@@ -1,0 +1,31 @@
+EXPEL
+a strongly typed LISP by haldean
+
+
+introduction ...........................................................
+
+Expel will eventually be a programming language. Expel aims to be a
+programming language that approximates the combination of the.
+conciseness of Haskell, the simplicity of Lisp, the productivity of
+Python and the deployability of Go. Expel is what I wish I could write
+everything in, but first I have to write Expel.
+
+Expel will have strict, static typing with full type inference. Expel
+will be homoiconic, and provide language-level features that allow users
+to control order-of-evaluation; in doing so, it will obviate the need
+for macros. Expel will draw heavily from Python's view of
+everything-as-namespace. Expel will, at first, be interpreted, but
+eventually will be compiled into LLVM IR (or similar). Expel will not
+have a null value or type. Expel will have side effects.
+
+
+expel in examples ......................................................
+
+    (set square-and-add
+        :type (Num a .=> a .-> a .-> a)
+        (func (x) (+ (^ x 2))))
+    (with (f (square-and-add 7))
+        (map f '(1, 4, 9)))
+    >>> (50, 53, 58)
+
+    
