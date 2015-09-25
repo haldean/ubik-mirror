@@ -37,4 +37,11 @@ apostrophe operator from Common Lisp to denote a literal list.
     (square-and-add 1 2)
     >>> 3
 
-    
+All functions are curried, allowing for both partial application and
+ease of definitions of functions like square-and-add above. An
+equivalent formulation of square-and-add would be:
+
+    (set square-and-add
+        :type '(Num a => a -> a -> a)
+        (func (x y) (+ (^ x 2) y)))
+
