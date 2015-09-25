@@ -21,8 +21,12 @@ have a null value or type. Expel will have side effects.
 
 expel in examples ......................................................
 
+Expel is, syntactically, a very simple LISP not dissimilar from Scheme.
+Perhaps the only idiom beyond a simple Scheme is that it borrows the
+apostrophe operator from Common Lisp to denote a literal list.
+
     (set square-and-add
-        :type (Num a .=> a .-> a .-> a)
+        :type '(Num a .=> a .-> a .-> a)
         (func (x) (+ (^ x 2))))
     (with (f (square-and-add 7))
         (map f '(1, 4, 9)))
