@@ -28,8 +28,13 @@ apostrophe operator from Common Lisp to denote a literal list.
     (set square-and-add
         :type '(Num a => a -> a -> a)
         (func (x) (+ (^ x 2))))
+    >>> ()
+
     (with (f (square-and-add 7))
         (map f '(1, 4, 9)))
     >>> (50, 53, 58)
+
+    (square-and-add 1 2)
+    >>> 3
 
     
