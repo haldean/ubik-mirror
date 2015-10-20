@@ -31,6 +31,7 @@ module Parser where
   parseTypeConstraint :: Parsec String () Expel.TypeConstraint
   parseTypeConstraint = do
     typeClass <- parseTypeName
+    Parsec.spaces
     Expel.VarType typeVar <- parseTypeVar
     return $ Expel.TypeConstraint typeClass typeVar
 
