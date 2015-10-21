@@ -1,5 +1,4 @@
 module Expel where
-
   import Data.List
 
   type Name = String
@@ -12,11 +11,22 @@ module Expel where
             | ConstrainedType Type [TypeConstraint]
             | UnknownType
 
-  data Node = IntLiteral Int
-            | FloatLiteral Float
+  data Node = IntLiteral Integer
+            | FloatLiteral Double
             | StringLiteral String
+            | Symbol String
             | Apply Node Node
             | Binding Name Type Node
+            | Prog Node Node
+
+  instance Show Node where
+    show (IntLiteral i) = show i
+    show (FloatLiteral f) = show f
+    show (StringLiteral s) = "\"" ++ s ++ "\""
+    show (Symbol s) = "." ++ s ++ "."
+    show (Apply f v) = "(" ++ show f ++ " " ++ show v ++ ")"
+    show (Binding n t body) = ":" ++ n ++ " ^(" ++ show t ++ ") =(" ++ show body ++ ")"
+    show (Prog n1 n2) = show n1 ++ "\n" ++ show n2
 
   instance Show Type where
     show (BaseType name) = name
