@@ -1,69 +1,46 @@
 module Parser where
-
-  import Debug.Trace
   import Expel
+  import TypeParser
   import Text.Parsec
   import qualified Text.Parsec as Parsec
+  import qualified Text.Parsec.Language as Lang
+  import qualified Text.Parsec.Token as Token
 
   parseName :: Parsec String () String
-  parseName = Parsec.many1 Parsec.alphaNum
+  parseName = Parsec.many1 (Parsec.alphaNum <|> Parsec.oneOf "!@#$%&*-_+='|><.?:/")
 
-  parseTypeName :: Parsec String () Expel.Type
-  parseTypeName = do
-    start <- Parsec.upper
-    rest <- Parsec.many Parsec.alphaNum
-    return $ Expel.BaseType (start : rest)
+  lexer :: Token.TokenParser ()
+  lexer = Token.makeTokenParser style
+    where style = Lang.emptyDef {
+    Token.commentLine = "//"
+    }
 
-  parseTypeVar :: Parsec String () Expel.Type
-  parseTypeVar = do
-    start <- Parsec.lower
-    rest <- Parsec.many Parsec.alphaNum
-    return $ Expel.VarType (start : rest)
+  parseNum :: Parsec String () Expel.Node
+  parseNum = fmap toExpelNode (Token.naturalOrFloat lexer) where
+    toExpelNode x = case x of
+      Left intVal -> Expel.IntLiteral intVal
+      Right floatVal -> Expel.FloatLiteral floatVal
 
-  parseUnconstrainedType :: Parsec String () Expel.Type
-  parseUnconstrainedType = do
-    base <- Parsec.try parseTypeName <|> parseTypeVar
-    -- try to parse the remainder as a function
-    Parsec.option base $
-      Parsec.try (Expel.FuncType base <$>
-        (Parsec.spaces *> Parsec.string "->" *> Parsec.spaces *> parseUnconstrainedType))
+  parseSymbol :: Parsec String () Expel.Node
+  parseSymbol = Expel.Symbol <$> Token.identifier lexer
 
-  parseTypeConstraint :: Parsec String () Expel.TypeConstraint
-  parseTypeConstraint = do
-    typeClass <- parseTypeName
-    Parsec.spaces
-    Expel.VarType typeVar <- parseTypeVar
-    return $ Expel.TypeConstraint typeClass typeVar
-
-  parseTypeConstraints :: Parsec String () [Expel.TypeConstraint]
-  parseTypeConstraints =
-    Parsec.sepBy1 parseTypeConstraint $
-      Parsec.spaces *> Parsec.char ',' *> Parsec.spaces
-
-  parseType :: Parsec String () Expel.Type
-  parseType = do
-    baseType <- parseUnconstrainedType
-    -- try to parse a type constraint off the end
-    Parsec.option baseType $
-      Parsec.try (Expel.ConstrainedType baseType <$>
-        (Parsec.spaces *> Parsec.char '|' *> Parsec.spaces *> parseTypeConstraints))
-
-  parseOptionalType :: Parsec String () Expel.Type
-  parseOptionalType = do
-    caret <- Parsec.optionMaybe $ Parsec.try (Just <$> Parsec.char '^')
-    case caret of
-      Nothing -> return Expel.UnknownType
-      Just _ -> Parsec.spaces *> parseType
-
-  stringUntilEmpty :: Parsec String () String
-  stringUntilEmpty = undefined
+  parseExpr :: Parsec String () Expel.Node
+  parseExpr = (parseNum <|> parseSymbol)
+    <* (Parsec.many1 Parsec.space <|>
+        -- need the const [] here to make Parsec.eof match [Char] from many1
+        (const [] <$> Parsec.eof))
 
   parseBinding :: Parsec String () Expel.Node
   parseBinding = do
     _ <- Parsec.char ':'
+    _ <- Parsec.spaces
     name <- parseName
+    _ <- Parsec.spaces
     bindtype <- parseOptionalType
-    return (Binding name bindtype undefined)
+    _ <- Parsec.spaces
+    _ <- Parsec.char '='
+    val <- parseExpr
+    return (Binding name bindtype val)
 
   parse :: Parsec String () [Expel.Node]
   parse = do
