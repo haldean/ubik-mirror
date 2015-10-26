@@ -2,20 +2,21 @@ module Blockify where
   import Data.Char
   import qualified Data.Text as T
 
-  data Block = Block { startLine :: Int
-                     , endLine :: Int
-                     , indent :: Int
-                     , contents :: T.Text
-                     , children :: [Block]
-                     }
+  data Block a = Block {
+    startLine :: Int,
+    endLine :: Int,
+    indent :: Int,
+    contents :: a,
+    children :: [Block a]
+   }
 
-  instance Show Block where
+  instance Show a => Show (Block a) where
     show b = replicate (indent b) ' ' ++ show (startLine b) ++ " " ++
-      show (contents b) ++ " {\n" ++
-      T.unpack (T.intercalate (T.pack "\n") (map (T.pack . show) (children b)))
-      ++ replicate (indent b) ' ' ++ "} " ++ show (endLine b) ++ "\n"
+        show (contents b) ++ " {\n" ++
+        T.unpack (T.intercalate (T.pack "\n") (map (T.pack . show) (children b)))
+        ++ replicate (indent b) ' ' ++ "} " ++ show (endLine b) ++ "\n"
 
-  mergeSameLevel :: [Block] -> [Block]
+  mergeSameLevel :: [Block T.Text] -> [Block T.Text]
   mergeSameLevel = foldr
     (\b acc -> if null acc then [b] else let prev = head acc in
       if indent b == indent prev
@@ -29,26 +30,26 @@ module Blockify where
         else b : acc)
     []
 
-  assignChildren' :: [Block] -> [Block]
+  assignChildren' :: [Block T.Text] -> [Block T.Text]
   assignChildren' (x:xs) =
     x { children = takeWhile isChild xs} : assignChildren' (dropWhile isChild xs)
     where
       isChild = (> indent x) . indent
   assignChildren' [] = []
 
-  assignChildren :: Block -> Block
+  assignChildren :: Block T.Text -> Block T.Text
   assignChildren b = let newChildren = assignChildren' (children b) in
     if length newChildren == length (children b)
       then b
       else b { children = map assignChildren newChildren }
 
-  createRoot :: [Block] -> Block
+  createRoot :: [Block T.Text] -> Block T.Text
   createRoot blocks = Block {
     startLine = 0, endLine = endLine (last blocks), indent = -1,
     contents = T.pack "", children = blocks
   }
 
-  toBlocks :: T.Text -> Block
+  toBlocks :: T.Text -> Block T.Text
   toBlocks t = assignChildren . createRoot . mergeSameLevel $ zipWith lineToBlock [0..] (T.lines t)
     where
       lineToBlock i l =
