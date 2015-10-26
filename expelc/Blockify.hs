@@ -8,7 +8,7 @@ module Blockify where
     indent :: Int,
     contents :: a,
     children :: [Block a]
-   }
+  }
 
   instance Show a => Show (Block a) where
     show b = replicate (indent b) ' ' ++ show (startLine b) ++ " " ++
