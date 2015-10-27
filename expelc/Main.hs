@@ -8,15 +8,21 @@ testProgs = map unlines [
     [
     ": test",
     "  ^ Int -> Int -> Int",
-    "  = \\x, y -> + x y"
+    "  = \\x, y -> + x y",
+    "  = \\x, y -> - x y"
     ],
     [
     ": test",
     "  ^ String -> Int -> Int",
     "  = \\x, y ->",
     "    +",
-    "      x y"
+    "      x y",
+    "  = \\x, y -> 7"
     ]
   ]
 
-main = mapM_ (print . P.parse) testProgs
+printProg p = do
+  putStrLn p
+  print $ P.parse p
+  putStrLn ""
+main = mapM_ printProg testProgs
