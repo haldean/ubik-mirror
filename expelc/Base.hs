@@ -20,7 +20,7 @@ module Base where
             | Binding Name Type [Node]
             | Prog Node Node
 
-  data BindChild = BindType Type | BindValue Node
+  data BindChild = BindType Type | BindValue Node | BindTypeAndValue Type Node
 
   instance Show Node where
     show (IntLiteral i) = show i
