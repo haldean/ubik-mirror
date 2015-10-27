@@ -1,49 +1,51 @@
 module Parser where
-  import Expel
-  import TypeParser
-  import Text.Parsec
-  import qualified Text.Parsec as Parsec
-  import qualified Text.Parsec.Language as Lang
-  import qualified Text.Parsec.Token as Token
+  import ParseUtil
+  import Data.Maybe
+  import Debug.Trace
+  import qualified Base
+  import qualified TypeParser
+  import qualified Text.Parsec as P
+  import qualified Control.Monad.State as S
+  import qualified Text.Parsec.Indent as I
 
-  parseName :: Parsec String () String
-  parseName = Parsec.many1 (Parsec.alphaNum <|> Parsec.oneOf "!@#$%&*-_+='|><.?:/")
+  parseName :: IndParser Base.Name
+  parseName = P.many1 (P.alphaNum P.<|> P.oneOf "!@#$%&*-_+='|><.?:/")
 
-  lexer :: Token.TokenParser ()
-  lexer = Token.makeTokenParser style
-    where style = Lang.emptyDef {
-    Token.commentLine = "//"
-    }
+  makeBinding :: Base.Name -> [Base.BindChild] -> Either String Base.Node
+  makeBinding name subs =
+    let
+      isTypeNode n = case n of
+        Base.BindType _ -> True
+        Base.BindValue _ -> False
+      typeNodes = filter isTypeNode subs
+    in if length typeNodes > 1
+      then Left ("cannot give more than one type for binding " ++ name)
+      else let
+         bindType = if null typeNodes then Base.UnknownType
+           else case head typeNodes of Base.BindType t -> t
+         values = mapMaybe (\n -> case n of
+           Base.BindValue nv -> Just nv
+           Base.BindType _ -> Nothing) subs
+        in Right $ Base.Binding name bindType values
 
-  parseNum :: Parsec String () Expel.Node
-  parseNum = fmap toExpelNode (Token.naturalOrFloat lexer) where
-    toExpelNode x = case x of
-      Left intVal -> Expel.IntLiteral intVal
-      Right floatVal -> Expel.FloatLiteral floatVal
+  parseBindChild :: IndParser Base.BindChild
+  parseBindChild = do
+    P.spaces
+    leader <- P.oneOf "^="
+    P.spaces
+    _ <- trace (show leader) return leader
+    case leader of
+      '^' -> Base.BindType <$> TypeParser.parseType
+      '=' -> return $ Base.BindValue (Base.IntLiteral 42)
 
-  parseSymbol :: Parsec String () Expel.Node
-  parseSymbol = Expel.Symbol <$> Token.identifier lexer
-
-  parseExpr :: Parsec String () Expel.Node
-  parseExpr = (parseNum <|> parseSymbol)
-    <* (Parsec.many1 Parsec.space <|>
-        -- need the const [] here to make Parsec.eof match [Char] from many1
-        (const [] <$> Parsec.eof))
-
-  parseBinding :: Parsec String () Expel.Node
+  parseBinding :: IndParser Base.Node
   parseBinding = do
-    _ <- Parsec.char ':'
-    _ <- Parsec.spaces
-    name <- parseName
-    _ <- Parsec.spaces
-    bindtype <- parseOptionalType
-    _ <- Parsec.spaces
-    _ <- Parsec.char '='
-    val <- parseExpr
-    return (Binding name bindtype val)
+    _ <- P.char ':'
+    P.spaces
+    bind <- I.withBlock makeBinding parseName parseBindChild
+    case bind of
+      Left errMsg -> fail errMsg
+      Right node -> return node
 
-  parse :: Parsec String () [Expel.Node]
-  parse = do
-    result <- Parsec.many parseBinding
-    _ <- Parsec.eof
-    return result
+  parse :: String -> Either P.ParseError Base.Node
+  parse = indParse parseBinding "source"

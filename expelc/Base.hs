@@ -1,4 +1,4 @@
-module Expel where
+module Base where
   import Data.List
 
   type Name = String
@@ -15,9 +15,12 @@ module Expel where
             | FloatLiteral Double
             | StringLiteral String
             | Symbol String
+            | TypeNode Type
             | Apply Node Node
-            | Binding Name Type Node
+            | Binding Name Type [Node]
             | Prog Node Node
+
+  data BindChild = BindType Type | BindValue Node
 
   instance Show Node where
     show (IntLiteral i) = show i

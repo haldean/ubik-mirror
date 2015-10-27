@@ -1,0 +1,16 @@
+Name:           expelc
+Version:        0.0.1
+Cabal-Version:  >= 1.2
+Author:         Haldean Brown
+Homepage:       http://haldean.org/expel
+
+Executable expelc
+  Build-Depends:
+    base,
+    parsec,
+    mtl,
+    indents==0.3.3
+  Other-source-modules:
+    Base
+    Parser
+  Main-is: Main.hs
