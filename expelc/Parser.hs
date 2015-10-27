@@ -16,36 +16,52 @@ module Parser where
     let
       isTypeNode n = case n of
         Base.BindType _ -> True
+        Base.BindTypeAndValue _ _ -> True
         Base.BindValue _ -> False
       typeNodes = filter isTypeNode subs
     in if length typeNodes > 1
       then Left ("cannot give more than one type for binding " ++ name)
       else let
          bindType = if null typeNodes then Base.UnknownType
-           else case head typeNodes of Base.BindType t -> t
+           else case head typeNodes of
+             Base.BindType t -> t
+             Base.BindTypeAndValue t _ -> t
          values = mapMaybe (\n -> case n of
            Base.BindValue nv -> Just nv
+           Base.BindTypeAndValue _ nv -> Just nv
            Base.BindType _ -> Nothing) subs
         in Right $ Base.Binding name bindType values
+
+  parseExpr :: IndParser Base.Node
+  parseExpr = const (Base.IntLiteral 42) <$> P.many (P.noneOf "\n") <* P.spaces
 
   parseBindChild :: IndParser Base.BindChild
   parseBindChild = do
     P.spaces
     leader <- P.oneOf "^="
     P.spaces
-    _ <- trace (show leader) return leader
     case leader of
-      '^' -> Base.BindType <$> TypeParser.parseType
-      '=' -> return $ Base.BindValue (Base.IntLiteral 42)
+      '^' -> do
+        bindType <- TypeParser.parseType
+        P.many (P.oneOf " \t")
+        eq <- P.try (P.optionMaybe $ P.char '=')
+        P.spaces
+        case eq of
+          Just _ -> Base.BindTypeAndValue bindType <$> parseExpr
+          Nothing -> return (Base.BindType bindType)
+      '=' -> Base.BindValue <$> parseExpr
 
   parseBinding :: IndParser Base.Node
   parseBinding = do
     _ <- P.char ':'
     P.spaces
-    bind <- I.withBlock makeBinding parseName parseBindChild
-    case bind of
-      Left errMsg -> fail errMsg
-      Right node -> return node
+    name <- parseName
+    P.spaces
+    children <- I.withPos $ I.block parseBindChild
+    let bind = makeBinding name children in
+      case bind of
+        Left errMsg -> fail errMsg
+        Right node -> return node
 
   parse :: String -> Either P.ParseError Base.Node
   parse = indParse parseBinding "source"
