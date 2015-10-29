@@ -12,4 +12,5 @@ Executable expelc
     text,
     concatenative==1.0.1,
     indents==0.3.3
+  Extensions: OverloadedStrings, FlexibleContexts
   Main-is: Main.hs

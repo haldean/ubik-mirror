@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Main where
 import GHC.IO.Encoding
 import qualified Data.Text as T

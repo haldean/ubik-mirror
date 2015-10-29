@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Parser where
   import ParseUtil
   import Data.Maybe

@@ -1,5 +1,3 @@
-{-# LANGUAGE FlexibleContexts #-}
-
 module ParseUtil where
   import qualified Control.Concatenative as C
   import qualified Control.Monad as M
