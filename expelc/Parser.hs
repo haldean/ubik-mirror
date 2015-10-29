@@ -3,14 +3,18 @@
 module Parser where
   import ParseUtil
   import Data.Maybe
-  import qualified Data.Text as T
   import qualified Base
+  import qualified Control.Monad as M
+  import qualified Data.Text as T
   import qualified TypeParser
   import qualified Text.Parsec as P
   import qualified Text.Parsec.Indent as I
 
   parseName :: IndParser Base.Name
   parseName = P.many1 (P.alphaNum P.<|> P.oneOf "!@#$%&*-_+='|><.?:/")
+
+  parseSymbol :: IndParser Base.Node
+  parseSymbol = Base.Symbol <$> parseName
 
   makeBinding :: Base.Name -> [Base.BindChild] -> Either String Base.Node
   makeBinding name subs =
@@ -21,7 +25,7 @@ module Parser where
         Base.BindValue _ -> False
       typeNodes = filter isTypeNode subs
     in if length typeNodes > 1
-      then Left ("cannot give more than one type for binding " ++ name)
+      then Left ("cannot give more than one type for binding \"" ++ name ++ "\"")
       else let
          bindType = if null typeNodes then Base.UnknownType
            else case head typeNodes of
@@ -38,7 +42,7 @@ module Parser where
 
   parseFunc :: IndParser Base.Node
   parseFunc = do
-    _ <- P.oneOf "\\λ"
+    P.try (P.oneOf "\\λ")
     P.spaces
     args <- P.many (checkIndent' >> parseFuncArg <* P.spaces)
     _ <- P.string "->"
@@ -46,8 +50,11 @@ module Parser where
     body <- Base.StringLiteral . foldl1 (++) <$> contBlock (P.many (P.noneOf "\n") <* P.spaces)
     return $ Base.Func args body
 
+  parseApply :: IndParser Base.Node
+  parseApply = checkIndent' >> P.spaces >> parseSymbol >>= \sym -> M.liftM (Base.Apply sym) parseExpr
+
   parseExpr :: IndParser Base.Node
-  parseExpr = parseFunc
+  parseExpr = P.spaces >> (parseFunc P.<|> parseApply)
 
   parseBindChild :: IndParser Base.BindChild
   parseBindChild = do
