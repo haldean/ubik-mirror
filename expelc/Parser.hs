@@ -33,7 +33,7 @@ module Parser where
         in Right $ Base.Binding name bindType values
 
   parseExpr :: IndParser Base.Node
-  parseExpr = const (Base.IntLiteral 42) <$> P.many (P.noneOf "\n") <* P.spaces
+  parseExpr = Base.StringLiteral . foldl1 (++) <$> contBlock (P.many (P.noneOf "\n") <* P.spaces)
 
   parseBindChild :: IndParser Base.BindChild
   parseBindChild = do
