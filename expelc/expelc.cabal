@@ -11,7 +11,4 @@ Executable expelc
     mtl,
     concatenative==1.0.1,
     indents==0.3.3
-  Other-source-modules:
-    Base
-    Parser
   Main-is: Main.hs

@@ -1,11 +1,9 @@
 module Parser where
   import ParseUtil
   import Data.Maybe
-  import Debug.Trace
   import qualified Base
   import qualified TypeParser
   import qualified Text.Parsec as P
-  import qualified Control.Monad.State as S
   import qualified Text.Parsec.Indent as I
 
   parseName :: IndParser Base.Name
@@ -32,24 +30,37 @@ module Parser where
            Base.BindType _ -> Nothing) subs
         in Right $ Base.Binding name bindType values
 
+  parseFuncArg :: IndParser Base.Node
+  parseFuncArg = Base.Symbol <$> P.many1 P.alphaNum
+
+  parseFunc :: IndParser Base.Node
+  parseFunc = do
+    _ <- P.oneOf "\\"
+    P.spaces
+    args <- P.many (checkIndent' >> parseFuncArg <* P.spaces)
+    _ <- P.string "->"
+    P.spaces
+    body <- Base.StringLiteral . foldl1 (++) <$> contBlock (P.many (P.noneOf "\n") <* P.spaces)
+    return $ Base.Func args body
+
   parseExpr :: IndParser Base.Node
-  parseExpr = Base.StringLiteral . foldl1 (++) <$> contBlock (P.many (P.noneOf "\n") <* P.spaces)
+  parseExpr = parseFunc
 
   parseBindChild :: IndParser Base.BindChild
   parseBindChild = do
     P.spaces
     leader <- P.oneOf "^="
-    P.spaces
     case leader of
       '^' -> do
+        P.spaces
         bindType <- TypeParser.parseType
-        P.many (P.oneOf " \t")
+        _ <- P.many (P.oneOf " \t")
         eq <- P.try (P.optionMaybe $ P.char '=')
         P.spaces
         case eq of
           Just _ -> Base.BindTypeAndValue bindType <$> parseExpr
           Nothing -> return (Base.BindType bindType)
-      '=' -> Base.BindValue <$> parseExpr
+      '=' -> I.withPos $ P.spaces >> Base.BindValue <$> parseExpr
 
   parseBinding :: IndParser Base.Node
   parseBinding = do

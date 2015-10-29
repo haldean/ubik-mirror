@@ -14,11 +14,12 @@ module Base where
   data Node = IntLiteral Integer
             | FloatLiteral Double
             | StringLiteral String
-            | Symbol String
+            | Symbol Name
             | TypeNode Type
             | Apply Node Node
             | Binding Name Type [Node]
             | Prog Node Node
+            | Func [Node] Node
 
   data BindChild = BindType Type | BindValue Node | BindTypeAndValue Type Node
 
@@ -26,10 +27,11 @@ module Base where
     show (IntLiteral i) = show i
     show (FloatLiteral f) = show f
     show (StringLiteral s) = "\"" ++ s ++ "\""
-    show (Symbol s) = "." ++ s ++ "."
+    show (Symbol s) = s
     show (Apply f v) = "(" ++ show f ++ " " ++ show v ++ ")"
     show (Binding n t body) = ":" ++ n ++ " ^(" ++ show t ++ ") =(" ++ show body ++ ")"
     show (Prog n1 n2) = show n1 ++ "\n" ++ show n2
+    show (Func args body) = "\\" ++ show args ++ " -> " ++ show body
 
   instance Show Type where
     show (BaseType name) = name
