@@ -1,7 +1,10 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Main where
+import qualified Data.Text as T
 import qualified Parser as P
 
-testProgs = map unlines [
+testProgs = map T.unlines [
     [
     ": test ^ Int = + 8 102"
     ],
@@ -14,15 +17,17 @@ testProgs = map unlines [
     [
     ": test",
     "  ^ String -> Int -> Int",
-    "  = \\x y ->",
+    "  = λ x y ->",
     "    +",
     "      x y",
     "  = \\x y -> 7"
     ]
   ]
 
+printProg :: T.Text -> IO ()
 printProg p = do
-  putStrLn p
+  putStrLn $ T.unpack p
   print $ P.parse p
   putStrLn ""
+
 main = mapM_ printProg testProgs

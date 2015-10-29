@@ -1,6 +1,9 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Parser where
   import ParseUtil
   import Data.Maybe
+  import qualified Data.Text as T
   import qualified Base
   import qualified TypeParser
   import qualified Text.Parsec as P
@@ -35,7 +38,7 @@ module Parser where
 
   parseFunc :: IndParser Base.Node
   parseFunc = do
-    _ <- P.oneOf "\\"
+    _ <- P.oneOf "\\λ"
     P.spaces
     args <- P.many (checkIndent' >> parseFuncArg <* P.spaces)
     _ <- P.string "->"
@@ -74,5 +77,5 @@ module Parser where
         Left errMsg -> fail errMsg
         Right node -> return node
 
-  parse :: String -> Either P.ParseError Base.Node
+  parse :: T.Text -> Either P.ParseError Base.Node
   parse = indParse parseBinding "source"

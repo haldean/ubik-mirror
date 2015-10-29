@@ -9,6 +9,7 @@ Executable expelc
     base,
     parsec,
     mtl,
+    text,
     concatenative==1.0.1,
     indents==0.3.3
   Main-is: Main.hs

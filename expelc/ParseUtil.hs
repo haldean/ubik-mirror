@@ -4,13 +4,14 @@ module ParseUtil where
   import qualified Control.Concatenative as C
   import qualified Control.Monad as M
   import qualified Control.Monad.State as S
+  import qualified Data.Text as T
   import qualified Text.Parsec as P
   import qualified Text.Parsec.Indent as I
 
   -- many thanks to @sw17ch for sharing these little bits on his blog.
-  type IndParser a = P.ParsecT String () (S.State P.SourcePos) a
+  type IndParser a = P.ParsecT T.Text () (S.State P.SourcePos) a
 
-  indParse :: IndParser a -> P.SourceName -> String -> Either P.ParseError a
+  indParse :: IndParser a -> P.SourceName -> T.Text -> Either P.ParseError a
   indParse p source_name input =
     I.runIndent source_name $ P.runParserT p () source_name input
 
