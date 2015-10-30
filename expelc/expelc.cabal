@@ -10,6 +10,7 @@ Executable expelc
     parsec,
     mtl,
     text,
+    hspec,
     concatenative==1.0.1,
     indents==0.3.3
   Extensions: OverloadedStrings, FlexibleContexts
