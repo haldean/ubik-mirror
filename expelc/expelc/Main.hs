@@ -1,5 +1,5 @@
 module Main where
-  
+
 import GHC.IO.Encoding
 import qualified Data.Text as T
 import qualified Expel.Parser as P
@@ -34,7 +34,7 @@ testProgs = map T.unlines [
 printProg :: T.Text -> IO ()
 printProg p = do
   putStrLn $ T.unpack p
-  print $ P.parse p
+  print $ P.parseExpel p
   putStrLn ""
 
 main = do

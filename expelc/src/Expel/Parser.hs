@@ -1,9 +1,8 @@
-module Expel.Parser where
+module Expel.Parser (parseExpel) where
   import Expel.ParseUtil
   import Data.Maybe
   import Text.Parsec ( (<|>) )
   import qualified Expel.Base as Base
-  import qualified Control.Monad as M
   import qualified Data.Text as T
   import qualified Expel.TypeParser as TypeParser
   import qualified Text.Parsec as P
@@ -66,13 +65,13 @@ module Expel.Parser where
     pre <- P.many1 P.digit
     period <- P.optionMaybe (P.oneOf ".e")
     case period of
-      Nothing -> P.space >> return (Base.IntLiteral (read pre :: Integer))
+      Nothing -> endOfSymbol >> return (Base.IntLiteral (read pre :: Integer))
       Just 'e' -> P.many P.digit >>= \exps ->
-        P.space >> return (Base.FloatLiteral (read (pre ++ "e" ++ exps) :: Double))
+        endOfSymbol >> return (Base.FloatLiteral (read (pre ++ "e" ++ exps) :: Double))
       Just '.' -> do
         frac <- P.many P.digit
         exps <- P.option "" (P.char 'e' >> P.many P.digit)
-        P.space
+        endOfSymbol
         return $ Base.FloatLiteral
           (read (pre ++ "." ++ frac ++ "e" ++ exps) :: Double))
 
@@ -110,5 +109,5 @@ module Expel.Parser where
   parseFile :: IndParser [Base.Node]
   parseFile = P.many parseBinding
 
-  parse :: T.Text -> Either P.ParseError [Base.Node]
-  parse = indParse parseFile "source"
+  parseExpel :: T.Text -> Either P.ParseError [Base.Node]
+  parseExpel = indParse parseFile "source"

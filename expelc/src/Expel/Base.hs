@@ -5,12 +5,13 @@ module Expel.Base where
   type Name = T.Text
 
   type TypeName = T.Text
-  data TypeConstraint = TypeConstraint Type Name
+  data TypeConstraint = TypeConstraint Type Name deriving (Eq)
   data Type = BaseType TypeName
             | VarType Name
             | FuncType Type Type
             | ConstrainedType Type [TypeConstraint]
             | UnknownType
+            deriving (Eq)
 
   data Node = IntLiteral Integer
             | FloatLiteral Double
@@ -21,6 +22,7 @@ module Expel.Base where
             | Binding Name Type [Node]
             | Prog Node Node
             | Func [Node] Node
+            deriving (Eq)
 
   data BindChild = BindType Type | BindValue Node | BindTypeAndValue Type Node
 
@@ -28,7 +30,7 @@ module Expel.Base where
     show (IntLiteral i) = show i ++ "i"
     show (FloatLiteral f) = show f ++ "f"
     show (StringLiteral s) = "\"" ++ T.unpack s ++ "\""
-    show (Symbol s) = T.unpack s
+    show (Symbol s) = "`" ++ T.unpack s
     show (Apply f v) = "(" ++ show f ++ " " ++ show v ++ ")"
     show (Binding n t body) = ":" ++ T.unpack n ++ " ^(" ++ show t ++ ") =(" ++ show body ++ ")"
     show (Prog n1 n2) = show n1 ++ "\n" ++ show n2
