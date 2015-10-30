@@ -50,7 +50,6 @@ module Parser where
     return $ Base.Func args body
 
   parseApply :: IndParser Base.Node
-  --parseApply = P.chainr1 (checkIndent' >> parseSimpleExpr) (return Base.Apply)
   parseApply = P.manyTill parseSimpleExpr (checkIndentLess <|> P.eof) >>=
     \exprs -> if null exprs
       then fail "parseApply got less than two applications"
