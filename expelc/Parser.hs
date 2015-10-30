@@ -57,11 +57,27 @@ module Parser where
 
   parseSimpleExpr :: IndParser Base.Node
   parseSimpleExpr = P.spaces >> (
+    parseNumber P.<|>
     parseSymbol P.<|>
     (P.char '(' *> parseExpr <* P.char ')')) <* P.spaces
 
+  parseNumber :: IndParser Base.Node
+  parseNumber = P.try (do
+    pre <- P.many1 P.digit
+    period <- P.optionMaybe (P.oneOf ".e")
+    case period of
+      Nothing -> P.space >> return (Base.IntLiteral (read pre :: Integer))
+      Just 'e' -> P.many P.digit >>= \exps ->
+        P.space >> return (Base.FloatLiteral (read (pre ++ "e" ++ exps) :: Double))
+      Just '.' -> do
+        frac <- P.many P.digit
+        exps <- P.option "" (P.char 'e' >> P.many P.digit)
+        P.space
+        return $ Base.FloatLiteral
+          (read (pre ++ "." ++ frac ++ "e" ++ exps) :: Double))
+
   parseExpr :: IndParser Base.Node
-  parseExpr = P.spaces >> (parseFunc P.<|> parseApply)
+  parseExpr = P.spaces >> (parseFunc P.<|> parseApply P.<|> parseNumber P.<|> parseSymbol)
 
   parseBindChild :: IndParser Base.BindChild
   parseBindChild = do
@@ -91,5 +107,8 @@ module Parser where
         Left errMsg -> fail errMsg
         Right node -> return node
 
-  parse :: T.Text -> Either P.ParseError Base.Node
-  parse = indParse parseBinding "source"
+  parseFile :: IndParser [Base.Node]
+  parseFile = P.many parseBinding
+
+  parse :: T.Text -> Either P.ParseError [Base.Node]
+  parse = indParse parseFile "source"

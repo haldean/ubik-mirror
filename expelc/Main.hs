@@ -5,7 +5,8 @@ import qualified Parser as P
 
 testProgs = map T.unlines [
     [
-    ": test ^ Int = + 8 102"
+    ": test ^ Int = + 80xtl 102",
+    ": lucky ^ Int = 14"
     ],
     [
     ": test",

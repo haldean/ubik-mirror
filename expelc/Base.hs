@@ -24,8 +24,8 @@ module Base where
   data BindChild = BindType Type | BindValue Node | BindTypeAndValue Type Node
 
   instance Show Node where
-    show (IntLiteral i) = show i
-    show (FloatLiteral f) = show f
+    show (IntLiteral i) = show i ++ "i"
+    show (FloatLiteral f) = show f ++ "f"
     show (StringLiteral s) = "\"" ++ s ++ "\""
     show (Symbol s) = s
     show (Apply f v) = "(" ++ show f ++ " " ++ show v ++ ")"
