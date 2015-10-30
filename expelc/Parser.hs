@@ -1,6 +1,7 @@
 module Parser where
   import ParseUtil
   import Data.Maybe
+  import Text.Parsec ( (<|>) )
   import qualified Base
   import qualified Control.Monad as M
   import qualified Data.Text as T
@@ -9,7 +10,7 @@ module Parser where
   import qualified Text.Parsec.Indent as I
 
   parseName :: IndParser Base.Name
-  parseName = T.pack <$> P.many1 (P.alphaNum P.<|> P.oneOf "!@#$%&*-_+='|><.?:/")
+  parseName = T.pack <$> P.many1 (P.alphaNum <|> P.oneOf "!@#$%&*-_+='|><.?:/")
 
   parseSymbol :: IndParser Base.Node
   parseSymbol = Base.Symbol <$> parseName
@@ -50,15 +51,15 @@ module Parser where
 
   parseApply :: IndParser Base.Node
   --parseApply = P.chainr1 (checkIndent' >> parseSimpleExpr) (return Base.Apply)
-  parseApply = P.manyTill parseSimpleExpr (checkIndentLess P.<|> P.eof) >>=
+  parseApply = P.manyTill parseSimpleExpr (checkIndentLess <|> P.eof) >>=
     \exprs -> if null exprs
       then fail "parseApply got less than two applications"
       else return $ foldl1 Base.Apply exprs
 
   parseSimpleExpr :: IndParser Base.Node
   parseSimpleExpr = P.spaces >> (
-    parseNumber P.<|>
-    parseSymbol P.<|>
+    parseNumber <|>
+    parseSymbol <|>
     (P.char '(' *> parseExpr <* P.char ')')) <* P.spaces
 
   parseNumber :: IndParser Base.Node
@@ -77,7 +78,7 @@ module Parser where
           (read (pre ++ "." ++ frac ++ "e" ++ exps) :: Double))
 
   parseExpr :: IndParser Base.Node
-  parseExpr = P.spaces >> (parseFunc P.<|> parseApply P.<|> parseNumber P.<|> parseSymbol)
+  parseExpr = P.spaces >> (parseFunc <|> parseApply <|> parseNumber <|> parseSymbol)
 
   parseBindChild :: IndParser Base.BindChild
   parseBindChild = do
