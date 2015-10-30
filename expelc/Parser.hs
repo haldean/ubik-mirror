@@ -45,11 +45,20 @@ module Parser where
     args <- P.many (checkIndent' >> parseFuncArg <* P.spaces)
     _ <- P.string "->"
     P.spaces
-    body <- Base.StringLiteral . foldl1 (++) <$> contBlock (P.many (P.noneOf "\n") <* P.spaces)
+    body <- parseExpr
     return $ Base.Func args body
 
   parseApply :: IndParser Base.Node
-  parseApply = checkIndent' >> P.spaces >> parseSymbol >>= \sym -> M.liftM (Base.Apply sym) parseExpr
+  --parseApply = P.chainr1 (checkIndent' >> parseSimpleExpr) (return Base.Apply)
+  parseApply = P.manyTill parseSimpleExpr (checkIndentLess P.<|> P.eof) >>=
+    \exprs -> if null exprs
+      then fail "parseApply got less than two applications"
+      else return $ foldl1 Base.Apply exprs
+
+  parseSimpleExpr :: IndParser Base.Node
+  parseSimpleExpr = P.spaces >> (
+    parseSymbol P.<|>
+    (P.char '(' *> parseExpr <* P.char ')')) <* P.spaces
 
   parseExpr :: IndParser Base.Node
   parseExpr = P.spaces >> (parseFunc P.<|> parseApply)

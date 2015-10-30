@@ -21,6 +21,12 @@ module ParseUtil where
     p <- P.getPosition
     M.unless (C.biAp P.sourceColumn (>=) p s) $ P.parserFail "indentation doesn't match"
 
+  checkIndentLess :: (P.Stream s (S.State P.SourcePos) z) => I.IndentParser s u ()
+  checkIndentLess = do
+    s <- S.get
+    p <- P.getPosition
+    M.unless (C.biAp P.sourceColumn (<) p s) $ P.parserFail "indentation doesn't match"
+
   -- like block, but continues parsing as long as the indentation level is equal
   -- or greater than the starting position.
   contBlock :: (P.Stream s (S.State P.SourcePos) z) => I.IndentParser s u a -> I.IndentParser s u [a]
