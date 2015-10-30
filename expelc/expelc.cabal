@@ -1,17 +1,31 @@
 Name:           expelc
 Version:        0.0.1
-Cabal-Version:  >= 1.2
+Cabal-Version:  >= 1.8
 Author:         Haldean Brown
 Homepage:       http://haldean.org/expel
 
-Executable expelc
+Library
   Build-Depends:
     base,
     parsec,
     mtl,
     text,
-    hspec,
     concatenative==1.0.1,
     indents==0.3.3
+  Exposed-modules:
+    Expel.Base
+    Expel.Parser
+  Other-modules:
+    Expel.ParseUtil
+    Expel.TypeParser
   Extensions: OverloadedStrings, FlexibleContexts
+  Hs-source-dirs: src
+
+Executable ec
+  Build-Depends:
+    base,
+    expelc,
+    text
+  Extensions: OverloadedStrings, FlexibleContexts
+  Hs-source-dirs: expelc
   Main-is: Main.hs

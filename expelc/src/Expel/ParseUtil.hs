@@ -1,4 +1,4 @@
-module ParseUtil where
+module Expel.ParseUtil where
   import qualified Control.Concatenative as C
   import qualified Control.Monad as M
   import qualified Control.Monad.State as S

@@ -1,7 +1,8 @@
 module Main where
+  
 import GHC.IO.Encoding
 import qualified Data.Text as T
-import qualified Parser as P
+import qualified Expel.Parser as P
 
 testProgs = map T.unlines [
     [

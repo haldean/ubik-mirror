@@ -1,6 +1,6 @@
-module TypeParser where
-  import Base
-  import ParseUtil
+module Expel.TypeParser where
+  import qualified Expel.Base as Base
+  import Expel.ParseUtil
   import qualified Data.Text as T
   import Text.Parsec ( (<|>) )
   import qualified Text.Parsec as P

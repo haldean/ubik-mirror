@@ -1,4 +1,4 @@
-module Base where
+module Expel.Base where
   import Data.List
   import qualified Data.Text as T
 

@@ -1,11 +1,11 @@
-module Parser where
-  import ParseUtil
+module Expel.Parser where
+  import Expel.ParseUtil
   import Data.Maybe
   import Text.Parsec ( (<|>) )
-  import qualified Base
+  import qualified Expel.Base as Base
   import qualified Control.Monad as M
   import qualified Data.Text as T
-  import qualified TypeParser
+  import qualified Expel.TypeParser as TypeParser
   import qualified Text.Parsec as P
   import qualified Text.Parsec.Indent as I
 
