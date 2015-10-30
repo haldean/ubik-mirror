@@ -1,9 +1,10 @@
 module Base where
   import Data.List
+  import qualified Data.Text as T
 
-  type Name = String
+  type Name = T.Text
 
-  type TypeName = String
+  type TypeName = T.Text
   data TypeConstraint = TypeConstraint Type Name
   data Type = BaseType TypeName
             | VarType Name
@@ -13,7 +14,7 @@ module Base where
 
   data Node = IntLiteral Integer
             | FloatLiteral Double
-            | StringLiteral String
+            | StringLiteral T.Text
             | Symbol Name
             | TypeNode Type
             | Apply Node Node
@@ -26,20 +27,20 @@ module Base where
   instance Show Node where
     show (IntLiteral i) = show i ++ "i"
     show (FloatLiteral f) = show f ++ "f"
-    show (StringLiteral s) = "\"" ++ s ++ "\""
-    show (Symbol s) = s
+    show (StringLiteral s) = "\"" ++ T.unpack s ++ "\""
+    show (Symbol s) = T.unpack s
     show (Apply f v) = "(" ++ show f ++ " " ++ show v ++ ")"
-    show (Binding n t body) = ":" ++ n ++ " ^(" ++ show t ++ ") =(" ++ show body ++ ")"
+    show (Binding n t body) = ":" ++ T.unpack n ++ " ^(" ++ show t ++ ") =(" ++ show body ++ ")"
     show (Prog n1 n2) = show n1 ++ "\n" ++ show n2
     show (Func args body) = "\\" ++ show args ++ " -> " ++ show body
 
   instance Show Type where
-    show (BaseType name) = name
-    show (VarType name) = "$" ++ name
+    show (BaseType name) = T.unpack name
+    show (VarType name) = "$" ++ T.unpack name
     show (FuncType from to) = show from ++ " -> " ++ show to
     show (ConstrainedType base constraints) =
       show base ++ " | " ++ intercalate ", " (map show constraints)
     show (UnknownType) = "(?)"
 
   instance Show TypeConstraint where
-    show (TypeConstraint cls name) = show cls ++ " " ++ name
+    show (TypeConstraint cls name) = show cls ++ " " ++ T.unpack name

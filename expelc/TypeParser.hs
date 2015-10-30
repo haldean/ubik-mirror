@@ -1,6 +1,7 @@
 module TypeParser where
   import Base
   import ParseUtil
+  import qualified Data.Text as T
   import Text.Parsec
   import qualified Text.Parsec as Parsec
 
@@ -8,13 +9,13 @@ module TypeParser where
   parseTypeName = do
     start <- Parsec.upper
     rest <- Parsec.many Parsec.alphaNum
-    return $ Base.BaseType (start : rest)
+    return $ Base.BaseType $ T.pack (start : rest)
 
   parseTypeVar :: IndParser Base.Type
   parseTypeVar = do
     start <- Parsec.lower
     rest <- Parsec.many Parsec.alphaNum
-    return $ Base.VarType (start : rest)
+    return $ Base.VarType $ T.pack (start : rest)
 
   parseUnconstrainedType :: IndParser Base.Type
   parseUnconstrainedType = do

@@ -9,7 +9,7 @@ module Parser where
   import qualified Text.Parsec.Indent as I
 
   parseName :: IndParser Base.Name
-  parseName = P.many1 (P.alphaNum P.<|> P.oneOf "!@#$%&*-_+='|><.?:/")
+  parseName = T.pack <$> P.many1 (P.alphaNum P.<|> P.oneOf "!@#$%&*-_+='|><.?:/")
 
   parseSymbol :: IndParser Base.Node
   parseSymbol = Base.Symbol <$> parseName
@@ -23,7 +23,7 @@ module Parser where
         Base.BindValue _ -> False
       typeNodes = filter isTypeNode subs
     in if length typeNodes > 1
-      then Left ("cannot give more than one type for binding \"" ++ name ++ "\"")
+      then Left ("cannot give more than one type for binding \"" ++ show name ++ "\"")
       else let
          bindType = if null typeNodes then Base.UnknownType
            else case head typeNodes of
@@ -36,7 +36,7 @@ module Parser where
         in Right $ Base.Binding name bindType values
 
   parseFuncArg :: IndParser Base.Node
-  parseFuncArg = Base.Symbol <$> P.many1 P.alphaNum
+  parseFuncArg = Base.Symbol . T.pack <$> P.many1 P.alphaNum
 
   parseFunc :: IndParser Base.Node
   parseFunc = do
