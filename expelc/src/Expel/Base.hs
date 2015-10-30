@@ -31,6 +31,7 @@ module Expel.Base where
     show (FloatLiteral f) = show f ++ "f"
     show (StringLiteral s) = "\"" ++ T.unpack s ++ "\""
     show (Symbol s) = "`" ++ T.unpack s
+    show (TypeNode s) = "^" ++ show s
     show (Apply f v) = "(" ++ show f ++ " " ++ show v ++ ")"
     show (Binding n t body) = ":" ++ T.unpack n ++ " ^(" ++ show t ++ ") =(" ++ show body ++ ")"
     show (Prog n1 n2) = show n1 ++ "\n" ++ show n2
