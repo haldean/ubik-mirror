@@ -16,36 +16,45 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 CC := gcc
-COPTS := -std=c99 -pedantic -Werror -Wall -Wextra -Iinclude -ggdb -O0 -D_GNU_SOURCE $(CFLAGS)
-LDOPTS := $(LDFLAGS)
+COPTS := -std=c99 -pedantic -Werror -Wall -Wextra -Iinclude -ggdb -O0 -D_GNU_SOURCE
+LDOPTS := -Ldist
 HEADERS := $(wildcard include/*.h)
 
-objects := $(patsubst src/%.c,build/%.o,$(wildcard src/*.c))
+ifeq ($(OS),Windows_NT)
+sharedlib := dist/libexpel.dll
+else
+sharedlib := dist/libexpel.so
+endif
+
+executable := dist/expelc
+testexe := build/test-expelc
+objects := $(patsubst libexpel/%.c,build/%.o,$(wildcard libexpel/*.c))
 
 # -MD builds makefiles with dependencies in-line with the object files. We
 # include them in the -include directive below
-build/%.o: src/%.c build
+build/%.o: libexpel/%.c
+	@test -d build || mkdir build
 	$(CC) $(COPTS) -MD -c -o $@ $<
-
-build:
-	@mkdir build
 
 -include $(patsubst build/%.o,build/%.d,$(objects))
 
-dist/expelc: $(objects) dist
-	$(CC) $(objects) $(LDOPTS) -o $@
+$(sharedlib): $(objects)
+	@test -d dist || mkdir dist
+	$(CC) $(objects) $(LDOPTS) -fPIC -shared -o $@
 
-build/test-expelc: $(objects) test/*.c test/*.h build
-	$(CC) $(COPTS) $< -lcheck $(LDOPTS) -o $@
+$(executable): expelc/*.c $(sharedlib)
+	@test -d dist || mkdir dist
+	$(CC) $(COPTS) $(LDOPTS) $< -lexpel -o $@
 
-dist:
-	@mkdir dist
+$(testexe): test/*.c $(sharedlib)
+	@test -d build || mkdir build
+	$(CC) $(COPTS) $(LDOPTS) $< -lcheck -lexpel -o $@
 
 clean:
 	rm -rf build dist
 
-test: build/test-expelc
-	build/test-expelc
+test: $(testexe)
+	LD_LIBRARY_PATH=dist LD_DEBUG=1 $(testexe)
 
 all: dist/expelc
 
