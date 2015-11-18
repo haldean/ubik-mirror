@@ -17,18 +17,23 @@
 
 CC := gcc
 COPTS := -std=c99 -pedantic -Werror -Wall -Wextra -Iinclude -ggdb -O0 -D_GNU_SOURCE
-LDOPTS := -Ldist
-HEADERS := $(wildcard include/*.h)
+LDOPTS := -L./dist
+
+objects := $(patsubst libexpel/%.c,build/%.o,$(wildcard libexpel/*.c))
 
 ifeq ($(OS),Windows_NT)
-sharedlib := dist/libexpel.dll
+sharedlib := dist/libexpel.dll.a
+executable := dist/expelc.exe
+testexe := build/testexpelc.exe
+sharedldopts :=
+exeenv := PATH="$(PATH):$(PWD)/dist"
 else
 sharedlib := dist/libexpel.so
-endif
-
 executable := dist/expelc
 testexe := build/test-expelc
-objects := $(patsubst libexpel/%.c,build/%.o,$(wildcard libexpel/*.c))
+sharedldopts := -fPIC
+exeenv :=
+endif
 
 # -MD builds makefiles with dependencies in-line with the object files. We
 # include them in the -include directive below
@@ -40,7 +45,7 @@ build/%.o: libexpel/%.c
 
 $(sharedlib): $(objects)
 	@test -d dist || mkdir dist
-	$(CC) $(objects) $(LDOPTS) -fPIC -shared -o $@
+	$(CC) $(objects) $(sharedldopts) $(LDOPTS) -shared -o $@
 
 $(executable): expelc/*.c $(sharedlib)
 	@test -d dist || mkdir dist
@@ -54,7 +59,7 @@ clean:
 	rm -rf build dist
 
 test: $(testexe)
-	LD_LIBRARY_PATH=dist LD_DEBUG=1 $(testexe)
+	$(exeenv) $(testexe)
 
 all: dist/expelc
 
