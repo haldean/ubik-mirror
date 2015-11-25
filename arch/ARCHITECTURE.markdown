@@ -54,9 +54,9 @@ type codes is:
 | `...tuple` | fixed-length tuple
 | `..string` | UTF-8 string
 
-Each type code is actually a word-sized integer that has the numeric equivalent
-of a 4-byte string, with the first letter in the most-significant byte. Note
-that periods in the above table stand in for zero bytes.
+Each type code is actually a word that contains the numeric equivalent of a
+8-byte string, with the first letter in the most-significant byte. Note that
+periods in the above table stand in for zero bytes.
 
 The tree encoding of integer types is very simple; on its left is a word
 containing the type code of the relevant integer type and on its right is the
