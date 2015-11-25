@@ -18,6 +18,7 @@
  */
 
 #include "expel/expel.h"
+#include "util.h"
 
 #include <stdlib.h>
 
@@ -41,20 +42,73 @@ get_u8(struct xl_value *out)
 }
 
 void
-make_u64(uint64_t val, struct xl_value *out)
+make_u32(uint32_t val, struct xl_value *out)
 {
         struct xl_type *type;
 
         type = malloc(sizeof(struct xl_type));
-        type->base = BASE_TYPE_U64;
+        type->base = BASE_TYPE_U32;
 
         out->tag = TAG_TYPED;
         out->left.t = type;
         out->right.v = val;
 }
 
+uint32_t
+get_u32(struct xl_value *out)
+{
+        return out->right.v;
+}
+
+void
+make_u64(uint64_t val, struct xl_value *out)
+{
+        struct xl_type *type;
+        struct xl_value *right;
+
+        type = malloc(sizeof(struct xl_type));
+        type->base = BASE_TYPE_U64;
+
+        out->tag = TAG_TYPED;
+        out->left.t = type;
+
+#if (NATIVE_SIZE == 8)
+        unused(right);
+        out->right.v = val;
+#elif (NATIVE_SIZE == 4)
+        right = malloc(sizeof(struct xl_value));
+        right->left.v = ((1 << 33) - 1) & (val >> 32);
+        right->right.v = ((1 << 33) - 1) & val;
+#endif
+}
+
 uint64_t
 get_u64(struct xl_value *out)
+{
+        uint64_t val;
+#if (NATIVE_SIZE == 8)
+        val = out->right.v;
+#elif (NATIVE_SIZE == 4)
+        val = out->right->left.v << 32 | out->right->right.v;
+#endif
+        return val;
+}
+
+void
+make_unative(unative_t val, struct xl_value *out)
+{
+        struct xl_type *type;
+
+        type = malloc(sizeof(struct xl_type));
+        type->base = BASE_TYPE_UNATIVE;
+
+        out->tag = TAG_TYPED;
+        out->left.t = type;
+        out->right.v = val;
+}
+
+unative_t
+get_unative(struct xl_value *out)
 {
         return out->right.v;
 }
@@ -62,13 +116,13 @@ get_u64(struct xl_value *out)
 void
 make_string(const char * val, struct xl_value *out)
 {
-        (void)val;
-        (void)out;
+        unused(val);
+        unused(out);
 }
 
 const char *
 get_string(struct xl_value *out)
 {
-        (void)out;
+        unused(out);
         return NULL;
 }

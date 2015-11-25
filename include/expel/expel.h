@@ -17,6 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include <stddef.h>
 #include <stdint.h>
 
 /* left is a function and right is its argument */
@@ -27,16 +28,38 @@
 #define TAG_NOUN        0x02
 
 /* value is a 64-bit unsigned integer, extra is NULL */
-#define BASE_TYPE_U64   0x00
+#define BASE_TYPE_U64           0x00
+/* value is a 32-bit unsigned integer, extra is NULL */
+#define BASE_TYPE_U32           0x01
 /* value is a 8-bit unsigned integer, extra is NULL */
-#define BASE_TYPE_U8    0x01
+#define BASE_TYPE_U8            0x02
+/* value is an unsigned integer the size of a native pointer, extra is NULL */
+#define BASE_TYPE_UNATIVE       0x03
+
+/* find size of native pointer */
+#ifndef NATIVE_SIZE
+#if _WIN32 || _WIN64
+  #if _WIN64
+    #define NATIVE_SIZE 8
+  #else
+    #define NATIVE_SIZE 4
+  #endif
+#endif
+#if __GNUC__
+  #if __x86_64__ || __ppc64__
+    #define NATIVE_SIZE 8
+  #else
+    #define NATIVE_SIZE 4
+  #endif
+#endif
+#endif
 
 typedef uint8_t tag_t;
+typedef size_t unative_t;
 
 union xl_ptr_val {
         struct xl_value *p;
-        struct xl_type *t;
-        uint64_t v;
+        unative_t v;
 };
 
 struct xl_value {
@@ -45,13 +68,23 @@ struct xl_value {
         tag_t tag;
 };
 
+struct xl_list_type {
+        struct xl_type *child_type;
+}
+struct xl_derived_type {
+
+}
 struct xl_derived_type {
         void *unused;
 };
 
 struct xl_type {
-        uint64_t base;
-        struct xl_derived_type *extra;
+        unative_t base;
+        union {
+                struct xl_list_type *list;
+                struct xl_tuple_type *tuple;
+                struct xl_derived_type *derived;
+        } extra;
 };
 
 #define VAL_CTOR(val_name, val_type) \
@@ -59,7 +92,9 @@ struct xl_type {
         val_type get_##val_name(struct xl_value *out)
 
 VAL_CTOR(u8, uint8_t);
+VAL_CTOR(u32, uint32_t);
 VAL_CTOR(u64, uint64_t);
+VAL_CTOR(unative, unative_t);
 VAL_CTOR(string, const char *);
 
 void
