@@ -52,7 +52,8 @@ type codes is:
 | `..sint08` | signed 8-bit integer
 | `....list` | homogenous list
 | `...tuple` | fixed-length tuple
-| `..string` | UTF-8 string
+| `..packed` | packed list
+| `....type` | type descriptor
 
 Each type code is actually a word that contains the numeric equivalent of a
 8-byte string, with the first letter in the most-significant byte. Note that
@@ -77,11 +78,19 @@ tuple elements are not homogenous. Instead, the type descriptor is a node whose
 left is the constant word `tuple` and whose right is a zero-word-terminated
 list of type encodings.
 
-The tree encoding of string types is provided for better space usage than a
-straight list-of-chars would provide. The left type descriptor for a string is
+// NEEDS WORK:
+The tree encoding of packed list types is provided for better space usage than a
+straight list would provide. The left type descriptor for a string is
 a constant word `string`. The right value of a string is a list of packed UTF-8
 bytes encoded as cons cells, where each cell has a left of 8 bytes of UTF-8
 data, and a right that either points to the next node or a zero-word. The
 represented string is the concatenation of all left values in the list. Note
 that this means that each individual left value may in fact be poorly-formed
 UTF-8, as a multibyte code point may be split across words.
+
+// NEEDS WORK: type descriptor
+
+// IDEA:
+maybe there is not an implicit relationship between left and right, and instead
+there is a typeof node whose right is a node whose left is a type and whose
+right is a value? seems somehow more general.
