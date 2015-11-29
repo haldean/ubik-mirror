@@ -22,37 +22,22 @@
 
 #include "expel/expel.h"
 
-START_TEST(test_u8)
+START_TEST(test_word)
 {
-        struct xl_value u8s;
-        uint8_t u8;
+        struct xl_value words;
+        word_t word;
 
-        make_u8(0, &u8s);
-        u8 = get_u8(&u8s);
-        ck_assert_int_eq(u8, 0);
+        make_word(0, &words);
+        word = get_word(&words);
+        ck_assert_int_eq(word, 0);
 
-        make_u8(255, &u8s);
-        u8 = get_u8(&u8s);
-        ck_assert_int_eq(u8, 255);
-}
-END_TEST
+        make_word(0xDEADBEEF00000000, &words);
+        word = get_word(&words);
+        ck_assert_int_eq(word, 0xDEADBEEF00000000);
 
-START_TEST(test_u64)
-{
-        struct xl_value u64s;
-        uint64_t u64;
-
-        make_u64(0, &u64s);
-        u64 = get_u64(&u64s);
-        ck_assert_int_eq(u64, 0);
-
-        make_u64(0xDEADBEEF00000000, &u64s);
-        u64 = get_u64(&u64s);
-        ck_assert_int_eq(u64, 0xDEADBEEF00000000);
-
-        make_u64(0xFFFFFFFFFFFFFFFF, &u64s);
-        u64 = get_u64(&u64s);
-        ck_assert_int_eq(u64, 0xFFFFFFFFFFFFFFFF);
+        make_word(0xFFFFFFFFFFFFFFFF, &words);
+        word = get_word(&words);
+        ck_assert_int_eq(word, 0xFFFFFFFFFFFFFFFF);
 }
 END_TEST
 
@@ -64,8 +49,7 @@ test_ctors_suite()
 
         s = suite_create("test_ctors");
         tc = tcase_create("base types");
-        tcase_add_test(tc, test_u8);
-        tcase_add_test(tc, test_u64);
+        tcase_add_test(tc, test_word);
         suite_add_tcase(s, tc);
 
         return s;

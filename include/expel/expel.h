@@ -20,46 +20,22 @@
 #include <stddef.h>
 #include <stdint.h>
 
-/* left is a function and right is its argument */
-#define TAG_APPLY       0x00
-/* left is a type object and right is a value with the given type */
-#define TAG_TYPED       0x01
-/* left is a type object and right is the name of the noun */
-#define TAG_NOUN        0x02
+#include "expel/words.h"
 
-/* value is a 64-bit unsigned integer, extra is NULL */
-#define BASE_TYPE_U64           0x00
-/* value is a 32-bit unsigned integer, extra is NULL */
-#define BASE_TYPE_U32           0x01
-/* value is a 8-bit unsigned integer, extra is NULL */
-#define BASE_TYPE_U8            0x02
-/* value is an unsigned integer the size of a native pointer, extra is NULL */
-#define BASE_TYPE_UNATIVE       0x03
+#define TAG_LEFT_NODE       0x01
+#define TAG_LEFT_WORD       0x02
+#define TAG_RIGHT_NODE      0x04
+#define TAG_RIGHT_WORD      0x08
 
-/* find size of native pointer */
-#ifndef NATIVE_SIZE
-#if _WIN32 || _WIN64
-  #if _WIN64
-    #define NATIVE_SIZE 8
-  #else
-    #define NATIVE_SIZE 4
-  #endif
-#endif
-#if __GNUC__
-  #if __x86_64__ || __ppc64__
-    #define NATIVE_SIZE 8
-  #else
-    #define NATIVE_SIZE 4
-  #endif
-#endif
-#endif
+#define BASE_TYPE_WORD      pack("....word")
+#define BASE_TYPE_SINT64    pack("..sint64")
 
 typedef uint8_t tag_t;
-typedef size_t unative_t;
+typedef uint64_t word_t;
 
 union xl_ptr_val {
         struct xl_value *p;
-        unative_t v;
+        word_t v;
 };
 
 struct xl_value {
@@ -68,33 +44,11 @@ struct xl_value {
         tag_t tag;
 };
 
-struct xl_list_type {
-        struct xl_type *child_type;
-}
-struct xl_derived_type {
-
-}
-struct xl_derived_type {
-        void *unused;
-};
-
-struct xl_type {
-        unative_t base;
-        union {
-                struct xl_list_type *list;
-                struct xl_tuple_type *tuple;
-                struct xl_derived_type *derived;
-        } extra;
-};
-
 #define VAL_CTOR(val_name, val_type) \
         void make_##val_name(val_type val, struct xl_value *out); \
         val_type get_##val_name(struct xl_value *out)
 
-VAL_CTOR(u8, uint8_t);
-VAL_CTOR(u32, uint32_t);
-VAL_CTOR(u64, uint64_t);
-VAL_CTOR(unative, unative_t);
+VAL_CTOR(word, word_t);
 VAL_CTOR(string, const char *);
 
 void

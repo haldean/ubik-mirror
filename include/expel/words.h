@@ -1,5 +1,5 @@
 /*
- * ctors.c: constructors for various tree structures
+ * words.h: utilities for dealing with words
  * Copyright (C) 2015, Haldean Brown
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,35 +17,14 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include "expel/expel.h"
-#include "util.h"
+#include <stdint.h>
 
-#include <stdlib.h>
-
-void
-make_word(word_t val, struct xl_value *out)
-{
-        out->tag = TAG_LEFT_WORD | TAG_RIGHT_WORD;
-        out->left.v = BASE_TYPE_WORD;
-        out->right.v = val;
-}
-
-word_t
-get_word(struct xl_value *out)
-{
-        return out->right.v;
-}
-
-void
-make_string(const char * val, struct xl_value *out)
-{
-        unused(val);
-        unused(out);
-}
-
-const char *
-get_string(struct xl_value *out)
-{
-        unused(out);
-        return NULL;
-}
+#define pack(c) ( \
+    (((uint64_t) ((c)[0] == '.' ? 0 : (c)[0])) << ((7 - 0) * 8)) | \
+    (((uint64_t) ((c)[1] == '.' ? 0 : (c)[1])) << ((7 - 1) * 8)) | \
+    (((uint64_t) ((c)[2] == '.' ? 0 : (c)[2])) << ((7 - 2) * 8)) | \
+    (((uint64_t) ((c)[3] == '.' ? 0 : (c)[3])) << ((7 - 3) * 8)) | \
+    (((uint64_t) ((c)[4] == '.' ? 0 : (c)[4])) << ((7 - 4) * 8)) | \
+    (((uint64_t) ((c)[5] == '.' ? 0 : (c)[5])) << ((7 - 5) * 8)) | \
+    (((uint64_t) ((c)[6] == '.' ? 0 : (c)[6])) << ((7 - 6) * 8)) | \
+    (((uint64_t) ((c)[7] == '.' ? 0 : (c)[7])) << ((7 - 7) * 8)))

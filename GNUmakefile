@@ -15,9 +15,8 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-CC := gcc
-COPTS := -std=c99 -pedantic -Werror -Wall -Wextra -Iinclude -ggdb -O0 -D_GNU_SOURCE
-LDOPTS := -L./dist
+COPTS := $(COPTS) -std=c99 -pedantic -Werror -Wall -Wextra -Iinclude -ggdb -O0 -D_GNU_SOURCE
+LDOPTS := $(LDOPTS) -L./dist
 
 objects := $(patsubst libexpel/%.c,build/%.o,$(wildcard libexpel/*.c))
 
@@ -27,12 +26,14 @@ executable := dist/expelc.exe
 testexe := build/testexpelc.exe
 sharedldopts :=
 exeenv := PATH="$(PATH):$(PWD)/dist"
+testldopts := $(LDOPTS)
 else
 sharedlib := dist/libexpel.so
 executable := dist/expelc
 testexe := build/test-expelc
 sharedldopts := -fPIC
-exeenv :=
+exeenv := LD_LIBRARY_PATH="$(LD_LIBRARY_PATH):$(PWD)/dist"
+testldopts := $(LDOPTS) -lm -lpthread -lrt
 endif
 
 # -MD builds makefiles with dependencies in-line with the object files. We
@@ -53,7 +54,7 @@ $(executable): expelc/*.c $(sharedlib)
 
 $(testexe): test/*.c $(sharedlib)
 	@test -d build || mkdir build
-	$(CC) $(COPTS) $(LDOPTS) $< -lcheck -lexpel -o $@
+	$(CC) $(COPTS) $(testldopts) $< -lcheck -lexpel -o $@
 
 clean:
 	rm -rf build dist
