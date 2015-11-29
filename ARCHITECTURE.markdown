@@ -78,12 +78,19 @@ tuple elements are not homogenous. Instead, the type descriptor is a node whose
 left is the constant word `tuple` and whose right is a zero-word-terminated
 list of type encodings.
 
-// NEEDS WORK:
 The tree encoding of packed list types is provided for better space usage than a
-straight list would provide. The left type descriptor for a string is
-a constant word `string`. The right value of a string is a list of packed UTF-8
-bytes encoded as cons cells, where each cell has a left of 8 bytes of UTF-8
-data, and a right that either points to the next node or a zero-word. The
+straight list would provide. The left type descriptor for a packed list is a
+node whose left is the constant word `packed` and whose right is the type of the
+elements of the list; this type is restricted to be a built-in integral type or
+`char`. The right value of a packed list is a node whose left is a word
+containing the number of items in the list, and whose right is a list of packed
+values encoded as cons cells, where each cell has a left of 8 bytes of packed
+data, and a right that either points to the next node or a zero-word. If the
+data ends off of an 8-byte boundary, the remaining bytes in the left word are
+zeroed; it is up to the user of the tree value to respect the length given in
+the first word of the value.
+
+Strings are stored as UTF-8 and are represented as packed lists of bytes; the
 represented string is the concatenation of all left values in the list. Note
 that this means that each individual left value may in fact be poorly-formed
 UTF-8, as a multibyte code point may be split across words.
