@@ -132,3 +132,20 @@ Where `B` is its body, `T` is the constant word `lambda`, `R` is the return
 type, and `A*` are the arguments. The arguments are themselves nodes, whose left
 is a type descriptor and whose right is the packed-array encoding of the
 argument's name.
+
+Apply trees are much simpler. Their left is the constant word `apply`, and their
+right has a left that is a function, and a right that is a list of arguments:
+
+                                    .
+                                   / \
+                                  T   .
+                                     / \
+                                    F   .
+                                       / \
+                                      A1  .
+                                         / \
+                                        A2  .
+
+Where `T` is the constant word `apply`, `F` is a subtree corresponding to the
+value of the function itself, and `A1` and `A2` are typed values that will be
+passed in as the first and second object.
