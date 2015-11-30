@@ -69,6 +69,7 @@ struct xl_uri {
         char *name;
         uint64_t version;
         struct xl_user author;
+        uint8_t scope;
 };
 
 struct xl_env;
