@@ -22,34 +22,48 @@
 
 #include "expel/words.h"
 
-#define TAG_LEFT_NODE       0x01
-#define TAG_LEFT_WORD       0x02
-#define TAG_RIGHT_NODE      0x04
-#define TAG_RIGHT_WORD      0x08
-
-#define BASE_TYPE_WORD      pack("....word")
-#define BASE_TYPE_SINT64    pack("..sint64")
-
 typedef uint8_t tag_t;
 typedef uint64_t word_t;
 
-union xl_ptr_val {
+const tag_t  TAG_LEFT_NODE       = 0x01;
+const tag_t  TAG_LEFT_WORD       = 0x02;
+const tag_t  TAG_RIGHT_NODE      = 0x04;
+const tag_t  TAG_RIGHT_WORD      = 0x08;
+
+const word_t BASE_TYPE_WORD      = pack(' ', ' ', ' ', ' ', 'w', 'o', 'r', 'd');
+const word_t BASE_TYPE_SINT64    = pack(' ', ' ', 's', 'i', 'n', 't', '6', '4');
+const word_t BASE_TYPE_UINT32    = pack(' ', ' ', 'u', 'i', 'n', 't', '3', '2');
+const word_t BASE_TYPE_SINT32    = pack(' ', ' ', 's', 'i', 'n', 't', '3', '2');
+const word_t BASE_TYPE_UINT16    = pack(' ', ' ', 'u', 'i', 'n', 't', '1', '6');
+const word_t BASE_TYPE_SINT16    = pack(' ', ' ', 's', 'i', 'n', 't', '1', '6');
+const word_t BASE_TYPE_UINT08    = pack(' ', ' ', 'u', 'i', 'n', 't', '0', '8');
+const word_t BASE_TYPE_SINT08    = pack(' ', ' ', 's', 'i', 'n', 't', '0', '8');
+const word_t BASE_TYPE_LIST      = pack(' ', ' ', ' ', ' ', 'l', 'i', 's', 't');
+const word_t BASE_TYPE_TUPLE     = pack(' ', ' ', ' ', 't', 'u', 'p', 'l', 'e');
+const word_t BASE_TYPE_PACKED    = pack(' ', ' ', 'p', 'a', 'c', 'k', 'e', 'd');
+const word_t BASE_TYPE_TYPE      = pack(' ', ' ', ' ', ' ', 't', 'y', 'p', 'e');
+
+union _xl_ptr_val {
         struct xl_value *p;
         word_t v;
 };
-
 struct xl_value {
-        union xl_ptr_val left;
-        union xl_ptr_val right;
+        union _xl_ptr_val left;
+        union _xl_ptr_val right;
         tag_t tag;
 };
 
-#define VAL_CTOR(val_name, val_type) \
-        void make_##val_name(val_type val, struct xl_value *out); \
-        val_type get_##val_name(struct xl_value *out)
+// identifies a user in the expel substrate
+struct xl_user {
+        uint64_t id;
+        char *name;
+};
 
-VAL_CTOR(word, word_t);
-VAL_CTOR(string, const char *);
+// identifies content in the expel substrate
+struct xl_uri {
+        char *name;
+        uint64_t version;
+        struct xl_user author;
+};
 
-void
-eval(struct xl_value in, struct xl_value out);
+struct xl_env;

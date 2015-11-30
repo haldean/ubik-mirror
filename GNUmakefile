@@ -15,7 +15,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-COPTS := $(COPTS) -std=c99 -pedantic -Werror -Wall -Wextra -Iinclude -ggdb -O0 -D_GNU_SOURCE
+COPTS := $(COPTS) -std=c11 -pedantic -Werror -Wall -Wextra -Iinclude -ggdb -O0 -D_GNU_SOURCE
 LDOPTS := $(LDOPTS) -L./dist
 
 objects := $(patsubst libexpel/%.c,build/%.o,$(wildcard libexpel/*.c))

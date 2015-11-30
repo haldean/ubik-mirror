@@ -1,5 +1,5 @@
 /*
- * words.h: utilities for dealing with words
+ * natives.h: minimal native runtime API
  * Copyright (C) 2015, Haldean Brown
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,14 +17,13 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include <stdint.h>
+#include "expel/expel.h"
 
-#define pack(a, b, c, d, e, f, g, h) ( \
-    (((uint64_t) (a)) << ((7 - 7) * 8)) | \
-    (((uint64_t) (b)) << ((7 - 6) * 8)) | \
-    (((uint64_t) (c)) << ((7 - 5) * 8)) | \
-    (((uint64_t) (d)) << ((7 - 4) * 8)) | \
-    (((uint64_t) (e)) << ((7 - 3) * 8)) | \
-    (((uint64_t) (f)) << ((7 - 2) * 8)) | \
-    (((uint64_t) (g)) << ((7 - 1) * 8)) | \
-    (((uint64_t) (h)) << ((7 - 0) * 8)))
+void
+xl_eval(struct xl_env *env, struct xl_value *in, struct xl_value *out);
+
+void
+xl_bind(struct xl_env *env, struct xl_value *bind, struct xl_value *out);
+
+void
+xl_hash(struct xl_env *env, struct xl_value *v, struct xl_value *out);

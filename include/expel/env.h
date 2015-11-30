@@ -1,5 +1,5 @@
 /*
- * words.h: utilities for dealing with words
+ * env.h: expel environment definitions
  * Copyright (C) 2015, Haldean Brown
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,14 +17,20 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include <stdint.h>
+#include "expel/expel.h"
 
-#define pack(a, b, c, d, e, f, g, h) ( \
-    (((uint64_t) (a)) << ((7 - 7) * 8)) | \
-    (((uint64_t) (b)) << ((7 - 6) * 8)) | \
-    (((uint64_t) (c)) << ((7 - 5) * 8)) | \
-    (((uint64_t) (d)) << ((7 - 4) * 8)) | \
-    (((uint64_t) (e)) << ((7 - 3) * 8)) | \
-    (((uint64_t) (f)) << ((7 - 2) * 8)) | \
-    (((uint64_t) (g)) << ((7 - 1) * 8)) | \
-    (((uint64_t) (h)) << ((7 - 0) * 8)))
+#include <stdint.h>
+#include <stdlib.h>
+
+struct xl_binding {
+        struct xl_uri uri;
+        struct xl_value *value;
+};
+
+struct xl_env {
+        struct xl_binding *bindings;
+        size_t bindings_n;
+        size_t bindings_cap;
+
+        struct xl_user user;
+};
