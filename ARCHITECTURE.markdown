@@ -5,8 +5,8 @@ This document attempts to fully explain the implementation and behavior of the
 Expel runtime. When the code and this document disagree, the code is incorrect;
 on the other hand, don't trust anything in this document.
 
-Runtime representations
----
+# Runtime representations
+
 Expel is based on a simple primitive: unbalanced binary trees of 64-bit values
 (called "words"). Everything is expressed in this way, from integers to types
 to functions; this homogeneity of data representation allows us to simplify
@@ -18,7 +18,7 @@ Each node in the tree has a left value, a right value, and a tag. Each value can
 be one of two things: a pointer to another node or a word; the tag tells you how
 to interpret the left and right values.
 
-### Tags
+## Tags
 
 Tags are stored in a byte which is the bitwise union of the relevant masks:
 
@@ -30,7 +30,7 @@ Tags are stored in a byte which is the bitwise union of the relevant masks:
 Thus, a node whose left value is a node and whose right value is a word would
 have the tag `0b00001001`, or `0x09`.
 
-### Types
+## Types
 
 Types can be base types or derived types. Base types are special in that they
 are identified only by an integer constant; derived types (quite predictably)
@@ -95,9 +95,40 @@ represented string is the concatenation of all left values in the list. Note
 that this means that each individual left value may in fact be poorly-formed
 UTF-8, as a multibyte code point may be split across words.
 
-// NEEDS WORK: type descriptor
+A type descriptor describes a type on its own; its left is the constant word
+`type` and its right is the descriptor itself. Anything that would appear on the
+left of a typed value is a type descriptor value, and could appear on the right
+of a type node.
 
-// IDEA:
-maybe there is not an implicit relationship between left and right, and instead
-there is a typeof node whose right is a node whose left is a type and whose
-right is a value? seems somehow more general.
+## Building logic
+
+There are four further interesting tree layouts which form the basis of actual
+programming in Expel trees: `lambda`, `apply`, `get` and `bind`. Each of these
+is referred to as a "seed". The `lambda` seed defines a new function, the
+`apply` seed applies arguments to a function, the `get` seed retries a value by
+URI and the `bind` seed binds a value to a URI (more on URIs soon). Seeds are,
+once again, binary trees of the exact same kind as the typed value trees
+described in the previous section.
+
+Lambda trees have a left which descibes the type of the function, and a right
+which contains the function body. The left itself has a lot of data in it; the
+overall structure looks like this:
+
+                                    .
+                                   / \
+                                  .   B
+                                 / \
+                                T   .
+                                   / \
+                                  R   .
+                                     / \
+                                    A1  .
+                                       / \
+                                      A2  .
+                                         / \
+                                        A3  0
+
+Where `B` is its body, `T` is the constant word `lambda`, `R` is the return
+type, and `A*` are the arguments. The arguments are themselves nodes, whose left
+is a type descriptor and whose right is the packed-array encoding of the
+argument's name.

@@ -43,6 +43,11 @@ const word_t BASE_TYPE_TUPLE     = pack(' ', ' ', ' ', 't', 'u', 'p', 'l', 'e');
 const word_t BASE_TYPE_PACKED    = pack(' ', ' ', 'p', 'a', 'c', 'k', 'e', 'd');
 const word_t BASE_TYPE_TYPE      = pack(' ', ' ', ' ', ' ', 't', 'y', 'p', 'e');
 
+const word_t SEED_LAMBDA         = pack(' ', ' ', 'l', 'a', 'm', 'b', 'd', 'a');
+const word_t SEED_APPLY          = pack(' ', ' ', ' ', 'a', 'p', 'p', 'l', 'y');
+const word_t SEED_GET            = pack(' ', ' ', ' ', ' ', ' ', 'g', 'e', 't');
+const word_t SEED_BIND           = pack(' ', ' ', ' ', ' ', 'b', 'i', 'n', 'd');
+
 union _xl_ptr_val {
         struct xl_value *p;
         word_t v;
