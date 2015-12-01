@@ -58,6 +58,7 @@ full list of base type codes is:
                      ...tuple   fixed-length tuple
                      ..packed   packed list
                      ....type   type descriptor
+                     .....uri   expel resource identifier
 
 Each type code is actually a word that contains the numeric equivalent
 of a 8-byte string, with the first letter in the byte with the lowest
@@ -107,6 +108,17 @@ A type descriptor describes a type on its own; its left is the constant
 word `type` and its right is the descriptor itself. Anything that would
 appear on the left of a typed value is a type descriptor value, and
 could appear on the right of a type node.
+
+A resource identifier is how all entities within the expel runtime are
+identified. Resources all have a name, author, version and scope; all of
+these are encoded in the URI tree. The left of a URI tree is the
+constant word `uri`, and the right is a cons-cell list, where the first
+element in the list is the name of the resource as a packed string, the
+second element in the list is the author (also as a packed string), the
+third item is a 64-bit integer representing the version number and the
+final element is a 64-bit integer represending the scope of the
+resource. The meanings of these fields will be covered in the Bindings
+section below.
 
 
 Building logic ---------------------------------------------------------
