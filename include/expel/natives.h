@@ -20,10 +20,10 @@
 #include "expel/expel.h"
 
 void
-xl_eval(struct xl_env *env, struct xl_value *in, struct xl_value *out);
+xl_eval(struct xl_value *out, struct xl_env *env, struct xl_value *in);
 
 void
-xl_bind(struct xl_env *env, struct xl_value *bind, struct xl_value *out);
+xl_bind(struct xl_value *out, struct xl_env *env, struct xl_value *bind);
 
 void
-xl_hash(struct xl_env *env, struct xl_value *v, struct xl_value *out);
+xl_hash(struct xl_value *out, struct xl_env *env, struct xl_value *v);
