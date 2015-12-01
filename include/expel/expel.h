@@ -73,3 +73,9 @@ struct xl_uri {
 };
 
 struct xl_env;
+
+void
+xl_load(struct xl_value *out, FILE *fp);
+
+void
+xl_save(FILE *fp, struct xl_value *in);
