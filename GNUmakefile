@@ -28,6 +28,7 @@ testexe := build/testexpelc.exe
 sharedldopts :=
 exeenv := PATH="$(PATH):$(PWD)/dist"
 testldopts := $(LDOPTS)
+
 else
 sharedlib := dist/libexpel.so
 executable := dist/expelc
@@ -63,7 +64,7 @@ $(executable): expelc/*.c $(sharedlib)
 
 $(testexe): test/*.c $(sharedlib)
 	@test -d build || mkdir build
-	$(CC) $(COPTS) $(testldopts) $< -lcheck -lexpel -o $@
+	$(CC) $(COPTS) $(testldopts) $< -lexpel -o $@
 
 clean:
 	rm -rf build dist

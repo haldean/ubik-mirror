@@ -17,55 +17,34 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include <check.h>
 #include <stdio.h>
 
-#include "expel/expel.h"
+#include "expel/stream.h"
+#include "unit.h"
 
-START_TEST(test_word)
+char *
+test_buffer()
 {
-        struct xl_value words;
-        word_t word;
+        struct xl_stream s;
+        char c[20];
 
-        make_word(0, &words);
-        word = get_word(&words);
-        ck_assert_int_eq(word, 0);
+        xl_stream_buffer(&s);
+        xl_stream_write(&s, (char[]){0, 1, 2, 3, 4}, 5);
+        xl_stream_read(c, &s, 5);
 
-        make_word(0xDEADBEEF00000000, &words);
-        word = get_word(&words);
-        ck_assert_int_eq(word, 0xDEADBEEF00000000);
+        assert(c[0] == 0);
+        assert(c[1] == 1);
+        assert(c[2] == 2);
+        assert(c[3] == 3);
+        assert(c[4] == 4);
 
-        make_word(0xFFFFFFFFFFFFFFFF, &words);
-        word = get_word(&words);
-        ck_assert_int_eq(word, 0xFFFFFFFFFFFFFFFF);
-}
-END_TEST
-
-Suite *
-test_ctors_suite()
-{
-        Suite *s;
-        TCase *tc;
-
-        s = suite_create("test_ctors");
-        tc = tcase_create("base types");
-        tcase_add_test(tc, test_word);
-        suite_add_tcase(s, tc);
-
-        return s;
+        return ok;
 }
 
 int
 main()
 {
-    int n_failures;
-    SRunner *sr;
-
-    sr = srunner_create(test_ctors_suite());
-    //srunner_add_suite(sr, make_tree_suite());
-    srunner_run_all(sr, CK_NORMAL);
-    n_failures = srunner_ntests_failed(sr);
-    srunner_free(sr);
-
-    return n_failures;
+        init();
+        run(test_buffer);
+        finish();
 }

@@ -1,5 +1,5 @@
 /*
- * util.h: internal runtime utilities
+ * unit.h: header-only unit testing "library"
  * Copyright (C) 2015, Haldean Brown
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,21 +17,13 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
- #ifndef EXPEL_UTIL_H__
- #define EXPEL_UTIL_H__
+#include <stdio.h>
 
- #define unused(x) (void)(x)
-
-static inline size_t
-size_max(size_t a, size_t b)
-{
-        return a < b ? b : a;
-}
-
-static inline size_t
-size_min(size_t a, size_t b)
-{
-        return a < b ? a : b;
-}
-
- #endif
+#define assert(x) if (!(x)) return #x
+#define run(x) { \
+        char * __unit_res = x(); __n_tests++; \
+        if (__unit_res != NULL) { printf("fail: %s: %s\n", #x, __unit_res); __n_errs++; } \
+        else printf("ok:   %s\n", #x); }
+#define init() int __n_errs = 0, __n_tests = 0;
+#define finish() printf("%d of %d tests failed\n", __n_errs, __n_tests); return __n_errs;
+#define ok NULL

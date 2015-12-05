@@ -24,9 +24,17 @@
 
 #include "expel/expel.h"
 
+struct _xl_buf {
+        uint8_t *start;
+        uint8_t *read;
+        uint8_t *write;
+        uint8_t *end;
+};
+
 struct xl_stream {
         union {
                 FILE *file;
+                struct _xl_buf *buffer;
         };
         word_t stream_type;
 };
@@ -38,6 +46,10 @@ xl_stream_rfile(struct xl_stream *sp, char *file);
 /* Opens a stream for writing to the given file. */
 void
 xl_stream_wfile(struct xl_stream *sp, char *file);
+
+/* Opens a stream backed by an in-memory buffer. */
+void
+xl_stream_buffer(struct xl_stream *sp);
 
 /* Attempts to read the specified number of bytes from the stream, returning the
  * number of bytes read. */
