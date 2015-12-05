@@ -17,6 +17,9 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#ifndef EXPEL_NATIVES_H
+#define EXPEL_NATIVES_H
+
 #include "expel/expel.h"
 
 void
@@ -27,3 +30,5 @@ xl_bind(struct xl_value *out, struct xl_env *env, struct xl_value *bind);
 
 void
 xl_hash(struct xl_value *out, struct xl_env *env, struct xl_value *v);
+
+#endif

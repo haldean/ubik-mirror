@@ -17,6 +17,9 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#ifndef EXPEL_ENV_H
+#define EXPEL_ENV_H
+
 #include "expel/expel.h"
 
 #include <stdint.h>
@@ -34,3 +37,5 @@ struct xl_env {
 
         struct xl_user user;
 };
+
+#endif

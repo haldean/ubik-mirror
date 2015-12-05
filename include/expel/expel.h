@@ -17,36 +17,22 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#ifndef EXPEL_EXPEL_H
+#define EXPEL_EXPEL_H
+
 #include <stddef.h>
 #include <stdint.h>
 
+#include "expel/const.h"
 #include "expel/words.h"
 
 typedef uint8_t tag_t;
 typedef uint64_t word_t;
 
-const tag_t  TAG_LEFT_NODE       = 0x01;
-const tag_t  TAG_LEFT_WORD       = 0x02;
-const tag_t  TAG_RIGHT_NODE      = 0x04;
-const tag_t  TAG_RIGHT_WORD      = 0x08;
-
-const word_t BASE_TYPE_WORD      = pack(' ', ' ', ' ', ' ', 'w', 'o', 'r', 'd');
-const word_t BASE_TYPE_SINT64    = pack(' ', ' ', 's', 'i', 'n', 't', '6', '4');
-const word_t BASE_TYPE_UINT32    = pack(' ', ' ', 'u', 'i', 'n', 't', '3', '2');
-const word_t BASE_TYPE_SINT32    = pack(' ', ' ', 's', 'i', 'n', 't', '3', '2');
-const word_t BASE_TYPE_UINT16    = pack(' ', ' ', 'u', 'i', 'n', 't', '1', '6');
-const word_t BASE_TYPE_SINT16    = pack(' ', ' ', 's', 'i', 'n', 't', '1', '6');
-const word_t BASE_TYPE_UINT08    = pack(' ', ' ', 'u', 'i', 'n', 't', '0', '8');
-const word_t BASE_TYPE_SINT08    = pack(' ', ' ', 's', 'i', 'n', 't', '0', '8');
-const word_t BASE_TYPE_LIST      = pack(' ', ' ', ' ', ' ', 'l', 'i', 's', 't');
-const word_t BASE_TYPE_TUPLE     = pack(' ', ' ', ' ', 't', 'u', 'p', 'l', 'e');
-const word_t BASE_TYPE_PACKED    = pack(' ', ' ', 'p', 'a', 'c', 'k', 'e', 'd');
-const word_t BASE_TYPE_TYPE      = pack(' ', ' ', ' ', ' ', 't', 'y', 'p', 'e');
-
-const word_t SEED_LAMBDA         = pack(' ', ' ', 'l', 'a', 'm', 'b', 'd', 'a');
-const word_t SEED_APPLY          = pack(' ', ' ', ' ', 'a', 'p', 'p', 'l', 'y');
-const word_t SEED_GET            = pack(' ', ' ', ' ', ' ', ' ', 'g', 'e', 't');
-const word_t SEED_BIND           = pack(' ', ' ', ' ', ' ', 'b', 'i', 'n', 'd');
+#define TAG_LEFT_NODE   0x01
+#define TAG_LEFT_WORD   0x02
+#define TAG_RIGHT_NODE  0x04
+#define TAG_RIGHT_WORD  0x08
 
 union _xl_ptr_val {
         struct xl_value *p;
@@ -73,9 +59,12 @@ struct xl_uri {
 };
 
 struct xl_env;
+struct xl_stream;
 
 void
-xl_load(struct xl_value *out, FILE *fp);
+xl_load(struct xl_value *out, struct xl_stream *sp);
 
 void
-xl_save(FILE *fp, struct xl_value *in);
+xl_save(struct xl_stream *sp, struct xl_value *in);
+
+#endif

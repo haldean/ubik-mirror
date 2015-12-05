@@ -1,0 +1,42 @@
+- const.txt: definitions of packed constants
+- Copyright (C) 2015, Haldean Brown
+-
+- This program is free software; you can redistribute it and/or modify
+- it under the terms of the GNU General Public License as published by
+- the Free Software Foundation; either version 2 of the License, or
+- (at your option) any later version.
+-
+- This program is distributed in the hope that it will be useful,
+- but WITHOUT ANY WARRANTY; without even the implied warranty of
+- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+- GNU General Public License for more details.
+-
+- You should have received a copy of the GNU General Public License along
+- with this program; if not, write to the Free Software Foundation, Inc.,
+- 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
+-------------------------------------------------------------------------------
+- Every line in this file will become a constant in dist/include/expel/const.h
+- when the project is made. Lines that begin with - are ignored. The format is
+- "  packed.NAME_OF_CONSTANT"; the packed value must be 8 characters long.
+
+    word.BASE_TYPE_WORD
+  sint64.BASE_TYPE_SINT64
+  uint32.BASE_TYPE_UINT32
+  sint32.BASE_TYPE_SINT32
+  uint16.BASE_TYPE_UINT16
+  sint16.BASE_TYPE_SINT16
+  uint08.BASE_TYPE_UINT08
+  sint08.BASE_TYPE_SINT08
+    list.BASE_TYPE_LIST
+   tuple.BASE_TYPE_TUPLE
+  packed.BASE_TYPE_PACKED
+    type.BASE_TYPE_TYPE
+
+  lambda.SEED_LAMBDA
+   apply.SEED_APPLY
+     get.SEED_GET
+    bind.SEED_BIND
+
+   rfile.STREAM_TYPE_FILE_R
+   wfile.STREAM_TYPE_FILE_W

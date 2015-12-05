@@ -15,7 +15,8 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-COPTS := $(COPTS) -std=c11 -pedantic -Werror -Wall -Wextra -Iinclude -ggdb -O0 -D_GNU_SOURCE
+COPTS := $(COPTS) -std=c11 -pedantic -Werror -Wall -Wextra -Iinclude \
+	-Idist/include -ggdb -O0 -D_GNU_SOURCE -fPIC
 LDOPTS := $(LDOPTS) -L./dist
 
 objects := $(patsubst libexpel/%.c,build/%.o,$(wildcard libexpel/*.c))
@@ -36,9 +37,17 @@ exeenv := LD_LIBRARY_PATH="$(LD_LIBRARY_PATH):$(PWD)/dist"
 testldopts := $(LDOPTS) -lm -lpthread -lrt
 endif
 
+all: dist/expelc test
+
+dist/include/expel/const.h: res/const.txt
+	@test -d dist || mkdir dist
+	@test -d dist/include || mkdir dist/include
+	@test -d dist/include/expel || mkdir dist/include/expel
+	awk -f res/compile-const.awk $< > $@
+
 # -MD builds makefiles with dependencies in-line with the object files. We
 # include them in the -include directive below
-build/%.o: libexpel/%.c
+build/%.o: libexpel/%.c dist/include/expel/const.h
 	@test -d build || mkdir build
 	$(CC) $(COPTS) -MD -c -o $@ $<
 
@@ -61,7 +70,5 @@ clean:
 
 test: $(testexe)
 	$(exeenv) $(testexe)
-
-all: dist/expelc
 
 .PHONY: clean test all
