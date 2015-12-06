@@ -22,7 +22,7 @@
 #include <string.h>
 
 #include "expel/stream.h"
-#include "util.h"
+#include "expel/util.h"
 
 /* Opens a stream for reading from the given file. */
 void
@@ -57,7 +57,7 @@ xl_stream_read(void *dst, struct xl_stream *src, size_t len)
         switch (src->stream_type)
         {
         case STREAM_TYPE_FILE_R:
-                return fread(dst, len, 1, src->file);
+                return fread(dst, 1, len, src->file);
         case STREAM_TYPE_FILE_W:
                 return 0;
         case STREAM_TYPE_BUFFER:
@@ -98,7 +98,7 @@ xl_stream_write(struct xl_stream *dst, void *src, size_t len)
         case STREAM_TYPE_FILE_R:
                 return 0;
         case STREAM_TYPE_FILE_W:
-                return fwrite(src, len, 1, dst->file);
+                return fwrite(src, 1, len, dst->file);
         case STREAM_TYPE_BUFFER:
                 if (len + dst->buffer->write > dst->buffer->end)
                         xl_buf_realloc(dst->buffer, len);

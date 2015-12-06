@@ -22,16 +22,18 @@
 
  #define unused(x) (void)(x)
 
-static inline size_t
-size_max(size_t a, size_t b)
-{
-        return a < b ? b : a;
-}
+size_t
+size_max(size_t a, size_t b);
 
-static inline size_t
-size_min(size_t a, size_t b)
-{
-        return a < b ? a : b;
-}
+size_t
+size_min(size_t a, size_t b);
+
+// converts a word from host byte order to network byte order
+word_t
+htonw(word_t);
+
+// converts a word from network byte order to host byte order
+word_t
+ntohw(word_t);
 
  #endif

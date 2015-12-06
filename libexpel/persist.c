@@ -19,6 +19,7 @@
 
 #include "expel/expel.h"
 #include "expel/stream.h"
+#include "expel/util.h"
 
 #include <stdlib.h>
 
@@ -26,21 +27,21 @@
  * Trees have a single binary storage format that is used for network
  * operations and for on-disk storage. The format begins with a header, and
  * then contains a single encoded tree.
- * 
+ *
  * The header has the following fields:
- * 
+ *
  *         Byte index   Field
  *                0-4   The constant bytes 0x65 0x78 0x70 0x6C ("expl")
  *                5-8   The version number of the encoding format, as a
  *                      little-endian 4-byte unsigned integer.
- * 
+ *
  * The tree encoding then proceeds as follows: Begin with the root of the
  * tree to be encoded. The node's 8-bit tag is written to the stream,
  * followed by the encoding of its left child, then its right child. If a
  * child is a value, the value is written to the stream in little-endian
  * format as an 8-byte integer. If a child is a node, recurse and apply
  * this same operation.
- * 
+ *
  * Tree decoding proceeds in much the same way: Take a byte off of the head
  * of the stream. If the byte indicates the left is a node, recurse. If it
  * indicates the left is a value, read the value as a little-endian 8-byte
@@ -60,6 +61,7 @@ xl_load(struct xl_value *out, struct xl_stream *sp)
         {
                 if (xl_stream_read(&out->left.v, sp, sizeof(word_t)) != sizeof(word_t))
                         return ERR_NO_DATA;
+                out->left.v = ntohw(out->left.v);
         }
         else
         {
@@ -73,6 +75,7 @@ xl_load(struct xl_value *out, struct xl_stream *sp)
         {
                 if (xl_stream_read(&out->right.v, sp, sizeof(word_t)) != sizeof(word_t))
                         return ERR_NO_DATA;
+                out->right.v = ntohw(out->right.v);
         }
         else
         {
@@ -88,6 +91,7 @@ xl_load(struct xl_value *out, struct xl_stream *sp)
 word_t
 xl_save(struct xl_stream *sp, struct xl_value *in)
 {
+        word_t val;
         word_t ret;
 
         if (xl_stream_write(sp, &in->tag, sizeof(tag_t)) != sizeof(tag_t))
@@ -95,7 +99,8 @@ xl_save(struct xl_stream *sp, struct xl_value *in)
 
         if (in->tag & TAG_LEFT_WORD)
         {
-                if (xl_stream_write(sp, &in->left.v, sizeof(word_t)) != sizeof(word_t))
+                val = htonw(in->left.v);
+                if (xl_stream_write(sp, &val, sizeof(word_t)) != sizeof(word_t))
                         return ERR_WRITE_FAILED;
         }
         else
@@ -107,7 +112,8 @@ xl_save(struct xl_stream *sp, struct xl_value *in)
 
         if (in->tag & TAG_RIGHT_WORD)
         {
-                if (xl_stream_write(sp, &in->right.v, sizeof(word_t)) != sizeof(word_t))
+                val = htonw(in->right.v);
+                if (xl_stream_write(sp, &val, sizeof(word_t)) != sizeof(word_t))
                         return ERR_WRITE_FAILED;
         }
         else

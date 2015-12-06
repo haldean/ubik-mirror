@@ -21,10 +21,11 @@
 #include <stdlib.h>
 
 #include "expel/stream.h"
+#include "expel/util.h"
 #include "unit.h"
 
-char *
-test_buffer()
+test_t
+buffer()
 {
         struct xl_stream s;
         char c[20];
@@ -50,13 +51,14 @@ test_buffer()
         return ok;
 }
 
-char *
-test_load_save()
+test_t
+load_save()
 {
-        struct xl_stream s;
+        struct xl_stream s, f;
         struct xl_value *u, *v;
 
         xl_stream_buffer(&s);
+        xl_stream_wfile(&f, "test.xl");
 
         /*
          *              0
@@ -93,6 +95,7 @@ test_load_save()
         u[5].right.v = 0xFFFFFFFFFFFFFFFF;
 
         assert(xl_save(&s, u) == 0);
+        assert(xl_save(&f, u) == 0);
 
         v = calloc(1, sizeof(struct xl_value));
         assert(xl_load(v, &s) == 0);
@@ -120,11 +123,28 @@ test_load_save()
         return ok;
 }
 
+test_t
+host_to_net()
+{
+        word_t v;
+
+        v = 0x0123456789ABCDEF;
+        v = htonw(v);
+        assert(*((uint8_t *) &v) == 0x01);
+        assert(*((uint8_t *) &v + 7) == 0xEF);
+
+        v = ntohw(v);
+        assert(v == 0x0123456789ABCDEF);
+
+        return ok;
+}
+
 int
 main()
 {
         init();
-        run(test_buffer);
-        run(test_load_save);
+        run(buffer);
+        run(load_save);
+        run(host_to_net);
         finish();
 }

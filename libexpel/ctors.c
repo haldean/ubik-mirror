@@ -18,7 +18,7 @@
  */
 
 #include "expel/expel.h"
-#include "util.h"
+#include "expel/util.h"
 
 #include <stdlib.h>
 

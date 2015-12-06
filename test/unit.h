@@ -19,11 +19,21 @@
 
 #include <stdio.h>
 
-#define assert(x) if (!(x)) return #x
+typedef struct
+{
+        char *msg;
+        int line;
+} test_t;
+
+#define assert(x) if (!(x)) return (test_t){.msg = #x, .line = __LINE__}
 #define run(x) { \
-        char * __unit_res = x(); __n_tests++; \
-        if (__unit_res != NULL) { printf("fail: %s: %s\n", #x, __unit_res); __n_errs++; } \
-        else printf("ok:   %s\n", #x); }
+        test_t __unit_res = x(); __n_tests++; \
+        if (__unit_res.msg != NULL) { \
+                printf("fail: %s line %d: %s\n", #x, __unit_res.line, __unit_res.msg); \
+                __n_errs++;\
+        } else printf("ok:   %s\n", #x); }
 #define init() int __n_errs = 0, __n_tests = 0;
-#define finish() printf("%d of %d tests succeeded\n", __n_tests - __n_errs, __n_tests); return __n_errs;
-#define ok NULL
+#define finish() \
+        printf("%d of %d tests succeeded\n", __n_tests - __n_errs, __n_tests); \
+        return __n_errs;
+#define ok (test_t){.msg = NULL, .line = __LINE__}
