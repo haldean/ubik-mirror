@@ -25,5 +25,5 @@
         if (__unit_res != NULL) { printf("fail: %s: %s\n", #x, __unit_res); __n_errs++; } \
         else printf("ok:   %s\n", #x); }
 #define init() int __n_errs = 0, __n_tests = 0;
-#define finish() printf("%d of %d tests failed\n", __n_errs, __n_tests); return __n_errs;
+#define finish() printf("%d of %d tests succeeded\n", __n_tests - __n_errs, __n_tests); return __n_errs;
 #define ok NULL

@@ -18,6 +18,9 @@
  */
 
 #include "expel/expel.h"
+#include "expel/stream.h"
+
+#include <stdlib.h>
 
 /*
  * Trees have a single binary storage format that is used for network
@@ -44,16 +47,75 @@
  * integer. Repeat the same operation for the right node.
  */
 
-void
+word_t
 xl_load(struct xl_value *out, struct xl_stream *sp)
 {
-        (void)out;
-        (void)sp;
+        tag_t tag;
+        word_t ret;
+
+        if (xl_stream_read(&tag, sp, sizeof(tag_t)) != sizeof(tag_t))
+                return ERR_NO_DATA;
+
+        if (tag & TAG_LEFT_WORD)
+        {
+                if (xl_stream_read(&out->left.v, sp, sizeof(word_t)) != sizeof(word_t))
+                        return ERR_NO_DATA;
+        }
+        else
+        {
+                out->left.p = calloc(1, sizeof(struct xl_value));
+                ret = xl_load(out->left.p, sp);
+                if (ret)
+                        return ret;
+        }
+
+        if (tag & TAG_RIGHT_WORD)
+        {
+                if (xl_stream_read(&out->right.v, sp, sizeof(word_t)) != sizeof(word_t))
+                        return ERR_NO_DATA;
+        }
+        else
+        {
+                out->right.p = calloc(1, sizeof(struct xl_value));
+                ret = xl_load(out->right.p, sp);
+                if (ret)
+                        return ret;
+        }
+
+        return 0;
 }
 
-void
+word_t
 xl_save(struct xl_stream *sp, struct xl_value *in)
 {
-        (void)sp;
-        (void)in;
+        word_t ret;
+
+        if (xl_stream_write(sp, &in->tag, sizeof(tag_t)) != sizeof(tag_t))
+                return ERR_WRITE_FAILED;
+
+        if (in->tag & TAG_LEFT_WORD)
+        {
+                if (xl_stream_write(sp, &in->left.v, sizeof(word_t)) != sizeof(word_t))
+                        return ERR_WRITE_FAILED;
+        }
+        else
+        {
+                ret = xl_save(sp, in->left.p);
+                if (ret)
+                        return ret;
+        }
+
+        if (in->tag & TAG_RIGHT_WORD)
+        {
+                if (xl_stream_write(sp, &in->right.v, sizeof(word_t)) != sizeof(word_t))
+                        return ERR_WRITE_FAILED;
+        }
+        else
+        {
+                ret = xl_save(sp, in->right.p);
+                if (ret)
+                        return ret;
+        }
+
+        return 0;
 }

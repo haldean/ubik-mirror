@@ -41,3 +41,6 @@
    rfile.STREAM_TYPE_FILE_R
    wfile.STREAM_TYPE_FILE_W
   buffer.STREAM_TYPE_BUFFER
+
+ enodata.ERR_NO_DATA
+  ewfail.ERR_WRITE_FAILED

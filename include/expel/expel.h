@@ -61,10 +61,12 @@ struct xl_uri {
 struct xl_env;
 struct xl_stream;
 
-void
+/* loads a tree from a stream. Returns 0 on success, or a nonzero error word. */
+word_t
 xl_load(struct xl_value *out, struct xl_stream *sp);
 
-void
+/* saves a tree to a stream. Returns 0 on success, or a nonzero error word. */
+word_t
 xl_save(struct xl_stream *sp, struct xl_value *in);
 
 #endif

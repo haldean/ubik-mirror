@@ -27,16 +27,24 @@ test_buffer()
 {
         struct xl_stream s;
         char c[20];
+        size_t n;
 
         xl_stream_buffer(&s);
-        xl_stream_write(&s, (char[]){0, 1, 2, 3, 4}, 5);
-        xl_stream_read(c, &s, 5);
+
+        n = xl_stream_write(&s, (char[]){0, 1, 2, 3, 4}, 5);
+        assert(n == 5);
+
+        n = xl_stream_read(c, &s, 5);
+        assert(n == 5);
 
         assert(c[0] == 0);
         assert(c[1] == 1);
         assert(c[2] == 2);
         assert(c[3] == 3);
         assert(c[4] == 4);
+
+        n = xl_stream_read(c, &s, 5);
+        assert(n == 0);
 
         return ok;
 }
