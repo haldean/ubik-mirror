@@ -54,11 +54,10 @@ buffer()
 test_t
 load_save()
 {
-        struct xl_stream s, f;
+        struct xl_stream s;
         struct xl_value *u, *v;
 
         xl_stream_buffer(&s);
-        xl_stream_wfile(&f, "test.xl");
 
         /*
          *              0
@@ -95,7 +94,6 @@ load_save()
         u[5].right.v = 0xFFFFFFFFFFFFFFFF;
 
         assert(xl_save(&s, u) == 0);
-        assert(xl_save(&f, u) == 0);
 
         v = calloc(1, sizeof(struct xl_value));
         assert(xl_load(v, &s) == 0);
