@@ -18,6 +18,7 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "expel/stream.h"
 #include "unit.h"
@@ -49,10 +50,81 @@ test_buffer()
         return ok;
 }
 
+char *
+test_load_save()
+{
+        struct xl_stream s;
+        struct xl_value *u, *v;
+
+        xl_stream_buffer(&s);
+
+        /*
+         *              0
+         *             / \
+         *            W   1
+         *               / \
+         *              2   W
+         *             / \
+         *            /   \
+         *           3     4
+         *          / \   / \
+         *         5   W W   W
+         *        / \
+         *       W   W
+         */
+        u = calloc(6, sizeof(struct xl_value));
+        u[0].tag = TAG_LEFT_WORD | TAG_RIGHT_NODE;
+        u[0].left.v = 0x1234567890123456;
+        u[0].right.p = &u[1];
+        u[1].tag = TAG_LEFT_NODE | TAG_RIGHT_WORD;
+        u[1].left.p = &u[2];
+        u[1].right.v = 0x456789012345678;
+        u[2].tag = TAG_LEFT_NODE | TAG_RIGHT_NODE;
+        u[2].left.p = &u[3];
+        u[2].right.p = &u[4];
+        u[3].tag = TAG_LEFT_NODE | TAG_RIGHT_WORD;
+        u[3].left.p = &u[5];
+        u[3].right.v = 0x123123123123123;
+        u[4].tag = TAG_LEFT_WORD | TAG_RIGHT_WORD;
+        u[4].left.v = 0x00424242424242;
+        u[4].right.v = 0x0000000000000001;
+        u[5].tag = TAG_LEFT_WORD | TAG_RIGHT_WORD;
+        u[5].left.v = 0x0;
+        u[5].right.v = 0xFFFFFFFFFFFFFFFF;
+
+        assert(xl_save(&s, u) == 0);
+
+        v = calloc(1, sizeof(struct xl_value));
+        assert(xl_load(v, &s) == 0);
+
+        // 0.left
+        assert(v->left.v == u->left.v);
+        // 5.left
+        assert(v->right.p->left.p->left.p->left.p->left.v ==
+               u->right.p->left.p->left.p->left.p->left.v);
+        // 5.right
+        assert(v->right.p->left.p->left.p->left.p->right.v ==
+               u->right.p->left.p->left.p->left.p->right.v);
+        // 3.right
+        assert(v->right.p->left.p->left.p->right.v ==
+               u->right.p->left.p->left.p->right.v);
+        // 4.left
+        assert(v->right.p->left.p->right.p->left.v ==
+               u->right.p->left.p->right.p->left.v);
+        // 4.right
+        assert(v->right.p->left.p->right.p->right.v ==
+               u->right.p->left.p->right.p->right.v);
+        // 1.right
+        assert(v->right.p->right.v == u->right.p->right.v);
+
+        return ok;
+}
+
 int
 main()
 {
         init();
         run(test_buffer);
+        run(test_load_save);
         finish();
 }
