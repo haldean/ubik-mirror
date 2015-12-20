@@ -85,7 +85,7 @@ xl_buf_realloc(struct _xl_buf *buf, size_t req_len)
         buf->start = realloc(buf->start, n);
         buf->read = buf->start + (buf->read - old_start);
         buf->write = buf->start + (buf->write - old_start);
-        buf->end = buf->start + n - 1;
+        buf->end = buf->start + n;
 }
 
 /* Attempts to write the specified number of bytes to the stream, returning the
@@ -100,7 +100,7 @@ xl_stream_write(struct xl_stream *dst, void *src, size_t len)
         case STREAM_TYPE_FILE_W:
                 return fwrite(src, 1, len, dst->file);
         case STREAM_TYPE_BUFFER:
-                if (len + dst->buffer->write > dst->buffer->end)
+                if (len + dst->buffer->write >= dst->buffer->end)
                         xl_buf_realloc(dst->buffer, len);
                 memcpy(dst->buffer->write, src, len);
                 dst->buffer->write += len;
