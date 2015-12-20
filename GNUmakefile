@@ -16,27 +16,17 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 COPTS := $(COPTS) -std=c11 -pedantic -Werror -Wall -Wextra -Iinclude \
-	-Idist/include -ggdb -O0 -D_GNU_SOURCE -fPIC
-LDOPTS := $(LDOPTS) -L./dist
+	-Idist/include -ggdb -O0 -D_GNU_SOURCE -fPIC -fsanitize=undefined
+LDOPTS := $(LDOPTS) -L./dist -fsanitize=undefined
 
 objects := $(patsubst libexpel/%.c,build/%.o,$(wildcard libexpel/*.c))
 
-ifeq ($(OS),Windows_NT)
-sharedlib := dist/libexpel.dll.a
-executable := dist/expelc.exe
-testexe := build/testexpelc.exe
-sharedldopts :=
-exeenv := PATH="$(PATH):$(PWD)/dist"
-testldopts := $(LDOPTS)
-
-else
 sharedlib := dist/libexpel.so
 executable := dist/expelc
 testexe := build/test-expelc
-sharedldopts := -fPIC
-exeenv := LD_LIBRARY_PATH="$(LD_LIBRARY_PATH):$(PWD)/dist"
-testldopts := $(LDOPTS) -lm -lpthread -lrt
-endif
+exeenv := LD_LIBRARY_PATH="$(PWD)/dist"
+sharedldopts := -fPIC -fsanitize=undefined
+testldopts := $(LDOPTS) -lm -lpthread -lrt -fsanitize=undefined
 
 all: dist/expelc test
 
