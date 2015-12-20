@@ -44,3 +44,8 @@
 
  enodata.ERR_NO_DATA
   ewfail.ERR_WRITE_FAILED
+
+ dnapply.DAGC_NODE_APPLY
+ dnconst.DAGC_NODE_CONST
+  dnload.DAGC_NODE_LOAD
+ dnstore.DAGC_NODE_STORE
