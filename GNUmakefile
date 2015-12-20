@@ -16,7 +16,8 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 COPTS := $(COPTS) -std=c11 -pedantic -Werror -Wall -Wextra -Iinclude \
-	-Idist/include -ggdb -O0 -D_GNU_SOURCE -fPIC -fsanitize=undefined
+	-Idist/include -ggdb -O0 -D_GNU_SOURCE -fPIC -fsanitize=undefined \
+	-fsanitize=address
 LDOPTS := $(LDOPTS) -L./dist -fsanitize=undefined
 
 objects := $(patsubst libexpel/%.c,build/%.o,$(wildcard libexpel/*.c))
@@ -25,8 +26,7 @@ sharedlib := dist/libexpel.so
 executable := dist/expelc
 testexe := build/test-expelc
 exeenv := LD_LIBRARY_PATH="$(PWD)/dist"
-sharedldopts := -fPIC -fsanitize=undefined
-testldopts := $(LDOPTS) -lm -lpthread -lrt -fsanitize=undefined
+testldopts := $(LDOPTS) -lm -lpthread -lrt
 
 all: dist/expelc test
 
@@ -46,7 +46,7 @@ build/%.o: libexpel/%.c dist/include/expel/const.h
 
 $(sharedlib): $(objects)
 	@test -d dist || mkdir dist
-	$(CC) $(objects) $(sharedldopts) $(LDOPTS) -shared -o $@
+	$(CC) $(objects) -fPIC $(LDOPTS) -shared -o $@
 
 $(executable): expelc/*.c $(sharedlib)
 	@test -d dist || mkdir dist
@@ -54,7 +54,7 @@ $(executable): expelc/*.c $(sharedlib)
 
 $(testexe): test/*.c $(sharedlib)
 	@test -d build || mkdir build
-	$(CC) $(COPTS) $(testldopts) $< -lexpel -o $@
+	$(CC) $(COPTS) $(LDOPTS) $(testldopts) $< -lexpel -o $@
 
 clean:
 	rm -rf build dist
