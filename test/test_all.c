@@ -167,11 +167,12 @@ env()
         struct xl_uri uris[N_TEST_URIS];
 
         v.tag = TAG_LEFT_WORD | TAG_RIGHT_WORD;
+        v.refcount = 1;
         v.left.v = 0x1234567890123456;
         v.right.v = 0xFFFFFFFFFFFFFFFF;
 
         u.hash = 0;
-        xl_uri_local(&u, "test_var_00000");
+        xl_uri_local(&u, "test_var_0");
         assert(u.hash != 0);
 
         xl_env_init(&env);
@@ -189,8 +190,9 @@ env()
         {
                 assert(xl_set(&env, &uris[i], &v) == OK);
         }
-
+        assert(v.refcount == N_TEST_URIS + 1);
         xl_env_free(&env);
+        assert(v.refcount == 1);
         return ok;
 }
 

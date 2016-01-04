@@ -75,8 +75,19 @@ xl_env_init(struct xl_env *env)
 word_t
 xl_env_free(struct xl_env *env)
 {
+        size_t i;
+
         if (likely(env->bindings != NULL))
+        {
+                for (i = 0; i < env->cap; i++)
+                {
+                        if (env->bindings[i].value == NULL)
+                                continue;
+                        xl_release(env->bindings[i].value);
+                }
                 free(env->bindings);
+        }
+
         env->n = 0;
         env->cap = 0;
         return OK;
@@ -121,10 +132,17 @@ __insert(
         {
                 if (binds[i].uri == NULL)
                         break;
+                if (xl_uri_eq(binds[i].uri, uri))
+                        break;
                 i = (i + 1) % cap;
         }
         if (unlikely(probed == cap))
                 return ERR_UNEXPECTED_FAILURE;
+
+        /* There was already a value at this key, we need to release our
+         * reference on it. */
+        if (unlikely(binds[i].value != NULL))
+                xl_release(binds[i].value);
 
         binds[i].uri = uri;
         binds[i].value = value;
@@ -202,6 +220,12 @@ xl_set(struct xl_env *env, struct xl_uri *uri, struct xl_value *value)
         /* copy the URI into a new struct to avoid post-modification bugs. */
         uri_copied = malloc(sizeof(struct xl_uri));
         memcpy(uri_copied, uri, sizeof(struct xl_uri));
+
+        /* take a reference to the value */
+        err = xl_take(value);
+        if (err != OK)
+                return err;
+
         err = __insert(env->bindings, env->cap, uri_copied, value);
         if (err == OK)
                 env->n++;
