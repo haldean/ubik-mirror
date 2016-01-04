@@ -99,12 +99,21 @@ load_save()
         v = calloc(1, sizeof(struct xl_value));
         assert(xl_load(v, &s) == OK);
 
+        // make sure tags are correct.
         assert(v->tag == u[0].tag);
         assert(v->right.p->tag == u[1].tag);
         assert(v->right.p->left.p->tag == u[2].tag);
         assert(v->right.p->left.p->left.p->tag == u[3].tag);
         assert(v->right.p->left.p->right.p->tag == u[4].tag);
         assert(v->right.p->left.p->left.p->left.p->tag == u[5].tag);
+
+        // make sure refcounts are all 1 except the root, which is not taken.
+        assert(v->refcount == 0);
+        assert(v->right.p->refcount == 1);
+        assert(v->right.p->left.p->refcount == 1);
+        assert(v->right.p->left.p->left.p->refcount == 1);
+        assert(v->right.p->left.p->right.p->refcount == 1);
+        assert(v->right.p->left.p->left.p->left.p->refcount == 1);
 
         // 0.left
         assert(v->left.v == u->left.v);
