@@ -24,35 +24,31 @@
 #include "expel/substrate.h"
 #include "expel/const.h"
 
+struct xl_dagc_node {
+        word_t node_type;
+        struct xl_value *known_type;
+};
+
 struct xl_dagc_apply {
+        struct xl_dagc_node __head;
         struct xl_dagc_node *func;
         struct xl_dagc_node *arg;
 };
 
 struct xl_dagc_value {
+        struct xl_dagc_node __head;
         struct xl_value *type;
         struct xl_value *value;
 };
 
 struct xl_dagc_load {
+        struct xl_dagc_node __head;
         struct xl_substrate_id item;
 };
 
 struct xl_dagc_store {
+        struct xl_dagc_node __head;
         struct xl_substrate_id item;
-};
-
-union _xl_dagc_node_details {
-        struct xl_dagc_apply apply;
-        struct xl_dagc_value value;
-        struct xl_dagc_load load;
-        struct xl_dagc_store store;
-};
-
-struct xl_dagc_node {
-        word_t node_type;
-        struct xl_value *known_type;
-        union _xl_dagc_node_details d;
 };
 
 #endif
