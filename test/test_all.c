@@ -141,16 +141,21 @@ host_to_net()
 test_t
 env()
 {
+        #define N_TEST_URIS 2000
+
         struct xl_env env;
         struct xl_value v, *r;
         struct xl_uri u;
+        int i;
+        char *key;
+        struct xl_uri uris[N_TEST_URIS];
 
         v.tag = TAG_LEFT_WORD | TAG_RIGHT_WORD;
         v.left.v = 0x1234567890123456;
         v.right.v = 0xFFFFFFFFFFFFFFFF;
 
         u.hash = 0;
-        xl_uri_local(&u, "test_var_1");
+        xl_uri_local(&u, "test_var_00000");
         assert(u.hash != 0);
 
         xl_env_init(&env);
@@ -158,6 +163,18 @@ env()
         assert(xl_get(&r, &env, &u) == OK);
         assert(r == &v);
 
+        for (i = 0; i < N_TEST_URIS; i++)
+        {
+                key = malloc(64);
+                sprintf(key, "test_var_%d", i);
+                xl_uri_local(&uris[i], key);
+        }
+        for (i = 0; i < N_TEST_URIS; i++)
+        {
+                assert(xl_set(&env, &uris[i], &v) == OK);
+        }
+
+        xl_env_free(&env);
         return ok;
 }
 
