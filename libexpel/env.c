@@ -72,11 +72,6 @@ xl_env_init(struct xl_env *env)
         return OK;
 }
 
-/* Finds the value associated wth the given URI in the environment.
- *
- * If the value is found, OK is returned and the out pointer is set to
- * the pointer to the assigned value. If the value is not found,
- * ERR_ABSENT is returned and the out pointer is unchanged. */
 word_t
 xl_get(struct xl_value **out, struct xl_env *env, struct xl_uri *uri)
 {
@@ -180,12 +175,6 @@ __resize_rebalance(struct xl_env *env)
         return OK;
 }
 
-/* Inserts the given value in at the given URI.
- *
- * Note: the URI is copied into the environment but the value is not;
- * later modifications to the passed-in URI will not change the bindings
- * but modifications to the value will modify the value stored in the
- * environment. */
 word_t
 xl_set(struct xl_env *env, struct xl_uri *uri, struct xl_value *value)
 {

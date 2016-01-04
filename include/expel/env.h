@@ -26,13 +26,8 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-// identifies a user in the expel substrate
-struct xl_user {
-        uint64_t id;
-        char *name;
-};
 
-// identifies content in the expel substrate
+/* Identifies values in the expel substrate */
 struct xl_uri {
         uint64_t hash;
         char     *name;
@@ -43,31 +38,47 @@ struct xl_uri {
         uint8_t  __padding_1;
 };
 
+/* An association between a URI and a value */
 struct xl_binding {
         struct xl_uri   *uri;
         struct xl_value *value;
 };
 
+/* A hash mapping from URI to value. */
 struct xl_env {
         struct xl_binding *bindings;
         size_t            n;
         size_t            cap;
 };
 
+/* Creates a URI for a local resource. */
 word_t
 xl_uri_local(
         struct xl_uri *uri,
         char *name);
 
+/* Returns true if the provided URIs are equal. */
 bool
 xl_uri_eq(struct xl_uri *u0, struct xl_uri *u1);
 
+/* Initializes a new environment struct. */
 word_t
 xl_env_init(struct xl_env *env);
 
+/* Finds the value associated wth the given URI in the environment.
+ *
+ * If the value is found, OK is returned and the out pointer is set to
+ * the pointer to the assigned value. If the value is not found,
+ * ERR_ABSENT is returned and the out pointer is unchanged. */
 word_t
 xl_get(struct xl_value **out, struct xl_env *env, struct xl_uri *uri);
 
+/* Inserts the given value in at the given URI.
+ *
+ * Note: the URI is copied into the environment but the value is not;
+ * later modifications to the passed-in URI will not change the bindings
+ * but modifications to the value will modify the value stored in the
+ * environment. */
 word_t
 xl_set(struct xl_env *env, struct xl_uri *uri, struct xl_value *value);
 
