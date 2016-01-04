@@ -30,6 +30,7 @@ typedef uint8_t tag_t;
 typedef uint64_t word_t;
 
 #define OK ((word_t)0)
+#define no_ignore __attribute__((__warn_unused_result__))
 
 #define TAG_LEFT_NODE   0x01
 #define TAG_LEFT_WORD   0x02
@@ -52,27 +53,32 @@ struct xl_stream;
 struct xl_user;
 struct xl_uri;
 
-/* Takes a reference to the given tree. */
-word_t
+/* Creates a new value. */
+
+/* Takes a reference to the given tree.
+ *
+ * Returns OK on success, or a nonzero error code on failure. */
+no_ignore word_t
 xl_take(struct xl_value *v);
 
 /* Releases a reference to the given tree.
  *
- * If the refcount has dropped to zero, this also frees the tree. */
-word_t
+ * If the refcount has dropped to zero, this also frees the tree. Returns OK on
+ * success, or a nonzero error code on failure. */
+no_ignore word_t
 xl_release(struct xl_value *v);
 
 /* Loads a tree from a stream.
  *
  * The returned tree is not taken; it is up to the caller to take the
  * tree. Returns OK on success, or a nonzero error word. */
-word_t
+no_ignore word_t
 xl_load(struct xl_value *out, struct xl_stream *sp);
 
 /* Saves a tree to a stream.
  *
  * Returns OK on success, or a nonzero error word. */
-word_t
+no_ignore word_t
 xl_save(struct xl_stream *sp, struct xl_value *in);
 
 #endif

@@ -75,6 +75,7 @@ xl_env_init(struct xl_env *env)
 word_t
 xl_env_free(struct xl_env *env)
 {
+        word_t err;
         size_t i;
 
         if (likely(env->bindings != NULL))
@@ -83,7 +84,9 @@ xl_env_free(struct xl_env *env)
                 {
                         if (env->bindings[i].value == NULL)
                                 continue;
-                        xl_release(env->bindings[i].value);
+                        err = xl_release(env->bindings[i].value);
+                        if (err != OK)
+                                return err;
                 }
                 free(env->bindings);
         }

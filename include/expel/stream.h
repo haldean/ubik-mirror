@@ -53,12 +53,12 @@ xl_stream_buffer(struct xl_stream *sp);
 
 /* Attempts to read the specified number of bytes from the stream, returning the
  * number of bytes read. */
-size_t
+no_ignore size_t
 xl_stream_read(void *dst, struct xl_stream *src, size_t len);
 
 /* Attempts to write the specified number of bytes to the stream, returning the
  * number of bytes written. */
-size_t
+no_ignore size_t
 xl_stream_write(struct xl_stream *dst, void *src, size_t len);
 
 /* Closes a stream. */
