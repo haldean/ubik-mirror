@@ -94,10 +94,17 @@ load_save()
         u[5].left.v = 0x0;
         u[5].right.v = 0xFFFFFFFFFFFFFFFF;
 
-        assert(xl_save(&s, u) == 0);
+        assert(xl_save(&s, u) == OK);
 
         v = calloc(1, sizeof(struct xl_value));
-        assert(xl_load(v, &s) == 0);
+        assert(xl_load(v, &s) == OK);
+
+        assert(v->tag == u[0].tag);
+        assert(v->right.p->tag == u[1].tag);
+        assert(v->right.p->left.p->tag == u[2].tag);
+        assert(v->right.p->left.p->left.p->tag == u[3].tag);
+        assert(v->right.p->left.p->right.p->tag == u[4].tag);
+        assert(v->right.p->left.p->left.p->left.p->tag == u[5].tag);
 
         // 0.left
         assert(v->left.v == u->left.v);

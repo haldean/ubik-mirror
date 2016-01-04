@@ -43,6 +43,7 @@ union _xl_ptr_val {
 struct xl_value {
         union _xl_ptr_val left;
         union _xl_ptr_val right;
+        uint16_t refcount;
         tag_t tag;
 };
 
@@ -51,11 +52,26 @@ struct xl_stream;
 struct xl_user;
 struct xl_uri;
 
-/* loads a tree from a stream. Returns 0 on success, or a nonzero error word. */
+/* Takes a reference to the given tree. */
+word_t
+xl_take(struct xl_value *v);
+
+/* Releases a reference to the given tree.
+ *
+ * If the refcount has dropped to zero, this also frees the tree. */
+word_t
+xl_release(struct xl_value *v);
+
+/* Loads a tree from a stream.
+ *
+ * The returned tree is not taken; it is up to the caller to take the
+ * tree. Returns OK on success, or a nonzero error word. */
 word_t
 xl_load(struct xl_value *out, struct xl_stream *sp);
 
-/* saves a tree to a stream. Returns 0 on success, or a nonzero error word. */
+/* Saves a tree to a stream.
+ *
+ * Returns OK on success, or a nonzero error word. */
 word_t
 xl_save(struct xl_stream *sp, struct xl_value *in);
 

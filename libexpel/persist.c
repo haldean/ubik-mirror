@@ -51,15 +51,20 @@
 word_t
 xl_load(struct xl_value *out, struct xl_stream *sp)
 {
+        size_t read;
         tag_t tag;
         word_t ret;
 
-        if (xl_stream_read(&tag, sp, sizeof(tag_t)) != sizeof(tag_t))
+        read = xl_stream_read(&tag, sp, sizeof(tag_t));
+        if (read != sizeof(tag_t))
                 return ERR_NO_DATA;
+        out->tag = tag;
+        out->refcount = 0;
 
         if (tag & TAG_LEFT_WORD)
         {
-                if (xl_stream_read(&out->left.v, sp, sizeof(word_t)) != sizeof(word_t))
+                read = xl_stream_read(&out->left.v, sp, sizeof(word_t));
+                if (read != sizeof(word_t))
                         return ERR_NO_DATA;
                 out->left.v = ntohw(out->left.v);
         }
@@ -67,13 +72,15 @@ xl_load(struct xl_value *out, struct xl_stream *sp)
         {
                 out->left.p = calloc(1, sizeof(struct xl_value));
                 ret = xl_load(out->left.p, sp);
-                if (ret)
+                if (ret != OK)
                         return ret;
+                out->left.p->refcount = 1;
         }
 
         if (tag & TAG_RIGHT_WORD)
         {
-                if (xl_stream_read(&out->right.v, sp, sizeof(word_t)) != sizeof(word_t))
+                read = xl_stream_read(&out->right.v, sp, sizeof(word_t));
+                if (read != sizeof(word_t))
                         return ERR_NO_DATA;
                 out->right.v = ntohw(out->right.v);
         }
@@ -81,11 +88,12 @@ xl_load(struct xl_value *out, struct xl_stream *sp)
         {
                 out->right.p = calloc(1, sizeof(struct xl_value));
                 ret = xl_load(out->right.p, sp);
-                if (ret)
+                if (ret != OK)
                         return ret;
+                out->right.p->refcount = 1;
         }
 
-        return 0;
+        return OK;
 }
 
 word_t
@@ -123,5 +131,5 @@ xl_save(struct xl_stream *sp, struct xl_value *in)
                         return ret;
         }
 
-        return 0;
+        return OK;
 }
