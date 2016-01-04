@@ -160,7 +160,7 @@ __resize_rebalance(struct xl_env *env)
         err = OK;
         for (i = 0, reinserted = 0; i < env->cap && reinserted < env->n; i++)
         {
-                if (env->bindings[i].uri != NULL)
+                if (env->bindings[i].uri == NULL)
                         continue;
 
                 err = __insert(
