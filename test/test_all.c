@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "expel/env.h"
 #include "expel/stream.h"
 #include "expel/util.h"
 #include "unit.h"
@@ -137,6 +138,29 @@ host_to_net()
         return ok;
 }
 
+test_t
+env()
+{
+        struct xl_env env;
+        struct xl_value v, *r;
+        struct xl_uri u;
+
+        v.tag = TAG_LEFT_WORD | TAG_RIGHT_WORD;
+        v.left.v = 0x1234567890123456;
+        v.right.v = 0xFFFFFFFFFFFFFFFF;
+
+        u.hash = 0;
+        xl_uri_local(&u, "test_var_1");
+        assert(u.hash != 0);
+
+        xl_env_init(&env);
+        assert(xl_set(&env, &u, &v) == OK);
+        assert(xl_get(&r, &env, &u) == OK);
+        assert(r == &v);
+
+        return ok;
+}
+
 int
 main()
 {
@@ -144,5 +168,6 @@ main()
         run(buffer);
         run(load_save);
         run(host_to_net);
+        run(env);
         finish();
 }

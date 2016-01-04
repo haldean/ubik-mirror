@@ -17,10 +17,12 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
- #ifndef EXPEL_UTIL_H__
- #define EXPEL_UTIL_H__
+#ifndef EXPEL_UTIL_H__
+#define EXPEL_UTIL_H__
 
- #define unused(x) (void)(x)
+#define unused(x) (void)(x)
+#define likely(x) (x)
+#define unlikely(x) (x)
 
 size_t
 size_max(size_t a, size_t b);
@@ -36,4 +38,4 @@ htonw(word_t);
 word_t
 ntohw(word_t);
 
- #endif
+#endif

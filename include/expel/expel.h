@@ -29,6 +29,8 @@
 typedef uint8_t tag_t;
 typedef uint64_t word_t;
 
+#define OK ((word_t)0)
+
 #define TAG_LEFT_NODE   0x01
 #define TAG_LEFT_WORD   0x02
 #define TAG_RIGHT_NODE  0x04
@@ -44,22 +46,10 @@ struct xl_value {
         tag_t tag;
 };
 
-// identifies a user in the expel substrate
-struct xl_user {
-        uint64_t id;
-        char *name;
-};
-
-// identifies content in the expel substrate
-struct xl_uri {
-        char *name;
-        uint64_t version;
-        struct xl_user author;
-        uint8_t scope;
-};
-
 struct xl_env;
 struct xl_stream;
+struct xl_user;
+struct xl_uri;
 
 /* loads a tree from a stream. Returns 0 on success, or a nonzero error word. */
 word_t
