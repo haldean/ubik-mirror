@@ -25,8 +25,8 @@
 #include "expel/util.h"
 
 #define ENV_MAX_LOAD 0.5
-#define ENV_INIT_CAP 10
-#define ENV_CAP_SCALE 2.0
+#define ENV_INIT_CAP 8
+#define ENV_CAP_SCALE 2
 
 word_t
 xl_uri_local(
@@ -151,7 +151,7 @@ __resize_rebalance(struct xl_env *env)
         if (env->cap == 0)
                 new_cap = ENV_INIT_CAP;
         else
-                new_cap = (int) ceil(ENV_CAP_SCALE * (float) env->cap);
+                new_cap = ENV_CAP_SCALE * env->cap;
 
         new_binds = calloc(new_cap, sizeof(struct xl_binding));
         if (new_binds == NULL)
