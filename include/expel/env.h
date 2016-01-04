@@ -65,6 +65,12 @@ xl_uri_eq(struct xl_uri *u0, struct xl_uri *u1);
 word_t
 xl_env_init(struct xl_env *env);
 
+/* Frees memory associated with the environment struct. Note that after
+ * this the environment can still be used with xl_get and xl_set; this
+ * is a clear operation that does not destroy the env. */
+word_t
+xl_env_free(struct xl_env *env);
+
 /* Finds the value associated wth the given URI in the environment.
  *
  * If the value is found, OK is returned and the out pointer is set to

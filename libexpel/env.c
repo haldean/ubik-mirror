@@ -73,6 +73,16 @@ xl_env_init(struct xl_env *env)
 }
 
 word_t
+xl_env_free(struct xl_env *env)
+{
+        if (likely(env->bindings != NULL))
+                free(env->bindings);
+        env->n = 0;
+        env->cap = 0;
+        return OK;
+}
+
+word_t
 xl_get(struct xl_value **out, struct xl_env *env, struct xl_uri *uri)
 {
         size_t i;
