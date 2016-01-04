@@ -44,6 +44,9 @@
 
  enodata.ERR_NO_DATA
   ewfail.ERR_WRITE_FAILED
+  enomem.ERR_NO_MEMORY
+ eabsent.ERR_ABSENT
+    ewtf.ERR_UNEXPECTED_FAILURE
 
  dnapply.DAGC_NODE_APPLY
  dnconst.DAGC_NODE_CONST
