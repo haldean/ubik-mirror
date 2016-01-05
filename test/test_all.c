@@ -230,15 +230,15 @@ gc()
         xl_gc_free_all();
         xl_gc_start();
 
-        for (i = 0; i < PAGE_SIZE * 2; i++)
+        for (i = 0; i < XL_GC_PAGE_SIZE * 2; i++)
         {
                 assert(xl_new(&vals[i]) == 0);
         }
-        for (i = 0; i < PAGE_SIZE * 2; i++)
+        for (i = 0; i < XL_GC_PAGE_SIZE * 2; i++)
         {
                 assert(xl_release(vals[i]) == 0);
         }
-        for (i = 0; i < PAGE_SIZE * 2; i++)
+        for (i = 0; i < XL_GC_PAGE_SIZE * 2; i++)
         {
                 assert(xl_new(&vals[i]) == 0);
         }

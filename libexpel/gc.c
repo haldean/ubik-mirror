@@ -43,7 +43,7 @@ xl_gc_start()
                 free(gc_stats);
 
         gc_stats = calloc(1, sizeof(struct xl_gc_info));
-        gc_stats->releases_until_gc = GC_TRIGGER_RELEASES;
+        gc_stats->releases_until_gc = XL_GC_TRIGGER_RELEASES;
 }
 
 void
@@ -93,14 +93,17 @@ xl_new(struct xl_value **v)
                 p = calloc(1, sizeof(struct xl_alloc_page));
                 if (p == NULL)
                         return ERR_NO_MEMORY;
+                p->values = calloc(XL_GC_PAGE_SIZE, sizeof(struct xl_value));
+                if (p->values == NULL)
+                        return ERR_NO_MEMORY;
 
                 /* All values are open when we begin */
-                for (i = 0; i < PAGE_SIZE; i++)
+                for (i = 0; i < XL_GC_PAGE_SIZE; i++)
                 {
                         p->open_values[i] = &p->values[i];
                         p->values[i].alloc_page = p;
                 }
-                p->n_open_values = PAGE_SIZE;
+                p->n_open_values = XL_GC_PAGE_SIZE;
 
                 if (page_tail != NULL)
                 {
@@ -117,7 +120,7 @@ xl_new(struct xl_value **v)
         #ifdef XL_DEBUG_GC
                 #ifdef XL_DEBUG_GC_V
                         printf("take slot %lu in page %04lx\n",
-                               ((uintptr_t) *v - (uintptr_t) &p->values[0])
+                               ((uintptr_t) *v - (uintptr_t) p->values)
                                         / sizeof(struct xl_value),
                                ((uintptr_t) p) & 0xFFFF);
                 #endif
@@ -151,7 +154,7 @@ run_gc()
         {
                 to_free = p;
                 p = p->prev;
-                if (unlikely(to_free->n_open_values == PAGE_SIZE))
+                if (unlikely(to_free->n_open_values == XL_GC_PAGE_SIZE))
                 {
                         if (to_free->prev != NULL)
                                 to_free->prev->next = to_free->next;
@@ -165,7 +168,7 @@ run_gc()
                         #endif
                 }
         }
-        gc_stats->releases_until_gc = GC_TRIGGER_RELEASES;
+        gc_stats->releases_until_gc = XL_GC_TRIGGER_RELEASES;
         return OK;
 }
 
@@ -195,7 +198,7 @@ xl_release(struct xl_value *v)
 
                 #ifdef XL_GC_DEBUG_V
                         printf("release slot %lu in page %04lx\n",
-                               ((uintptr_t) v - (uintptr_t) &p->values[0])
+                               ((uintptr_t) v - (uintptr_t) p->values)
                                         / sizeof(struct xl_value),
                                ((uintptr_t) p) & 0xFFFF);
                 #endif
