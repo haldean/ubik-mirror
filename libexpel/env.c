@@ -129,6 +129,7 @@ __insert(
 {
         size_t i;
         size_t probed;
+        word_t err;
 
         i = uri->hash % cap;
         for (probed = 0; probed < cap; probed++)
@@ -144,12 +145,16 @@ __insert(
 
         /* There was already a value at this key, we need to release our
          * reference on it. */
+        err = OK;
         if (unlikely(binds[i].value != NULL))
-                xl_release(binds[i].value);
+                err = xl_release(binds[i].value);
 
-        binds[i].uri = uri;
-        binds[i].value = value;
-        return OK;
+        if (err == OK)
+        {
+                binds[i].uri = uri;
+                binds[i].value = value;
+        }
+        return err;
 }
 
 /* Resizes and rebalances an environment, scaling the capacity by

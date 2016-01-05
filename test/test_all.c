@@ -160,49 +160,76 @@ env()
         #define N_TEST_URIS 2000
 
         struct xl_env env;
-        struct xl_value v, *r;
+        struct xl_value *v, *r;
         struct xl_uri u;
         int i;
         char *key;
         struct xl_uri uris[N_TEST_URIS];
 
-        v.tag = TAG_LEFT_WORD | TAG_RIGHT_WORD;
-        v.refcount = 1;
-        v.left.v = 0x1234567890123456;
-        v.right.v = 0xFFFFFFFFFFFFFFFF;
+        assert(xl_new(&v) == OK);
+        v->tag = TAG_LEFT_WORD | TAG_RIGHT_WORD;
+        v->refcount = 1;
+        v->left.v = 0x1234567890123456;
+        v->right.v = 0xFFFFFFFFFFFFFFFF;
 
         u.hash = 0;
-        xl_uri_local(&u, "test_var_0");
+        assert(xl_uri_local(&u, "test_var_0") == OK);
         assert(u.hash != 0);
 
-        xl_env_init(&env);
-        assert(xl_set(&env, &u, &v) == OK);
+        assert(xl_env_init(&env) == OK);
+        assert(xl_set(&env, &u, v) == OK);
         assert(xl_get(&r, &env, &u) == OK);
-        assert(r == &v);
+        assert(r == v);
 
         for (i = 0; i < N_TEST_URIS; i++)
         {
                 key = malloc(64);
                 sprintf(key, "test_var_%d", i);
-                xl_uri_local(&uris[i], key);
+                assert(xl_uri_local(&uris[i], key) == OK);
         }
         for (i = 0; i < N_TEST_URIS; i++)
         {
-                assert(xl_set(&env, &uris[i], &v) == OK);
+                assert(xl_set(&env, &uris[i], v) == OK);
         }
-        assert(v.refcount == N_TEST_URIS + 1);
-        xl_env_free(&env);
-        assert(v.refcount == 1);
+        assert(v->refcount == N_TEST_URIS + 1);
+        assert(xl_env_free(&env) == OK);
+        assert(v->refcount == 1);
+        return ok;
+}
+
+test_t
+gc()
+{
+        #define N_TEST_GC_VALUES 10000
+
+        size_t i;
+        struct xl_value *vals[N_TEST_GC_VALUES];
+
+        for (i = 0; i < N_TEST_GC_VALUES; i++)
+        {
+                assert(xl_new(&vals[i]) == 0);
+        }
+        for (i = 0; i < N_TEST_GC_VALUES; i++)
+        {
+                assert(xl_release(vals[i]) == 0);
+        }
         return ok;
 }
 
 int
 main()
 {
+        word_t err;
         init();
+        if ((err = xl_start()) != OK)
+        {
+                printf("couldn't start expel: %s\n", explain_word(err));
+                return -1;
+        }
         run(buffer);
         run(load_save);
         run(host_to_net);
         run(env);
+        run(gc);
         finish();
 }

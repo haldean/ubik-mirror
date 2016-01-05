@@ -22,6 +22,7 @@
 
 #include <arpa/inet.h>
 #include <stdint.h>
+#include <stdlib.h>
 
 size_t
 size_max(size_t a, size_t b)
@@ -81,4 +82,18 @@ ntohw(word_t w)
         return ((uint64_t) ntohl(w >> 32)) |
                ((uint64_t) ntohl((uint32_t) w)) << 32;
 #endif
+}
+
+char *
+explain_word(word_t word)
+{
+        char *res;
+        res = malloc(4);
+        if (res == NULL)
+                return res;
+        res[0] = (char) (word >> 24);
+        res[1] = (char) (word >> 16);
+        res[2] = (char) (word >>  8);
+        res[3] = (char) (word);
+        return res;
 }

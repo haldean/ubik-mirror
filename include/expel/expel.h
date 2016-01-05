@@ -53,7 +53,18 @@ struct xl_stream;
 struct xl_user;
 struct xl_uri;
 
-/* Creates a new value. */
+/* Starts the expel runtime.
+ *
+ * Returns OK on success. */
+no_ignore word_t
+xl_start();
+
+/* Creates a new value.
+ *
+ * The returned value has a refcount of one; callers to xl_new do
+ * not need to take the result. */
+no_ignore word_t
+xl_new(struct xl_value **v);
 
 /* Takes a reference to the given tree.
  *
@@ -63,8 +74,7 @@ xl_take(struct xl_value *v);
 
 /* Releases a reference to the given tree.
  *
- * If the refcount has dropped to zero, this also frees the tree. Returns OK on
- * success, or a nonzero error code on failure. */
+ * Returns OK on success, or a nonzero error code on failure. */
 no_ignore word_t
 xl_release(struct xl_value *v);
 
