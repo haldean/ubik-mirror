@@ -68,8 +68,22 @@ no_ignore word_t
 xl_new(struct xl_value **v)
 {
         struct xl_alloc_page *p;
+        size_t i;
+        bool pages_full;
 
-        if (unlikely(page_tail == NULL || page_tail->used == PAGE_SIZE))
+        pages_full = true;
+        p = page_tail;
+        while (p != NULL)
+        {
+                if (p->n_open_values > 0)
+                {
+                        pages_full = false;
+                        break;
+                }
+                p = p->prev;
+        }
+
+        if (unlikely(pages_full))
         {
                 #ifdef XL_DEBUG_GC
                         gc_stats->n_page_allocs++;
@@ -77,6 +91,15 @@ xl_new(struct xl_value **v)
                 p = calloc(1, sizeof(struct xl_alloc_page));
                 if (p == NULL)
                         return ERR_NO_MEMORY;
+
+                /* All values are open when we begin */
+                for (i = 0; i < PAGE_SIZE; i++)
+                {
+                        p->open_values[i] = &p->values[i];
+                        p->values[i].alloc_page = p;
+                }
+                p->n_open_values = PAGE_SIZE;
+
                 if (page_tail != NULL)
                 {
                         p->prev = page_tail;
@@ -85,9 +108,9 @@ xl_new(struct xl_value **v)
                 page_tail = p;
         }
 
-        *v = &page_tail->values[page_tail->used];
+        *v = p->open_values[p->n_open_values - 1];
         (*v)->refcount = 1;
-        page_tail->used++;
+        p->n_open_values--;
 
         #ifdef XL_DEBUG_GC
                 gc_stats->n_val_allocs++;
@@ -110,45 +133,17 @@ run_gc()
 {
         struct xl_alloc_page *p;
         struct xl_alloc_page *to_free;
-        size_t i;
-        bool can_remove;
 
         #ifdef XL_DEBUG_GC
-                uint32_t n_live_values;
                 gc_stats->n_gc_runs++;
         #endif
 
         p = page_tail;
         while (p != NULL)
         {
-                can_remove = true;
-                #ifdef XL_DEBUG_GC
-                        n_live_values = 0;
-                #endif
-                for (i = 0; i < PAGE_SIZE; i++)
-                {
-                        if (p->values[i].refcount != 0)
-                        {
-                                can_remove = false;
-                                #ifdef XL_DEBUG_GC
-                                        n_live_values++;
-                                #else
-                                        /* we don't break if we're debugging so
-                                         * that we can see how alive this page
-                                         * is. */
-                                        break;
-                                #endif
-                        }
-                }
-
-                #ifdef XL_DEBUG_GC_VERBOSE
-                        fprintf(gc_out, "page is %.1f%% alive\n",
-                                100. * n_live_values / PAGE_SIZE);
-                #endif
-
                 to_free = p;
                 p = p->prev;
-                if (unlikely(can_remove))
+                if (unlikely(to_free->n_open_values == PAGE_SIZE))
                 {
                         if (to_free->prev != NULL)
                                 to_free->prev->next = to_free->next;
@@ -169,10 +164,12 @@ word_t
 xl_release(struct xl_value *v)
 {
         word_t err;
+        struct xl_alloc_page *p;
 
         if (unlikely(v->refcount == 0))
                 return ERR_REFCOUNT_UNDERFLOW;
         v->refcount--;
+
         gc_stats->n_release_since_gc++;
         #ifdef XL_DEBUG_GC
                 gc_stats->n_val_frees++;
@@ -182,6 +179,10 @@ xl_release(struct xl_value *v)
 
         if (v->refcount == 0)
         {
+                p = v->alloc_page;
+                p->open_values[p->n_open_values] = v;
+                p->n_open_values++;
+
                 if (v->tag & TAG_LEFT_NODE)
                         err = xl_release(v->left.p);
                 if (err == OK && v->tag & TAG_RIGHT_NODE)

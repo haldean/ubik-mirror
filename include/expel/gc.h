@@ -26,8 +26,11 @@ struct xl_alloc_page
 {
         struct xl_alloc_page *prev;
         struct xl_alloc_page *next;
+
         struct xl_value values[PAGE_SIZE];
-        uint16_t used;
+        struct xl_value *open_values[PAGE_SIZE];
+
+        int64_t n_open_values;
 };
 
 struct xl_gc_stats

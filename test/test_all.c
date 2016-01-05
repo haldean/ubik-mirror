@@ -263,7 +263,7 @@ main()
         run(buffer);
         run(load_save);
         run(host_to_net);
-        run(env);
+        //run(env);
         run(gc);
         finish();
 }

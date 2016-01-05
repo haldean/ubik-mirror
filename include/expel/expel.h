@@ -37,6 +37,8 @@ typedef uint64_t word_t;
 #define TAG_RIGHT_NODE  0x04
 #define TAG_RIGHT_WORD  0x08
 
+struct xl_alloc_page;
+
 union _xl_ptr_val {
         struct xl_value *p;
         word_t v;
@@ -44,7 +46,10 @@ union _xl_ptr_val {
 struct xl_value {
         union _xl_ptr_val left;
         union _xl_ptr_val right;
+
+        struct xl_alloc_page *alloc_page;
         uint16_t refcount;
+
         tag_t tag;
 };
 
