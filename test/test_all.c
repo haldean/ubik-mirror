@@ -204,9 +204,9 @@ gc()
 {
         #define N_TEST_GC_VALUES 10000
 
-        size_t i, j;
+        size_t i;
         struct xl_value *vals[N_TEST_GC_VALUES];
-        struct xl_gc_stats gc_stats;
+        struct xl_gc_info gc_stats;
 
         xl_gc_free_all();
         xl_gc_start();
@@ -230,16 +230,17 @@ gc()
         xl_gc_free_all();
         xl_gc_start();
 
-        for (j = 0; j < 2; j++)
+        for (i = 0; i < PAGE_SIZE * 2; i++)
         {
-                for (i = 0; i < 16; i++)
-                {
-                        assert(xl_new(&vals[i]) == 0);
-                }
-                for (i = 0; i < 16; i++)
-                {
-                        assert(xl_release(vals[i]) == 0);
-                }
+                assert(xl_new(&vals[i]) == 0);
+        }
+        for (i = 0; i < PAGE_SIZE * 2; i++)
+        {
+                assert(xl_release(vals[i]) == 0);
+        }
+        for (i = 0; i < PAGE_SIZE * 2; i++)
+        {
+                assert(xl_new(&vals[i]) == 0);
         }
 
         #ifdef XL_DEBUG_GC

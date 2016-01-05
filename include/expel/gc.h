@@ -20,7 +20,7 @@
 #include "expel/expel.h"
 
 #define PAGE_SIZE 8
-#define TRIGGER_GC_ON_FREES (4 * PAGE_SIZE)
+#define GC_TRIGGER_RELEASES (4 * PAGE_SIZE)
 
 struct xl_alloc_page
 {
@@ -33,9 +33,9 @@ struct xl_alloc_page
         int64_t n_open_values;
 };
 
-struct xl_gc_stats
+struct xl_gc_info
 {
-        uint32_t n_release_since_gc;
+        int64_t releases_until_gc;
 
 #ifdef XL_DEBUG_GC
         uint64_t n_page_allocs;
@@ -56,7 +56,7 @@ xl_gc_start();
 
 /* Get garbage collector stats. */
 void
-xl_gc_get_stats(struct xl_gc_stats *stats);
+xl_gc_get_stats(struct xl_gc_info *stats);
 
 /* Free everything the garbage collector knows about.
  *

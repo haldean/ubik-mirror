@@ -33,7 +33,7 @@
 #include "expel/util.h"
 
 static struct xl_alloc_page *page_tail;
-static struct xl_gc_stats *gc_stats;
+static struct xl_gc_info *gc_stats;
 
 void
 xl_gc_start()
@@ -41,13 +41,15 @@ xl_gc_start()
         page_tail = NULL;
         if (unlikely(gc_stats != NULL))
                 free(gc_stats);
-        gc_stats = calloc(1, sizeof(struct xl_gc_stats));
+
+        gc_stats = calloc(1, sizeof(struct xl_gc_info));
+        gc_stats->releases_until_gc = GC_TRIGGER_RELEASES;
 }
 
 void
-xl_gc_get_stats(struct xl_gc_stats *stats)
+xl_gc_get_stats(struct xl_gc_info *stats)
 {
-        memcpy(stats, gc_stats, sizeof(struct xl_gc_stats));
+        memcpy(stats, gc_stats, sizeof(struct xl_gc_info));
 }
 
 void
@@ -163,7 +165,7 @@ run_gc()
                         #endif
                 }
         }
-        gc_stats->n_release_since_gc = 0;
+        gc_stats->releases_until_gc = GC_TRIGGER_RELEASES;
         return OK;
 }
 
@@ -178,7 +180,7 @@ xl_release(struct xl_value *v)
                 return ERR_REFCOUNT_UNDERFLOW;
         v->refcount--;
 
-        gc_stats->n_release_since_gc++;
+        gc_stats->releases_until_gc--;
         #ifdef XL_DEBUG_GC
                 gc_stats->n_val_frees++;
         #endif
@@ -204,8 +206,7 @@ xl_release(struct xl_value *v)
                         err = xl_release(v->right.p);
         }
 
-        if (unlikely(err == OK &&
-                     gc_stats->n_release_since_gc >= TRIGGER_GC_ON_FREES))
+        if (unlikely(err == OK && gc_stats->releases_until_gc == 0))
                 err = run_gc();
         return err;
 }
