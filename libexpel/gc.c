@@ -61,6 +61,7 @@ xl_gc_free_all()
         {
                 p = page_tail;
                 page_tail = p->prev;
+                free(p->values);
                 free(p);
         }
 }
@@ -162,6 +163,7 @@ run_gc()
                                 to_free->next->prev = to_free->prev;
                         if (to_free == page_tail)
                                 page_tail = to_free->prev;
+                        free(to_free->values);
                         free(to_free);
                         #ifdef XL_DEBUG_GC
                                 gc_stats->n_page_frees++;
