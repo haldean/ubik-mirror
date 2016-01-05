@@ -21,6 +21,8 @@
 #include <stdlib.h>
 
 #include "expel/env.h"
+#include "expel/expel.h"
+#include "expel/gc.h"
 #include "expel/stream.h"
 #include "expel/util.h"
 #include "unit.h"
@@ -202,8 +204,12 @@ gc()
 {
         #define N_TEST_GC_VALUES 10000
 
-        size_t i;
+        size_t i, j;
         struct xl_value *vals[N_TEST_GC_VALUES];
+        struct xl_gc_stats gc_stats;
+
+        xl_gc_free_all();
+        xl_gc_start();
 
         for (i = 0; i < N_TEST_GC_VALUES; i++)
         {
@@ -213,6 +219,34 @@ gc()
         {
                 assert(xl_release(vals[i]) == 0);
         }
+
+        #ifdef XL_DEBUG_GC
+        xl_gc_get_stats(&gc_stats);
+        assert(gc_stats.n_val_allocs == N_TEST_GC_VALUES);
+        assert(gc_stats.n_val_frees == N_TEST_GC_VALUES);
+        assert(gc_stats.n_val_frees > gc_stats.n_gc_runs);
+        #endif
+
+        xl_gc_free_all();
+        xl_gc_start();
+
+        for (j = 0; j < 20; j++)
+        {
+                for (i = 0; i < 2000; i++)
+                {
+                        assert(xl_new(&vals[i]) == 0);
+                }
+                for (i = 0; i < 2000; i++)
+                {
+                        assert(xl_release(vals[i]) == 0);
+                }
+        }
+
+        #ifdef XL_DEBUG_GC
+        xl_gc_get_stats(&gc_stats);
+        assert(gc_stats.n_page_allocs < (2000 / PAGE_SIZE) + 1);
+        #endif
+
         return ok;
 }
 

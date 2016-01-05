@@ -26,6 +26,7 @@
 
 #include <stdbool.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "expel/expel.h"
 #include "expel/gc.h"
@@ -38,7 +39,28 @@ void
 xl_gc_start()
 {
         page_tail = NULL;
+        if (unlikely(gc_stats != NULL))
+                free(gc_stats);
         gc_stats = calloc(1, sizeof(struct xl_gc_stats));
+}
+
+void
+xl_gc_get_stats(struct xl_gc_stats *stats)
+{
+        memcpy(stats, gc_stats, sizeof(struct xl_gc_stats));
+}
+
+void
+xl_gc_free_all()
+{
+        struct xl_alloc_page *p;
+
+        while (page_tail != NULL)
+        {
+                p = page_tail;
+                page_tail = page_tail->prev;
+                free(p);
+        }
 }
 
 /* Creates a new value. */
@@ -92,11 +114,7 @@ run_gc()
         bool can_remove;
 
         #ifdef XL_DEBUG_GC
-                uint32_t n_pages;
                 uint32_t n_live_values;
-
-                n_pages = 0;
-
                 gc_stats->n_gc_runs++;
         #endif
 
@@ -123,8 +141,8 @@ run_gc()
                         }
                 }
 
-                #ifdef XL_DEBUG_GC
-                        fprintf(gc_out, "page %d is %.1f%% alive\n", n_pages,
+                #ifdef XL_DEBUG_GC_VERBOSE
+                        fprintf(gc_out, "page is %.1f%% alive\n",
                                 100. * n_live_values / PAGE_SIZE);
                 #endif
 

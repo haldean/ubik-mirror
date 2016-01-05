@@ -51,6 +51,17 @@ struct xl_gc_stats
 void
 xl_gc_start();
 
+/* Get garbage collector stats. */
+void
+xl_gc_get_stats(struct xl_gc_stats *stats);
+
+/* Free everything the garbage collector knows about.
+ *
+ * This will seriously fuck with the runtime, because pretty much
+ * every pointer becomes invalid. You have been warned. */
+void
+xl_gc_free_all();
+
 /* Runs garbage collection and removes empty pages.
  *
  * There should be no reason to call this; xl_release calls it
