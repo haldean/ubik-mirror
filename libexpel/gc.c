@@ -58,7 +58,7 @@ xl_gc_free_all()
         while (page_tail != NULL)
         {
                 p = page_tail;
-                page_tail = page_tail->prev;
+                page_tail = p->prev;
                 free(p);
         }
 }
@@ -113,6 +113,12 @@ xl_new(struct xl_value **v)
         p->n_open_values--;
 
         #ifdef XL_DEBUG_GC
+                #ifdef XL_DEBUG_GC_V
+                        printf("take slot %lu in page %04lx\n",
+                               ((uintptr_t) *v - (uintptr_t) &p->values[0])
+                                        / sizeof(struct xl_value),
+                               ((uintptr_t) p) & 0xFFFF);
+                #endif
                 gc_stats->n_val_allocs++;
         #endif
         return OK;
@@ -149,6 +155,8 @@ run_gc()
                                 to_free->prev->next = to_free->next;
                         if (to_free->next != NULL)
                                 to_free->next->prev = to_free->prev;
+                        if (to_free == page_tail)
+                                page_tail = to_free->prev;
                         free(to_free);
                         #ifdef XL_DEBUG_GC
                                 gc_stats->n_page_frees++;
@@ -183,6 +191,13 @@ xl_release(struct xl_value *v)
                 p->open_values[p->n_open_values] = v;
                 p->n_open_values++;
 
+                #ifdef XL_GC_DEBUG_V
+                        printf("release slot %lu in page %04lx\n",
+                               ((uintptr_t) v - (uintptr_t) &p->values[0])
+                                        / sizeof(struct xl_value),
+                               ((uintptr_t) p) & 0xFFFF);
+                #endif
+
                 if (v->tag & TAG_LEFT_NODE)
                         err = xl_release(v->left.p);
                 if (err == OK && v->tag & TAG_RIGHT_NODE)
@@ -190,7 +205,7 @@ xl_release(struct xl_value *v)
         }
 
         if (unlikely(err == OK &&
-                     gc_stats->n_release_since_gc > TRIGGER_GC_ON_FREES))
+                     gc_stats->n_release_since_gc >= TRIGGER_GC_ON_FREES))
                 err = run_gc();
         return err;
 }

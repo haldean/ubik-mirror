@@ -19,7 +19,7 @@
 
 #include "expel/expel.h"
 
-#define PAGE_SIZE 256
+#define PAGE_SIZE 8
 #define TRIGGER_GC_ON_FREES (4 * PAGE_SIZE)
 
 struct xl_alloc_page

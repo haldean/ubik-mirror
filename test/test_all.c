@@ -224,19 +224,19 @@ gc()
         xl_gc_get_stats(&gc_stats);
         assert(gc_stats.n_val_allocs == N_TEST_GC_VALUES);
         assert(gc_stats.n_val_frees == N_TEST_GC_VALUES);
-        assert(gc_stats.n_val_frees > gc_stats.n_gc_runs);
+        assert(gc_stats.n_val_frees >= gc_stats.n_gc_runs);
         #endif
 
         xl_gc_free_all();
         xl_gc_start();
 
-        for (j = 0; j < 20; j++)
+        for (j = 0; j < 2; j++)
         {
-                for (i = 0; i < 2000; i++)
+                for (i = 0; i < 16; i++)
                 {
                         assert(xl_new(&vals[i]) == 0);
                 }
-                for (i = 0; i < 2000; i++)
+                for (i = 0; i < 16; i++)
                 {
                         assert(xl_release(vals[i]) == 0);
                 }
@@ -244,7 +244,7 @@ gc()
 
         #ifdef XL_DEBUG_GC
         xl_gc_get_stats(&gc_stats);
-        assert(gc_stats.n_page_allocs < (2000 / PAGE_SIZE) + 1);
+        assert(gc_stats.n_page_allocs == 2);
         #endif
 
         return ok;
