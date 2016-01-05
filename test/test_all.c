@@ -220,11 +220,11 @@ gc()
                 assert(xl_release(vals[i]) == 0);
         }
 
-        #ifdef XL_DEBUG_GC
         xl_gc_get_stats(&gc_stats);
-        assert(gc_stats.n_val_allocs == N_TEST_GC_VALUES);
-        assert(gc_stats.n_val_frees == N_TEST_GC_VALUES);
-        assert(gc_stats.n_val_frees >= gc_stats.n_gc_runs);
+        #ifdef XL_GC_DEBUG
+                assert(gc_stats.n_val_allocs == N_TEST_GC_VALUES);
+                assert(gc_stats.n_val_frees == N_TEST_GC_VALUES);
+                assert(gc_stats.n_val_frees >= gc_stats.n_gc_runs);
         #endif
 
         xl_gc_free_all();
@@ -243,9 +243,9 @@ gc()
                 assert(xl_new(&vals[i]) == 0);
         }
 
-        #ifdef XL_DEBUG_GC
         xl_gc_get_stats(&gc_stats);
-        assert(gc_stats.n_page_allocs == 2);
+        #ifdef XL_GC_DEBUG
+                assert(gc_stats.n_page_allocs == 2);
         #endif
 
         return ok;

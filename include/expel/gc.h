@@ -47,7 +47,7 @@ struct xl_gc_info
 {
         int64_t releases_until_gc;
 
-#ifdef XL_DEBUG_GC
+#ifdef XL_GC_DEBUG
         uint64_t n_page_allocs;
         uint64_t n_page_frees;
         uint64_t n_val_allocs;

@@ -17,9 +17,9 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-/* Define XL_DEBUG_GC to have garbage collection information
+/* Define XL_GC_DEBUG to have garbage collection information
  * printed to stderr. */
-#ifdef XL_DEBUG_GC
+#ifdef XL_GC_DEBUG
 #include <stdio.h>
 #define gc_out stderr
 #endif
@@ -88,7 +88,7 @@ xl_new(struct xl_value **v)
 
         if (unlikely(pages_full))
         {
-                #ifdef XL_DEBUG_GC
+                #ifdef XL_GC_DEBUG
                         gc_stats->n_page_allocs++;
                 #endif
                 p = calloc(1, sizeof(struct xl_alloc_page));
@@ -118,8 +118,8 @@ xl_new(struct xl_value **v)
         (*v)->refcount = 1;
         p->n_open_values--;
 
-        #ifdef XL_DEBUG_GC
-                #ifdef XL_DEBUG_GC_V
+        #ifdef XL_GC_DEBUG
+                #ifdef XL_GC_DEBUG_V
                         printf("take slot %lu in page %04lx\n",
                                ((uintptr_t) *v - (uintptr_t) p->values)
                                         / sizeof(struct xl_value),
@@ -146,7 +146,7 @@ run_gc()
         struct xl_alloc_page *p;
         struct xl_alloc_page *to_free;
 
-        #ifdef XL_DEBUG_GC
+        #ifdef XL_GC_DEBUG
                 gc_stats->n_gc_runs++;
         #endif
 
@@ -165,7 +165,7 @@ run_gc()
                                 page_tail = to_free->prev;
                         free(to_free->values);
                         free(to_free);
-                        #ifdef XL_DEBUG_GC
+                        #ifdef XL_GC_DEBUG
                                 gc_stats->n_page_frees++;
                         #endif
                 }
@@ -186,7 +186,7 @@ xl_release(struct xl_value *v)
         v->refcount--;
 
         gc_stats->releases_until_gc--;
-        #ifdef XL_DEBUG_GC
+        #ifdef XL_GC_DEBUG
                 gc_stats->n_val_frees++;
         #endif
 
