@@ -290,7 +290,10 @@ __load_node(struct xl_dagc_node **node, struct xl_stream *sp)
 }
 
 no_ignore static word_t
-__set_node_pointers(struct xl_dagc_node *node, struct xl_dagc_node **all_nodes)
+__set_node_pointers(
+        struct xl_dagc_node *node,
+        struct xl_dagc_node **all_nodes,
+        size_t n_nodes)
 {
         struct xl_dagc_apply *apply;
         struct xl_dagc_load *load;
@@ -300,16 +303,28 @@ __set_node_pointers(struct xl_dagc_node *node, struct xl_dagc_node **all_nodes)
         {
         case DAGC_NODE_APPLY:
                 apply = (struct xl_dagc_apply *) node;
+                if ((uintptr_t) apply->func >= n_nodes)
+                        return ERR_OUT_OF_BOUNDS;
+                if ((uintptr_t) apply->arg >= n_nodes)
+                        return ERR_OUT_OF_BOUNDS;
+
                 apply->func = all_nodes[(uintptr_t) apply->func];
                 apply->arg = all_nodes[(uintptr_t) apply->arg];
                 break;
+
         case DAGC_NODE_LOAD:
                 load = (struct xl_dagc_load *) node;
+                if ((uintptr_t) load->dependent_store >= n_nodes)
+                        return ERR_OUT_OF_BOUNDS;
+
                 load->dependent_store =
                         all_nodes[(uintptr_t) load->dependent_store];
                 break;
         case DAGC_NODE_STORE:
                 store = (struct xl_dagc_store *) node;
+                if ((uintptr_t) store->value >= n_nodes)
+                        return ERR_OUT_OF_BOUNDS;
+
                 store->value = all_nodes[(uintptr_t) store->value];
                 break;
         case DAGC_NODE_CONST:
@@ -374,7 +389,8 @@ xl_load(struct xl_dagc *graph, struct xl_stream *sp)
          * we know what the appropriate pointers are. */
         for (i = 0; i < n_nodes; i++)
         {
-                err = __set_node_pointers(graph->nodes[i], graph->nodes);
+                err = __set_node_pointers(
+                        graph->nodes[i], graph->nodes, n_nodes);
                 if (err != OK)
                         return err;
         }

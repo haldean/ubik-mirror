@@ -42,6 +42,7 @@
   ebhead.ERR_BAD_HEADER
   ebtype.ERR_BAD_TYPE
    efull.ERR_FULL
+    eoob.ERR_OUT_OF_BOUNDS
  enodata.ERR_NO_DATA
   enomem.ERR_NO_MEMORY
 enotdone.ERR_NOT_IMPLEMENTED
