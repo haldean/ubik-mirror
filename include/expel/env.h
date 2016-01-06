@@ -89,7 +89,25 @@ xl_get(
         struct xl_env *env,
         struct xl_uri *uri);
 
-/* Inserts the given value in at the given URI.
+/* Inserts the given value in at the given URI, overwriting an
+ * existing value if present.
+ *
+ * The URI is copied into the environment but the value is not;
+ * later modifications to the passed-in URI will not change the
+ * bindings but modifications to the value will modify the value
+ * stored in the environment. */
+no_ignore word_t
+xl_overwrite(
+        struct xl_env *env,
+        struct xl_uri *uri,
+        struct xl_value *value,
+        struct xl_value *type);
+
+/* Inserts the given value in at the given URI if the URI is
+ * not already defined.
+ *
+ * If the URI is already bound, this will return ERR_PRESENT
+ * and the existing binding will not be modified.
  *
  * The URI is copied into the environment but the value is not;
  * later modifications to the passed-in URI will not change the

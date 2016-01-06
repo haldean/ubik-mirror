@@ -186,6 +186,13 @@ env()
         assert(xl_set(&env, &u, v, t) == OK);
         assert(xl_get(&r, &rt, &env, &u) == OK);
         assert(r == v);
+        assert(v->refcount == 2);
+
+        assert(xl_set(&env, &u, v, t) == ERR_PRESENT);
+        assert(v->refcount == 2);
+
+        assert(xl_overwrite(&env, &u, v, t) == OK);
+        assert(v->refcount == 2);
 
         for (i = 0; i < N_TEST_URIS; i++)
         {
@@ -193,10 +200,12 @@ env()
                 sprintf(key, "test_var_%d", i);
                 assert(xl_uri_local(&uris[i], key) == OK);
         }
+
         for (i = 0; i < N_TEST_URIS; i++)
         {
-                assert(xl_set(&env, &uris[i], v, t) == OK);
+                assert(xl_overwrite(&env, &uris[i], v, t) == OK);
         }
+
         assert(v->refcount == N_TEST_URIS + 1);
         assert(xl_env_free(&env) == OK);
         assert(v->refcount == 1);
@@ -268,7 +277,7 @@ main()
         run(buffer);
         run(load_save);
         run(host_to_net);
-        //run(env);
+        run(env);
         run(gc);
         finish();
 }

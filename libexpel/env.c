@@ -128,14 +128,19 @@ xl_get(
 /* Inserts the given URI-value pair into the given binding array.
  *
  * This assumes that the table has space for another entry, and
- * will return ERR_FULL if the table has no spaces remaining. */
+ * will return ERR_FULL if the table has no spaces remaining.
+ *
+ * The overwrite parameter controls whether existing data will be
+ * overwritten. True means that it will be, false means that it
+ * will not. */
 static inline word_t
 __insert(
         struct xl_binding *binds,
         size_t cap,
         struct xl_uri *uri,
         struct xl_value *value,
-        struct xl_value *type)
+        struct xl_value *type,
+        bool overwrite)
 {
         size_t i;
         size_t probed;
@@ -157,7 +162,11 @@ __insert(
          * reference on it. */
         err = OK;
         if (unlikely(binds[i].value != NULL))
+        {
+                if (!overwrite)
+                        return ERR_PRESENT;
                 err = xl_release(binds[i].value);
+        }
 
         if (err == OK)
         {
@@ -205,7 +214,8 @@ __resize_rebalance(struct xl_env *env)
                         new_cap,
                         env->bindings[i].uri,
                         env->bindings[i].value,
-                        env->bindings[i].type);
+                        env->bindings[i].type,
+                        false);
                 if (err != OK)
                         break;
         }
@@ -223,15 +233,16 @@ __resize_rebalance(struct xl_env *env)
         return OK;
 }
 
-word_t
-xl_set(
+static no_ignore word_t
+__set(
         struct xl_env *env,
         struct xl_uri *uri,
         struct xl_value *value,
-        struct xl_value *type)
+        struct xl_value *type,
+        bool overwrite)
 {
         struct xl_uri *uri_copied;
-        word_t err;
+        word_t err, ignore;
 
         err = OK;
         if (unlikely(env->cap == 0))
@@ -245,14 +256,50 @@ xl_set(
         uri_copied = malloc(sizeof(struct xl_uri));
         memcpy(uri_copied, uri, sizeof(struct xl_uri));
 
-        /* take a reference to the value */
+        /* Take a reference to the value. We do this before we know whether the
+         * insert succeeded, because the insert can result in a release, which
+         * itself can result in a GC. We want to make sure that this doesn't get
+         * GCed if we are going to keep this thing, so we take a reference now
+         * and release it if the insert fails later. */
         err = xl_take(value);
         if (err != OK)
                 return err;
 
-        err = __insert(env->bindings, env->cap, uri_copied, value, type);
+        err = __insert(env->bindings, env->cap, uri_copied, value,
+                       type, overwrite);
         if (err == OK)
                 env->n++;
+        else
+        {
+                /* We're on the clean-up codepath, and we want the returned
+                 * error to be the actual error, not whatever went wrong during
+                 * the release, so we drop this error on the ground.
+                 *
+                 * (I like that it takes this much effort to ignore an
+                 * unignorable parameter) */
+                ignore = xl_release(value);
+                unused(ignore);
+        }
 
         return err;
+}
+
+word_t
+xl_set(
+        struct xl_env *env,
+        struct xl_uri *uri,
+        struct xl_value *value,
+        struct xl_value *type)
+{
+        return __set(env, uri, value, type, false);
+}
+
+word_t
+xl_overwrite(
+        struct xl_env *env,
+        struct xl_uri *uri,
+        struct xl_value *value,
+        struct xl_value *type)
+{
+        return __set(env, uri, value, type, true);
 }

@@ -35,16 +35,24 @@ no_ignore static word_t
 __eval_const(struct xl_env *env, struct xl_dagc_const *node)
 {
         unused(env);
-        unused(node);
-        return ERR_NOT_IMPLEMENTED;
+        node->head.known_type = node->type;
+        return OK;
 }
 
 no_ignore static word_t
 __eval_load(struct xl_env *env, struct xl_dagc_load *node)
 {
-        unused(env);
-        unused(node);
-        return ERR_NOT_IMPLEMENTED;
+        struct xl_value *value;
+        struct xl_value *type;
+        word_t err;
+
+        err = xl_get(&value, &type, env, node->loc);
+        if (err != OK)
+                return err;
+
+        node->head.known_type = type;
+        node->known_value = value;
+        return OK;
 }
 
 no_ignore static word_t
