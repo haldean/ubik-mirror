@@ -1,5 +1,5 @@
 /*
- * eval.c: evaluate directed acyclic graphs of computation
+ * schedule.c: scheduled evaluation of directed acyclic graphs of computation
  * Copyright (C) 2015, Haldean Brown
  *
  * This program is free software; you can redistribute it and/or modify

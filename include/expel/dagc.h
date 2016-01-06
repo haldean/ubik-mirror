@@ -116,6 +116,17 @@ xl_dagc_get_parents(
         struct xl_dagc *graph,
         struct xl_dagc_node *child);
 
+/* Returns the computed value and type of the given node.
+ *
+ * Assumes that the provided node is complete. For nodes that do
+ * not have a value (i.e., store nodes), ERR_BAD_TYPE is returned.
+ * If the node is not complete, the returned value is unspecified. */
+no_ignore word_t
+xl_dagc_known_value(
+        struct xl_value **value,
+        struct xl_value **type,
+        struct xl_dagc_node *node);
+
 no_ignore word_t
 xl_dagc_node_eval(struct xl_env *env, struct xl_dagc_node *node);
 
