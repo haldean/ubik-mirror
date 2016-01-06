@@ -23,13 +23,13 @@
 #include "expel/const.h"
 #include "expel/expel.h"
 
-#define FLAG_DONE 0x0001
-#define FLAG_D1_READY 0x0002
-#define FLAG_D2_READY 0x0004
+#define XL_DAGC_FLAG_COMPLETE 0x0001
+#define XL_DAGC_FLAG_D1_READY 0x0002
+#define XL_DAGC_FLAG_D2_READY 0x0004
+#define XL_DAGC_READY_MASK    0x0006
 
 struct xl_dagc_node
 {
-        word_t id;
         word_t node_type;
         struct xl_value *known_type;
         uint8_t is_terminal;

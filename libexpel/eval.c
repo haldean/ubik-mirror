@@ -24,6 +24,12 @@
 #include "expel/expel.h"
 #include "expel/util.h"
 
+struct xl_node_schedule
+{
+        struct xl_node_schedule *prev;
+        struct xl_dagc_node *node;
+};
+
 /* Adds elem to set if elem isn't already in set, modifying the
  * provided size if necessary. Returns true if the element was
  * added to the set. */ 
@@ -50,6 +56,11 @@ __set_add(struct xl_dagc_node **set, size_t *n, struct xl_dagc_node *elem)
         return false;
 }
 
+/* Finds reachable nodes in the graph.
+ *
+ * "Reachable" nodes are ones that are reachable from a terminal
+ * node by traversing dependency edges; nodes that are not
+ * reachable do not need to be evaluated. */
 no_ignore word_t
 __find_reachable_nodes(
                 struct xl_dagc_node **reachable, 
@@ -93,16 +104,96 @@ __find_reachable_nodes(
         return OK;
 }
 
+/* Initializes the flags of a given set of nodes.
+ *
+ * A node is ready if it has no incomplete dependencies, and is
+ * complete if it has no dependencies. */
+no_ignore word_t
+__set_initial_ready(struct xl_dagc_node *nodes, size_t n_nodes)
+{
+        struct xl_dagc_node *n, *d1, *d2;
+        word_t err;
+        size_t i;
+
+        /* First set the complete flag on applicable nodes. */
+        for (i = 0; i < n_nodes; i++)
+        {
+                n = &nodes[i];
+                err = xl_dagc_get_deps(&d1, &d2, n);
+                if (err != OK)
+                        return err;
+
+                if (d1 == NULL && d2 == NULL)
+                        n->flags = XL_DAGC_FLAG_COMPLETE;
+                else
+                        n->flags = 0;
+        }
+
+        /* Now set the ready flag on everyone whose dependencies
+         * are complete. */
+        for (i = 0; i < n_nodes; i++)
+        {
+                n = &nodes[i];
+                err = xl_dagc_get_deps(&d1, &d2, n);
+                if (err != OK)
+                        return err;
+
+                if (d1 == NULL || d1->flags & XL_DAGC_FLAG_COMPLETE)
+                        n->flags |= XL_DAGC_FLAG_D1_READY;
+                if (d2 == NULL || d2->flags & XL_DAGC_FLAG_COMPLETE)
+                        n->flags |= XL_DAGC_FLAG_D2_READY;
+        }
+
+        return OK;
+}
+
+no_ignore word_t
+__schedule_all_ready(
+                struct xl_node_schedule **schedule,
+                struct xl_dagc_node *nodes,
+                size_t n_nodes)
+{
+        struct xl_node_schedule *sched;
+        struct xl_dagc_node *n;
+        size_t i;
+
+        *schedule = NULL;
+        for (i = 0; i < n_nodes; i++)
+        {
+                n = &nodes[i];
+                if (n->flags & XL_DAGC_FLAG_COMPLETE)
+                        continue;
+                if ((n->flags & XL_DAGC_READY_MASK) == XL_DAGC_READY_MASK)
+                {
+                        sched = calloc(1, sizeof(struct xl_node_schedule));
+                        sched->prev = *schedule;
+                        sched->node = n;
+                        *schedule = sched;
+                }
+        }
+
+        return OK;
+}
+
 no_ignore word_t
 eval_dagc(struct xl_env *env, struct xl_dagc *graph)
 {
         struct xl_dagc_node *reachable;
+        struct xl_node_schedule *to_exec;
         size_t rn;
         word_t err;
 
         unused(env);
 
         err = __find_reachable_nodes(&reachable, &rn, graph);
+        if (err != OK)
+                return err;
+
+        err = __set_initial_ready(reachable, rn);
+        if (err != OK)
+                return err;
+
+        err = __schedule_all_ready(&to_exec, reachable, rn);
         if (err != OK)
                 return err;
 
