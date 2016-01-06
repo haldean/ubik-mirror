@@ -58,6 +58,10 @@ xl_uri_local(
         struct xl_uri *uri,
         char *name);
 
+/* Creates a URI struct from a value-encoded URI. */
+no_ignore word_t
+xl_uri_from_value(struct xl_uri *uri, struct xl_value *uri_val);
+
 /* Returns true if the provided URIs are equal. */
 bool
 xl_uri_eq(struct xl_uri *u0, struct xl_uri *u1);

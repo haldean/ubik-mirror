@@ -178,7 +178,7 @@ format:
                      computation. Set to 0x00 otherwise.
 
 Once the header has been loaded, the type-dependent decoding of the body
-can proceed.
+is given.
 
 Nodes with node type `   apply` have the following body:
 
@@ -191,6 +191,8 @@ Nodes with node type `    load` have the following body:
         Byte index   Field
                0-7   Node index of dependent store
               8...   Tree-encoded URI
+
+If the load has no dependent store, bytes 0-7 should all be set to 0xFF.
 
 Nodes with node type `   store` have the following body:
 
