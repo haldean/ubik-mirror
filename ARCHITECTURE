@@ -123,78 +123,92 @@ section below.
 
 Building logic ---------------------------------------------------------
 
-There are four further interesting tree layouts which form the basis of
-actual programming in Expel trees: `lambda`, `apply`, `get` and `bind`.
-Each of these is referred to as a "seed". The `lambda` seed defines a
-new function, the `apply` seed applies arguments to a function, the
-`get` seed retries a value by URI and the `bind` seed binds a value to a
-URI (more on URIs soon). Seeds are, once again, binary trees of the
-exact same kind as the typed value trees described in the previous
-section.
+Logic in Expel is encoded in a directed acyclic graph of computations
+(DAGC); nodes in this graph then reference values stored as trees. There
+are four kinds of nodes in a DAGC:
 
-Lambda trees have a left which descibes the type of the function, and a
-right which contains the function body. The left itself has a lot of
-data in it; the overall structure looks like this:
-
-                                .
-                               / \
-                              .   B
-                             / \
-                            T   .
-                               / \
-                              R   .
-                                 / \
-                                A1  .
-                                   / \
-                                  A2  .
-                                     / \
-                                    A3  0
-
-Where `B` is its body, `T` is the constant word `lambda`, `R` is the
-return type, and `A*` are the arguments. The arguments are themselves
-nodes, whose left is a type descriptor and whose right is the
-packed-array encoding of the argument's name.
-
-Apply trees are much simpler. Their left is the constant word `apply`,
-and their right has a left that is a function, and a right that is a
-list of arguments:
-
-                                .
-                               / \
-                              T   .
-                                 / \
-                                F   .
-                                   / \
-                                  A1  .
-                                     / \
-                                    A2  .
-
-Where `T` is the constant word `apply`, `F` is a subtree corresponding
-to the value of the function itself, and `A1` and `A2` are typed values
-that will be passed in as the first and second object.
-
-TODO: get and bind
-
+        `apply`   Points to a node with a function value and a node with
+                  an argument. Applies the argument to the function
+                  value. If the function is then fully applied the value
+                  of the node is the result of the function; if the
+                  function is partially applied the value of the node is
+                  a function that has an arity of one fewer than the
+                  input function.
+        `const`   A constant type and value.
+        `load`    A load operation. Has a required URI and an optional
+                  dependent store; the URI references where the value
+                  should come from and the dependent store adds a
+                  dependency from the load to that store.
+        `store`   A store operation. Has a URI and a reference to a node
+                  with a value, and stores the given value at that URI.
 
 Encoding in-flight and at-rest -----------------------------------------
 
 Trees have a single binary storage format that is used for network
 operations and for on-disk storage. The format begins with a header, and
-then contains a single encoded tree.
+then contains a single encoded graph.
 
 The header has the following fields:
 
         Byte index   Field
-               0-4   The constant bytes 0x65 0x78 0x70 0x6C ("expl")
-               5-8   The version number of the encoding format, as a
+               0-3   The constant bytes 0x65 0x78 0x70 0x6C ("expl")
+               4-7   The version number of the encoding format, as a
                      little-endian 4-byte unsigned integer.
 
-The tree encoding then proceeds as follows: Begin with the root of the
-tree to be encoded. The node's 8-bit tag is written to the stream,
-followed by the encoding of its left child, then its right child. If a
-child is a value, the value is written to the stream in little-endian
-format as an 8-byte integer. If a child is a node, recurse and apply
-this same operation.
+The version of the encoding specified in this document is 1, and thus
+bytes 4-7 should be 0x01000000
+
+The graph encoding has a header of its own:
+
+        Byte index   Field
+               0-7   The number of nodes in the graph
+
+Following the graph header, the specified number of node encodings
+follows. The order of encoding matters; each node is identified by other
+nodes by its index.
+
+A node is encoded by a type-independent header followed by a
+type-dependent body. The type-independent node header has the following
+format:
+
+        Byte index   Field
+               0-7   Node type (word-encoded)
+                 8   Set to 0x01 if the node is a terminal node, meaning
+                     that its value is intended as an output of
+                     computation. Set to 0x00 otherwise.
+
+Once the header has been loaded, the type-dependent decoding of the body
+can proceed.
+
+Nodes with node type `   apply` have the following body:
+
+        Byte index   Field
+               0-7   Node index of function node
+              8-15   Node index of argument node
+
+Nodes with node type `    load` have the following body:
+
+        Byte index   Field
+               0-7   Node index of dependent store
+              8...   Tree-encoded URI
+
+Nodes with node type `   store` have the following body:
+
+        Byte index   Field
+               0-7   Node index of value node
+              8...   Tree-encoded URI
+
+Nodes with node type `   const` have the following body:
+
+        Byte index   Field
+              0...   Tree-encoded type-value pair
+
+The tree encoding proceeds as follows: Begin with the root of the tree
+to be encoded. The node's 8-bit tag is written to the stream, followed
+by the encoding of its left child, then its right child. If a child is a
+value, the value is written to the stream in little-endian format as an
+8-byte integer. If a child is a node, recurse and apply this same
+operation.
 
 Tree decoding proceeds in much the same way: Take a byte off of the head
 of the stream. If the byte indicates the left is a node, recurse. If it

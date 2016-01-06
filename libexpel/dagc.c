@@ -120,7 +120,7 @@ xl_dagc_init(struct xl_dagc *graph)
 
         for (i = 0; i < graph->n; i++)
         {
-                graph->adjacency[i].child = &graph->nodes[i];
+                graph->adjacency[i].child = graph->nodes[i];
                 graph->adjacency[i].parents = NULL;
                 graph->adjacency[i].n_parents = 0;
         }
@@ -131,7 +131,7 @@ xl_dagc_init(struct xl_dagc *graph)
         /* First go through and count how many parents each one has. */
         for (i = 0; i < graph->n; i++)
         {
-                p = &graph->nodes[i];
+                p = graph->nodes[i];
                 err = xl_dagc_get_deps(&c1, &c2, p);
                 if (err != OK)
                         return err;
@@ -165,7 +165,7 @@ xl_dagc_init(struct xl_dagc *graph)
         /* Finally fill in the actual parent arrays. */
         for (i = 0; i < graph->n; i++)
         {
-                p = &graph->nodes[i];
+                p = graph->nodes[i];
                 err = xl_dagc_get_deps(&c1, &c2, p);
                 if (err != OK)
                         return err;

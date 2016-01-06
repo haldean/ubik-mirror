@@ -1,5 +1,5 @@
 /*
- * expel.h: expel base types
+ * expel.h: minimal public API
  * Copyright (C) 2015, Haldean Brown
  *
  * This program is free software; you can redistribute it and/or modify
@@ -89,7 +89,7 @@ struct xl_dagc_node
 struct xl_dagc
 {
         /* The nodes participating in the graph. */
-        struct xl_dagc_node *nodes;
+        struct xl_dagc_node **nodes;
         /* The number of nodes in the graph. */
         size_t n;
 
@@ -122,18 +122,30 @@ xl_take(struct xl_value *v);
 no_ignore word_t
 xl_release(struct xl_value *v);
 
+/* Loads a graph from a stream.
+ *
+ * Returns OK on success, or a nonzero error word. */
+no_ignore word_t
+xl_load(struct xl_dagc *out, struct xl_stream *sp);
+
+/* Saves a graph to a stream.
+ *
+ * Returns OK on success, or a nonzero error word. */
+no_ignore word_t
+xl_save(struct xl_stream *sp, struct xl_dagc *in);
+
 /* Loads a tree from a stream.
  *
  * The returned tree is not taken; it is up to the caller to take the
  * tree. Returns OK on success, or a nonzero error word. */
 no_ignore word_t
-xl_load(struct xl_value *out, struct xl_stream *sp);
+xl_load_value(struct xl_value *out, struct xl_stream *sp);
 
 /* Saves a tree to a stream.
  *
  * Returns OK on success, or a nonzero error word. */
 no_ignore word_t
-xl_save(struct xl_stream *sp, struct xl_value *in);
+xl_save_value(struct xl_stream *sp, struct xl_value *in);
 
 /* Initializes derived quantities on graphs.
  *

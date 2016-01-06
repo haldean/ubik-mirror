@@ -21,7 +21,11 @@
 #include "expel/stream.h"
 #include "expel/util.h"
 
+#include <arpa/inet.h>
 #include <stdlib.h>
+#include <string.h>
+
+#define CURRENT_ENCODING_VERSION 1
 
 /*
  * Trees have a single binary storage format that is used for network
@@ -49,7 +53,7 @@
  */
 
 word_t
-xl_load(struct xl_value *out, struct xl_stream *sp)
+xl_load_value(struct xl_value *out, struct xl_stream *sp)
 {
         size_t read;
         tag_t tag;
@@ -71,7 +75,7 @@ xl_load(struct xl_value *out, struct xl_stream *sp)
         else
         {
                 out->left.p = calloc(1, sizeof(struct xl_value));
-                ret = xl_load(out->left.p, sp);
+                ret = xl_load_value(out->left.p, sp);
                 if (ret != OK)
                         return ret;
                 out->left.p->refcount = 1;
@@ -87,7 +91,7 @@ xl_load(struct xl_value *out, struct xl_stream *sp)
         else
         {
                 out->right.p = calloc(1, sizeof(struct xl_value));
-                ret = xl_load(out->right.p, sp);
+                ret = xl_load_value(out->right.p, sp);
                 if (ret != OK)
                         return ret;
                 out->right.p->refcount = 1;
@@ -97,7 +101,7 @@ xl_load(struct xl_value *out, struct xl_stream *sp)
 }
 
 word_t
-xl_save(struct xl_stream *sp, struct xl_value *in)
+xl_save_value(struct xl_stream *sp, struct xl_value *in)
 {
         word_t val;
         word_t ret;
@@ -113,7 +117,7 @@ xl_save(struct xl_stream *sp, struct xl_value *in)
         }
         else
         {
-                ret = xl_save(sp, in->left.p);
+                ret = xl_save_value(sp, in->left.p);
                 if (ret)
                         return ret;
         }
@@ -126,10 +130,43 @@ xl_save(struct xl_stream *sp, struct xl_value *in)
         }
         else
         {
-                ret = xl_save(sp, in->right.p);
+                ret = xl_save_value(sp, in->right.p);
                 if (ret)
                         return ret;
         }
 
+        return OK;
+}
+
+word_t
+xl_load(struct xl_dagc *graph, struct xl_stream *sp)
+{
+        #define READ_INTO(x) { \
+                read = xl_stream_read(&x, sp, sizeof(x)); \
+                if (read != sizeof(x)) return ERR_NO_DATA; }
+
+        char header[4];
+        uint32_t version;
+        word_t n_nodes;
+        size_t read;
+        size_t i;
+
+        READ_INTO(header);
+        if (strncmp(header, "expl", 4) != 0)
+                return ERR_BAD_HEADER;
+
+        READ_INTO(version);
+        version = ntohl(version);
+        if (version != CURRENT_ENCODING_VERSION)
+                return ERR_UNSUPPORTED_VERSION;
+
+        READ_INTO(n_nodes);
+        n_nodes = ntohw(n_nodes);
+        graph->n = n_nodes;
+        graph->nodes = calloc(n_nodes, sizeof(struct xl_dagc_node));
+
+        for (i = 0; i < n_nodes; i++)
+        {
+        }
         return OK;
 }

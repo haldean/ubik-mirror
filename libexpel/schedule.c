@@ -79,7 +79,7 @@ __find_reachable_nodes(
         /* First find terminal nodes. */
         for (i = 0; i < graph->n; i++)
         {
-                n = &graph->nodes[i];
+                n = graph->nodes[i];
                 if (n->is_terminal)
                         reachable[(*rn)++] = n;
         }

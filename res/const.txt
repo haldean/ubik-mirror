@@ -32,17 +32,14 @@
    tuple.BASE_TYPE_TUPLE
   packed.BASE_TYPE_PACKED
     type.BASE_TYPE_TYPE
-
-  lambda.SEED_LAMBDA
-   apply.SEED_APPLY
-     get.SEED_GET
-    bind.SEED_BIND
+  lambda.BASE_TYPE_FUNC
 
    rfile.STREAM_TYPE_FILE_R
    wfile.STREAM_TYPE_FILE_W
   buffer.STREAM_TYPE_BUFFER
 
  eabsent.ERR_ABSENT
+  ebhead.ERR_BAD_HEADER
   ebtype.ERR_BAD_TYPE
    efull.ERR_FULL
  enodata.ERR_NO_DATA
@@ -53,9 +50,10 @@ erefoflw.ERR_REFCOUNT_OVERFLOW
 erefuflw.ERR_REFCOUNT_UNDERFLOW
     ewtf.ERR_UNEXPECTED_FAILURE
   eutype.ERR_UNKNOWN_TYPE
+ ebadver.ERR_UNSUPPORTED_VERSION
   ewfail.ERR_WRITE_FAILED
 
- dnapply.DAGC_NODE_APPLY
- dnconst.DAGC_NODE_CONST
-  dnload.DAGC_NODE_LOAD
- dnstore.DAGC_NODE_STORE
+   apply.DAGC_NODE_APPLY
+   const.DAGC_NODE_CONST
+    load.DAGC_NODE_LOAD
+   store.DAGC_NODE_STORE
