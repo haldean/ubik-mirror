@@ -73,18 +73,29 @@ __eval_store(struct xl_env *env, struct xl_dagc_store *node)
 no_ignore word_t
 xl_dagc_node_eval(struct xl_env *env, struct xl_dagc_node *node)
 {
+        word_t err;
+
         xl_assert((node->flags & XL_DAGC_READY_MASK) == XL_DAGC_READY_MASK);
 
         switch (node->node_type)
         {
         case DAGC_NODE_APPLY:
-                return __eval_apply(env, (struct xl_dagc_apply *) node);
+                err = __eval_apply(env, (struct xl_dagc_apply *) node);
+                break;
         case DAGC_NODE_CONST:
-                return __eval_const(env, (struct xl_dagc_const *) node);
+                err = __eval_const(env, (struct xl_dagc_const *) node);
+                break;
         case DAGC_NODE_LOAD:
-                return __eval_load(env, (struct xl_dagc_load *) node);
+                err = __eval_load(env, (struct xl_dagc_load *) node);
+                break;
         case DAGC_NODE_STORE:
-                return __eval_store(env, (struct xl_dagc_store *) node);
+                err = __eval_store(env, (struct xl_dagc_store *) node);
+                break;
+        default:
+                return ERR_UNKNOWN_TYPE;
         }
-        return ERR_UNKNOWN_TYPE;
+
+        if (err == OK)
+                node->flags |= XL_DAGC_FLAG_COMPLETE;
+        return err;
 }

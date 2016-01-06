@@ -23,45 +23,64 @@
 #include "expel/const.h"
 #include "expel/expel.h"
 
-#define XL_DAGC_FLAG_COMPLETE 0x0001
-#define XL_DAGC_FLAG_D1_READY 0x0002
-#define XL_DAGC_FLAG_D2_READY 0x0004
-#define XL_DAGC_READY_MASK    0x0006
+/* node is fully evaluated */
+#define XL_DAGC_FLAG_COMPLETE 0x01
+/* node's first dependency is fully evaluated */
+#define XL_DAGC_FLAG_D1_READY 0x02
+/* node's second dependency is fully evaluated */
+#define XL_DAGC_FLAG_D2_READY 0x04
+/* d1_ready | d2_ready */
+#define XL_DAGC_READY_MASK    0x06
 
 struct xl_dagc_node
 {
+        /* One of the DAGC_NODE constants */
         word_t node_type;
+        /* The evaluated type of the node */
         struct xl_value *known_type;
+        /* Nonzero if we want the value of this node at the end of evaluation */
         uint8_t is_terminal;
+        /* A bitsest of the XL_DAGC_FLAG constants */
         uint8_t flags;
 };
 
 struct xl_dagc_apply
 {
         struct xl_dagc_node head;
+        /* Function to call */
         struct xl_dagc_node *func;
+        /* Argument to apply to function */
         struct xl_dagc_node *arg;
+        /* Value filled in after node is evaluated */
         struct xl_value *known_value;
 };
 
 struct xl_dagc_const
 {
         struct xl_dagc_node head;
+        /* Type of constant */
         struct xl_value *type;
+        /* Value of constant */
         struct xl_value *value;
 };
 
 struct xl_dagc_load
 {
         struct xl_dagc_node head;
+        /* The store this load depends on (can be NULL) */
+        struct xl_dagc_node *dependent_store;
+        /* Where to load from */
         struct xl_uri *loc;
+        /* Value filled in after node is evaluated */
         struct xl_value *known_value;
 };
 
 struct xl_dagc_store
 {
         struct xl_dagc_node head;
+        /* Location to store */
         struct xl_uri *loc;
+        /* Value to store */
         struct xl_dagc_node *value;
 };
 
