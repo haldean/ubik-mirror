@@ -29,7 +29,7 @@ masks:
                 0b00000001 (0x01): left child is a node
                 0b00000010 (0x02): left child is a word
                 0b00000100 (0x04): right child is a node
-                0b00001000 (0x05): right child is a word
+                0b00001000 (0x08): right child is a word
 
 Thus, a node whose left value is a node and whose right value is a word
 would have the tag `0b00001001`, or `0x09`.
@@ -148,15 +148,18 @@ Trees have a single binary storage format that is used for network
 operations and for on-disk storage. The format begins with a header, and
 then contains a single encoded graph.
 
+All numerically-encoded data is stored in big-endian ("network") byte
+order, which means the most significant byte comes first.
+
 The header has the following fields:
 
         Byte index   Field
                0-3   The constant bytes 0x65 0x78 0x70 0x6C ("expl")
                4-7   The version number of the encoding format, as a
-                     little-endian 4-byte unsigned integer.
+                     big-endian 4-byte unsigned integer.
 
 The version of the encoding specified in this document is 1, and thus
-bytes 4-7 should be 0x01000000
+bytes 4-7 should be 0x00000001
 
 The graph encoding has a header of its own:
 
@@ -203,7 +206,8 @@ Nodes with node type `   store` have the following body:
 Nodes with node type `   const` have the following body:
 
         Byte index   Field
-              0...   Tree-encoded type-value pair
+              0...   Tree-encoded value
+               ...   Tree-encoded type
 
 The tree encoding proceeds as follows: Begin with the root of the tree
 to be encoded. The node's 8-bit tag is written to the stream, followed

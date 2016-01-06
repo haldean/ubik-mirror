@@ -85,15 +85,15 @@ ntohw(word_t w)
 }
 
 char *
-explain_word(word_t word)
+xl_explain_word(word_t word)
 {
+        size_t i;
         char *res;
-        res = malloc(4);
+        word = htonw(word);
+        res = calloc(9, sizeof(char));
         if (res == NULL)
                 return res;
-        res[0] = (char) (word >> 24);
-        res[1] = (char) (word >> 16);
-        res[2] = (char) (word >>  8);
-        res[3] = (char) (word);
+        for (i = 0; i < 8; i++)
+                res[i] = (char) (word >> (8 * (7 - i)));
         return res;
 }

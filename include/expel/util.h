@@ -40,6 +40,6 @@ ntohw(word_t);
 
 /* Converts a constant to its string value. */
 char *
-explain_word(word_t);
+xl_explain_word(word_t);
 
 #endif

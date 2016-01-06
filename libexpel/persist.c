@@ -278,6 +278,7 @@ __load_node(struct xl_dagc_node **node, struct xl_stream *sp)
                 err = __load_store((struct xl_dagc_store **) node, sp);
                 break;
         default:
+                printf("type: %s (%lx)\n", xl_explain_word(node_type), node_type);
                 return ERR_UNKNOWN_TYPE;
         }
 

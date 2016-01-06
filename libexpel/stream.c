@@ -25,27 +25,30 @@
 #include "expel/util.h"
 
 /* Opens a stream for reading from the given file. */
-void
+no_ignore word_t
 xl_stream_rfile(struct xl_stream *sp, char *file)
 {
         sp->stream_type = STREAM_TYPE_FILE_R;
         sp->file = fopen(file, "r");
+        return sp->file == NULL ? ERR_ABSENT : OK;
 }
 
 /* Opens a stream for writing to the given file. */
-void
+no_ignore word_t
 xl_stream_wfile(struct xl_stream *sp, char *file)
 {
         sp->stream_type = STREAM_TYPE_FILE_W;
         sp->file = fopen(file, "w");
+        return sp->file == NULL ? ERR_ABSENT : OK;
 }
 
 /* Opens a stream backed by an in-memory buffer. */
-void
+no_ignore word_t
 xl_stream_buffer(struct xl_stream *sp)
 {
         sp->stream_type = STREAM_TYPE_BUFFER;
         sp->buffer = calloc(1, sizeof(struct _xl_buf));
+        return sp->buffer == NULL ? ERR_NO_MEMORY : OK;
 }
 
 /* Attempts to read the specified number of bytes from the stream, returning the

@@ -34,7 +34,7 @@ buffer()
         char c[20];
         size_t n;
 
-        xl_stream_buffer(&s);
+        assert(xl_stream_buffer(&s) == OK);
 
         n = xl_stream_write(&s, (char[]){0, 1, 2, 3, 4}, 5);
         assert(n == 5);
@@ -60,7 +60,7 @@ load_save()
         struct xl_stream s;
         struct xl_value *u, *v;
 
-        xl_stream_buffer(&s);
+        assert(xl_stream_buffer(&s) == OK);
 
         /*
          *              0
@@ -273,7 +273,7 @@ main()
         init();
         if ((err = xl_start()) != OK)
         {
-                printf("couldn't start expel: %s\n", explain_word(err));
+                printf("couldn't start expel: %s\n", xl_explain_word(err));
                 return -1;
         }
         run(buffer);
