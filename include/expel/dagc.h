@@ -96,14 +96,24 @@ xl_dagc_get_deps(
 no_ignore word_t
 xl_dagc_init(struct xl_dagc *graph);
 
-/* Returns true if an edge exists from parent to child.
+/* Retrieve the parents of the given node.
  *
- * This existence of an edge implies that the parent depends on
- * the value of the child. */
-bool
-xl_dagc_edge_exists(
+ * Returns OK on success or a nonzero error code on error.
+ * It is imperative that callers do not modify the contents
+ * of the returned array.
+ *
+ * I know a triple-pointer seems ridiculous, but hear me
+ * out; we're returning a pointer to the caller, but we're
+ * returning multiple values so we want it as an outparam,
+ * which means we need to be passed a pointer to the
+ * pointer. The pointer we're returning is itself a pointer
+ * to a list of pointers. So we're asking you to pass us a
+ * pointer to a pointer of pointers. I'm sorry. */
+no_ignore word_t
+xl_dagc_get_parents(
+        struct xl_dagc_node ***parents,
+        size_t *n_parents,
         struct xl_dagc *graph,
-        struct xl_dagc_node *parent,
         struct xl_dagc_node *child);
 
 #endif
