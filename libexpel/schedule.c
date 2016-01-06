@@ -33,7 +33,7 @@ struct xl_node_schedule
 /* Adds elem to set if elem isn't already in set, modifying the
  * provided size if necessary. Returns true if the element was
  * added to the set. */ 
-bool
+static bool
 __set_add(struct xl_dagc_node **set, size_t *n, struct xl_dagc_node *elem)
 {
         size_t i;
@@ -61,7 +61,7 @@ __set_add(struct xl_dagc_node **set, size_t *n, struct xl_dagc_node *elem)
  * "Reachable" nodes are ones that are reachable from a terminal
  * node by traversing dependency edges; nodes that are not
  * reachable do not need to be evaluated. */
-no_ignore word_t
+no_ignore static word_t
 __find_reachable_nodes(
                 struct xl_dagc_node **reachable, 
                 size_t *rn,
@@ -108,29 +108,15 @@ __find_reachable_nodes(
  *
  * A node is ready if it has no incomplete dependencies, and is
  * complete if it has no dependencies. */
-no_ignore word_t
+no_ignore static word_t
 __set_initial_ready(struct xl_dagc_node *nodes, size_t n_nodes)
 {
         struct xl_dagc_node *n, *d1, *d2;
         word_t err;
         size_t i;
 
-        /* First set the complete flag on applicable nodes. */
-        for (i = 0; i < n_nodes; i++)
-        {
-                n = &nodes[i];
-                err = xl_dagc_get_deps(&d1, &d2, n);
-                if (err != OK)
-                        return err;
-
-                if (d1 == NULL && d2 == NULL)
-                        n->flags = XL_DAGC_FLAG_COMPLETE;
-                else
-                        n->flags = 0;
-        }
-
-        /* Now set the ready flag on everyone whose dependencies
-         * are complete. */
+        /* Set the ready flag on everyone whose dependencies are
+         * complete. */
         for (i = 0; i < n_nodes; i++)
         {
                 n = &nodes[i];
@@ -147,7 +133,7 @@ __set_initial_ready(struct xl_dagc_node *nodes, size_t n_nodes)
         return OK;
 }
 
-no_ignore word_t
+no_ignore static word_t
 __schedule(struct xl_node_schedule **schedule, struct xl_dagc_node *node)
 {
         struct xl_node_schedule *sched;
@@ -160,7 +146,7 @@ __schedule(struct xl_node_schedule **schedule, struct xl_dagc_node *node)
         return OK;
 }
 
-no_ignore word_t
+no_ignore static word_t
 __schedule_all_ready(
                 struct xl_node_schedule **schedule,
                 struct xl_dagc_node *nodes,
@@ -187,7 +173,7 @@ __schedule_all_ready(
         return OK;
 }
 
-no_ignore word_t
+no_ignore static word_t
 __notify_parents(
                 struct xl_node_schedule **schedule,
                 struct xl_dagc *graph,

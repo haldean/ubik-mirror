@@ -32,18 +32,6 @@
 /* d1_ready | d2_ready */
 #define XL_DAGC_READY_MASK    0x06
 
-struct xl_dagc_node
-{
-        /* One of the DAGC_NODE constants */
-        word_t node_type;
-        /* The evaluated type of the node */
-        struct xl_value *known_type;
-        /* Nonzero if we want the value of this node at the end of evaluation */
-        uint8_t is_terminal;
-        /* A bitsest of the XL_DAGC_FLAG constants */
-        uint8_t flags;
-};
-
 struct xl_dagc_apply
 {
         struct xl_dagc_node head;
@@ -84,17 +72,6 @@ struct xl_dagc_store
         struct xl_dagc_node *value;
 };
 
-struct __xl_dagc_adjacency;
-
-struct xl_dagc
-{
-        struct xl_dagc_node *nodes;
-        size_t n;
-
-        /* Derived members: populated by calling xl_dagc_init */
-        struct __xl_dagc_adjacency *adjacency;
-};
-
 /* Gets the dependencies of a node.
  *
  * For nodes with two dependencies, d1 and d2 will be filled in
@@ -106,14 +83,6 @@ xl_dagc_get_deps(
         struct xl_dagc_node **d1,
         struct xl_dagc_node **d2,
         struct xl_dagc_node *n);
-
-/* Initializes derived quantities on graphs.
- *
- * Callers should create a dagc struct, populate the nodes and the
- * n fields, and then call this method to compute all derived
- * quantities. */
-no_ignore word_t
-xl_dagc_init(struct xl_dagc *graph);
 
 /* Retrieve the parents of the given node.
  *
@@ -146,10 +115,8 @@ xl_dagc_known_value(
         struct xl_value **type,
         struct xl_dagc_node *node);
 
+/* Evaluates a node and marks it as complete. */
 no_ignore word_t
 xl_dagc_node_eval(struct xl_env *env, struct xl_dagc_node *node);
-
-no_ignore word_t
-xl_dagc_eval(struct xl_env *env, struct xl_dagc *graph);
 
 #endif

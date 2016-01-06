@@ -35,6 +35,7 @@ no_ignore static word_t
 __eval_const(struct xl_env *env, struct xl_dagc_const *node)
 {
         unused(env);
+        node->head.known_value = node->value;
         node->head.known_type = node->type;
         return OK;
 }
