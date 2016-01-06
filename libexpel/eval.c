@@ -148,13 +148,26 @@ __set_initial_ready(struct xl_dagc_node *nodes, size_t n_nodes)
 }
 
 no_ignore word_t
+__schedule(struct xl_node_schedule **schedule, struct xl_dagc_node *node)
+{
+        struct xl_node_schedule *sched;
+
+        sched = calloc(1, sizeof(struct xl_node_schedule));
+        sched->prev = *schedule;
+        sched->node = node;
+        *schedule = sched;
+
+        return OK;
+}
+
+no_ignore word_t
 __schedule_all_ready(
                 struct xl_node_schedule **schedule,
                 struct xl_dagc_node *nodes,
                 size_t n_nodes)
 {
-        struct xl_node_schedule *sched;
         struct xl_dagc_node *n;
+        word_t err;
         size_t i;
 
         *schedule = NULL;
@@ -165,10 +178,9 @@ __schedule_all_ready(
                         continue;
                 if ((n->flags & XL_DAGC_READY_MASK) == XL_DAGC_READY_MASK)
                 {
-                        sched = calloc(1, sizeof(struct xl_node_schedule));
-                        sched->prev = *schedule;
-                        sched->node = n;
-                        *schedule = sched;
+                        err = __schedule(schedule, n);
+                        if (err != OK)
+                                return err;
                 }
         }
 
@@ -176,26 +188,76 @@ __schedule_all_ready(
 }
 
 no_ignore word_t
-eval_dagc(struct xl_env *env, struct xl_dagc *graph)
+__notify_parents(
+                struct xl_node_schedule **schedule,
+                struct xl_dagc *graph,
+                struct xl_dagc_node *node)
 {
-        struct xl_dagc_node *reachable;
-        struct xl_node_schedule *to_exec;
-        size_t rn;
+        struct xl_dagc_node **parents, *d1, *d2, *p;
+        size_t i, n_parents;
         word_t err;
 
-        unused(env);
-
-        err = __find_reachable_nodes(&reachable, &rn, graph);
+        err = xl_dagc_get_parents(&parents, &n_parents, graph, node);
         if (err != OK)
                 return err;
 
-        err = __set_initial_ready(reachable, rn);
+        for (i = 0; i < n_parents; i++)
+        {
+                p = parents[i];
+
+                err = xl_dagc_get_deps(&d1, &d2, p);
+                if (err != OK)
+                        return err;
+
+                if (node == d1)
+                        p->flags |= XL_DAGC_FLAG_D1_READY;
+                if (node == d2)
+                        p->flags |= XL_DAGC_FLAG_D2_READY;
+                if ((p->flags & XL_DAGC_READY_MASK) == XL_DAGC_READY_MASK)
+                {
+                        err = __schedule(schedule, p);
+                        if (err != OK)
+                                return err;
+                }
+        }
+        return OK;
+}
+
+no_ignore word_t
+xl_dagc_eval(struct xl_env *env, struct xl_dagc *graph)
+{
+        struct xl_dagc_node *reachable;
+        struct xl_node_schedule *schedule, *to_exec;
+        size_t n_nodes;
+        word_t err;
+
+        err = __find_reachable_nodes(&reachable, &n_nodes, graph);
         if (err != OK)
                 return err;
 
-        err = __schedule_all_ready(&to_exec, reachable, rn);
+        err = __set_initial_ready(reachable, n_nodes);
         if (err != OK)
                 return err;
+
+        err = __schedule_all_ready(&schedule, reachable, n_nodes);
+        if (err != OK)
+                return err;
+
+        while (schedule != NULL)
+        {
+                to_exec = schedule;
+                schedule = to_exec->prev;
+
+                err = xl_dagc_node_eval(env, to_exec->node);
+                if (err != OK)
+                        return err;
+
+                err = __notify_parents(&schedule, graph, to_exec->node);
+                if (err != OK)
+                        return err;
+
+                free(to_exec);
+        }
 
         return OK;
 }

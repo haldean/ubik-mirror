@@ -116,4 +116,10 @@ xl_dagc_get_parents(
         struct xl_dagc *graph,
         struct xl_dagc_node *child);
 
+no_ignore word_t
+xl_dagc_node_eval(struct xl_env *env, struct xl_dagc_node *node);
+
+no_ignore word_t
+xl_dagc_eval(struct xl_env *env, struct xl_dagc *graph);
+
 #endif
