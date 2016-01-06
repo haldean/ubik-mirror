@@ -21,27 +21,45 @@
 #include "expel/dagc.h"
 #include "expel/env.h"
 #include "expel/expel.h"
+#include "expel/util.h"
 
-static no_ignore word_t
-__eval_apply(struct xl_env *env, struct xl_dagc_node *node)
+no_ignore static word_t
+__eval_apply(struct xl_env *env, struct xl_dagc_apply *node)
+{
+        unused(env);
+        unused(node);
+        return ERR_NOT_IMPLEMENTED;
+}
 
-static no_ignore word_t
-__eval_const(struct xl_env *env, struct xl_dagc_node *node)
+no_ignore static word_t
+__eval_const(struct xl_env *env, struct xl_dagc_const *node)
+{
+        unused(env);
+        unused(node);
+        return ERR_NOT_IMPLEMENTED;
+}
 
-static no_ignore word_t
-__eval_load(struct xl_env *env, struct xl_dagc_node *node)
+no_ignore static word_t
+__eval_load(struct xl_env *env, struct xl_dagc_load *node)
+{
+        unused(env);
+        unused(node);
+        return ERR_NOT_IMPLEMENTED;
+}
 
-static no_ignore word_t
-__eval_store(struct xl_env *env, struct xl_dagc_node *node)
+no_ignore static word_t
+__eval_store(struct xl_env *env, struct xl_dagc_store *node)
 {
         struct xl_value *known_value;
         struct xl_value *known_type;
         word_t err;
 
-        err = xl_dagc_known_value(&known_value, &known_type, node);
+        err = xl_dagc_known_value(&known_value, &known_type, node->value);
         if (err != OK)
                 return err;
-        return xl_set(env, node->loc, known_value);
+
+        node->head.known_type = known_type;
+        return xl_set(env, node->loc, known_value, known_type);
 }
 
 no_ignore word_t
@@ -52,13 +70,13 @@ xl_dagc_node_eval(struct xl_env *env, struct xl_dagc_node *node)
         switch (node->node_type)
         {
         case DAGC_NODE_APPLY:
-                return __eval_apply(env, node);
+                return __eval_apply(env, (struct xl_dagc_apply *) node);
         case DAGC_NODE_CONST:
-                return __eval_const(env, node);
+                return __eval_const(env, (struct xl_dagc_const *) node);
         case DAGC_NODE_LOAD:
-                return __eval_load(env, node);
+                return __eval_load(env, (struct xl_dagc_load *) node);
         case DAGC_NODE_STORE:
-                return __eval_store(env, node);
+                return __eval_store(env, (struct xl_dagc_store *) node);
         }
         return ERR_UNKNOWN_TYPE;
 }

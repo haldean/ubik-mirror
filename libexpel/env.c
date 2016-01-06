@@ -97,7 +97,11 @@ xl_env_free(struct xl_env *env)
 }
 
 word_t
-xl_get(struct xl_value **out, struct xl_env *env, struct xl_uri *uri)
+xl_get(
+        struct xl_value **value,
+        struct xl_value **type,
+        struct xl_env *env,
+        struct xl_uri *uri)
 {
         size_t i;
         size_t probed;
@@ -110,22 +114,28 @@ xl_get(struct xl_value **out, struct xl_env *env, struct xl_uri *uri)
                         continue;
                 if (xl_uri_eq(uri, env->bindings[i].uri))
                 {
-                        *out = env->bindings[i].value;
+                        *value = env->bindings[i].value;
+                        *type = env->bindings[i].type;
                         found = true;
                         break;
                 }
+                i = (i + 1) % env->cap;
         }
 
         return found ? OK : ERR_ABSENT;
 }
 
-/* Inserts the given URI-value pair into the given binding array. */
+/* Inserts the given URI-value pair into the given binding array.
+ *
+ * This assumes that the table has space for another entry, and
+ * will return ERR_FULL if the table has no spaces remaining. */
 static inline word_t
 __insert(
         struct xl_binding *binds,
         size_t cap,
         struct xl_uri *uri,
-        struct xl_value *value)
+        struct xl_value *value,
+        struct xl_value *type)
 {
         size_t i;
         size_t probed;
@@ -141,7 +151,7 @@ __insert(
                 i = (i + 1) % cap;
         }
         if (unlikely(probed == cap))
-                return ERR_UNEXPECTED_FAILURE;
+                return ERR_FULL;
 
         /* There was already a value at this key, we need to release our
          * reference on it. */
@@ -153,6 +163,7 @@ __insert(
         {
                 binds[i].uri = uri;
                 binds[i].value = value;
+                binds[i].type = type;
         }
         return err;
 }
@@ -193,7 +204,8 @@ __resize_rebalance(struct xl_env *env)
                         new_binds,
                         new_cap,
                         env->bindings[i].uri,
-                        env->bindings[i].value);
+                        env->bindings[i].value,
+                        env->bindings[i].type);
                 if (err != OK)
                         break;
         }
@@ -212,7 +224,11 @@ __resize_rebalance(struct xl_env *env)
 }
 
 word_t
-xl_set(struct xl_env *env, struct xl_uri *uri, struct xl_value *value)
+xl_set(
+        struct xl_env *env,
+        struct xl_uri *uri,
+        struct xl_value *value,
+        struct xl_value *type)
 {
         struct xl_uri *uri_copied;
         word_t err;
@@ -220,7 +236,7 @@ xl_set(struct xl_env *env, struct xl_uri *uri, struct xl_value *value)
         err = OK;
         if (unlikely(env->cap == 0))
                 err = __resize_rebalance(env);
-        else if ((float) env->n / (float) env->cap > ENV_MAX_LOAD)
+        else if (unlikely((float) env->n / (float) env->cap > ENV_MAX_LOAD))
                 err = __resize_rebalance(env);
         if (err != OK)
                 return err;
@@ -234,7 +250,7 @@ xl_set(struct xl_env *env, struct xl_uri *uri, struct xl_value *value)
         if (err != OK)
                 return err;
 
-        err = __insert(env->bindings, env->cap, uri_copied, value);
+        err = __insert(env->bindings, env->cap, uri_copied, value, type);
         if (err == OK)
                 env->n++;
 

@@ -42,6 +42,7 @@ struct xl_uri {
 struct xl_binding {
         struct xl_uri   *uri;
         struct xl_value *value;
+        struct xl_value *type;
 };
 
 /* A hash mapping from URI to value. */
@@ -82,7 +83,11 @@ xl_env_free(struct xl_env *env);
  * found, ERR_ABSENT is returned and the out pointer is unchanged.
  * */
 no_ignore word_t
-xl_get(struct xl_value **out, struct xl_env *env, struct xl_uri *uri);
+xl_get(
+        struct xl_value **value,
+        struct xl_value **type,
+        struct xl_env *env,
+        struct xl_uri *uri);
 
 /* Inserts the given value in at the given URI.
  *
@@ -91,6 +96,10 @@ xl_get(struct xl_value **out, struct xl_env *env, struct xl_uri *uri);
  * bindings but modifications to the value will modify the value
  * stored in the environment. */
 no_ignore word_t
-xl_set(struct xl_env *env, struct xl_uri *uri, struct xl_value *value);
+xl_set(
+        struct xl_env *env,
+        struct xl_uri *uri,
+        struct xl_value *value,
+        struct xl_value *type);
 
 #endif

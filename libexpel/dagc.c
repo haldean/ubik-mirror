@@ -197,6 +197,29 @@ xl_dagc_init(struct xl_dagc *graph)
 }
 
 no_ignore word_t
+xl_dagc_known_value(
+        struct xl_value **value,
+        struct xl_value **type,
+        struct xl_dagc_node *node)
+{
+        *type = node->known_type;
+
+        switch (node->node_type)
+        {
+        case DAGC_NODE_APPLY:
+                *value = ((struct xl_dagc_apply *) node)->known_value;
+                return OK;
+        case DAGC_NODE_LOAD:
+                *value = ((struct xl_dagc_load *) node)->known_value;
+                return OK;
+        case DAGC_NODE_CONST:
+                *value = ((struct xl_dagc_const *) node)->value;
+                return OK;
+        }
+        return ERR_BAD_TYPE;
+}
+
+no_ignore word_t
 xl_dagc_get_parents(
         struct xl_dagc_node ***parents,
         size_t *n_parents,

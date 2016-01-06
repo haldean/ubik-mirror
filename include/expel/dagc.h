@@ -38,7 +38,7 @@ struct xl_dagc_node
 
 struct xl_dagc_apply
 {
-        struct xl_dagc_node __head;
+        struct xl_dagc_node head;
         struct xl_dagc_node *func;
         struct xl_dagc_node *arg;
         struct xl_value *known_value;
@@ -46,21 +46,21 @@ struct xl_dagc_apply
 
 struct xl_dagc_const
 {
-        struct xl_dagc_node __head;
+        struct xl_dagc_node head;
         struct xl_value *type;
         struct xl_value *value;
 };
 
 struct xl_dagc_load
 {
-        struct xl_dagc_node __head;
+        struct xl_dagc_node head;
         struct xl_uri *loc;
         struct xl_value *known_value;
 };
 
 struct xl_dagc_store
 {
-        struct xl_dagc_node __head;
+        struct xl_dagc_node head;
         struct xl_uri *loc;
         struct xl_dagc_node *value;
 };

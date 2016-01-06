@@ -162,7 +162,7 @@ env()
         #define N_TEST_URIS 2000
 
         struct xl_env env;
-        struct xl_value *v, *r;
+        struct xl_value *v, *r, *t, *rt;
         struct xl_uri u;
         int i;
         char *key;
@@ -170,17 +170,21 @@ env()
 
         assert(xl_new(&v) == OK);
         v->tag = TAG_LEFT_WORD | TAG_RIGHT_WORD;
-        v->refcount = 1;
         v->left.v = 0x1234567890123456;
-        v->right.v = 0xFFFFFFFFFFFFFFFF;
+        v->right.v = 0;
+
+        assert(xl_new(&t) == OK);
+        t->tag = TAG_LEFT_WORD | TAG_RIGHT_WORD;
+        t->left.v = BASE_TYPE_WORD;
+        t->right.v = 0;
 
         u.hash = 0;
         assert(xl_uri_local(&u, "test_var_0") == OK);
         assert(u.hash != 0);
 
         assert(xl_env_init(&env) == OK);
-        assert(xl_set(&env, &u, v) == OK);
-        assert(xl_get(&r, &env, &u) == OK);
+        assert(xl_set(&env, &u, v, t) == OK);
+        assert(xl_get(&r, &rt, &env, &u) == OK);
         assert(r == v);
 
         for (i = 0; i < N_TEST_URIS; i++)
@@ -191,7 +195,7 @@ env()
         }
         for (i = 0; i < N_TEST_URIS; i++)
         {
-                assert(xl_set(&env, &uris[i], v) == OK);
+                assert(xl_set(&env, &uris[i], v, t) == OK);
         }
         assert(v->refcount == N_TEST_URIS + 1);
         assert(xl_env_free(&env) == OK);
