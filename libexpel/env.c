@@ -29,41 +29,6 @@
 #define ENV_CAP_SCALE 2
 
 word_t
-xl_uri_local(
-        struct xl_uri *uri,
-        char *name)
-{
-        size_t i;
-
-        uri->name = name;
-        uri->version = 0;
-
-        uri->hash = uri->version;
-        for (i = 0; name[i] != 0; i++)
-                uri->hash ^=
-                        ((uint64_t) name[i] << 24) |
-                        ((uint64_t) name[i] << 16) |
-                        ((uint64_t) name[i] <<  8) |
-                        ((uint64_t) name[i]);
-
-        return OK;
-}
-
-bool
-xl_uri_eq(struct xl_uri *u0, struct xl_uri *u1)
-{
-        if (u0->hash != u1->hash)
-                return false;
-        if (u0->version != u1->version)
-                return false;
-        if (u0->scope != u1->scope)
-                return false;
-        if (strcmp(u0->name, u1->name) != 0)
-                return false;
-        return true;
-}
-
-word_t
 xl_env_init(struct xl_env *env)
 {
         env->bindings = NULL;

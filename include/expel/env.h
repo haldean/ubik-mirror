@@ -21,22 +21,12 @@
 #define EXPEL_ENV_H
 
 #include "expel/expel.h"
+#include "expel/uri.h"
 
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
 
-
-/* Identifies values in the expel substrate */
-struct xl_uri {
-        uint64_t hash;
-        char     *name;
-        uint64_t __reserved_for_author;
-        uint32_t version;
-        uint16_t __padding_0;
-        uint8_t  scope;
-        uint8_t  __padding_1;
-};
 
 /* An association between a URI and a value */
 struct xl_binding {
@@ -51,20 +41,6 @@ struct xl_env {
         size_t            n;
         size_t            cap;
 };
-
-/* Creates a URI for a local resource. */
-no_ignore word_t
-xl_uri_local(
-        struct xl_uri *uri,
-        char *name);
-
-/* Creates a URI struct from a value-encoded URI. */
-no_ignore word_t
-xl_uri_from_value(struct xl_uri *uri, struct xl_value *uri_val);
-
-/* Returns true if the provided URIs are equal. */
-bool
-xl_uri_eq(struct xl_uri *u0, struct xl_uri *u1);
 
 /* Initializes a new environment struct. */
 no_ignore word_t

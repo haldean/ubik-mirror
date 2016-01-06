@@ -23,12 +23,12 @@ LDOPTS := $(LDOPTS) -L./dist -fsanitize=undefined
 objects := $(patsubst libexpel/%.c,build/%.o,$(wildcard libexpel/*.c))
 
 sharedlib := dist/libexpel.so
-executable := dist/expelc
-testexe := build/test-expelc
+executable := dist/expelrt
+testexe := build/test-expel
 exeenv := LD_LIBRARY_PATH="$(PWD)/dist"
 testldopts := $(LDOPTS) -lm -lpthread -lrt
 
-all: dist/expelc test
+all: $(executable) test
 
 dist/include/expel/const.h: res/const.txt
 	@test -d dist || mkdir dist
@@ -48,7 +48,7 @@ $(sharedlib): $(objects)
 	@test -d dist || mkdir dist
 	$(CC) $(objects) -fPIC $(LDOPTS) -shared -o $@
 
-$(executable): expelc/*.c $(sharedlib)
+$(executable): expelrt/*.c $(sharedlib)
 	@test -d dist || mkdir dist
 	$(CC) $(COPTS) $(LDOPTS) $< -lexpel -o $@
 

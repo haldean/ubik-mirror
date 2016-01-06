@@ -165,7 +165,7 @@ env()
         struct xl_value *v, *r, *t, *rt;
         struct xl_uri u;
         int i;
-        char *key;
+        wchar_t *key;
         struct xl_uri uris[N_TEST_URIS];
 
         assert(xl_new(&v) == OK);
@@ -179,7 +179,9 @@ env()
         t->right.v = 0;
 
         u.hash = 0;
-        assert(xl_uri_local(&u, "test_var_0") == OK);
+        key = calloc(64, sizeof(wchar_t));
+        swprintf(key, 64, L"test_var_0");
+        assert(xl_uri_local(&u, key) == OK);
         assert(u.hash != 0);
 
         assert(xl_env_init(&env) == OK);
@@ -196,8 +198,8 @@ env()
 
         for (i = 0; i < N_TEST_URIS; i++)
         {
-                key = malloc(64);
-                sprintf(key, "test_var_%d", i);
+                key = calloc(64, sizeof(wchar_t));
+                swprintf(key, 64, L"test_var_%d", i);
                 assert(xl_uri_local(&uris[i], key) == OK);
         }
 
