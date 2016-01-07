@@ -359,6 +359,7 @@ __increment_value_refs(struct xl_dagc_node *node)
         struct xl_dagc_load *l;
         struct xl_dagc_store *s;
         struct xl_dagc_const *c;
+        struct xl_dagc_input *i;
         xl_error_t err;
 
         if (node->known.any != NULL)
@@ -377,8 +378,11 @@ __increment_value_refs(struct xl_dagc_node *node)
         switch (node->node_type)
         {
         case DAGC_NODE_APPLY:
-        case DAGC_NODE_INPUT:
                 return OK;
+
+        case DAGC_NODE_INPUT:
+                i = (struct xl_dagc_input *) node;
+                return xl_take(i->required_type);
 
         case DAGC_NODE_LOAD:
                 l = (struct xl_dagc_load *) node;

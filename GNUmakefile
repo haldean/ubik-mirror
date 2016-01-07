@@ -17,7 +17,7 @@
 
 COPTS := $(COPTS) -std=c11 -pedantic -Werror -Wall -Wextra -Iinclude \
 	-Idist/include -ggdb -O0 -D_GNU_SOURCE -fPIC -fsanitize=undefined \
-	-fsanitize=address -DXL_GC_DEBUG
+	-fsanitize=address -DXL_GC_DEBUG -DXL_APPLY_DEBUG
 LDOPTS := $(LDOPTS) -L./dist -fsanitize=undefined
 
 objects := $(patsubst libexpel/%.c,build/%.o,$(wildcard libexpel/*.c))

@@ -45,10 +45,11 @@ def apply(func, arg, terminal=False):
         is_term=terminal,
     )
 
-def arg(arg_num, terminal=False):
+def arg(arg_num, type, terminal=False):
     return dict(
         type="input",
         arg_num=arg_num,
+        req_type=type,
         is_term=terminal,
     )
 
@@ -147,5 +148,6 @@ def encode(graphs):
                     f.write(struct.pack(">Q", node["arg"]["idx"]))
                 elif node_type == "input":
                     f.write(struct.pack(">Q", node["arg_num"]))
+                    f.write(pack_tree(node["req_type"]))
                 else:
                     raise NotImplementedError("node type %s not supported" % node_type)

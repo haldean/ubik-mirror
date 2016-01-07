@@ -143,7 +143,7 @@ xl_take(void *p)
 
         tag = *((tag_t *) p);
 
-        if (tag & TAG_VALUE)
+        if ((tag & TAG_TYPE_MASK) == TAG_VALUE)
         {
                 v = (struct xl_value *) p;
                 if (unlikely(v->refcount == UINT16_MAX))
@@ -151,7 +151,7 @@ xl_take(void *p)
                 v->refcount++;
                 return OK;
         }
-        if (tag & TAG_GRAPH)
+        if ((tag & TAG_TYPE_MASK) == TAG_GRAPH)
         {
                 g = (struct xl_dagc *) p;
                 if (unlikely(g->refcount == UINT16_MAX))
@@ -241,6 +241,10 @@ __release_value(struct xl_value *v)
 no_ignore static xl_error_t
 __release_node(struct xl_dagc_node *n)
 {
+        struct xl_dagc_load *l;
+        struct xl_dagc_store *s;
+        struct xl_dagc_const *c;
+        struct xl_dagc_input *i;
         xl_error_t err;
 
         switch (n->node_type)
@@ -249,28 +253,32 @@ __release_node(struct xl_dagc_node *n)
                 break;
 
         case DAGC_NODE_CONST:
-                err = xl_release(((struct xl_dagc_const *) n)->type);
+                c = (struct xl_dagc_const *) n;
+                err = xl_release(c->type);
                 if (err != OK)
                         return err;
-                err = xl_release(((struct xl_dagc_const *) n)->value.any);
+                err = xl_release(c->value.any);
                 if (err != OK)
                         return err;
                 break;
 
         case DAGC_NODE_LOAD:
-                err = xl_release(((struct xl_dagc_load *) n)->loc);
+                l = (struct xl_dagc_load *) n;
+                err = xl_release(l->loc);
                 if (err != OK)
                         return err;
                 break;
 
         case DAGC_NODE_STORE:
-                err = xl_release(((struct xl_dagc_store *) n)->loc);
+                s = (struct xl_dagc_store *) n;
+                err = xl_release(s->loc);
                 if (err != OK)
                         return err;
                 break;
 
         case DAGC_NODE_INPUT:
-                err = xl_release(((struct xl_dagc_input *) n)->required_type);
+                i = (struct xl_dagc_input *) n;
+                err = xl_release(i->required_type);
                 if (err != OK)
                         return err;
                 break;
@@ -333,9 +341,9 @@ xl_release(void *v)
 {
         tag_t tag;
         tag = *((tag_t *) v);
-        if (tag & TAG_VALUE)
+        if ((tag & TAG_TYPE_MASK) == TAG_VALUE)
                 return __release_value((struct xl_value *) v);
-        if (tag & TAG_GRAPH)
+        if ((tag & TAG_TYPE_MASK) == TAG_GRAPH)
                 return __release_graph((struct xl_dagc *) v);
         return xl_raise(ERR_BAD_TAG, "release");
 }

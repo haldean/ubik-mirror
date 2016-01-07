@@ -67,9 +67,9 @@ xl_load_value(struct xl_value *out, struct xl_stream *sp)
         xl_error_t err;
 
         READ_INTO(tag, sp);
-        xl_assert((tag & TAG_LEFT_WORD) || (tag & TAG_LEFT_NODE));
-        xl_assert((tag & TAG_RIGHT_WORD) || (tag & TAG_RIGHT_NODE));
-        xl_assert(tag & TAG_VALUE);
+        xl_assert(!(tag & TAG_LEFT_WORD) ^ !(tag & TAG_LEFT_NODE));
+        xl_assert(!(tag & TAG_RIGHT_WORD) ^ !(tag & TAG_RIGHT_NODE));
+        xl_assert((tag & TAG_TYPE_MASK) == TAG_VALUE);
 
         out->tag = TAG_VALUE | tag;
 
@@ -284,6 +284,7 @@ __load_store(struct xl_dagc_store **node, struct xl_stream *sp)
 no_ignore static xl_error_t
 __load_input(struct xl_dagc_input **node, struct xl_stream *sp)
 {
+        xl_error_t err;
         word_t arg_num;
 
         *node = calloc(1, sizeof(struct xl_dagc_input));
@@ -292,7 +293,12 @@ __load_input(struct xl_dagc_input **node, struct xl_stream *sp)
 
         READ_INTO(arg_num, sp);
         (*node)->arg_num = ntohw(arg_num);
-        return OK;
+
+        err = xl_new(&(*node)->required_type);
+        if (err != OK)
+                return err;
+        err = xl_load_value((*node)->required_type, sp);
+        return err;
 }
 
 no_ignore static xl_error_t

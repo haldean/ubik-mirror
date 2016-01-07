@@ -34,6 +34,13 @@ masks:
 Thus, a node whose left value is a node and whose right value is a word
 would have the tag `0b00001001`, or `0x09`.
 
+Additionally, the relevant tag type is bitwise-ORed into the tag:
+
+                0b00000000 (0x00): object is a tree
+                0b00010000 (0x10): object is a graph
+                0b00100000 (0x20): object is a URI
+
+So a graph has tag `0x10` and a URI has tag `0x20`.
 
 Types
 
@@ -238,6 +245,7 @@ Nodes with node type `   input` have the following body:
 
         Byte index   Field
                0-7   Argument index of the node
+              8...   The tree-encoded type requirement on the argument
 
 The tree encoding proceeds as follows: Begin with the root of the tree
 to be encoded. The node's 8-bit tag is written to the stream, followed

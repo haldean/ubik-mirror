@@ -74,7 +74,16 @@ __eval_apply(struct xl_env *env, struct xl_dagc_apply *node)
                 return err;
 
         node->head.value_type = graph->terminals[0]->value_type;
+
         node->head.known = graph->terminals[0]->known;
+        err = xl_take(node->head.known.any);
+        if (err != OK)
+                return err;
+
+        node->head.known_type = graph->terminals[0]->known_type;
+        err = xl_take(node->head.known_type);
+        if (err != OK)
+                return err;
 
         err = xl_release(graph);
         return err;

@@ -234,11 +234,9 @@ gc()
         for (i = 0; i < N_TEST_GC_VALUES; i++)
         {
                 assert(xl_new(&vals[i]) == 0);
-                assert(vals[i]->tag == 0x10);
         }
         for (i = 0; i < N_TEST_GC_VALUES; i++)
         {
-                assert(vals[i]->tag == 0x10);
                 assert(xl_release(vals[i]) == 0);
         }
 
