@@ -21,6 +21,7 @@
 
 #include "expel/assert.h"
 #include "expel/dagc.h"
+#include "expel/env.h"
 #include "expel/expel.h"
 #include "expel/util.h"
 
@@ -71,6 +72,7 @@ no_ignore xl_error_t
 xl_dagc_collapse_graph(struct xl_dagc_node *node, struct xl_env *env)
 {
         struct xl_dagc *graph;
+        struct xl_env *child_env;
         xl_error_t err;
 
         if (node->value_type != DAGC_TYPE_GRAPH)
@@ -87,9 +89,20 @@ xl_dagc_collapse_graph(struct xl_dagc_node *node, struct xl_env *env)
         if (graph->in_arity != 0)
                 return OK;
 
-        err = xl_dagc_eval(env, graph);
+        /* Create a child environment to execute the function in. */
+        child_env = calloc(1, sizeof(struct xl_env));
+        err = xl_env_make_child(child_env, env);
         if (err != OK)
                 return err;
+
+        err = xl_dagc_eval(child_env, graph);
+        if (err != OK)
+                return err;
+
+        err = xl_env_free(child_env);
+        if (err != OK)
+                return err;
+        free(child_env);
 
         node->value_type = graph->terminals[0]->value_type;
 

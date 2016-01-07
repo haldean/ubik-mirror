@@ -41,11 +41,16 @@ struct xl_env {
         struct xl_binding *bindings;
         size_t            n;
         size_t            cap;
+        struct xl_env     *parent;
 };
 
 /* Initializes a new environment struct. */
 no_ignore xl_error_t
 xl_env_init(struct xl_env *env);
+
+/* Creates a child environment from the given env. */
+no_ignore xl_error_t
+xl_env_make_child(struct xl_env *child, struct xl_env *parent);
 
 /* Frees memory associated with the environment struct.
  *

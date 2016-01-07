@@ -19,11 +19,6 @@
 
 #include "expel/expel.h"
 
-void
-xl_n_unsigned_add(
-        struct xl_value *res,
-        struct xl_value *v1,
-        struct xl_value *v2);
+no_ignore xl_error_t
+xl_register_natives(struct xl_env *env);
 
-void
-xl_n_unsigned_add_type(struct xl_value *res);

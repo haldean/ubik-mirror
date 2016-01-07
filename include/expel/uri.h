@@ -27,10 +27,12 @@
 struct xl_uri {
         tag_t    tag;
         word_t   hash;
+
         wchar_t  *name;
         size_t   name_len;
         word_t   version;
         word_t   scope;
+
         word_t   refcount;
 };
 

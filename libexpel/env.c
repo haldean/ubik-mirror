@@ -34,6 +34,18 @@ xl_env_init(struct xl_env *env)
         env->bindings = NULL;
         env->n = 0;
         env->cap = 0;
+        env->parent = NULL;
+        return OK;
+}
+
+no_ignore xl_error_t
+xl_env_make_child(struct xl_env *child, struct xl_env *parent)
+{
+        xl_error_t err;
+        err = xl_env_init(child);
+        if (err != OK)
+                return err;
+        child->parent = parent;
         return OK;
 }
 
