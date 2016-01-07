@@ -61,6 +61,11 @@ xl_stream_read(void *dst, struct xl_stream *src, size_t len);
 no_ignore size_t
 xl_stream_write(struct xl_stream *dst, void *src, size_t len);
 
+/* Drops a number of bytes from the stream, returning the number of bytes
+ * dropped successfully. */
+no_ignore size_t
+xl_stream_drop(struct xl_stream *src, size_t len);
+
 /* Closes a stream. */
 void
 xl_stream_close(struct xl_stream *sp);

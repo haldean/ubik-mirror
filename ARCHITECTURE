@@ -127,22 +127,22 @@ Logic in Expel is encoded in a directed acyclic graph of computations
 (DAGC); nodes in this graph then reference values stored as trees. There
 are four kinds of nodes in a DAGC:
 
-        `apply`   Points to a node with a function value and a node with
-                  an argument. Applies the argument to the function
-                  value. If the function is then fully applied the value
-                  of the node is the result of the function; if the
-                  function is partially applied the value of the node is
-                  a function that has an arity of one fewer than the
-                  input function.
-        `const`   A constant type and value.
-        `load`    A load operation. Has a required URI and an optional
-                  dependent store; the URI references where the value
-                  should come from and the dependent store adds a
-                  dependency from the load to that store.
-        `store`   A store operation. Has a URI and a reference to a node
-                  with a value, and stores the given value at that URI.
-        `input`   The input to a DAGC.
-        `graph`   Reference to a different DAGC.
+        `apply`     Points to a node with a function value and a node with
+                    an argument. Applies the argument to the function
+                    value. If the function is then fully applied the value
+                    of the node is the result of the function; if the
+                    function is partially applied the value of the node is
+                    a function that has an arity of one fewer than the
+                    input function.
+        `const`     A constant type and value.
+        `load`      A load operation. Has a required URI and an optional
+                    dependent store; the URI references where the value
+                    should come from and the dependent store adds a
+                    dependency from the load to that store.
+        `store`     A store operation. Has a URI and a reference to a node
+                    with a value, and stores the given value at that URI.
+        `input`     The input to a DAGC.
+        `dispatch`  Reference to a different DAGC.
 
 Each individual DAGC represents a function; each DAGC contains an input
 node for each of the function's arguments, and a single terminal node
@@ -151,7 +151,7 @@ to evaluate the terminal node is found, and all nodes in that set are
 evaluated in turn. This gives the result for the DAGC.
 
 Logic is then built up by creating a number of graphs and referencing
-them from each other. When a `graph` node is applied, a copy of the
+them from each other. When a `dispatch` node is applied, a copy of the
 referenced DAGC is made and that DAGC's `input` nodes are completed.
 Once all required input nodes have been completed, the DAGC can be
 evaluated.
@@ -160,7 +160,7 @@ Encoding in-flight and at-rest -----------------------------------------
 
 Trees have a single binary storage format that is used for network
 operations and for on-disk storage. The format begins with a header, and
-then contains a single encoded graph.
+then contains a number of encoded graphs.
 
 All numerically-encoded data is stored in big-endian ("network") byte
 order, which means the most significant byte comes first.
@@ -171,9 +171,12 @@ The header has the following fields:
                0-3   The constant bytes 0x65 0x78 0x70 0x6C ("expl")
                4-7   The version number of the encoding format, as a
                      big-endian 4-byte unsigned integer.
+              8-15   The number of graphs in the file.
 
 The version of the encoding specified in this document is 1, and thus
-bytes 4-7 should be 0x00000001
+bytes 4-7 should be 0x00000001. The decoding proceeds by concatenating a
+number of graph encodings. Each graph that is encoded is identified by
+its index in the file.
 
 The graph encoding has a header of its own:
 
@@ -193,6 +196,7 @@ format:
                  8   Set to 0x01 if the node is a terminal node, meaning
                      that its value is intended as an output of
                      computation. Set to 0x00 otherwise.
+              9-11   Unused
 
 Once the header has been loaded, the type-dependent decoding of the body
 is given.
@@ -222,6 +226,16 @@ Nodes with node type `   const` have the following body:
         Byte index   Field
               0...   Tree-encoded value
                ...   Tree-encoded type
+
+Nodes with node type `dispatch` have the following body:
+
+        Byte index   Field
+               0-7   Index of the referenced graph
+
+Nodes with node type `   input` have the following body:
+
+        Byte index   Field
+               0-7   Argument index of the node
 
 The tree encoding proceeds as follows: Begin with the root of the tree
 to be encoded. The node's 8-bit tag is written to the stream, followed

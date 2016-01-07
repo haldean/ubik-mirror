@@ -29,8 +29,9 @@ int
 main(int argc, char *argv[])
 {
         struct xl_stream stream;
-        struct xl_dagc graph;
+        struct xl_dagc *graphs;
         struct xl_env env;
+        size_t n_graphs;
         xl_error_t err;
 
         if (argc <= 1)
@@ -55,7 +56,7 @@ main(int argc, char *argv[])
                 return EXIT_FAILURE;
         }
 
-        err = xl_load(&graph, &stream);
+        err = xl_load(&graphs, &n_graphs, &stream);
         if (err != OK)
         {
                 fprintf(stderr, "couldn't load %s: %s\n",
@@ -71,7 +72,7 @@ main(int argc, char *argv[])
                 return EXIT_FAILURE;
         }
 
-        err = xl_dagc_eval(&env, &graph);
+        err = xl_dagc_eval(&env, graphs);
         if (err != OK)
         {
                 fprintf(stderr, "couldn't eval dagc: %s\n",
@@ -80,15 +81,16 @@ main(int argc, char *argv[])
         }
 
         size_t i;
-        for (i = 0; i < graph.n; i++)
+        for (i = 0; i < graphs->n; i++)
         {
                 printf("%lu: ", i);
-                if ((graph.nodes[i]->flags & XL_DAGC_FLAG_COMPLETE) == 0)
+                if ((graphs->nodes[i]->flags & XL_DAGC_FLAG_COMPLETE) == 0)
                         printf("not evaluated\n");
-                else if (graph.nodes[i]->known_value == NULL)
+                else if (graphs->nodes[i]->known_value == NULL)
                         printf("no value\n");
                 else
-                        printf("left %lu\n", graph.nodes[i]->known_value->left.v);
+                        printf("left %lu\n",
+                               graphs->nodes[i]->known_value->left.v);
         }
 
         return EXIT_SUCCESS;

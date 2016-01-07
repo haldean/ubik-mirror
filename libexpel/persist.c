@@ -256,6 +256,33 @@ __load_store(struct xl_dagc_store **node, struct xl_stream *sp)
 }
 
 no_ignore static xl_error_t
+__load_dispatch(struct xl_dagc_dispatch **node, struct xl_stream *sp)
+{
+        uint64_t graph_index;
+
+        *node = calloc(1, sizeof(struct xl_dagc_dispatch));
+        if (*node == NULL)
+                return xl_raise(ERR_NO_MEMORY, "graph alloc");
+
+        READ_INTO(graph_index, sp);
+        graph_index = ntohw(graph_index);
+        (*node)->graph = (struct xl_dagc *) graph_index;
+
+        return OK;
+}
+
+no_ignore static xl_error_t
+__load_input(struct xl_dagc_input **node, struct xl_stream *sp)
+{
+        *node = calloc(1, sizeof(struct xl_dagc_input));
+        if (*node == NULL)
+                return xl_raise(ERR_NO_MEMORY, "input alloc");
+
+        READ_INTO((*node)->arg_num, sp);
+        return OK;
+}
+
+no_ignore static xl_error_t
 __load_node(struct xl_dagc_node **node, struct xl_stream *sp)
 {
         xl_error_t err;
@@ -264,6 +291,9 @@ __load_node(struct xl_dagc_node **node, struct xl_stream *sp)
 
         READ_INTO(node_type, sp);
         READ_INTO(terminal, sp);
+
+        if (xl_stream_drop(sp, 3) != 3)
+                return xl_raise(ERR_NO_DATA, "node padding bytes");
 
         switch (node_type)
         {
@@ -278,6 +308,12 @@ __load_node(struct xl_dagc_node **node, struct xl_stream *sp)
                 break;
         case DAGC_NODE_STORE:
                 err = __load_store((struct xl_dagc_store **) node, sp);
+                break;
+        case DAGC_NODE_DISPATCH:
+                err = __load_dispatch((struct xl_dagc_dispatch **) node, sp);
+                break;
+        case DAGC_NODE_INPUT:
+                err = __load_input((struct xl_dagc_input **) node, sp);
                 break;
         default:
                 return xl_raise(ERR_UNKNOWN_TYPE, "load node");
@@ -336,6 +372,8 @@ __set_node_pointers(
                 break;
 
         case DAGC_NODE_CONST:
+        case DAGC_NODE_DISPATCH:
+        case DAGC_NODE_INPUT:
                 break;
         default:
                 return xl_raise(ERR_UNKNOWN_TYPE, "set node pointers");
@@ -343,24 +381,35 @@ __set_node_pointers(
         return OK;
 }
 
-no_ignore xl_error_t
-xl_load(struct xl_dagc *graph, struct xl_stream *sp)
+no_ignore static xl_error_t
+__set_graph_pointers(
+        struct xl_dagc *graph,
+        struct xl_dagc *all_graphs,
+        size_t n_graphs)
 {
-
-        char header[4];
-        uint32_t version;
-        word_t n_nodes;
-        xl_error_t err;
+        struct xl_dagc_dispatch *n;
         size_t i;
 
-        READ_INTO(header, sp);
-        if (strncmp(header, "expl", 4) != 0)
-                return xl_raise(ERR_BAD_HEADER, NULL);
+        for (i = 0; i < graph->n; i++)
+        {
+                /* C is fun. */
+                n = (struct xl_dagc_dispatch *) graph->nodes[i];
+                if (n->head.node_type != DAGC_NODE_DISPATCH)
+                        continue;
+                if ((uintptr_t) n->graph >= n_graphs)
+                        return xl_raise(ERR_OUT_OF_BOUNDS, "dispatch idx");
+                n->graph = &all_graphs[(uintptr_t) n->graph];
+        }
 
-        READ_INTO(version, sp);
-        version = ntohl(version);
-        if (version != CURRENT_ENCODING_VERSION)
-                return xl_raise(ERR_UNSUPPORTED_VERSION, NULL);
+        return OK;
+}
+
+no_ignore static xl_error_t
+__load_graph(struct xl_dagc *graph, struct xl_stream *sp)
+{
+        word_t n_nodes;
+        size_t i;
+        xl_error_t err;
 
         READ_INTO(n_nodes, sp);
         n_nodes = ntohw(n_nodes);
@@ -404,4 +453,44 @@ xl_load(struct xl_dagc *graph, struct xl_stream *sp)
         }
 
         return xl_dagc_init(graph);
+}
+
+no_ignore xl_error_t
+xl_load(struct xl_dagc **graphs, size_t *n_graphs, struct xl_stream *sp)
+{
+
+        char header[4];
+        uint32_t version;
+        word_t n;
+        xl_error_t err;
+        size_t i;
+
+        READ_INTO(header, sp);
+        if (strncmp(header, "expl", 4) != 0)
+                return xl_raise(ERR_BAD_HEADER, NULL);
+
+        READ_INTO(version, sp);
+        version = ntohl(version);
+        if (version != CURRENT_ENCODING_VERSION)
+                return xl_raise(ERR_UNSUPPORTED_VERSION, NULL);
+
+        READ_INTO(n, sp);
+        n = ntohw(n);
+        *n_graphs = n;
+        *graphs = calloc(n, sizeof(struct xl_dagc));
+
+        for (i = 0; i < n; i++)
+        {
+                err = __load_graph(&(*graphs)[i], sp);
+                if (err != OK)
+                        return err;
+        }
+        for (i = 0; i < n; i++)
+        {
+                err = __set_graph_pointers(&(*graphs)[i], *graphs, n);
+                if (err != OK)
+                        return err;
+        }
+
+        return OK;
 }

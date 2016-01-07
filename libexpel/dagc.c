@@ -47,16 +47,18 @@ xl_dagc_get_deps(
                 *d1 = ((struct xl_dagc_apply *) n)->func;
                 *d2 = ((struct xl_dagc_apply *) n)->arg;
                 return OK;
-        case DAGC_NODE_CONST:
-                *d1 = NULL;
-                *d2 = NULL;
-                return OK;
         case DAGC_NODE_LOAD:
                 *d1 = ((struct xl_dagc_load *) n)->dependent_store;
                 *d2 = NULL;
                 return OK;
         case DAGC_NODE_STORE:
                 *d1 = ((struct xl_dagc_store *) n)->value;
+                *d2 = NULL;
+                return OK;
+        case DAGC_NODE_CONST:
+        case DAGC_NODE_DISPATCH:
+        case DAGC_NODE_INPUT:
+                *d1 = NULL;
                 *d2 = NULL;
                 return OK;
         default:

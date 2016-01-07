@@ -71,6 +71,23 @@ __eval_store(struct xl_env *env, struct xl_dagc_store *node)
         return xl_set(env, node->loc, known_value, known_type);
 }
 
+no_ignore static xl_error_t
+__eval_input(struct xl_env *env, struct xl_dagc_input *node)
+{
+        unused(env);
+        node->head.known_value = node->applied_value;
+        node->head.known_type = node->applied_type;
+        return OK;
+}
+
+no_ignore static xl_error_t
+__eval_dispatch(struct xl_env *env, struct xl_dagc_dispatch *node)
+{
+        unused(env);
+        unused(node);
+        return OK;
+}
+
 no_ignore xl_error_t
 xl_dagc_node_eval(struct xl_env *env, struct xl_dagc_node *node)
 {
@@ -91,6 +108,12 @@ xl_dagc_node_eval(struct xl_env *env, struct xl_dagc_node *node)
                 break;
         case DAGC_NODE_STORE:
                 err = __eval_store(env, (struct xl_dagc_store *) node);
+                break;
+        case DAGC_NODE_INPUT:
+                err = __eval_input(env, (struct xl_dagc_input *) node);
+                break;
+        case DAGC_NODE_DISPATCH:
+                err = __eval_dispatch(env, (struct xl_dagc_dispatch *) node);
                 break;
         default:
                 return xl_raise(ERR_UNKNOWN_TYPE, "node_eval");

@@ -39,6 +39,12 @@ struct xl_dagc_apply
         struct xl_dagc_node *func;
         /* Argument to apply to function */
         struct xl_dagc_node *arg;
+        /* The graph represented by application, if the result of
+         * this call is a partially-applied function. If this is
+         * non-null, the result is partially-applied; if it is
+         * null, the result is fully applied and is stored in
+         * known_value. */
+        struct xl_dagc *partial;
 };
 
 struct xl_dagc_const
@@ -73,9 +79,15 @@ struct xl_dagc_input
         struct xl_dagc_node head;
         /* The argument that this corresponds to */
         word_t arg_num;
+        /* The type required by the program */
+        struct xl_value *required_type;
+        /* The value filled in when the argument is applied */
+        struct xl_value *applied_value;
+        /* The type filled in when the argument is applied */
+        struct xl_value *applied_type;
 };
 
-struct xl_dagc_graph
+struct xl_dagc_dispatch
 {
         struct xl_dagc_node head;
         /* The referenced DAGC */

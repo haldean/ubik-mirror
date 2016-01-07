@@ -136,7 +136,7 @@ xl_release(struct xl_value *v);
  *
  * Returns OK on success, or a nonzero error word. */
 no_ignore xl_error_t
-xl_load(struct xl_dagc *out, struct xl_stream *sp);
+xl_load(struct xl_dagc **out, size_t *n_graphs, struct xl_stream *sp);
 
 /* Saves a graph to a stream.
  *
