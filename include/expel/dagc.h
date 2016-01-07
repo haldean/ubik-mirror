@@ -68,6 +68,20 @@ struct xl_dagc_store
         struct xl_dagc_node *value;
 };
 
+struct xl_dagc_input
+{
+        struct xl_dagc_node head;
+        /* The argument that this corresponds to */
+        word_t arg_num;
+};
+
+struct xl_dagc_graph
+{
+        struct xl_dagc_node head;
+        /* The referenced DAGC */
+        struct xl_dagc *graph;
+};
+
 /* Gets the dependencies of a node.
  *
  * For nodes with two dependencies, d1 and d2 will be filled in

@@ -102,6 +102,9 @@ struct xl_dagc
 
         /* Derived members: populated by calling xl_dagc_init */
         struct __xl_dagc_adjacency *adjacency;
+
+        struct xl_dagc_node **inputs;
+        size_t arity;
 };
 
 /* Starts the expel runtime.

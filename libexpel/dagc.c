@@ -193,6 +193,24 @@ xl_dagc_init(struct xl_dagc *graph)
                 }
         }
 
+        /* Go through and find the input nodes to find its maximal index. */
+        graph->arity = 0;
+        for (i = 0; i < graph->n; i++)
+        {
+                p = graph->nodes[i];
+                if (p->node_type == DAGC_NODE_INPUT)
+                        graph->arity++;
+        }
+
+        /* Then populate the input list. */
+        graph->inputs = calloc(graph->arity, sizeof(struct xl_dagc_node *));
+        for (i = 0, j = 0; i < graph->n; i++)
+        {
+                p = graph->nodes[i];
+                if (p->node_type == DAGC_NODE_INPUT)
+                        graph->inputs[j++] = p;
+        }
+
         return OK;
 }
 
@@ -209,6 +227,7 @@ xl_dagc_known_value(
         case DAGC_NODE_APPLY:
         case DAGC_NODE_LOAD:
         case DAGC_NODE_CONST:
+        case DAGC_NODE_INPUT:
                 *value = node->known_value;
                 return OK;
         }

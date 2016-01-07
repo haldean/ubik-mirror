@@ -21,13 +21,7 @@
 - "  packed.NAME_OF_CONSTANT"; the packed value must be 8 characters long.
 
     word.BASE_TYPE_WORD
-  sint64.BASE_TYPE_SINT64
-  uint32.BASE_TYPE_UINT32
-  sint32.BASE_TYPE_SINT32
-  uint16.BASE_TYPE_UINT16
-  sint16.BASE_TYPE_SINT16
-  uint08.BASE_TYPE_UINT08
-  sint08.BASE_TYPE_SINT08
+   sword.BASE_TYPE_SWORD
     list.BASE_TYPE_LIST
    tuple.BASE_TYPE_TUPLE
   packed.BASE_TYPE_PACKED
@@ -57,10 +51,12 @@ erefuflw.ERR_REFCOUNT_UNDERFLOW
 
    apply.DAGC_NODE_APPLY
    const.DAGC_NODE_CONST
+   input.DAGC_NODE_INPUT
     load.DAGC_NODE_LOAD
    store.DAGC_NODE_STORE
 
   native.SCOPE_NATIVE
  userdef.SCOPE_USER_DEFINED
 
-     add.NATIVE_ADD
+    uadd.NATIVE_UNSIGNED_ADD
+    sadd.NATIVE_SIGNED_ADD

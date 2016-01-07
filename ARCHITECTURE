@@ -47,18 +47,14 @@ full list of base type codes is:
 
                          Code   Description
                      ....word   unsigned 64-bit integer
-                     ..sint64   signed 64-bit integer
-                     ..uint32   unsigned 32-bit integer
-                     ..sint32   signed 32-bit integer
-                     ..uint16   unsigned 16-bit integer
-                     ..sint16   signed 16-bit integer
-                     ..uint08   unsigned 8-bit integer
-                     ..sint08   signed 8-bit integer
+                     ...sword   signed 64-bit integer
                      ....list   homogenous list
                      ...tuple   fixed-length tuple
                      ..packed   packed list
                      ....type   type descriptor
                      .....uri   expel resource identifier
+                     ..lambda   function
+                     .nlambda   native function
 
 Each type code is actually a word that contains the numeric equivalent
 of a 8-byte string, with the first letter in the byte with the lowest
@@ -120,6 +116,10 @@ final element is a 64-bit integer represending the scope of the
 resource. The meanings of these fields will be covered in the Bindings
 section below.
 
+Function types (`lambda` and `nlambda`) work slightly differently; the
+types are stored as tree values but the function bodies are stored as...
+what?
+
 
 Building logic ---------------------------------------------------------
 
@@ -141,6 +141,20 @@ are four kinds of nodes in a DAGC:
                   dependency from the load to that store.
         `store`   A store operation. Has a URI and a reference to a node
                   with a value, and stores the given value at that URI.
+        `input`   The input to a DAGC.
+        `graph`   Reference to a different DAGC.
+
+Each individual DAGC represents a function; each DAGC contains an input
+node for each of the function's arguments, and a single terminal node
+that represents the function's result. The minimal set of nodes required
+to evaluate the terminal node is found, and all nodes in that set are
+evaluated in turn. This gives the result for the DAGC.
+
+Logic is then built up by creating a number of graphs and referencing
+them from each other. When a `graph` node is applied, a copy of the
+referenced DAGC is made and that DAGC's `input` nodes are completed.
+Once all required input nodes have been completed, the DAGC can be
+evaluated.
 
 Encoding in-flight and at-rest -----------------------------------------
 
