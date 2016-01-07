@@ -52,7 +52,7 @@ __eval_load(struct xl_env *env, struct xl_dagc_load *node)
                 return err;
 
         node->head.known_type = type;
-        node->known_value = value;
+        node->head.known_value = value;
         return OK;
 }
 

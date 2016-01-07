@@ -72,6 +72,9 @@ xl_get(
         size_t probed;
         bool found;
 
+        if (env->cap == 0)
+                return xl_raise(ERR_ABSENT, "xl_get: env is empty");
+
         i = uri->hash % env->cap;
         for (probed = 0; probed < env->cap; probed++)
         {

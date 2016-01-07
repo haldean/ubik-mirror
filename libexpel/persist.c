@@ -17,6 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include "expel/assert.h"
 #include "expel/dagc.h"
 #include "expel/env.h"
 #include "expel/expel.h"
@@ -66,8 +67,11 @@ xl_load_value(struct xl_value *out, struct xl_stream *sp)
         xl_error_t err;
 
         READ_INTO(tag, sp);
+        xl_assert((tag & TAG_LEFT_WORD) || (tag & TAG_LEFT_NODE));
+        xl_assert((tag & TAG_RIGHT_WORD) || (tag & TAG_RIGHT_NODE));
+        xl_assert((tag & 0xF0) == 0);
+
         out->tag = tag;
-        out->refcount = 0;
 
         if (tag & TAG_LEFT_WORD)
         {
@@ -155,9 +159,11 @@ __load_apply(struct xl_dagc_apply **node, struct xl_stream *sp)
          * exceed the size of a pointer inside xl_load, we can safely jam this
          * index into a pointer. */
         READ_INTO(node_index, sp);
+        node_index = ntohw(node_index);
         (*node)->func = (struct xl_dagc_node *) node_index;
 
         READ_INTO(node_index, sp);
+        node_index = ntohw(node_index);
         (*node)->arg = (struct xl_dagc_node *) node_index;
 
         return OK;
@@ -199,6 +205,7 @@ __load_load(struct xl_dagc_load **node, struct xl_stream *sp)
                 return xl_raise(ERR_NO_MEMORY, "load alloc");
 
         READ_INTO(node_index, sp);
+        node_index = ntohw(node_index);
         (*node)->dependent_store = (struct xl_dagc_node *) node_index;
 
         err = xl_new(&uri_val);
@@ -229,6 +236,7 @@ __load_store(struct xl_dagc_store **node, struct xl_stream *sp)
                 return xl_raise(ERR_NO_MEMORY, "store alloc");
 
         READ_INTO(node_index, sp);
+        node_index = ntohw(node_index);
         (*node)->value = (struct xl_dagc_node *) node_index;
 
         err = xl_new(&uri_val);
@@ -308,12 +316,17 @@ __set_node_pointers(
 
         case DAGC_NODE_LOAD:
                 load = (struct xl_dagc_load *) node;
+                if ((uintptr_t) load->dependent_store == UINTPTR_MAX)
+                {
+                        load->dependent_store = NULL;
+                        break;
+                }
                 if ((uintptr_t) load->dependent_store >= n_nodes)
                         return xl_raise(ERR_OUT_OF_BOUNDS, "load depstore idx");
-
                 load->dependent_store =
                         all_nodes[(uintptr_t) load->dependent_store];
                 break;
+
         case DAGC_NODE_STORE:
                 store = (struct xl_dagc_store *) node;
                 if ((uintptr_t) store->value >= n_nodes)
@@ -321,6 +334,7 @@ __set_node_pointers(
 
                 store->value = all_nodes[(uintptr_t) store->value];
                 break;
+
         case DAGC_NODE_CONST:
                 break;
         default:

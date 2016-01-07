@@ -5,10 +5,33 @@ import sys
 
 def const(typ, val, terminal=False):
     return dict(
-        id=None,
         type="const",
         ctype=typ,
         cvalue=val,
+        is_term=terminal,
+    )
+
+def load(name, dep=None, terminal=False):
+    return dict(
+        type="load",
+        name=name,
+        dep=dep,
+        is_term=terminal,
+    )
+
+def store(name, val, terminal=False):
+    return dict(
+        type="store",
+        name=name,
+        value=val,
+        is_term=terminal,
+    )
+
+def apply(func, arg, terminal=False):
+    return dict(
+        type="apply",
+        func=func,
+        arg=arg,
         is_term=terminal,
     )
 
@@ -24,6 +47,21 @@ def pack(s):
     if len(s) < 8:
         s = s.rjust(8)
     return struct.pack("8s", s)
+
+def uri(name, version=0, scope=0):
+    return t(version, t(scope, pack_string(name)))
+
+def pack_string(s):
+    bits = []
+    bytes = s.encode("utf-8")
+    while s:
+        bits.append(s[:8])
+        s = s[8:]
+    tree = 0
+    while bits:
+        tree = t(bits[-1].ljust(8, '\x00'), tree)
+        bits = bits[:-1]
+    return t(len(bytes), tree)
 
 def pack_tree(t):
     tag = 0
@@ -61,6 +99,9 @@ def encode(nodes):
         f.write(struct.pack(">I", 1))
         f.write(struct.pack(">Q", len(nodes)))
 
+        for i, node in enumerate(nodes):
+            node["idx"] = i
+
         for node in nodes:
             node_type = node["type"]
             f.write(struct.pack("8s", pack(node_type)))
@@ -69,5 +110,17 @@ def encode(nodes):
             if node_type == "const":
                 f.write(pack_tree(node["cvalue"]))
                 f.write(pack_tree(node["ctype"]))
+            elif node_type == "load":
+                if node["dep"] is None:
+                    f.write(struct.pack(">Q", 0xFFFFFFFFFFFFFFFF))
+                else:
+                    f.write(struct.pack(">Q", node["dep"]["idx"]))
+                f.write(pack_tree(uri(name=node["name"])))
+            elif node_type == "store":
+                f.write(struct.pack(">Q", node["value"]["idx"]))
+                f.write(pack_tree(uri(name=node["name"])))
+            elif node_type == "apply":
+                f.write(struct.pack(">Q", node["func"]["idx"]))
+                f.write(struct.pack(">Q", node["arg"]["idx"]))
             else:
                 raise NotImplementedError("node type %s not supported" % node_type)

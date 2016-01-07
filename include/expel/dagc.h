@@ -39,8 +39,6 @@ struct xl_dagc_apply
         struct xl_dagc_node *func;
         /* Argument to apply to function */
         struct xl_dagc_node *arg;
-        /* Value filled in after node is evaluated */
-        struct xl_value *known_value;
 };
 
 struct xl_dagc_const
@@ -59,8 +57,6 @@ struct xl_dagc_load
         struct xl_dagc_node *dependent_store;
         /* Where to load from */
         struct xl_uri *loc;
-        /* Value filled in after node is evaluated */
-        struct xl_value *known_value;
 };
 
 struct xl_dagc_store

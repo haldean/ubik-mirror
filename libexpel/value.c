@@ -18,6 +18,7 @@
  */
 
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -31,24 +32,27 @@ xl_read_packed(char **dest, size_t *n, struct xl_value *src)
         size_t i, n_bytes, n_copy;
         word_t p;
         struct xl_value *v;
+        char *res;
 
         n_bytes = src->left.v;
         *n = n_bytes;
-        *dest = calloc(n_bytes, sizeof(char));
-        if (*dest == NULL)
+        res = calloc(n_bytes + 1, sizeof(char));
+        if (res == NULL)
                 return xl_raise(ERR_NO_MEMORY, "read packed");
 
         i = 0;
         v = src->right.p;
         while (n_bytes)
         {
-                n_copy = size_min(n_bytes, 4);
-                p = htole64(v->left.v);
-                memcpy(&dest[i], &p, n_copy);
+                n_copy = size_min(n_bytes, 8);
+                p = htonw(v->left.v);
+                memcpy(&res[i], &p, n_copy);
                 n_bytes -= n_copy;
                 i += n_copy;
+                v = v->right.p;
         }
 
+        *dest = res;
         return OK;
 }
 
@@ -76,7 +80,7 @@ xl_read_string(wchar_t **dest, size_t *n, struct xl_value *src)
         free(orig_buf);
 
         *dest = realloc(*dest, str_size * sizeof(wchar_t));
-        if (*dest == NULL)
+        if (*dest == NULL && str_size > 0)
         {
                 free(*dest);
                 return xl_raise(ERR_NO_MEMORY, "read string");

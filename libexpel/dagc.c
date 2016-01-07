@@ -52,7 +52,7 @@ xl_dagc_get_deps(
                 *d2 = NULL;
                 return OK;
         case DAGC_NODE_LOAD:
-                *d1 = NULL;
+                *d1 = ((struct xl_dagc_load *) n)->dependent_store;
                 *d2 = NULL;
                 return OK;
         case DAGC_NODE_STORE:
@@ -67,9 +67,9 @@ xl_dagc_get_deps(
 static int
 __cmp_adjacency(const void *v1, const void *v2)
 {
-        uintptr_t *p1, *p2;
-        p1 = (uintptr_t *) v1;
-        p2 = (uintptr_t *) v2;
+        uintptr_t p1, p2;
+        p1 = *((uintptr_t *) v1);
+        p2 = *((uintptr_t *) v2);
         if (p1 < p2)
                 return -1;
         if (p1 > p2)
@@ -141,7 +141,7 @@ xl_dagc_init(struct xl_dagc *graph)
                         err = __find_adjacency(
                                 &a, graph->adjacency, graph->n, c1);
                         if (err != OK)
-                                return xl_raise(ERR_UNEXPECTED_FAILURE, "init");
+                                return err;
                         graph->adjacency[a].n_parents++;
                 }
                 if (c2 != NULL)
@@ -149,7 +149,7 @@ xl_dagc_init(struct xl_dagc *graph)
                         err = __find_adjacency(
                                 &a, graph->adjacency, graph->n, c2);
                         if (err != OK)
-                                return xl_raise(ERR_UNEXPECTED_FAILURE, "init");
+                                return err;
                         graph->adjacency[a].n_parents++;
                 }
         }
@@ -175,7 +175,7 @@ xl_dagc_init(struct xl_dagc *graph)
                         err = __find_adjacency(
                                 &a, graph->adjacency, graph->n, c1);
                         if (err != OK)
-                                return xl_raise(ERR_UNEXPECTED_FAILURE, "init");
+                                return err;
                         adj = &graph->adjacency[a];
                         /* Find the first NULL parent entry. */
                         for (j = 0; adj->parents[j] && j < adj->n_parents; j++);
@@ -186,7 +186,7 @@ xl_dagc_init(struct xl_dagc *graph)
                         err = __find_adjacency(
                                 &a, graph->adjacency, graph->n, c2);
                         if (err != OK)
-                                return xl_raise(ERR_UNEXPECTED_FAILURE, "init");
+                                return err;
                         adj = &graph->adjacency[a];
                         for (j = 0; adj->parents[j] && j < adj->n_parents; j++);
                         adj->parents[j] = p;
@@ -207,13 +207,9 @@ xl_dagc_known_value(
         switch (node->node_type)
         {
         case DAGC_NODE_APPLY:
-                *value = ((struct xl_dagc_apply *) node)->known_value;
-                return OK;
         case DAGC_NODE_LOAD:
-                *value = ((struct xl_dagc_load *) node)->known_value;
-                return OK;
         case DAGC_NODE_CONST:
-                *value = ((struct xl_dagc_const *) node)->value;
+                *value = node->known_value;
                 return OK;
         }
         return xl_raise(ERR_BAD_TYPE, "known value");

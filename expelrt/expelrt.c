@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "expel/dagc.h"
 #include "expel/env.h"
 #include "expel/expel.h"
 #include "expel/stream.h"
@@ -78,7 +79,17 @@ main(int argc, char *argv[])
                 return EXIT_FAILURE;
         }
 
-        printf("%lu\n", graph.nodes[0]->known_value->left.v);
+        size_t i;
+        for (i = 0; i < graph.n; i++)
+        {
+                printf("%lu: ", i);
+                if ((graph.nodes[i]->flags & XL_DAGC_FLAG_COMPLETE) == 0)
+                        printf("not evaluated\n");
+                else if (graph.nodes[i]->known_value == NULL)
+                        printf("no value\n");
+                else
+                        printf("left %lu\n", graph.nodes[i]->known_value->left.v);
+        }
 
         return EXIT_SUCCESS;
 }
