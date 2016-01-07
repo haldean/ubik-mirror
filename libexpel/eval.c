@@ -17,6 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include "expel/apply.h"
 #include "expel/assert.h"
 #include "expel/dagc.h"
 #include "expel/env.h"
@@ -26,9 +27,43 @@
 no_ignore static xl_error_t
 __eval_apply(struct xl_env *env, struct xl_dagc_apply *node)
 {
+        struct xl_dagc *graph;
+        xl_error_t err;
         unused(env);
-        unused(node);
-        return xl_raise(ERR_NOT_IMPLEMENTED, "eval_apply");
+
+        graph = calloc(1, sizeof(struct xl_dagc));
+        if (graph == NULL)
+                return xl_raise(ERR_NO_MEMORY, "eval apply: graph alloc");
+
+        if (node->func->value_type != DAGC_TYPE_GRAPH)
+                return xl_raise(
+                        ERR_BAD_TYPE, "eval apply: func node is not a graph");
+
+        err = xl_dagc_apply_arg(graph, node->func->known_graph, node->arg);
+        if (err != OK)
+                return err;
+
+        if (graph->in_arity != 0)
+        {
+                node->head.known_graph = graph;
+                node->head.value_type = DAGC_TYPE_GRAPH;
+                return OK;
+        }
+
+        /* Graph is fully applied; we can evaluate it to find the value of this
+         * node. */
+        if (graph->out_arity != 1)
+                return xl_raise(
+                        ERR_BAD_TYPE,
+                        "eval apply: can't call graph with multiple terminals");
+        err = xl_dagc_eval(env, graph);
+        if (err != OK)
+                return err;
+
+        node->head.value_type = graph->terminals[0]->value_type;
+        node->head.known_value = graph->terminals[0]->known_value;
+        node->head.known_graph = graph->terminals[0]->known_graph;
+        return OK;
 }
 
 no_ignore static xl_error_t

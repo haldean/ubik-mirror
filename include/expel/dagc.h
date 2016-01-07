@@ -45,12 +45,6 @@ struct xl_dagc_apply
         struct xl_dagc_node *func;
         /* Argument to apply to function */
         struct xl_dagc_node *arg;
-        /* The graph represented by application, if the result of
-         * this call is a partially-applied function. If this is
-         * non-null, the result is partially-applied; if it is
-         * null, the result is fully applied and is stored in
-         * known_value. */
-        struct xl_dagc *partial;
 };
 
 union xl_value_or_graph

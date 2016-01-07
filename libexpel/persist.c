@@ -276,11 +276,14 @@ __load_store(struct xl_dagc_store **node, struct xl_stream *sp)
 no_ignore static xl_error_t
 __load_input(struct xl_dagc_input **node, struct xl_stream *sp)
 {
+        word_t arg_num;
+
         *node = calloc(1, sizeof(struct xl_dagc_input));
         if (*node == NULL)
                 return xl_raise(ERR_NO_MEMORY, "input alloc");
 
-        READ_INTO((*node)->arg_num, sp);
+        READ_INTO(arg_num, sp);
+        (*node)->arg_num = ntohw(arg_num);
         return OK;
 }
 

@@ -119,6 +119,13 @@ __set_initial_ready(struct xl_dagc_node **nodes, size_t n_nodes)
         for (i = 0; i < n_nodes; i++)
         {
                 n = nodes[i];
+                /* Input nodes are special; they're only ready once their values
+                 * have been filled in, even though they have no dependencies.
+                 * Only application of the graph they participate in can make
+                 * them ready, so these don't changed here. */
+                if (n->node_type == DAGC_NODE_INPUT)
+                        continue;
+
                 err = xl_dagc_get_deps(&d1, &d2, n);
                 if (err != OK)
                         return err;

@@ -21,7 +21,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "expel/assert.h"
 #include "expel/dagc.h"
+#include "expel/expel.h"
 
 /* Gets the dependencies of a node.
  *
@@ -204,11 +206,15 @@ xl_dagc_init(struct xl_dagc *graph)
         graph->inputs = calloc(graph->in_arity, sizeof(struct xl_dagc_node *));
         graph->terminals =
                 calloc(graph->out_arity, sizeof(struct xl_dagc_node *));
-        for (i = 0, next_in = 0, next_out = 0; i < graph->n; i++)
+        for (i = 0, next_out = 0; i < graph->n; i++)
         {
                 p = graph->nodes[i];
                 if (p->node_type == DAGC_NODE_INPUT)
-                        graph->inputs[next_in++] = p;
+                {
+                        next_in = ((struct xl_dagc_input *) p)->arg_num;
+                        xl_assert(next_in < graph->in_arity);
+                        graph->inputs[next_in] = p;
+                }
                 if (p->is_terminal)
                         graph->terminals[next_out++] = p;
         }
@@ -292,6 +298,8 @@ __replace_ref(
 {
         size_t i;
 
+        if (*ref == NULL)
+                return OK;
         for (i = 0; i < n; i++)
         {
                 if (proto[i] == *ref)
@@ -383,6 +391,7 @@ xl_dagc_copy(
                 calloc(result->out_arity, sizeof(struct xl_dagc_node *));
         for (i = 0; i < result->in_arity; i++)
         {
+                result->inputs[i] = proto->inputs[i];
                 err = __replace_ref(
                         &result->inputs[i], proto->nodes, result->nodes,
                         result->n);
@@ -391,6 +400,7 @@ xl_dagc_copy(
         }
         for (i = 0; i < result->out_arity; i++)
         {
+                result->terminals[i] = proto->terminals[i];
                 err = __replace_ref(
                         &result->terminals[i], proto->nodes, result->nodes,
                         result->n);
@@ -400,7 +410,8 @@ xl_dagc_copy(
 
         result->adjacency =
                 calloc(result->n, sizeof(struct __xl_dagc_adjacency));
-        memcpy(result->adjacency, proto->adjacency, result->n);
+        memcpy(result->adjacency, proto->adjacency,
+               result->n * sizeof(struct __xl_dagc_adjacency));
 
         for (i = 0; i < result->n; i++)
         {
