@@ -56,8 +56,9 @@ dispatch.DAGC_NODE_DISPATCH
     load.DAGC_NODE_LOAD
    store.DAGC_NODE_STORE
 
-  cvalue.DAGC_CONST_VALUE
-  cgraph.DAGC_CONST_GRAPH
+  cvalue.DAGC_TYPE_VALUE
+  cgraph.DAGC_TYPE_GRAPH
+cunknown.DAGC_TYPE_UNKNOWN
 
   native.SCOPE_NATIVE
  userdef.SCOPE_USER_DEFINED

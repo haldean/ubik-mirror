@@ -36,13 +36,13 @@ __eval_const(struct xl_env *env, struct xl_dagc_const *node)
 {
         unused(env);
         node->head.known_type = node->type;
-        if (node->const_type == DAGC_CONST_VALUE)
+        if (node->head.value_type == DAGC_TYPE_VALUE)
         {
                 node->head.known_value = node->value.tree;
                 node->head.known_graph = NULL;
                 return OK;
         }
-        if (node->const_type == DAGC_CONST_GRAPH)
+        if (node->head.value_type == DAGC_TYPE_GRAPH)
         {
                 node->head.known_value = NULL;
                 node->head.known_graph = node->value.graph;
@@ -62,6 +62,7 @@ __eval_load(struct xl_env *env, struct xl_dagc_load *node)
         if (err != OK)
                 return err;
 
+        node->head.value_type = DAGC_TYPE_VALUE;
         node->head.known_type = type;
         node->head.known_value = value;
         return OK;
@@ -78,6 +79,7 @@ __eval_store(struct xl_env *env, struct xl_dagc_store *node)
         if (err != OK)
                 return err;
 
+        node->head.value_type = DAGC_TYPE_VALUE;
         node->head.known_type = known_type;
         return xl_set(env, node->loc, known_value, known_type);
 }
@@ -86,9 +88,20 @@ no_ignore static xl_error_t
 __eval_input(struct xl_env *env, struct xl_dagc_input *node)
 {
         unused(env);
-        node->head.known_value = node->applied_value;
         node->head.known_type = node->applied_type;
-        return OK;
+        if (node->head.value_type == DAGC_TYPE_VALUE)
+        {
+                node->head.known_value = node->applied.tree;
+                node->head.known_graph = NULL;
+                return OK;
+        }
+        if (node->head.value_type == DAGC_TYPE_GRAPH)
+        {
+                node->head.known_graph = node->applied.graph;
+                node->head.known_value = NULL;
+                return OK;
+        }
+        return xl_raise(ERR_BAD_TYPE, "eval input value type");
 }
 
 no_ignore xl_error_t

@@ -82,6 +82,8 @@ struct xl_dagc_node
 {
         /* One of the DAGC_NODE constants */
         word_t node_type;
+        /* One of the DAGC_TYPE constants */
+        word_t value_type;
         /* The evaluated type of the node, populated after the
          * node is evaluated by xl_dagc_eval. */
         struct xl_value *known_type;

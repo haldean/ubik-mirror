@@ -55,8 +55,6 @@ union xl_value_or_graph
 struct xl_dagc_const
 {
         struct xl_dagc_node head;
-        /* Either DAGC_CONST_VALUE or DAGC_CONST_GRAPH */
-        word_t const_type;
         /* Type of constant */
         struct xl_value *type;
         /* Value of constant */
@@ -89,7 +87,7 @@ struct xl_dagc_input
         /* The type required by the program */
         struct xl_value *required_type;
         /* The value filled in when the argument is applied */
-        struct xl_value *applied_value;
+        union xl_value_or_graph applied;
         /* The type filled in when the argument is applied */
         struct xl_value *applied_type;
 };
