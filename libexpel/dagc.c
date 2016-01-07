@@ -112,7 +112,7 @@ xl_dagc_init(struct xl_dagc *graph)
 {
         struct xl_dagc_node *p, *c1, *c2;
         struct __xl_dagc_adjacency *adj;
-        size_t i, j, a;
+        size_t i, j, a, next_in, next_out;
         xl_error_t err;
 
         /* Adjacency is stored as a sorted list of adjacency
@@ -195,22 +195,29 @@ xl_dagc_init(struct xl_dagc *graph)
                 }
         }
 
-        /* Go through and find the input nodes to find its maximal index. */
-        graph->arity = 0;
+        /* Go through and find how many nodes are inputs or terminals */
+        graph->in_arity = 0;
+        graph->out_arity = 0;
         for (i = 0; i < graph->n; i++)
         {
                 p = graph->nodes[i];
                 if (p->node_type == DAGC_NODE_INPUT)
-                        graph->arity++;
+                        graph->in_arity++;
+                if (p->is_terminal)
+                        graph->out_arity++;
         }
 
-        /* Then populate the input list. */
-        graph->inputs = calloc(graph->arity, sizeof(struct xl_dagc_node *));
-        for (i = 0, j = 0; i < graph->n; i++)
+        /* Then populate the input and terminal lists. */
+        graph->inputs = calloc(graph->in_arity, sizeof(struct xl_dagc_node *));
+        graph->terminals =
+                calloc(graph->out_arity, sizeof(struct xl_dagc_node *));
+        for (i = 0, next_in = 0, next_out = 0; i < graph->n; i++)
         {
                 p = graph->nodes[i];
                 if (p->node_type == DAGC_NODE_INPUT)
-                        graph->inputs[j++] = p;
+                        graph->inputs[next_in++] = p;
+                if (p->is_terminal)
+                        graph->terminals[next_out++] = p;
         }
 
         return OK;

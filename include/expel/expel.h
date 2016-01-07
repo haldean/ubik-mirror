@@ -110,8 +110,13 @@ struct xl_dagc
         /* Derived members: populated by calling xl_dagc_init */
         struct __xl_dagc_adjacency *adjacency;
 
+        /* The input nodes in the graph. */
         struct xl_dagc_node **inputs;
-        size_t arity;
+        size_t in_arity;
+
+        /* The terminal nodes in the graph. */
+        struct xl_dagc_node **terminals;
+        size_t out_arity;
 };
 
 /* Starts the expel runtime.
