@@ -54,39 +54,11 @@ __eval_apply(struct xl_env *env, struct xl_dagc_apply *node)
         if (err != OK)
                 return err;
 
-        if (graph->in_arity != 0)
-        {
-                /* We let the node own the graph; it inherits the reference we
-                 * took above. */
-                node->head.known.graph = graph;
-                node->head.value_type = DAGC_TYPE_GRAPH;
-                return OK;
-        }
-
-        /* Graph is fully applied; we can evaluate it to find the value of this
-         * node. */
-        if (graph->out_arity != 1)
-                return xl_raise(
-                        ERR_BAD_TYPE,
-                        "eval apply: can't call graph with multiple terminals");
-        err = xl_dagc_eval(env, graph);
-        if (err != OK)
-                return err;
-
-        node->head.value_type = graph->terminals[0]->value_type;
-
-        node->head.known = graph->terminals[0]->known;
-        err = xl_take(node->head.known.any);
-        if (err != OK)
-                return err;
-
-        node->head.known_type = graph->terminals[0]->known_type;
-        err = xl_take(node->head.known_type);
-        if (err != OK)
-                return err;
-
-        err = xl_release(graph);
-        return err;
+        /* We let the node own the graph; it inherits the reference we
+         * took above. */
+        node->head.known.graph = graph;
+        node->head.value_type = DAGC_TYPE_GRAPH;
+        return OK;
 }
 
 no_ignore static xl_error_t
@@ -212,7 +184,11 @@ xl_dagc_node_eval(struct xl_env *env, struct xl_dagc_node *node)
                 return xl_raise(ERR_UNKNOWN_TYPE, "node_eval");
         }
 
-        if (err == OK)
-                node->flags |= XL_DAGC_FLAG_COMPLETE;
+        if (err != OK)
+                return err;
+
+        node->flags |= XL_DAGC_FLAG_COMPLETE;
+
+        err = xl_dagc_collapse_graph(node, env);
         return err;
 }

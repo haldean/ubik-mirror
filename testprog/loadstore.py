@@ -1,8 +1,13 @@
 from expelc.libexpel import *
 
-c0 = const(uint8(), t(7, 10))
-c1 = const(uint8(), t(2, 30))
-s = store("wheee", c0)
-l = load("wheee", dep=s, terminal=True)
+muri = uri(name="super cool lambda biz", scope=pack("userdef"))
 
-encode([c1, l, c0, s])
+g_ref = graph(uint8(), 1)
+s = store(muri, g_ref)
+l = load(muri, dep=s, terminal=True)
+g0 = [g_ref, s, l]
+
+c0 = const(uint8(), t(7, 10), terminal=True)
+g1 = [c0]
+
+encode([g0, g1])

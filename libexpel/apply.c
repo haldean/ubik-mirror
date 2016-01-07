@@ -66,3 +66,43 @@ xl_dagc_apply_arg(
 
         return OK;
 }
+
+no_ignore xl_error_t
+xl_dagc_collapse_graph(struct xl_dagc_node *node, struct xl_env *env)
+{
+        struct xl_dagc *graph;
+        xl_error_t err;
+
+        if (node->value_type != DAGC_TYPE_GRAPH)
+                return OK;
+        graph = node->known.graph;
+
+        /* Graph is fully applied; we can evaluate it to find the value of this
+         * node. */
+        if (graph->out_arity != 1)
+                return xl_raise(
+                        ERR_BAD_TYPE,
+                        "collapse: can't call graph with multiple terminals");
+
+        if (graph->in_arity != 0)
+                return OK;
+
+        err = xl_dagc_eval(env, graph);
+        if (err != OK)
+                return err;
+
+        node->value_type = graph->terminals[0]->value_type;
+
+        node->known = graph->terminals[0]->known;
+        err = xl_take(node->known.any);
+        if (err != OK)
+                return err;
+
+        node->known_type = graph->terminals[0]->known_type;
+        err = xl_take(node->known_type);
+        if (err != OK)
+                return err;
+
+        err = xl_release(graph);
+        return err;
+}

@@ -19,10 +19,20 @@
 
 #include "expel/expel.h"
 
-/* Takes a prototype graph and an argument, and applied the argument to the
- * graph. */
+/* Takes a prototype graph and an argument, and applied the
+ * argument to the graph. */
 no_ignore xl_error_t
 xl_dagc_apply_arg(
         struct xl_dagc *result,
         struct xl_dagc *proto,
         struct xl_dagc_node *arg);
+
+/* Collapses a graph in a node's known value into a value, if the
+ * arity of the graph is zero.
+ *
+ * If the graph in the node is not suitable for collapsing, this
+ * operation is a no-op and returns OK. */
+no_ignore xl_error_t
+xl_dagc_collapse_graph(
+        struct xl_dagc_node *node,
+        struct xl_env *env);
