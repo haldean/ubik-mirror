@@ -48,8 +48,8 @@ xl_dagc_apply_arg(
                 result->inputs[i] = result->inputs[i + 1];
 
         input->head.value_type = arg->value_type;
-        input->applied_type = arg->known_type;
-        input->applied = arg->known;
+        input->head.known_type = arg->known_type;
+        input->head.known = arg->known;
         input->head.flags |= XL_DAGC_READY_MASK;
 
         return OK;

@@ -117,8 +117,7 @@ no_ignore static xl_error_t
 __eval_input(struct xl_env *env, struct xl_dagc_input *node)
 {
         unused(env);
-        node->head.known_type = node->applied_type;
-        node->head.known = node->applied;
+        unused(node);
         return OK;
 }
 

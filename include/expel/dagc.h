@@ -81,10 +81,6 @@ struct xl_dagc_input
         word_t arg_num;
         /* The type required by the program */
         struct xl_value *required_type;
-        /* The value filled in when the argument is applied */
-        union xl_value_or_graph applied;
-        /* The type filled in when the argument is applied */
-        struct xl_value *applied_type;
 };
 
 /* Gets the dependencies of a node.

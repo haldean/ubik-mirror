@@ -29,6 +29,7 @@
 #include <string.h>
 
 #include "expel/assert.h"
+#include "expel/dagc.h"
 #include "expel/expel.h"
 #include "expel/gc.h"
 #include "expel/util.h"
@@ -238,10 +239,89 @@ __release_value(struct xl_value *v)
 }
 
 no_ignore static xl_error_t
+__release_node(struct xl_dagc_node *n)
+{
+        xl_error_t err;
+
+        switch (n->node_type)
+        {
+        case DAGC_NODE_APPLY:
+                break;
+
+        case DAGC_NODE_CONST:
+                err = xl_release(((struct xl_dagc_const *) n)->type);
+                if (err != OK)
+                        return err;
+                err = xl_release(((struct xl_dagc_const *) n)->value.any);
+                if (err != OK)
+                        return err;
+                break;
+
+        case DAGC_NODE_LOAD:
+                err = xl_release(((struct xl_dagc_load *) n)->loc);
+                if (err != OK)
+                        return err;
+                break;
+
+        case DAGC_NODE_STORE:
+                err = xl_release(((struct xl_dagc_store *) n)->loc);
+                if (err != OK)
+                        return err;
+                break;
+
+        case DAGC_NODE_INPUT:
+                err = xl_release(((struct xl_dagc_input *) n)->required_type);
+                if (err != OK)
+                        return err;
+                break;
+
+        default:
+                return xl_raise(ERR_UNKNOWN_TYPE, "release node: node type");
+        }
+
+        if (n->known_type != NULL)
+        {
+                err = xl_release(n->known_type);
+                if (err != OK)
+                        return err;
+        }
+        if (n->known.any != NULL)
+        {
+                err = xl_release(n->known.any);
+                if (err != OK)
+                        return err;
+        }
+        return OK;
+}
+
+no_ignore static xl_error_t
 __release_graph(struct xl_dagc *g)
 {
-        unused(g);
-        return xl_raise(ERR_NOT_IMPLEMENTED, "release graph");
+        size_t i;
+        xl_error_t err;
+
+        g->refcount--;
+
+        if (g->refcount)
+                return OK;
+
+        for (i = 0; i < g->n; i++)
+        {
+                err = __release_node(g->nodes[i]);
+                if (err != OK)
+                        return err;
+                free(g->nodes[i]);
+        }
+        free(g->nodes);
+
+        for (i = 0; i < g->n; i++)
+                free(g->adjacency[i].parents);
+        free(g->adjacency);
+
+        free(g->inputs);
+        free(g->terminals);
+
+        return OK;
 }
 
 no_ignore xl_error_t
