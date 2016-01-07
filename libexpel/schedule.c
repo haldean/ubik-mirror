@@ -74,7 +74,6 @@ __find_reachable_nodes(
 
         /* Mark appropriate nodes as reachable. */
         *rn = 0;
-        reachable = calloc(graph->n, sizeof(struct xl_node *));
 
         /* First find terminal nodes. */
         for (i = 0; i < graph->n; i++)
@@ -109,7 +108,7 @@ __find_reachable_nodes(
  * A node is ready if it has no incomplete dependencies, and is
  * complete if it has no dependencies. */
 no_ignore static word_t
-__set_initial_ready(struct xl_dagc_node *nodes, size_t n_nodes)
+__set_initial_ready(struct xl_dagc_node **nodes, size_t n_nodes)
 {
         struct xl_dagc_node *n, *d1, *d2;
         word_t err;
@@ -119,7 +118,7 @@ __set_initial_ready(struct xl_dagc_node *nodes, size_t n_nodes)
          * complete. */
         for (i = 0; i < n_nodes; i++)
         {
-                n = &nodes[i];
+                n = nodes[i];
                 err = xl_dagc_get_deps(&d1, &d2, n);
                 if (err != OK)
                         return err;
@@ -149,7 +148,7 @@ __schedule(struct xl_node_schedule **schedule, struct xl_dagc_node *node)
 no_ignore static word_t
 __schedule_all_ready(
                 struct xl_node_schedule **schedule,
-                struct xl_dagc_node *nodes,
+                struct xl_dagc_node **nodes,
                 size_t n_nodes)
 {
         struct xl_dagc_node *n;
@@ -159,7 +158,7 @@ __schedule_all_ready(
         *schedule = NULL;
         for (i = 0; i < n_nodes; i++)
         {
-                n = &nodes[i];
+                n = nodes[i];
                 if (n->flags & XL_DAGC_FLAG_COMPLETE)
                         continue;
                 if ((n->flags & XL_DAGC_READY_MASK) == XL_DAGC_READY_MASK)
@@ -212,12 +211,16 @@ __notify_parents(
 no_ignore word_t
 xl_dagc_eval(struct xl_env *env, struct xl_dagc *graph)
 {
-        struct xl_dagc_node *reachable;
+        struct xl_dagc_node **reachable;
         struct xl_node_schedule *schedule, *to_exec;
         size_t n_nodes;
         word_t err;
 
-        err = __find_reachable_nodes(&reachable, &n_nodes, graph);
+        reachable = calloc(graph->n, sizeof(struct xl_node *));
+        if (reachable == NULL)
+                return ERR_NO_MEMORY;
+
+        err = __find_reachable_nodes(reachable, &n_nodes, graph);
         if (err != OK)
                 return err;
 
