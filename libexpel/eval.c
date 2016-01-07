@@ -23,15 +23,15 @@
 #include "expel/expel.h"
 #include "expel/util.h"
 
-no_ignore static word_t
+no_ignore static xl_error_t
 __eval_apply(struct xl_env *env, struct xl_dagc_apply *node)
 {
         unused(env);
         unused(node);
-        return ERR_NOT_IMPLEMENTED;
+        return xl_raise(ERR_NOT_IMPLEMENTED, "eval_apply");
 }
 
-no_ignore static word_t
+no_ignore static xl_error_t
 __eval_const(struct xl_env *env, struct xl_dagc_const *node)
 {
         unused(env);
@@ -40,12 +40,12 @@ __eval_const(struct xl_env *env, struct xl_dagc_const *node)
         return OK;
 }
 
-no_ignore static word_t
+no_ignore static xl_error_t
 __eval_load(struct xl_env *env, struct xl_dagc_load *node)
 {
         struct xl_value *value;
         struct xl_value *type;
-        word_t err;
+        xl_error_t err;
 
         err = xl_get(&value, &type, env, node->loc);
         if (err != OK)
@@ -56,12 +56,12 @@ __eval_load(struct xl_env *env, struct xl_dagc_load *node)
         return OK;
 }
 
-no_ignore static word_t
+no_ignore static xl_error_t
 __eval_store(struct xl_env *env, struct xl_dagc_store *node)
 {
         struct xl_value *known_value;
         struct xl_value *known_type;
-        word_t err;
+        xl_error_t err;
 
         err = xl_dagc_known_value(&known_value, &known_type, node->value);
         if (err != OK)
@@ -71,10 +71,10 @@ __eval_store(struct xl_env *env, struct xl_dagc_store *node)
         return xl_set(env, node->loc, known_value, known_type);
 }
 
-no_ignore word_t
+no_ignore xl_error_t
 xl_dagc_node_eval(struct xl_env *env, struct xl_dagc_node *node)
 {
-        word_t err;
+        xl_error_t err;
 
         xl_assert((node->flags & XL_DAGC_READY_MASK) == XL_DAGC_READY_MASK);
 
@@ -93,7 +93,7 @@ xl_dagc_node_eval(struct xl_env *env, struct xl_dagc_node *node)
                 err = __eval_store(env, (struct xl_dagc_store *) node);
                 break;
         default:
-                return ERR_UNKNOWN_TYPE;
+                return xl_raise(ERR_UNKNOWN_TYPE, "node_eval");
         }
 
         if (err == OK)

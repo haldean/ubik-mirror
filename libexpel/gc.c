@@ -67,7 +67,7 @@ xl_gc_free_all()
 }
 
 /* Creates a new value. */
-no_ignore word_t
+no_ignore xl_error_t
 xl_new(struct xl_value **v)
 {
         struct xl_alloc_page *p;
@@ -93,10 +93,10 @@ xl_new(struct xl_value **v)
                 #endif
                 p = calloc(1, sizeof(struct xl_alloc_page));
                 if (p == NULL)
-                        return ERR_NO_MEMORY;
+                        return xl_raise(ERR_NO_MEMORY, "new page");
                 p->values = calloc(XL_GC_PAGE_SIZE, sizeof(struct xl_value));
                 if (p->values == NULL)
-                        return ERR_NO_MEMORY;
+                        return xl_raise(ERR_NO_MEMORY, "new page values");
 
                 /* All values are open when we begin */
                 for (i = 0; i < XL_GC_PAGE_SIZE; i++)
@@ -131,16 +131,16 @@ xl_new(struct xl_value **v)
 }
 
 /* Takes a reference to the given tree. */
-word_t
+no_ignore xl_error_t
 xl_take(struct xl_value *v)
 {
         if (unlikely(v->refcount == UINT16_MAX))
-                return ERR_REFCOUNT_OVERFLOW;
+                return xl_raise(ERR_REFCOUNT_OVERFLOW, "take");
         v->refcount++;
         return OK;
 }
 
-no_ignore word_t
+no_ignore xl_error_t
 run_gc()
 {
         struct xl_alloc_page *p;
@@ -175,14 +175,14 @@ run_gc()
 }
 
 /* Releases a reference to the given tree. */
-word_t
+no_ignore xl_error_t
 xl_release(struct xl_value *v)
 {
-        word_t err;
+        xl_error_t err;
         struct xl_alloc_page *p;
 
         if (unlikely(v->refcount == 0))
-                return ERR_REFCOUNT_UNDERFLOW;
+                return xl_raise(ERR_REFCOUNT_UNDERFLOW, "release");
         v->refcount--;
 
         gc_stats->releases_until_gc--;

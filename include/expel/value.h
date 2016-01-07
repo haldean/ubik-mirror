@@ -21,8 +21,8 @@
 
 #include "expel/expel.h"
 
-no_ignore word_t
+no_ignore xl_error_t
 xl_read_packed(char **dest, size_t *n, struct xl_value *src);
 
-no_ignore word_t
+no_ignore xl_error_t
 xl_read_string(wchar_t **dest, size_t *n, struct xl_value *src);

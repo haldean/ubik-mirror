@@ -78,7 +78,7 @@ struct xl_dagc_store
  * with valid pointers. For nodes with one dependency, d1 will be
  * filled in with a pointer and d2 will be set to NULL. For nodes
  * with no dependencies, both will be NULL. */
-no_ignore word_t
+no_ignore xl_error_t
 xl_dagc_get_deps(
         struct xl_dagc_node **d1,
         struct xl_dagc_node **d2,
@@ -97,7 +97,7 @@ xl_dagc_get_deps(
  * pointer. The pointer we're returning is itself a pointer
  * to a list of pointers. So we're asking you to pass us a
  * pointer to a pointer of pointers. I'm sorry. */
-no_ignore word_t
+no_ignore xl_error_t
 xl_dagc_get_parents(
         struct xl_dagc_node ***parents,
         size_t *n_parents,
@@ -109,14 +109,14 @@ xl_dagc_get_parents(
  * Assumes that the provided node is complete. For nodes that do
  * not have a value (i.e., store nodes), ERR_BAD_TYPE is returned.
  * If the node is not complete, the returned value is unspecified. */
-no_ignore word_t
+no_ignore xl_error_t
 xl_dagc_known_value(
         struct xl_value **value,
         struct xl_value **type,
         struct xl_dagc_node *node);
 
 /* Evaluates a node and marks it as complete. */
-no_ignore word_t
+no_ignore xl_error_t
 xl_dagc_node_eval(struct xl_env *env, struct xl_dagc_node *node);
 
 #endif

@@ -43,7 +43,7 @@ struct xl_env {
 };
 
 /* Initializes a new environment struct. */
-no_ignore word_t
+no_ignore xl_error_t
 xl_env_init(struct xl_env *env);
 
 /* Frees memory associated with the environment struct.
@@ -53,7 +53,7 @@ xl_env_init(struct xl_env *env);
  * state. If OK is returned, the environment can still be used
  * with xl_get and xl_set after calling xl_env_free; this is a
  * clear operation that does not destroy the env. */
-no_ignore word_t
+no_ignore xl_error_t
 xl_env_free(struct xl_env *env);
 
 /* Finds the value associated wth the given URI in the environment.
@@ -62,7 +62,7 @@ xl_env_free(struct xl_env *env);
  * set to the pointer to the assigned value. If the value is not
  * found, ERR_ABSENT is returned and the out pointer is unchanged.
  * */
-no_ignore word_t
+no_ignore xl_error_t
 xl_get(
         struct xl_value **value,
         struct xl_value **type,
@@ -76,7 +76,7 @@ xl_get(
  * later modifications to the passed-in URI will not change the
  * bindings but modifications to the value will modify the value
  * stored in the environment. */
-no_ignore word_t
+no_ignore xl_error_t
 xl_overwrite(
         struct xl_env *env,
         struct xl_uri *uri,
@@ -93,7 +93,7 @@ xl_overwrite(
  * later modifications to the passed-in URI will not change the
  * bindings but modifications to the value will modify the value
  * stored in the environment. */
-no_ignore word_t
+no_ignore xl_error_t
 xl_set(
         struct xl_env *env,
         struct xl_uri *uri,

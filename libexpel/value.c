@@ -25,7 +25,7 @@
 #include "expel/util.h"
 #include "expel/value.h"
 
-no_ignore word_t
+no_ignore xl_error_t
 xl_read_packed(char **dest, size_t *n, struct xl_value *src)
 {
         size_t i, n_bytes, n_copy;
@@ -36,7 +36,7 @@ xl_read_packed(char **dest, size_t *n, struct xl_value *src)
         *n = n_bytes;
         *dest = calloc(n_bytes, sizeof(char));
         if (*dest == NULL)
-                return ERR_NO_MEMORY;
+                return xl_raise(ERR_NO_MEMORY, "read packed");
 
         i = 0;
         v = src->right.p;
@@ -52,10 +52,10 @@ xl_read_packed(char **dest, size_t *n, struct xl_value *src)
         return OK;
 }
 
-no_ignore word_t
+no_ignore xl_error_t
 xl_read_string(wchar_t **dest, size_t *n, struct xl_value *src)
 {
-        word_t err;
+        xl_error_t err;
         size_t str_size, buf_size;
         char *buf, *orig_buf;
 
@@ -79,7 +79,7 @@ xl_read_string(wchar_t **dest, size_t *n, struct xl_value *src)
         if (*dest == NULL)
         {
                 free(*dest);
-                return ERR_NO_MEMORY;
+                return xl_raise(ERR_NO_MEMORY, "read string");
         }
         *n = str_size;
         return OK;

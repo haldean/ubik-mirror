@@ -28,7 +28,7 @@
 #define ENV_INIT_CAP 8
 #define ENV_CAP_SCALE 2
 
-word_t
+no_ignore xl_error_t
 xl_env_init(struct xl_env *env)
 {
         env->bindings = NULL;
@@ -37,10 +37,10 @@ xl_env_init(struct xl_env *env)
         return OK;
 }
 
-word_t
+no_ignore xl_error_t
 xl_env_free(struct xl_env *env)
 {
-        word_t err;
+        xl_error_t err;
         size_t i;
 
         if (likely(env->bindings != NULL))
@@ -61,7 +61,7 @@ xl_env_free(struct xl_env *env)
         return OK;
 }
 
-word_t
+no_ignore xl_error_t
 xl_get(
         struct xl_value **value,
         struct xl_value **type,
@@ -87,7 +87,7 @@ xl_get(
                 i = (i + 1) % env->cap;
         }
 
-        return found ? OK : ERR_ABSENT;
+        return found ? OK : xl_raise(ERR_ABSENT, "xl_get");
 }
 
 /* Inserts the given URI-value pair into the given binding array.
@@ -98,7 +98,7 @@ xl_get(
  * The overwrite parameter controls whether existing data will be
  * overwritten. True means that it will be, false means that it
  * will not. */
-static inline word_t
+no_ignore static xl_error_t
 __insert(
         struct xl_binding *binds,
         size_t cap,
@@ -109,7 +109,7 @@ __insert(
 {
         size_t i;
         size_t probed;
-        word_t err;
+        xl_error_t err;
 
         i = uri->hash % cap;
         for (probed = 0; probed < cap; probed++)
@@ -121,7 +121,7 @@ __insert(
                 i = (i + 1) % cap;
         }
         if (unlikely(probed == cap))
-                return ERR_FULL;
+                return xl_raise(ERR_FULL, "env insert");
 
         /* There was already a value at this key, we need to release our
          * reference on it. */
@@ -129,7 +129,7 @@ __insert(
         if (unlikely(binds[i].value != NULL))
         {
                 if (!overwrite)
-                        return ERR_PRESENT;
+                        return xl_raise(ERR_PRESENT, "env overwrite");
                 err = xl_release(binds[i].value);
         }
 
@@ -150,14 +150,14 @@ __insert(
  * frees the old array and updates the env struct to reference the new
  * array. If an error occurs during rebalancing, the environment remains
  * unmodified and a nonzero error code is returned. */
-static word_t
+static xl_error_t
 __resize_rebalance(struct xl_env *env)
 {
         struct xl_binding *new_binds;
         size_t new_cap;
         size_t i;
         size_t reinserted;
-        word_t err;
+        xl_error_t err;
 
         if (env->cap == 0)
                 new_cap = ENV_INIT_CAP;
@@ -166,7 +166,7 @@ __resize_rebalance(struct xl_env *env)
 
         new_binds = calloc(new_cap, sizeof(struct xl_binding));
         if (new_binds == NULL)
-                return ERR_NO_MEMORY;
+                return xl_raise(ERR_NO_MEMORY, "env resize");
 
         err = OK;
         for (i = 0, reinserted = 0; i < env->cap && reinserted < env->n; i++)
@@ -198,7 +198,7 @@ __resize_rebalance(struct xl_env *env)
         return OK;
 }
 
-static no_ignore word_t
+no_ignore static xl_error_t
 __set(
         struct xl_env *env,
         struct xl_uri *uri,
@@ -207,7 +207,7 @@ __set(
         bool overwrite)
 {
         struct xl_uri *uri_copied;
-        word_t err, ignore;
+        xl_error_t err, ignore;
 
         err = OK;
         if (unlikely(env->cap == 0))
@@ -249,7 +249,7 @@ __set(
         return err;
 }
 
-word_t
+no_ignore xl_error_t
 xl_set(
         struct xl_env *env,
         struct xl_uri *uri,
@@ -259,7 +259,7 @@ xl_set(
         return __set(env, uri, value, type, false);
 }
 
-word_t
+no_ignore xl_error_t
 xl_overwrite(
         struct xl_env *env,
         struct xl_uri *uri,

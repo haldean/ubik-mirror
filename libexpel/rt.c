@@ -20,7 +20,7 @@
 #include "expel/expel.h"
 #include "expel/gc.h"
 
-word_t
+xl_error_t
 xl_start()
 {
         xl_gc_start();

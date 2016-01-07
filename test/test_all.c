@@ -190,7 +190,7 @@ env()
         assert(r == v);
         assert(v->refcount == 2);
 
-        assert(xl_set(&env, &u, v, t) == ERR_PRESENT);
+        assert(xl_set(&env, &u, v, t)->error_code == ERR_PRESENT);
         assert(v->refcount == 2);
 
         assert(xl_overwrite(&env, &u, v, t) == OK);
@@ -269,11 +269,12 @@ gc()
 int
 main()
 {
-        word_t err;
+        xl_error_t err;
+
         init();
         if ((err = xl_start()) != OK)
         {
-                printf("couldn't start expel: %s\n", xl_explain_word(err));
+                printf("couldn't start expel: %s\n", xl_explain_error(err));
                 return -1;
         }
         run(buffer);

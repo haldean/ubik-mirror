@@ -23,7 +23,7 @@
 #include "expel/uri.h"
 #include "expel/value.h"
 
-no_ignore static word_t
+no_ignore static xl_error_t
 __set_hash(struct xl_uri *uri)
 {
         size_t i;
@@ -36,7 +36,7 @@ __set_hash(struct xl_uri *uri)
         return OK;
 }
 
-no_ignore word_t
+no_ignore xl_error_t
 xl_uri_local(
         struct xl_uri *uri,
         wchar_t *name)
@@ -64,10 +64,10 @@ xl_uri_eq(struct xl_uri *u0, struct xl_uri *u1)
         return true;
 }
 
-no_ignore word_t
+no_ignore xl_error_t
 xl_uri_from_value(struct xl_uri *uri, struct xl_value *uri_val)
 {
-        word_t err;
+        xl_error_t err;
 
         /* URIs have the following structure:
          *      L      version

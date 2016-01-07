@@ -24,13 +24,9 @@
 #include <stdint.h>
 
 #include "expel/const.h"
-#include "expel/words.h"
 
 typedef uint8_t tag_t;
 typedef uint64_t word_t;
-
-#define OK ((word_t)0)
-#define no_ignore __attribute__((__warn_unused_result__))
 
 #define TAG_LEFT_NODE   0x01
 #define TAG_LEFT_WORD   0x02
@@ -44,6 +40,17 @@ struct xl_stream;
 struct xl_user;
 struct xl_uri;
 struct __xl_dagc_adjacency;
+
+/* Used to communicate errors through the stack. */
+struct xl_error
+{
+        word_t error_code;
+        char *tag;
+};
+typedef struct xl_error * xl_error_t;
+#define OK ((xl_error_t) NULL)
+
+#define no_ignore __attribute__((__warn_unused_result__))
 
 union _xl_ptr_val
 {
@@ -100,51 +107,51 @@ struct xl_dagc
 /* Starts the expel runtime.
  *
  * Returns OK on success. */
-no_ignore word_t
+no_ignore xl_error_t
 xl_start();
 
 /* Creates a new value.
  *
  * The returned value has a refcount of one; callers to xl_new do
  * not need to take the result. */
-no_ignore word_t
+no_ignore xl_error_t
 xl_new(struct xl_value **v);
 
 /* Takes a reference to the given tree.
  *
  * Returns OK on success, or a nonzero error code on failure. */
-no_ignore word_t
+no_ignore xl_error_t
 xl_take(struct xl_value *v);
 
 /* Releases a reference to the given tree.
  *
  * Returns OK on success, or a nonzero error code on failure. */
-no_ignore word_t
+no_ignore xl_error_t
 xl_release(struct xl_value *v);
 
 /* Loads a graph from a stream.
  *
  * Returns OK on success, or a nonzero error word. */
-no_ignore word_t
+no_ignore xl_error_t
 xl_load(struct xl_dagc *out, struct xl_stream *sp);
 
 /* Saves a graph to a stream.
  *
  * Returns OK on success, or a nonzero error word. */
-no_ignore word_t
+no_ignore xl_error_t
 xl_save(struct xl_stream *sp, struct xl_dagc *in);
 
 /* Loads a tree from a stream.
  *
  * The returned tree is not taken; it is up to the caller to take the
  * tree. Returns OK on success, or a nonzero error word. */
-no_ignore word_t
+no_ignore xl_error_t
 xl_load_value(struct xl_value *out, struct xl_stream *sp);
 
 /* Saves a tree to a stream.
  *
  * Returns OK on success, or a nonzero error word. */
-no_ignore word_t
+no_ignore xl_error_t
 xl_save_value(struct xl_stream *sp, struct xl_value *in);
 
 /* Initializes derived quantities on graphs.
@@ -152,7 +159,7 @@ xl_save_value(struct xl_stream *sp, struct xl_value *in);
  * Callers should create a dagc struct, populate the nodes and the
  * n fields, and then call this method to compute all derived
  * quantities. */
-no_ignore word_t
+no_ignore xl_error_t
 xl_dagc_init(struct xl_dagc *graph);
 
 /* Evaluates all terminal nodes in a graph.
@@ -160,7 +167,15 @@ xl_dagc_init(struct xl_dagc *graph);
  * This finds all nodes reachable from any node marked terminal,
  * and evaluates all of those nodes to determine the value for the
  * terminal nodes. */
-no_ignore word_t
+no_ignore xl_error_t
 xl_dagc_eval(struct xl_env *env, struct xl_dagc *graph);
+
+/* Create an error object. */
+xl_error_t
+xl_raise(word_t code, char *tag);
+
+/* Creates a string representation of an error object. */
+char *
+xl_explain_error(xl_error_t err);
 
 #endif

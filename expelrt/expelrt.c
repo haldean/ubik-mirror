@@ -23,7 +23,6 @@
 #include "expel/env.h"
 #include "expel/expel.h"
 #include "expel/stream.h"
-#include "expel/util.h"
 
 int
 main(int argc, char *argv[])
@@ -31,7 +30,7 @@ main(int argc, char *argv[])
         struct xl_stream stream;
         struct xl_dagc graph;
         struct xl_env env;
-        word_t err;
+        xl_error_t err;
 
         if (argc <= 1)
         {
@@ -43,7 +42,7 @@ main(int argc, char *argv[])
         if (err != OK)
         {
                 fprintf(stderr, "couldn't start expel: %s\n",
-                        xl_explain_word(err));
+                        xl_explain_error(err));
                 return EXIT_FAILURE;
         }
 
@@ -51,7 +50,7 @@ main(int argc, char *argv[])
         if (err != OK)
         {
                 fprintf(stderr, "couldn't open %s: %s\n",
-                        argv[1], xl_explain_word(err));
+                        argv[1], xl_explain_error(err));
                 return EXIT_FAILURE;
         }
 
@@ -59,7 +58,7 @@ main(int argc, char *argv[])
         if (err != OK)
         {
                 fprintf(stderr, "couldn't load %s: %s\n",
-                        argv[1], xl_explain_word(err));
+                        argv[1], xl_explain_error(err));
                 return EXIT_FAILURE;
         }
 
@@ -67,7 +66,7 @@ main(int argc, char *argv[])
         if (err != OK)
         {
                 fprintf(stderr, "couldn't create environment: %s\n",
-                        xl_explain_word(err));
+                        xl_explain_error(err));
                 return EXIT_FAILURE;
         }
 
@@ -75,7 +74,7 @@ main(int argc, char *argv[])
         if (err != OK)
         {
                 fprintf(stderr, "couldn't eval dagc: %s\n",
-                        xl_explain_word(err));
+                        xl_explain_error(err));
                 return EXIT_FAILURE;
         }
 

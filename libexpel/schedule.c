@@ -61,7 +61,7 @@ __set_add(struct xl_dagc_node **set, size_t *n, struct xl_dagc_node *elem)
  * "Reachable" nodes are ones that are reachable from a terminal
  * node by traversing dependency edges; nodes that are not
  * reachable do not need to be evaluated. */
-no_ignore static word_t
+no_ignore static xl_error_t
 __find_reachable_nodes(
                 struct xl_dagc_node **reachable, 
                 size_t *rn,
@@ -69,7 +69,7 @@ __find_reachable_nodes(
 {
         struct xl_dagc_node *n, *d1, *d2;
         size_t i;
-        word_t err;
+        xl_error_t err;
         bool done;
 
         /* Mark appropriate nodes as reachable. */
@@ -107,11 +107,11 @@ __find_reachable_nodes(
  *
  * A node is ready if it has no incomplete dependencies, and is
  * complete if it has no dependencies. */
-no_ignore static word_t
+no_ignore static xl_error_t
 __set_initial_ready(struct xl_dagc_node **nodes, size_t n_nodes)
 {
         struct xl_dagc_node *n, *d1, *d2;
-        word_t err;
+        xl_error_t err;
         size_t i;
 
         /* Set the ready flag on everyone whose dependencies are
@@ -132,7 +132,7 @@ __set_initial_ready(struct xl_dagc_node **nodes, size_t n_nodes)
         return OK;
 }
 
-no_ignore static word_t
+no_ignore static xl_error_t
 __schedule(struct xl_node_schedule **schedule, struct xl_dagc_node *node)
 {
         struct xl_node_schedule *sched;
@@ -145,14 +145,14 @@ __schedule(struct xl_node_schedule **schedule, struct xl_dagc_node *node)
         return OK;
 }
 
-no_ignore static word_t
+no_ignore static xl_error_t
 __schedule_all_ready(
                 struct xl_node_schedule **schedule,
                 struct xl_dagc_node **nodes,
                 size_t n_nodes)
 {
         struct xl_dagc_node *n;
-        word_t err;
+        xl_error_t err;
         size_t i;
 
         *schedule = NULL;
@@ -172,7 +172,7 @@ __schedule_all_ready(
         return OK;
 }
 
-no_ignore static word_t
+no_ignore static xl_error_t
 __notify_parents(
                 struct xl_node_schedule **schedule,
                 struct xl_dagc *graph,
@@ -180,7 +180,7 @@ __notify_parents(
 {
         struct xl_dagc_node **parents, *d1, *d2, *p;
         size_t i, n_parents;
-        word_t err;
+        xl_error_t err;
 
         err = xl_dagc_get_parents(&parents, &n_parents, graph, node);
         if (err != OK)
@@ -208,17 +208,17 @@ __notify_parents(
         return OK;
 }
 
-no_ignore word_t
+no_ignore xl_error_t
 xl_dagc_eval(struct xl_env *env, struct xl_dagc *graph)
 {
         struct xl_dagc_node **reachable;
         struct xl_node_schedule *schedule, *to_exec;
         size_t n_nodes;
-        word_t err;
+        xl_error_t err;
 
         reachable = calloc(graph->n, sizeof(struct xl_node *));
         if (reachable == NULL)
-                return ERR_NO_MEMORY;
+                return xl_raise(ERR_NO_MEMORY, "eval");
 
         err = __find_reachable_nodes(reachable, &n_nodes, graph);
         if (err != OK)

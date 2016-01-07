@@ -33,13 +33,13 @@ struct xl_uri {
 };
 
 /* Creates a URI for a local resource. */
-no_ignore word_t
+no_ignore xl_error_t
 xl_uri_local(
         struct xl_uri *uri,
         wchar_t *name);
 
 /* Creates a URI struct from a value-encoded URI. */
-no_ignore word_t
+no_ignore xl_error_t
 xl_uri_from_value(struct xl_uri *uri, struct xl_value *uri_val);
 
 /* Returns true if the provided URIs are equal. */

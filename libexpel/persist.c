@@ -31,7 +31,8 @@
 
 /* Reads sizeof(x) bytes into x from sp. */
 #define READ_INTO(x, sp) \
-        if (xl_stream_read(&x, sp, sizeof(x)) != sizeof(x)) return ERR_NO_DATA;
+        if (xl_stream_read(&x, sp, sizeof(x)) != sizeof(x)) \
+                return xl_raise(ERR_NO_DATA, #x);
 
 /*
  * Trees have a single binary storage format that is used for network
@@ -58,104 +59,97 @@
  * integer. Repeat the same operation for the right node.
  */
 
-word_t
+no_ignore xl_error_t
 xl_load_value(struct xl_value *out, struct xl_stream *sp)
 {
-        size_t read;
         tag_t tag;
-        word_t ret;
+        xl_error_t err;
 
-        read = xl_stream_read(&tag, sp, sizeof(tag_t));
-        if (read != sizeof(tag_t))
-                return ERR_NO_DATA;
+        READ_INTO(tag, sp);
         out->tag = tag;
         out->refcount = 0;
 
         if (tag & TAG_LEFT_WORD)
         {
-                read = xl_stream_read(&out->left.v, sp, sizeof(word_t));
-                if (read != sizeof(word_t))
-                        return ERR_NO_DATA;
+                READ_INTO(out->left.v, sp);
                 out->left.v = ntohw(out->left.v);
         }
         else
         {
-                ret = xl_new(&out->left.p);
-                if (ret != OK)
-                        return ret;
-                ret = xl_load_value(out->left.p, sp);
-                if (ret != OK)
-                        return ret;
+                err = xl_new(&out->left.p);
+                if (err != OK)
+                        return err;
+                err = xl_load_value(out->left.p, sp);
+                if (err != OK)
+                        return err;
                 out->left.p->refcount = 1;
         }
 
         if (tag & TAG_RIGHT_WORD)
         {
-                read = xl_stream_read(&out->right.v, sp, sizeof(word_t));
-                if (read != sizeof(word_t))
-                        return ERR_NO_DATA;
+                READ_INTO(out->right.v, sp);
                 out->right.v = ntohw(out->right.v);
         }
         else
         {
-                ret = xl_new(&out->right.p);
-                if (ret != OK)
-                        return ret;
-                ret = xl_load_value(out->right.p, sp);
-                if (ret != OK)
-                        return ret;
+                err = xl_new(&out->right.p);
+                if (err != OK)
+                        return err;
+                err = xl_load_value(out->right.p, sp);
+                if (err != OK)
+                        return err;
                 out->right.p->refcount = 1;
         }
 
         return OK;
 }
 
-word_t
+no_ignore xl_error_t
 xl_save_value(struct xl_stream *sp, struct xl_value *in)
 {
         word_t val;
-        word_t ret;
+        xl_error_t err;
 
         if (xl_stream_write(sp, &in->tag, sizeof(tag_t)) != sizeof(tag_t))
-                return ERR_WRITE_FAILED;
+                return xl_raise(ERR_WRITE_FAILED, "value tag");
 
         if (in->tag & TAG_LEFT_WORD)
         {
                 val = htonw(in->left.v);
                 if (xl_stream_write(sp, &val, sizeof(word_t)) != sizeof(word_t))
-                        return ERR_WRITE_FAILED;
+                        return xl_raise(ERR_WRITE_FAILED, "left value");
         }
         else
         {
-                ret = xl_save_value(sp, in->left.p);
-                if (ret)
-                        return ret;
+                err = xl_save_value(sp, in->left.p);
+                if (err)
+                        return err;
         }
 
         if (in->tag & TAG_RIGHT_WORD)
         {
                 val = htonw(in->right.v);
                 if (xl_stream_write(sp, &val, sizeof(word_t)) != sizeof(word_t))
-                        return ERR_WRITE_FAILED;
+                        return xl_raise(ERR_WRITE_FAILED, "right value");
         }
         else
         {
-                ret = xl_save_value(sp, in->right.p);
-                if (ret)
-                        return ret;
+                err = xl_save_value(sp, in->right.p);
+                if (err)
+                        return err;
         }
 
         return OK;
 }
 
-no_ignore static word_t
+no_ignore static xl_error_t
 __load_apply(struct xl_dagc_apply **node, struct xl_stream *sp)
 {
         uint64_t node_index;
 
         *node = calloc(1, sizeof(struct xl_dagc_apply));
         if (*node == NULL)
-                return ERR_NO_MEMORY;
+                return xl_raise(ERR_NO_MEMORY, "apply alloc");
 
         /* Because of the check to make sure that the number of nodes does not
          * exceed the size of a pointer inside xl_load, we can safely jam this
@@ -170,14 +164,14 @@ __load_apply(struct xl_dagc_apply **node, struct xl_stream *sp)
 }
 
 
-no_ignore static word_t
+no_ignore static xl_error_t
 __load_const(struct xl_dagc_const **node, struct xl_stream *sp)
 {
-        word_t err;
+        xl_error_t err;
 
-        *node = calloc(1, sizeof(struct xl_dagc_apply));
+        *node = calloc(1, sizeof(struct xl_dagc_const));
         if (*node == NULL)
-                return ERR_NO_MEMORY;
+                return xl_raise(ERR_NO_MEMORY, "const alloc");
 
         err = xl_new(&(*node)->value);
         if (err != OK)
@@ -193,16 +187,16 @@ __load_const(struct xl_dagc_const **node, struct xl_stream *sp)
         return err;
 }
 
-no_ignore static word_t
+no_ignore static xl_error_t
 __load_load(struct xl_dagc_load **node, struct xl_stream *sp)
 {
-        word_t err;
+        xl_error_t err;
         uint64_t node_index;
         struct xl_value *uri_val;
 
         *node = calloc(1, sizeof(struct xl_dagc_load));
         if (*node == NULL)
-                return ERR_NO_MEMORY;
+                return xl_raise(ERR_NO_MEMORY, "load alloc");
 
         READ_INTO(node_index, sp);
         (*node)->dependent_store = (struct xl_dagc_node *) node_index;
@@ -223,16 +217,16 @@ __load_load(struct xl_dagc_load **node, struct xl_stream *sp)
         return err;
 }
 
-no_ignore static word_t
+no_ignore static xl_error_t
 __load_store(struct xl_dagc_store **node, struct xl_stream *sp)
 {
-        word_t err;
+        xl_error_t err;
         uint64_t node_index;
         struct xl_value *uri_val;
 
         *node = calloc(1, sizeof(struct xl_dagc_store));
         if (*node == NULL)
-                return ERR_NO_MEMORY;
+                return xl_raise(ERR_NO_MEMORY, "store alloc");
 
         READ_INTO(node_index, sp);
         (*node)->value = (struct xl_dagc_node *) node_index;
@@ -253,10 +247,10 @@ __load_store(struct xl_dagc_store **node, struct xl_stream *sp)
         return err;
 }
 
-no_ignore static word_t
+no_ignore static xl_error_t
 __load_node(struct xl_dagc_node **node, struct xl_stream *sp)
 {
-        word_t err;
+        xl_error_t err;
         word_t node_type;
         uint8_t terminal;
 
@@ -278,8 +272,7 @@ __load_node(struct xl_dagc_node **node, struct xl_stream *sp)
                 err = __load_store((struct xl_dagc_store **) node, sp);
                 break;
         default:
-                printf("type: %s (%lx)\n", xl_explain_word(node_type), node_type);
-                return ERR_UNKNOWN_TYPE;
+                return xl_raise(ERR_UNKNOWN_TYPE, "load node");
         }
 
         if (err != OK)
@@ -290,7 +283,7 @@ __load_node(struct xl_dagc_node **node, struct xl_stream *sp)
         return OK;
 }
 
-no_ignore static word_t
+no_ignore static xl_error_t
 __set_node_pointers(
         struct xl_dagc_node *node,
         struct xl_dagc_node **all_nodes,
@@ -305,9 +298,9 @@ __set_node_pointers(
         case DAGC_NODE_APPLY:
                 apply = (struct xl_dagc_apply *) node;
                 if ((uintptr_t) apply->func >= n_nodes)
-                        return ERR_OUT_OF_BOUNDS;
+                        return xl_raise(ERR_OUT_OF_BOUNDS, "apply func idx");
                 if ((uintptr_t) apply->arg >= n_nodes)
-                        return ERR_OUT_OF_BOUNDS;
+                        return xl_raise(ERR_OUT_OF_BOUNDS, "apply arg idx");
 
                 apply->func = all_nodes[(uintptr_t) apply->func];
                 apply->arg = all_nodes[(uintptr_t) apply->arg];
@@ -316,7 +309,7 @@ __set_node_pointers(
         case DAGC_NODE_LOAD:
                 load = (struct xl_dagc_load *) node;
                 if ((uintptr_t) load->dependent_store >= n_nodes)
-                        return ERR_OUT_OF_BOUNDS;
+                        return xl_raise(ERR_OUT_OF_BOUNDS, "load depstore idx");
 
                 load->dependent_store =
                         all_nodes[(uintptr_t) load->dependent_store];
@@ -324,36 +317,36 @@ __set_node_pointers(
         case DAGC_NODE_STORE:
                 store = (struct xl_dagc_store *) node;
                 if ((uintptr_t) store->value >= n_nodes)
-                        return ERR_OUT_OF_BOUNDS;
+                        return xl_raise(ERR_OUT_OF_BOUNDS, "store value idx");
 
                 store->value = all_nodes[(uintptr_t) store->value];
                 break;
         case DAGC_NODE_CONST:
                 break;
         default:
-                return ERR_UNKNOWN_TYPE;
+                return xl_raise(ERR_UNKNOWN_TYPE, "set node pointers");
         }
         return OK;
 }
 
-no_ignore word_t
+no_ignore xl_error_t
 xl_load(struct xl_dagc *graph, struct xl_stream *sp)
 {
 
         char header[4];
         uint32_t version;
         word_t n_nodes;
-        word_t err;
+        xl_error_t err;
         size_t i;
 
         READ_INTO(header, sp);
         if (strncmp(header, "expl", 4) != 0)
-                return ERR_BAD_HEADER;
+                return xl_raise(ERR_BAD_HEADER, NULL);
 
         READ_INTO(version, sp);
         version = ntohl(version);
         if (version != CURRENT_ENCODING_VERSION)
-                return ERR_UNSUPPORTED_VERSION;
+                return xl_raise(ERR_UNSUPPORTED_VERSION, NULL);
 
         READ_INTO(n_nodes, sp);
         n_nodes = ntohw(n_nodes);
@@ -368,7 +361,7 @@ xl_load(struct xl_dagc *graph, struct xl_stream *sp)
          * 4G nodes in the graph, which means this thing is going to need
          * terabytes of memory. Good luck. */
         if (n_nodes > (uint64_t) UINTPTR_MAX)
-                return ERR_NO_MEMORY;
+                return xl_raise(ERR_NO_MEMORY, "n_nodes too big");
 
         graph->n = n_nodes;
         graph->nodes = calloc(n_nodes, sizeof(struct xl_dagc_node *));
