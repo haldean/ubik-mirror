@@ -47,14 +47,11 @@ xl_env_free(struct xl_env *env)
         {
                 for (i = 0; i < env->cap; i++)
                 {
-                        if (env->bindings[i].value_type == DAGC_TYPE_VALUE)
-                        {
-                                if (env->bindings[i].value.tree == NULL)
-                                        continue;
-                                err = xl_release(env->bindings[i].value.tree);
-                                if (err != OK)
-                                        return err;
-                        }
+                        if (env->bindings[i].value.any == NULL)
+                                continue;
+                        err = xl_release(env->bindings[i].value.any);
+                        if (err != OK)
+                                return err;
                 }
                 free(env->bindings);
         }
@@ -136,9 +133,7 @@ __insert(
         {
                 if (!overwrite)
                         return xl_raise(ERR_PRESENT, "env overwrite");
-                if (binds[i].value_type == DAGC_TYPE_VALUE)
-                        err = xl_release(binds[i].value.tree);
-                // TODO: release graph
+                err = xl_release(binds[i].value.any);
         }
 
         if (err == OK)
@@ -218,7 +213,9 @@ __set(
                 return err;
 
         /* copy the URI into a new struct to avoid post-modification bugs. */
-        uri_copied = malloc(sizeof(struct xl_uri));
+        uri_copied = calloc(1, sizeof(struct xl_uri));
+        if (uri_copied == NULL)
+                return xl_raise(ERR_NO_MEMORY, "env set: uri alloc");
         memcpy(uri_copied, uri, sizeof(struct xl_uri));
 
         new_binding.uri = uri_copied;
@@ -231,17 +228,14 @@ __set(
          * itself can result in a GC. We want to make sure that this doesn't get
          * GCed if we are going to keep this thing, so we take a reference now
          * and release it if the insert fails later. */
-        if (value_type == DAGC_TYPE_VALUE)
-        {
-                err = xl_take(value.tree);
-                if (err != OK)
-                        return err;
-        }
+        err = xl_take(value.any);
+        if (err != OK)
+                return err;
 
         err = __insert(env->bindings, env->cap, &new_binding, overwrite);
         if (err == OK)
                 env->n++;
-        else if (value_type == DAGC_TYPE_VALUE)
+        else
         {
                 /* We're on the clean-up codepath, and we want the returned
                  * error to be the actual error, not whatever went wrong during
@@ -249,7 +243,7 @@ __set(
                  *
                  * (I like that it takes this much effort to ignore an
                  * unignorable parameter) */
-                ignore = xl_release(value.tree);
+                ignore = xl_release(value.any);
                 unused(ignore);
         }
 

@@ -35,6 +35,7 @@
 
  eabsent.ERR_ABSENT
   ebhead.ERR_BAD_HEADER
+   ebtag.ERR_BAD_TAG
   ebtype.ERR_BAD_TYPE
    efull.ERR_FULL
     eoob.ERR_OUT_OF_BOUNDS

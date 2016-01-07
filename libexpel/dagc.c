@@ -110,6 +110,9 @@ xl_dagc_init(struct xl_dagc *graph)
         size_t i, j, a, next_in, next_out;
         xl_error_t err;
 
+        /* Set the tag */
+        graph->tag = TAG_GRAPH;
+
         /* Adjacency is stored as a sorted list of adjacency
          * lists; the first element in each list is the child and
          * the remaining elements are parents. */

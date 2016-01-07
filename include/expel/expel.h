@@ -28,6 +28,8 @@
 typedef uint8_t tag_t;
 typedef uint64_t word_t;
 
+#define TAG_VALUE       0x10
+#define TAG_GRAPH       0x20
 #define TAG_LEFT_NODE   0x01
 #define TAG_LEFT_WORD   0x02
 #define TAG_RIGHT_NODE  0x04
@@ -61,6 +63,11 @@ union _xl_ptr_val
 /* The base type of all data in Expel; it's a cons cell. */
 struct xl_value
 {
+        /* A bitset of the TAG_ constants. One each of the
+         * TAG_LEFT_ and TAG_RIGHT_ bits must be set, along with
+         * the TAG_VALUE bit. */
+        tag_t tag;
+
         union _xl_ptr_val left;
         union _xl_ptr_val right;
 
@@ -71,9 +78,6 @@ struct xl_value
          * garbage collector. Special hell awaits those who modify
          * this value. */
         uint16_t refcount;
-
-        /* A bitset of the TAG_LEFT and TAG_RIGHT constants. */
-        tag_t tag;
 };
 
 struct xl_dagc;
@@ -81,7 +85,8 @@ struct xl_dagc;
 union xl_value_or_graph
 {
         struct xl_value *tree;
-        struct xl_dagc *graph;
+        struct xl_dagc  *graph;
+        void            *any;
 };
 
 struct xl_dagc_node
@@ -107,12 +112,26 @@ struct xl_dagc_node
 
 struct xl_dagc
 {
+        /* Used to determine if a void* is a graph or a value.
+         * This is set by xl_dagc_init; users of the DAGC API
+         * should not touch it. */
+        tag_t tag;
+
         /* The nodes participating in the graph. */
         struct xl_dagc_node **nodes;
         /* The number of nodes in the graph. */
         size_t n;
 
-        /* Derived members: populated by calling xl_dagc_init */
+        /* Below this is only members that are populated by
+         * calling xl_dagc_init; callers should initialize nodes
+         * and n above and then call init to take care of
+         * everything else. */
+
+        /* Number of references held to this graph. */
+        uint64_t refcount;
+
+        /* A list of structs which encode backlinks from child to
+         * parent. */
         struct __xl_dagc_adjacency *adjacency;
 
         /* The input nodes in the graph. */
@@ -133,21 +152,26 @@ xl_start();
 /* Creates a new value.
  *
  * The returned value has a refcount of one; callers to xl_new do
- * not need to take the result. */
+ * not need to take the result. This may result in an allocation
+ * but is not guaranteed to; xl_values are allocated in pages. */
 no_ignore xl_error_t
 xl_new(struct xl_value **v);
 
-/* Takes a reference to the given tree.
+/* Takes a reference to the given tree or graph.
  *
  * Returns OK on success, or a nonzero error code on failure. */
 no_ignore xl_error_t
-xl_take(struct xl_value *v);
+xl_take(void *v);
 
-/* Releases a reference to the given tree.
+/* Releases a reference to the given tree or graph.
  *
- * Returns OK on success, or a nonzero error code on failure. */
+ * Returns OK on success, or a nonzero error code on failure. If
+ * passed a value, this may result in a free but is not guaranteed
+ * to; xl_values are garbage-collected periodically. If passed a
+ * graph and the releaser was the last owner of the graph, this
+ * will free the graph. */
 no_ignore xl_error_t
-xl_release(struct xl_value *v);
+xl_release(void *v);
 
 /* Loads a graph from a stream.
  *

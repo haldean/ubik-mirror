@@ -69,9 +69,9 @@ xl_load_value(struct xl_value *out, struct xl_stream *sp)
         READ_INTO(tag, sp);
         xl_assert((tag & TAG_LEFT_WORD) || (tag & TAG_LEFT_NODE));
         xl_assert((tag & TAG_RIGHT_WORD) || (tag & TAG_RIGHT_NODE));
-        xl_assert((tag & 0xF0) == 0);
+        xl_assert(tag & TAG_VALUE);
 
-        out->tag = tag;
+        out->tag = TAG_VALUE | tag;
 
         if (tag & TAG_LEFT_WORD)
         {

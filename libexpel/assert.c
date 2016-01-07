@@ -17,21 +17,10 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#ifndef XL_RECKLESS
-        #include <stdio.h>
-        #include <stdlib.h>
+#include "expel/assert.h"
 
-        int
-        break_on_assert();
-
-        #define xl_assert(x) do { \
-                if (!(x)) { \
-                        fprintf(stderr, \
-                                "assertion %s:%d failed: %s\n", \
-                                __FILE__, __LINE__, #x); \
-                        break_on_assert(); \
-                        exit(EXIT_FAILURE); \
-                }} while (0)
-#else
-        #define xl_assert(x)
-#endif
+int
+break_on_assert()
+{
+        return 0;
+}

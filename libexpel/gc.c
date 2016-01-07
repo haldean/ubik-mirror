@@ -28,6 +28,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "expel/assert.h"
 #include "expel/expel.h"
 #include "expel/gc.h"
 #include "expel/util.h"
@@ -115,6 +116,7 @@ xl_new(struct xl_value **v)
         }
 
         *v = p->open_values[p->n_open_values - 1];
+        (*v)->tag = TAG_VALUE;
         (*v)->refcount = 1;
         p->n_open_values--;
 
@@ -132,16 +134,35 @@ xl_new(struct xl_value **v)
 
 /* Takes a reference to the given tree. */
 no_ignore xl_error_t
-xl_take(struct xl_value *v)
+xl_take(void *p)
 {
-        if (unlikely(v->refcount == UINT16_MAX))
-                return xl_raise(ERR_REFCOUNT_OVERFLOW, "take");
-        v->refcount++;
-        return OK;
+        struct xl_value *v;
+        struct xl_dagc *g;
+        tag_t tag;
+
+        tag = *((tag_t *) p);
+
+        if (tag & TAG_VALUE)
+        {
+                v = (struct xl_value *) p;
+                if (unlikely(v->refcount == UINT16_MAX))
+                        return xl_raise(ERR_REFCOUNT_OVERFLOW, "take");
+                v->refcount++;
+                return OK;
+        }
+        if (tag & TAG_GRAPH)
+        {
+                g = (struct xl_dagc *) p;
+                if (unlikely(g->refcount == UINT16_MAX))
+                        return xl_raise(ERR_REFCOUNT_OVERFLOW, "take");
+                g->refcount++;
+                return OK;
+        }
+        return xl_raise(ERR_BAD_TAG, "take");
 }
 
 no_ignore xl_error_t
-run_gc()
+xl_run_gc()
 {
         struct xl_alloc_page *p;
         struct xl_alloc_page *to_free;
@@ -175,8 +196,8 @@ run_gc()
 }
 
 /* Releases a reference to the given tree. */
-no_ignore xl_error_t
-xl_release(struct xl_value *v)
+no_ignore static xl_error_t
+__release_value(struct xl_value *v)
 {
         xl_error_t err;
         struct xl_alloc_page *p;
@@ -212,6 +233,25 @@ xl_release(struct xl_value *v)
         }
 
         if (unlikely(err == OK && gc_stats->releases_until_gc == 0))
-                err = run_gc();
+                err = xl_run_gc();
         return err;
+}
+
+no_ignore static xl_error_t
+__release_graph(struct xl_dagc *g)
+{
+        unused(g);
+        return xl_raise(ERR_NOT_IMPLEMENTED, "release graph");
+}
+
+no_ignore xl_error_t
+xl_release(void *v)
+{
+        tag_t tag;
+        tag = *((tag_t *) v);
+        if (tag & TAG_VALUE)
+                return __release_value((struct xl_value *) v);
+        if (tag & TAG_GRAPH)
+                return __release_graph((struct xl_dagc *) v);
+        return xl_raise(ERR_BAD_TAG, "release");
 }

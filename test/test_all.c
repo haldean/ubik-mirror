@@ -77,22 +77,22 @@ load_save()
          *       W   W
          */
         u = calloc(6, sizeof(struct xl_value));
-        u[0].tag = TAG_LEFT_WORD | TAG_RIGHT_NODE;
+        u[0].tag = TAG_VALUE | TAG_LEFT_WORD | TAG_RIGHT_NODE;
         u[0].left.v = 0x1234567890123456;
         u[0].right.p = &u[1];
-        u[1].tag = TAG_LEFT_NODE | TAG_RIGHT_WORD;
+        u[1].tag = TAG_VALUE | TAG_LEFT_NODE | TAG_RIGHT_WORD;
         u[1].left.p = &u[2];
         u[1].right.v = 0x456789012345678;
-        u[2].tag = TAG_LEFT_NODE | TAG_RIGHT_NODE;
+        u[2].tag = TAG_VALUE | TAG_LEFT_NODE | TAG_RIGHT_NODE;
         u[2].left.p = &u[3];
         u[2].right.p = &u[4];
-        u[3].tag = TAG_LEFT_NODE | TAG_RIGHT_WORD;
+        u[3].tag = TAG_VALUE | TAG_LEFT_NODE | TAG_RIGHT_WORD;
         u[3].left.p = &u[5];
         u[3].right.v = 0x123123123123123;
-        u[4].tag = TAG_LEFT_WORD | TAG_RIGHT_WORD;
+        u[4].tag = TAG_VALUE | TAG_LEFT_WORD | TAG_RIGHT_WORD;
         u[4].left.v = 0x00424242424242;
         u[4].right.v = 0x0000000000000001;
-        u[5].tag = TAG_LEFT_WORD | TAG_RIGHT_WORD;
+        u[5].tag = TAG_VALUE | TAG_LEFT_WORD | TAG_RIGHT_WORD;
         u[5].left.v = 0x0;
         u[5].right.v = 0xFFFFFFFFFFFFFFFF;
 
@@ -171,12 +171,12 @@ env()
         struct xl_uri uris[N_TEST_URIS];
 
         assert(xl_new(&v.tree) == OK);
-        v.tree->tag = TAG_LEFT_WORD | TAG_RIGHT_WORD;
+        v.tree->tag = TAG_VALUE | TAG_LEFT_WORD | TAG_RIGHT_WORD;
         v.tree->left.v = 0x1234567890123456;
         v.tree->right.v = 0;
 
         assert(xl_new(&t) == OK);
-        t->tag = TAG_LEFT_WORD | TAG_RIGHT_WORD;
+        t->tag = TAG_VALUE | TAG_LEFT_WORD | TAG_RIGHT_WORD;
         t->left.v = BASE_TYPE_WORD;
         t->right.v = 0;
 
@@ -234,9 +234,11 @@ gc()
         for (i = 0; i < N_TEST_GC_VALUES; i++)
         {
                 assert(xl_new(&vals[i]) == 0);
+                assert(vals[i]->tag == 0x10);
         }
         for (i = 0; i < N_TEST_GC_VALUES; i++)
         {
+                assert(vals[i]->tag == 0x10);
                 assert(xl_release(vals[i]) == 0);
         }
 
@@ -245,6 +247,12 @@ gc()
                 assert(gc_stats.n_val_allocs == N_TEST_GC_VALUES);
                 assert(gc_stats.n_val_frees == N_TEST_GC_VALUES);
                 assert(gc_stats.n_val_frees >= gc_stats.n_gc_runs);
+        #endif
+
+        assert(xl_run_gc() == OK);
+        xl_gc_get_stats(&gc_stats);
+        #ifdef XL_GC_DEBUG
+                assert(gc_stats.n_page_frees == gc_stats.n_page_allocs);
         #endif
 
         xl_gc_free_all();
