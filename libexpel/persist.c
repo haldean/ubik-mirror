@@ -173,24 +173,36 @@ __load_apply(struct xl_dagc_apply **node, struct xl_stream *sp)
 no_ignore static xl_error_t
 __load_const(struct xl_dagc_const **node, struct xl_stream *sp)
 {
+        word_t graph_index;
         xl_error_t err;
 
         *node = calloc(1, sizeof(struct xl_dagc_const));
         if (*node == NULL)
                 return xl_raise(ERR_NO_MEMORY, "const alloc");
 
-        err = xl_new(&(*node)->value);
-        if (err != OK)
-                return err;
-        err = xl_load_value((*node)->value, sp);
-        if (err != OK)
-                return err;
+        READ_INTO((*node)->const_type, sp);
 
         err = xl_new(&(*node)->type);
         if (err != OK)
                 return err;
         err = xl_load_value((*node)->type, sp);
-        return err;
+
+        if ((*node)->const_type == DAGC_CONST_VALUE)
+        {
+                err = xl_new(&(*node)->value.tree);
+                if (err != OK)
+                        return err;
+                err = xl_load_value((*node)->value.tree, sp);
+                return err;
+        }
+        if ((*node)->const_type == DAGC_CONST_GRAPH)
+        {
+                READ_INTO(graph_index, sp);
+                graph_index = ntohw(graph_index);
+                (*node)->value.graph = (struct xl_dagc *) graph_index;
+                return OK;
+        }
+        return xl_raise(ERR_BAD_HEADER, "const subtype");
 }
 
 no_ignore static xl_error_t
@@ -256,22 +268,6 @@ __load_store(struct xl_dagc_store **node, struct xl_stream *sp)
 }
 
 no_ignore static xl_error_t
-__load_dispatch(struct xl_dagc_dispatch **node, struct xl_stream *sp)
-{
-        uint64_t graph_index;
-
-        *node = calloc(1, sizeof(struct xl_dagc_dispatch));
-        if (*node == NULL)
-                return xl_raise(ERR_NO_MEMORY, "graph alloc");
-
-        READ_INTO(graph_index, sp);
-        graph_index = ntohw(graph_index);
-        (*node)->graph = (struct xl_dagc *) graph_index;
-
-        return OK;
-}
-
-no_ignore static xl_error_t
 __load_input(struct xl_dagc_input **node, struct xl_stream *sp)
 {
         *node = calloc(1, sizeof(struct xl_dagc_input));
@@ -308,9 +304,6 @@ __load_node(struct xl_dagc_node **node, struct xl_stream *sp)
                 break;
         case DAGC_NODE_STORE:
                 err = __load_store((struct xl_dagc_store **) node, sp);
-                break;
-        case DAGC_NODE_DISPATCH:
-                err = __load_dispatch((struct xl_dagc_dispatch **) node, sp);
                 break;
         case DAGC_NODE_INPUT:
                 err = __load_input((struct xl_dagc_input **) node, sp);
@@ -387,18 +380,22 @@ __set_graph_pointers(
         struct xl_dagc *all_graphs,
         size_t n_graphs)
 {
-        struct xl_dagc_dispatch *n;
+        struct xl_dagc_const *n;
+        size_t graph_i;
         size_t i;
 
         for (i = 0; i < graph->n; i++)
         {
                 /* C is fun. */
-                n = (struct xl_dagc_dispatch *) graph->nodes[i];
-                if (n->head.node_type != DAGC_NODE_DISPATCH)
+                n = (struct xl_dagc_const *) graph->nodes[i];
+                if (n->head.node_type != DAGC_NODE_CONST)
                         continue;
-                if ((uintptr_t) n->graph >= n_graphs)
-                        return xl_raise(ERR_OUT_OF_BOUNDS, "dispatch idx");
-                n->graph = &all_graphs[(uintptr_t) n->graph];
+                if (n->const_type != DAGC_CONST_GRAPH)
+                        continue;
+                graph_i = (uintptr_t) n->value.graph;
+                if (graph_i >= n_graphs)
+                        return xl_raise(ERR_OUT_OF_BOUNDS, "const graph idx");
+                n->value.graph = &all_graphs[graph_i];
         }
 
         return OK;

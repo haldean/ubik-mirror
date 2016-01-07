@@ -76,6 +76,8 @@ struct xl_value
         tag_t tag;
 };
 
+struct xl_dagc;
+
 struct xl_dagc_node
 {
         /* One of the DAGC_NODE constants */
@@ -84,8 +86,13 @@ struct xl_dagc_node
          * node is evaluated by xl_dagc_eval. */
         struct xl_value *known_type;
         /* The evaluated value of the node, populated after the
-         * node is evaluated by xl_dagc_eval. */
+         * node is evaluated by xl_dagc_eval if the value of the
+         * node is a plain value. */
         struct xl_value *known_value;
+        /* The evaluated computation graph of the node, populated
+         * after the node is evaluated by xl_dagc_eval if the
+         * value of this node is a unit of computation. */
+        struct xl_dagc *known_graph;
         /* Nonzero if we want the value of this node at the end of
          * evaluation */
         uint8_t is_terminal;

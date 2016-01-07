@@ -221,16 +221,18 @@ Nodes with node type `   store` have the following body:
                0-7   Node index of value node
               8...   Tree-encoded URI
 
-Nodes with node type `   const` have the following body:
+Nodes with node type `   const` have the following subheader:
 
         Byte index   Field
-              0...   Tree-encoded value
-               ...   Tree-encoded type
+               0-7   The subtype of the associated value (either
+                     `cvalue` or `cgraph`) which informs whether this
+                     constant points at a DAGC or a tree.
+              8...   The tree-encoded type of the constant
 
-Nodes with node type `dispatch` have the following body:
-
-        Byte index   Field
-               0-7   Index of the referenced graph
+Then, depending on the associated subtype, this header is either
+followed by a tree-encoded value (if the subtype is `cvalue`) or
+contains a word-encoded index of another graph in the encoding (if the
+subtype is `cgraph`).
 
 Nodes with node type `   input` have the following body:
 

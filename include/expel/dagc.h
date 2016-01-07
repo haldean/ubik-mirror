@@ -20,7 +20,6 @@
 #ifndef EXPEL_DAGC_H
 #define EXPEL_DAGC_H
 
-#include "expel/const.h"
 #include "expel/expel.h"
 
 /* node is fully evaluated */
@@ -47,13 +46,21 @@ struct xl_dagc_apply
         struct xl_dagc *partial;
 };
 
+union xl_value_or_graph
+{
+        struct xl_value *tree;
+        struct xl_dagc *graph;
+};
+
 struct xl_dagc_const
 {
         struct xl_dagc_node head;
+        /* Either DAGC_CONST_VALUE or DAGC_CONST_GRAPH */
+        word_t const_type;
         /* Type of constant */
         struct xl_value *type;
         /* Value of constant */
-        struct xl_value *value;
+        union xl_value_or_graph value;
 };
 
 struct xl_dagc_load
@@ -85,13 +92,6 @@ struct xl_dagc_input
         struct xl_value *applied_value;
         /* The type filled in when the argument is applied */
         struct xl_value *applied_type;
-};
-
-struct xl_dagc_dispatch
-{
-        struct xl_dagc_node head;
-        /* The referenced DAGC */
-        struct xl_dagc *graph;
 };
 
 /* Gets the dependencies of a node.

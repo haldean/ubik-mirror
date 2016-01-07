@@ -222,13 +222,22 @@ xl_dagc_known_value(
         struct xl_value **type,
         struct xl_dagc_node *node)
 {
+        struct xl_dagc_const *c;
+
         *type = node->known_type;
 
         switch (node->node_type)
         {
+        case DAGC_NODE_CONST:
+                c = (struct xl_dagc_const *) node;
+                if (c->const_type == DAGC_CONST_VALUE)
+                {
+                        *value = node->known_value;
+                        return OK;
+                }
+                return xl_raise(ERR_BAD_TYPE, "const known value");
         case DAGC_NODE_APPLY:
         case DAGC_NODE_LOAD:
-        case DAGC_NODE_CONST:
         case DAGC_NODE_INPUT:
                 *value = node->known_value;
                 return OK;

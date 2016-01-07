@@ -35,9 +35,20 @@ no_ignore static xl_error_t
 __eval_const(struct xl_env *env, struct xl_dagc_const *node)
 {
         unused(env);
-        node->head.known_value = node->value;
         node->head.known_type = node->type;
-        return OK;
+        if (node->const_type == DAGC_CONST_VALUE)
+        {
+                node->head.known_value = node->value.tree;
+                node->head.known_graph = NULL;
+                return OK;
+        }
+        if (node->const_type == DAGC_CONST_GRAPH)
+        {
+                node->head.known_value = NULL;
+                node->head.known_graph = node->value.graph;
+                return OK;
+        }
+        return xl_raise(ERR_BAD_TYPE, "eval_const subtype");
 }
 
 no_ignore static xl_error_t
@@ -80,14 +91,6 @@ __eval_input(struct xl_env *env, struct xl_dagc_input *node)
         return OK;
 }
 
-no_ignore static xl_error_t
-__eval_dispatch(struct xl_env *env, struct xl_dagc_dispatch *node)
-{
-        unused(env);
-        unused(node);
-        return OK;
-}
-
 no_ignore xl_error_t
 xl_dagc_node_eval(struct xl_env *env, struct xl_dagc_node *node)
 {
@@ -111,9 +114,6 @@ xl_dagc_node_eval(struct xl_env *env, struct xl_dagc_node *node)
                 break;
         case DAGC_NODE_INPUT:
                 err = __eval_input(env, (struct xl_dagc_input *) node);
-                break;
-        case DAGC_NODE_DISPATCH:
-                err = __eval_dispatch(env, (struct xl_dagc_dispatch *) node);
                 break;
         default:
                 return xl_raise(ERR_UNKNOWN_TYPE, "node_eval");
