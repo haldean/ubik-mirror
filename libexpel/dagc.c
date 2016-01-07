@@ -19,15 +19,9 @@
 
 #include <stdbool.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "expel/dagc.h"
-
-struct __xl_dagc_adjacency
-{
-        struct xl_dagc_node *child;
-        struct xl_dagc_node **parents;
-        size_t n_parents;
-};
 
 /* Gets the dependencies of a node.
  *
@@ -56,7 +50,6 @@ xl_dagc_get_deps(
                 *d2 = NULL;
                 return OK;
         case DAGC_NODE_CONST:
-        case DAGC_NODE_DISPATCH:
         case DAGC_NODE_INPUT:
                 *d1 = NULL;
                 *d2 = NULL;
@@ -263,5 +256,172 @@ xl_dagc_get_parents(
 
         *parents = graph->adjacency[i].parents;
         *n_parents = graph->adjacency[i].n_parents;
+        return OK;
+}
+
+no_ignore static xl_error_t
+__sizeof(size_t *res, struct xl_dagc_node *n)
+{
+        switch (n->node_type)
+        {
+        case DAGC_NODE_APPLY:
+                *res = sizeof(struct xl_dagc_apply);
+                return OK;
+        case DAGC_NODE_CONST:
+                *res = sizeof(struct xl_dagc_const);
+                return OK;
+        case DAGC_NODE_INPUT:
+                *res = sizeof(struct xl_dagc_input);
+                return OK;
+        case DAGC_NODE_LOAD:
+                *res = sizeof(struct xl_dagc_load);
+                return OK;
+        case DAGC_NODE_STORE:
+                *res = sizeof(struct xl_dagc_store);
+                return OK;
+        }
+        return xl_raise(ERR_BAD_TYPE, "apply sizeof");
+}
+
+no_ignore static xl_error_t
+__replace_ref(
+        struct xl_dagc_node **ref,
+        struct xl_dagc_node **proto,
+        struct xl_dagc_node **copied,
+        size_t n)
+{
+        size_t i;
+
+        for (i = 0; i < n; i++)
+        {
+                if (proto[i] == *ref)
+                {
+                        *ref = copied[i];
+                        return OK;
+                }
+        }
+        return xl_raise(ERR_ABSENT, "replace ref");
+}
+
+no_ignore static xl_error_t
+__replace_node_refs(
+        struct xl_dagc_node *node,
+        struct xl_dagc_node **proto,
+        struct xl_dagc_node **copied,
+        size_t n)
+{
+        struct xl_dagc_apply *a;
+        struct xl_dagc_load *l;
+        struct xl_dagc_store *s;
+        xl_error_t err;
+
+        switch (node->node_type)
+        {
+        case DAGC_NODE_APPLY:
+                a = (struct xl_dagc_apply *) node;
+                err = __replace_ref(&a->func, proto, copied, n);
+                if (err != OK)
+                        return err;
+                err = __replace_ref(&a->arg, proto, copied, n);
+                return err;
+
+        case DAGC_NODE_LOAD:
+                l = (struct xl_dagc_load *) node;
+                err = __replace_ref(&l->dependent_store, proto, copied, n);
+                return err;
+
+        case DAGC_NODE_STORE:
+                s = (struct xl_dagc_store *) node;
+                err = __replace_ref(&s->value, proto, copied, n);
+                return err;
+
+        case DAGC_NODE_CONST:
+        case DAGC_NODE_INPUT:
+                return OK;
+        }
+        return xl_raise(ERR_UNKNOWN_TYPE, "replace node refs");
+}
+
+no_ignore xl_error_t
+xl_dagc_copy(
+        struct xl_dagc *result,
+        struct xl_dagc *proto)
+{
+        struct __xl_dagc_adjacency *adj;
+        size_t i, j, size;
+        xl_error_t err;
+
+        /* Start by making a direct copy, then replace all of the references.
+         * Since the nodes are all different sizes, this is unfortunately more
+         * complicated than just a memcpy from proto to result :( */
+        memcpy(result, proto, sizeof(struct xl_dagc));
+
+        result->nodes = calloc(proto->n, sizeof(struct xl_dagc_node *));
+        for (i = 0; i < proto->n; i++)
+        {
+                err = __sizeof(&size, proto->nodes[i]);
+                if (err != OK)
+                        return err;
+                result->nodes[i] = calloc(1, size);
+                if (result->nodes[i] == NULL)
+                        return xl_raise(ERR_NO_MEMORY, "apply copy");
+                memcpy(result->nodes[i], proto->nodes[i], size);
+        }
+
+        for (i = 0; i < result->n; i++)
+        {
+                err = __replace_node_refs(
+                        result->nodes[i], proto->nodes, result->nodes,
+                        result->n);
+                if (err != OK)
+                        return err;
+        }
+
+        result->inputs =
+                calloc(result->in_arity, sizeof(struct xl_dagc_node *));
+        result->terminals =
+                calloc(result->out_arity, sizeof(struct xl_dagc_node *));
+        for (i = 0; i < result->in_arity; i++)
+        {
+                err = __replace_ref(
+                        &result->inputs[i], proto->nodes, result->nodes,
+                        result->n);
+                if (err != OK)
+                        return err;
+        }
+        for (i = 0; i < result->out_arity; i++)
+        {
+                err = __replace_ref(
+                        &result->terminals[i], proto->nodes, result->nodes,
+                        result->n);
+                if (err != OK)
+                        return err;
+        }
+
+        result->adjacency =
+                calloc(result->n, sizeof(struct __xl_dagc_adjacency));
+        memcpy(result->adjacency, proto->adjacency, result->n);
+
+        for (i = 0; i < result->n; i++)
+        {
+                adj = &result->adjacency[i];
+                err = __replace_ref(
+                        &adj->child, proto->nodes, result->nodes, result->n);
+                if (err != OK)
+                        return err;
+
+                adj->parents =
+                        calloc(adj->n_parents, sizeof(struct xl_dagc_node *));
+                memcpy(adj->parents, &proto->adjacency[i], adj->n_parents);
+                for (j = 0; j < adj->n_parents; j++)
+                {
+                        err = __replace_ref(
+                                &adj->parents[j], proto->nodes,
+                                result->nodes, result->n);
+                        if (err != OK)
+                                return err;
+                }
+        }
+
         return OK;
 }

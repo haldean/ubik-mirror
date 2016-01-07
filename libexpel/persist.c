@@ -371,7 +371,6 @@ __set_node_pointers(
                 break;
 
         case DAGC_NODE_CONST:
-        case DAGC_NODE_DISPATCH:
         case DAGC_NODE_INPUT:
                 break;
         default:

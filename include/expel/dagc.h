@@ -31,6 +31,13 @@
 /* d1_ready | d2_ready */
 #define XL_DAGC_READY_MASK    0x06
 
+struct __xl_dagc_adjacency
+{
+        struct xl_dagc_node *child;
+        struct xl_dagc_node **parents;
+        size_t n_parents;
+};
+
 struct xl_dagc_apply
 {
         struct xl_dagc_node head;
@@ -138,5 +145,15 @@ xl_dagc_known_value(
 /* Evaluates a node and marks it as complete. */
 no_ignore xl_error_t
 xl_dagc_node_eval(struct xl_env *env, struct xl_dagc_node *node);
+
+/* Performs a copy from proto to result.
+ *
+ * This is a deep copy of the nodes but not the values within
+ * them. This copies all information, including adjacency, and
+ * updates all internal references between nodes. */
+no_ignore xl_error_t
+xl_dagc_copy(
+        struct xl_dagc *result,
+        struct xl_dagc *proto);
 
 #endif
