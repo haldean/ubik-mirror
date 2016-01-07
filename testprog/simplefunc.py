@@ -2,7 +2,7 @@ from expelc.libexpel import *
 
 c0 = const(uint8(), t(7, 0))
 c1 = const(uint8(), t(2, 0))
-g = graph(1)
+g = graph(uint8(), 1)
 partial = apply(func=g, arg=c0)
 res = apply(func=partial, arg=c1, terminal=True)
 g0 = [c0, c1, partial, g, res]

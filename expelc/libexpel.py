@@ -8,6 +8,16 @@ def const(typ, val, terminal=False):
         type="const",
         ctype=typ,
         cvalue=val,
+        subtype=pack("cvalue"),
+        is_term=terminal,
+    )
+
+def graph(typ, graph_num, terminal=False):
+    return dict(
+        type="const",
+        ctype=typ,
+        cvalue=graph_num,
+        subtype=pack("cgraph"),
         is_term=terminal,
     )
 
@@ -32,13 +42,6 @@ def apply(func, arg, terminal=False):
         type="apply",
         func=func,
         arg=arg,
-        is_term=terminal,
-    )
-
-def graph(graph_num, terminal=False):
-    return dict(
-        type="dispatch",
-        graph_num=graph_num,
         is_term=terminal,
     )
 
@@ -124,8 +127,12 @@ def encode(graphs):
                 f.write(struct.pack(">Bxxx", 1 if node["is_term"] else 0))
 
                 if node_type == "const":
-                    f.write(pack_tree(node["cvalue"]))
+                    f.write(node["subtype"])
                     f.write(pack_tree(node["ctype"]))
+                    if node["subtype"] == "  cgraph":
+                        f.write(struct.pack(">Q", node["cvalue"]))
+                    else:
+                        f.write(pack_tree(node["cvalue"]))
                 elif node_type == "load":
                     if node["dep"] is None:
                         f.write(struct.pack(">Q", 0xFFFFFFFFFFFFFFFF))
@@ -138,8 +145,6 @@ def encode(graphs):
                 elif node_type == "apply":
                     f.write(struct.pack(">Q", node["func"]["idx"]))
                     f.write(struct.pack(">Q", node["arg"]["idx"]))
-                elif node_type == "dispatch":
-                    f.write(struct.pack(">Q", node["graph_num"]))
                 elif node_type == "input":
                     f.write(struct.pack(">Q", node["arg_num"]))
                 else:
