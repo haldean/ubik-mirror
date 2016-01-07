@@ -91,11 +91,11 @@ main(int argc, char *argv[])
                         printf("not evaluated\n");
                 else if (graphs->nodes[i]->value_type == DAGC_TYPE_GRAPH)
                         printf("graph\n");
-                else if (graphs->nodes[i]->known_value == NULL)
+                else if (graphs->nodes[i]->known.tree == NULL)
                         printf("no value\n");
                 else
                         printf("left %lu\n",
-                               graphs->nodes[i]->known_value->left.v);
+                               graphs->nodes[i]->known.tree->left.v);
         }
 
         return EXIT_SUCCESS;

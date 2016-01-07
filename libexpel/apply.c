@@ -49,12 +49,7 @@ xl_dagc_apply_arg(
 
         input->head.value_type = arg->value_type;
         input->applied_type = arg->known_type;
-        if (arg->value_type == DAGC_TYPE_VALUE)
-                input->applied.tree = arg->known_value;
-        else if (arg->value_type == DAGC_TYPE_GRAPH)
-                input->applied.graph = arg->known_graph;
-        else
-                return xl_raise(ERR_UNKNOWN_TYPE, "apply: arg value type");
+        input->applied = arg->known;
         input->head.flags |= XL_DAGC_READY_MASK;
 
         return OK;

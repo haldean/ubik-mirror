@@ -78,6 +78,12 @@ struct xl_value
 
 struct xl_dagc;
 
+union xl_value_or_graph
+{
+        struct xl_value *tree;
+        struct xl_dagc *graph;
+};
+
 struct xl_dagc_node
 {
         /* One of the DAGC_NODE constants */
@@ -87,14 +93,11 @@ struct xl_dagc_node
         /* The evaluated type of the node, populated after the
          * node is evaluated by xl_dagc_eval. */
         struct xl_value *known_type;
-        /* The evaluated value of the node, populated after the
-         * node is evaluated by xl_dagc_eval if the value of the
-         * node is a plain value. */
-        struct xl_value *known_value;
         /* The evaluated computation graph of the node, populated
-         * after the node is evaluated by xl_dagc_eval if the
-         * value of this node is a unit of computation. */
-        struct xl_dagc *known_graph;
+         * after the node is evaluated by xl_dagc_eval. The
+         * value_type field tells you which member of the union to
+         * access. */
+        union xl_value_or_graph known;
         /* Nonzero if we want the value of this node at the end of
          * evaluation */
         uint8_t is_terminal;

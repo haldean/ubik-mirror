@@ -47,12 +47,6 @@ struct xl_dagc_apply
         struct xl_dagc_node *arg;
 };
 
-union xl_value_or_graph
-{
-        struct xl_value *tree;
-        struct xl_dagc *graph;
-};
-
 struct xl_dagc_const
 {
         struct xl_dagc_node head;

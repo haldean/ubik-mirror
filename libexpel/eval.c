@@ -39,13 +39,13 @@ __eval_apply(struct xl_env *env, struct xl_dagc_apply *node)
                 return xl_raise(
                         ERR_BAD_TYPE, "eval apply: func node is not a graph");
 
-        err = xl_dagc_apply_arg(graph, node->func->known_graph, node->arg);
+        err = xl_dagc_apply_arg(graph, node->func->known.graph, node->arg);
         if (err != OK)
                 return err;
 
         if (graph->in_arity != 0)
         {
-                node->head.known_graph = graph;
+                node->head.known.graph = graph;
                 node->head.value_type = DAGC_TYPE_GRAPH;
                 return OK;
         }
@@ -61,8 +61,7 @@ __eval_apply(struct xl_env *env, struct xl_dagc_apply *node)
                 return err;
 
         node->head.value_type = graph->terminals[0]->value_type;
-        node->head.known_value = graph->terminals[0]->known_value;
-        node->head.known_graph = graph->terminals[0]->known_graph;
+        node->head.known = graph->terminals[0]->known;
         return OK;
 }
 
@@ -73,14 +72,12 @@ __eval_const(struct xl_env *env, struct xl_dagc_const *node)
         node->head.known_type = node->type;
         if (node->head.value_type == DAGC_TYPE_VALUE)
         {
-                node->head.known_value = node->value.tree;
-                node->head.known_graph = NULL;
+                node->head.known.tree = node->value.tree;
                 return OK;
         }
         if (node->head.value_type == DAGC_TYPE_GRAPH)
         {
-                node->head.known_value = NULL;
-                node->head.known_graph = node->value.graph;
+                node->head.known.graph = node->value.graph;
                 return OK;
         }
         return xl_raise(ERR_BAD_TYPE, "eval_const subtype");
@@ -99,24 +96,24 @@ __eval_load(struct xl_env *env, struct xl_dagc_load *node)
 
         node->head.value_type = DAGC_TYPE_VALUE;
         node->head.known_type = type;
-        node->head.known_value = value;
+        node->head.known.tree = value;
         return OK;
 }
 
 no_ignore static xl_error_t
 __eval_store(struct xl_env *env, struct xl_dagc_store *node)
 {
-        struct xl_value *known_value;
+        struct xl_value *known_tree;
         struct xl_value *known_type;
         xl_error_t err;
 
-        err = xl_dagc_known_value(&known_value, &known_type, node->value);
+        err = xl_dagc_known_value(&known_tree, &known_type, node->value);
         if (err != OK)
                 return err;
 
         node->head.value_type = DAGC_TYPE_VALUE;
         node->head.known_type = known_type;
-        return xl_set(env, node->loc, known_value, known_type);
+        return xl_set(env, node->loc, known_tree, known_type);
 }
 
 no_ignore static xl_error_t
@@ -124,19 +121,8 @@ __eval_input(struct xl_env *env, struct xl_dagc_input *node)
 {
         unused(env);
         node->head.known_type = node->applied_type;
-        if (node->head.value_type == DAGC_TYPE_VALUE)
-        {
-                node->head.known_value = node->applied.tree;
-                node->head.known_graph = NULL;
-                return OK;
-        }
-        if (node->head.value_type == DAGC_TYPE_GRAPH)
-        {
-                node->head.known_graph = node->applied.graph;
-                node->head.known_value = NULL;
-                return OK;
-        }
-        return xl_raise(ERR_BAD_TYPE, "eval input value type");
+        node->head.known = node->applied;
+        return OK;
 }
 
 no_ignore xl_error_t

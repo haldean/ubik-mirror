@@ -238,7 +238,7 @@ xl_dagc_known_value(
         case DAGC_NODE_INPUT:
                 if (node->value_type == DAGC_TYPE_VALUE)
                 {
-                        *value = node->known_value;
+                        *value = node->known.tree;
                         return OK;
                 }
                 return xl_raise(ERR_BAD_TYPE, "known_value value type");
