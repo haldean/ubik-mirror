@@ -236,6 +236,10 @@ __load_load(struct xl_dagc_load **node, struct xl_stream *sp)
         if (err != OK)
                 return err;
 
+        err = xl_take((*node)->loc);
+        if (err != OK)
+                return err;
+
         err = xl_release(uri_val);
         return err;
 }
@@ -266,6 +270,10 @@ __load_store(struct xl_dagc_store **node, struct xl_stream *sp)
 
         (*node)->loc = calloc(1, sizeof(struct xl_uri));
         err = xl_uri_from_value((*node)->loc, uri_val);
+        if (err != OK)
+                return err;
+
+        err = xl_take((*node)->loc);
         if (err != OK)
                 return err;
 
@@ -391,6 +399,7 @@ __set_graph_pointers(
         struct xl_dagc_const *n;
         size_t graph_i;
         size_t i;
+        xl_error_t err;
 
         for (i = 0; i < graph->n; i++)
         {
@@ -404,6 +413,10 @@ __set_graph_pointers(
                 if (graph_i >= n_graphs)
                         return xl_raise(ERR_OUT_OF_BOUNDS, "const graph idx");
                 n->value.graph = &all_graphs[graph_i];
+
+                err = xl_take(n->value.graph);
+                if (err != OK)
+                        return err;
         }
 
         return OK;

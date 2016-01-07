@@ -353,6 +353,51 @@ __replace_node_refs(
         return xl_raise(ERR_UNKNOWN_TYPE, "replace node refs");
 }
 
+no_ignore static xl_error_t
+__increment_value_refs(struct xl_dagc_node *node)
+{
+        struct xl_dagc_load *l;
+        struct xl_dagc_store *s;
+        struct xl_dagc_const *c;
+        xl_error_t err;
+
+        if (node->known.any != NULL)
+        {
+                err = xl_take(node->known.any);
+                if (err != OK)
+                        return err;
+        }
+        if (node->known_type != NULL)
+        {
+                err = xl_take(node->known_type);
+                if (err != OK)
+                        return err;
+        }
+
+        switch (node->node_type)
+        {
+        case DAGC_NODE_APPLY:
+        case DAGC_NODE_INPUT:
+                return OK;
+
+        case DAGC_NODE_LOAD:
+                l = (struct xl_dagc_load *) node;
+                return xl_take(l->loc);
+
+        case DAGC_NODE_STORE:
+                s = (struct xl_dagc_store *) node;
+                return xl_take(s->loc);
+
+        case DAGC_NODE_CONST:
+                c = (struct xl_dagc_const *) node;
+                err = xl_take(c->type);
+                if (err != OK)
+                        return err;
+                return xl_take(c->value.any);
+        }
+        return xl_raise(ERR_UNKNOWN_TYPE, "replace node refs");
+}
+
 no_ignore xl_error_t
 xl_dagc_copy(
         struct xl_dagc *result,
@@ -366,6 +411,7 @@ xl_dagc_copy(
          * Since the nodes are all different sizes, this is unfortunately more
          * complicated than just a memcpy from proto to result :( */
         memcpy(result, proto, sizeof(struct xl_dagc));
+        result->refcount = 0;
 
         result->nodes = calloc(proto->n, sizeof(struct xl_dagc_node *));
         for (i = 0; i < proto->n; i++)
@@ -384,6 +430,9 @@ xl_dagc_copy(
                 err = __replace_node_refs(
                         result->nodes[i], proto->nodes, result->nodes,
                         result->n);
+                if (err != OK)
+                        return err;
+                err = __increment_value_refs(result->nodes[i]);
                 if (err != OK)
                         return err;
         }

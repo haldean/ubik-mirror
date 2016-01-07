@@ -29,11 +29,22 @@ __eval_apply(struct xl_env *env, struct xl_dagc_apply *node)
 {
         struct xl_dagc *graph;
         xl_error_t err;
+
         unused(env);
 
         graph = calloc(1, sizeof(struct xl_dagc));
         if (graph == NULL)
                 return xl_raise(ERR_NO_MEMORY, "eval apply: graph alloc");
+
+        graph->n = 0;
+        graph->nodes = NULL;
+        err = xl_dagc_init(graph);
+        if (err != OK)
+                return err;
+
+        err = xl_take(graph);
+        if (err != OK)
+                return err;
 
         if (node->func->value_type != DAGC_TYPE_GRAPH)
                 return xl_raise(
@@ -45,6 +56,8 @@ __eval_apply(struct xl_env *env, struct xl_dagc_apply *node)
 
         if (graph->in_arity != 0)
         {
+                /* We let the node own the graph; it inherits the reference we
+                 * took above. */
                 node->head.known.graph = graph;
                 node->head.value_type = DAGC_TYPE_GRAPH;
                 return OK;
@@ -62,14 +75,30 @@ __eval_apply(struct xl_env *env, struct xl_dagc_apply *node)
 
         node->head.value_type = graph->terminals[0]->value_type;
         node->head.known = graph->terminals[0]->known;
-        return OK;
+
+        err = xl_release(graph);
+        return err;
 }
 
 no_ignore static xl_error_t
 __eval_const(struct xl_env *env, struct xl_dagc_const *node)
 {
+        xl_error_t err;
         unused(env);
+
+        /* We end up having two references for a single value from a single
+         * node; this is so we don't have to worry about whether things are
+         * populated when we eventually free the graph. */
         node->head.known_type = node->type;
+        err = xl_take(node->type);
+        if (err != OK)
+                return err;
+
+        /* Aren't unions just grand? */
+        err = xl_take(node->value.any);
+        if (err != OK)
+                return err;
+
         if (node->head.value_type == DAGC_TYPE_VALUE)
         {
                 node->head.known.tree = node->value.tree;
@@ -80,6 +109,13 @@ __eval_const(struct xl_env *env, struct xl_dagc_const *node)
                 node->head.known.graph = node->value.graph;
                 return OK;
         }
+
+        /* Release the reference we took to the value that we don't actually
+         * want anymore, and swallow any errors so we can return the error that
+         * people actually care about. */
+        err = xl_release(node->value.any);
+        unused(err);
+
         return xl_raise(ERR_BAD_TYPE, "eval_const subtype");
 }
 
@@ -95,6 +131,14 @@ __eval_load(struct xl_env *env, struct xl_dagc_load *node)
         if (err != OK)
                 return err;
 
+        err = xl_take(value.any);
+        if (err != OK)
+                return err;
+
+        err = xl_take(type);
+        if (err != OK)
+                return err;
+
         node->head.value_type = value_type;
         node->head.known_type = type;
         node->head.known = value;
@@ -104,9 +148,19 @@ __eval_load(struct xl_env *env, struct xl_dagc_load *node)
 no_ignore static xl_error_t
 __eval_store(struct xl_env *env, struct xl_dagc_store *node)
 {
+        xl_error_t err;
+
         node->head.value_type = node->value->value_type;
         node->head.known_type = node->value->known_type;
         node->head.known = node->value->known;
+
+        err = xl_take(node->head.known.any);
+        if (err != OK)
+                return err;
+
+        err = xl_take(node->head.known_type);
+        if (err != OK)
+                return err;
 
         return xl_set(
                 env, node->loc, node->value->known, node->value->known_type,

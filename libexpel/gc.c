@@ -321,6 +321,10 @@ __release_graph(struct xl_dagc *g)
         free(g->inputs);
         free(g->terminals);
 
+        #ifdef XL_GC_DEBUG
+        gc_stats->n_graph_frees++;
+        #endif
+
         return OK;
 }
 

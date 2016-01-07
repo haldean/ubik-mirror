@@ -53,6 +53,7 @@ struct xl_gc_info
         uint64_t n_val_allocs;
         uint64_t n_val_frees;
         uint64_t n_gc_runs;
+        uint64_t n_graph_frees;
 #endif
 };
 

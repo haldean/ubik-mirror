@@ -42,15 +42,27 @@ xl_dagc_apply_arg(
         if (err != OK)
                 return err;
 
+        err = xl_take(result);
+        if (err != OK)
+                return err;
+
         input = (struct xl_dagc_input *) result->inputs[0];
         result->in_arity--;
         for (i = 0; i < result->in_arity; i++)
                 result->inputs[i] = result->inputs[i + 1];
 
         input->head.value_type = arg->value_type;
-        input->head.known_type = arg->known_type;
-        input->head.known = arg->known;
         input->head.flags |= XL_DAGC_READY_MASK;
+
+        input->head.known_type = arg->known_type;
+        err = xl_take(input->head.known_type);
+        if (err != OK)
+                return err;
+
+        input->head.known = arg->known;
+        err = xl_take(input->head.known.any);
+        if (err != OK)
+                return err;
 
         return OK;
 }
