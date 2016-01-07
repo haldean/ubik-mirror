@@ -388,5 +388,6 @@ xl_load(struct xl_dagc *graph, struct xl_stream *sp)
                 if (err != OK)
                         return err;
         }
-        return OK;
+
+        return xl_dagc_init(graph);
 }

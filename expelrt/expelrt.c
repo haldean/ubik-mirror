@@ -78,5 +78,7 @@ main(int argc, char *argv[])
                 return EXIT_FAILURE;
         }
 
+        printf("%lu\n", graph.nodes[0]->known_value->left.v);
+
         return EXIT_SUCCESS;
 }
