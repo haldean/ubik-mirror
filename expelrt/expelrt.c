@@ -24,6 +24,7 @@
 #include "expel/env.h"
 #include "expel/expel.h"
 #include "expel/stream.h"
+#include "expel/util.h"
 
 int
 main(int argc, char *argv[])
@@ -83,9 +84,13 @@ main(int argc, char *argv[])
         size_t i;
         for (i = 0; i < graphs->n; i++)
         {
-                printf("%lu: ", i);
+                printf("% 4d %hx %s: ", (int) i,
+                       (short)((uintptr_t) graphs->nodes[i]),
+                       xl_explain_word(graphs->nodes[i]->node_type));
                 if ((graphs->nodes[i]->flags & XL_DAGC_FLAG_COMPLETE) == 0)
                         printf("not evaluated\n");
+                else if (graphs->nodes[i]->value_type == DAGC_TYPE_GRAPH)
+                        printf("graph\n");
                 else if (graphs->nodes[i]->known_value == NULL)
                         printf("no value\n");
                 else

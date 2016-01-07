@@ -18,6 +18,7 @@
  */
 
 #include <stdbool.h>
+#include <stdio.h>
 
 #include "expel/dagc.h"
 #include "expel/env.h"
@@ -91,6 +92,9 @@ __find_reachable_nodes(
         for (i = 0; i < *rn; i++)
         {
                 n = reachable[i];
+                #ifdef XL_SCHEDULE_DEBUG
+                fprintf(stderr, "reachable  %hx\n", (short)((uintptr_t) n));
+                #endif
                 err = xl_dagc_get_deps(&d1, &d2, n);
                 if (err != OK)
                         return err;
@@ -207,6 +211,11 @@ __notify_parents(
                         p->flags |= XL_DAGC_FLAG_D2_READY;
                 if ((p->flags & XL_DAGC_READY_MASK) == XL_DAGC_READY_MASK)
                 {
+                        #ifdef XL_SCHEDULE_DEBUG
+                        fprintf(stderr, "scheduling %hx for %hx\n",
+                                (short)((uintptr_t) p),
+                                (short)((uintptr_t) node));
+                        #endif
                         err = __schedule(schedule, p);
                         if (err != OK)
                                 return err;
@@ -247,6 +256,12 @@ xl_dagc_eval(struct xl_env *env, struct xl_dagc *graph)
                 err = xl_dagc_node_eval(env, to_exec->node);
                 if (err != OK)
                         return err;
+
+                #ifdef XL_SCHEDULE_DEBUG
+                        fprintf(stderr, "evaluated  %hx  %s\n",
+                                (short)((uintptr_t) to_exec->node),
+                                xl_explain_word(to_exec->node->node_type));
+                #endif
 
                 err = __notify_parents(&schedule, graph, to_exec->node);
                 if (err != OK)
