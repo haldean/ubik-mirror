@@ -11,18 +11,18 @@ def const(typ, val, terminal=False):
         is_term=terminal,
     )
 
-def load(name, dep=None, terminal=False):
+def load(uri, dep=None, terminal=False):
     return dict(
         type="load",
-        name=name,
+        uri=uri,
         dep=dep,
         is_term=terminal,
     )
 
-def store(name, val, terminal=False):
+def store(uri, val, terminal=False):
     return dict(
         type="store",
-        name=name,
+        uri=uri,
         value=val,
         is_term=terminal,
     )
@@ -48,7 +48,7 @@ def pack(s):
         s = s.rjust(8)
     return struct.pack("8s", s)
 
-def uri(name, version=0, scope=0):
+def uri(name, version=0, scope=pack("userdef")):
     return t(version, t(scope, pack_string(name)))
 
 def pack_string(s):
@@ -115,10 +115,10 @@ def encode(nodes):
                     f.write(struct.pack(">Q", 0xFFFFFFFFFFFFFFFF))
                 else:
                     f.write(struct.pack(">Q", node["dep"]["idx"]))
-                f.write(pack_tree(uri(name=node["name"])))
+                f.write(pack_tree(node["uri"]))
             elif node_type == "store":
                 f.write(struct.pack(">Q", node["value"]["idx"]))
-                f.write(pack_tree(uri(name=node["name"])))
+                f.write(pack_tree(node["uri"]))
             elif node_type == "apply":
                 f.write(struct.pack(">Q", node["func"]["idx"]))
                 f.write(struct.pack(">Q", node["arg"]["idx"]))

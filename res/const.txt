@@ -33,6 +33,7 @@
   packed.BASE_TYPE_PACKED
     type.BASE_TYPE_TYPE
   lambda.BASE_TYPE_FUNC
+ nlambda.BASE_TYPE_NATIVE_FUNC
 
    rfile.STREAM_TYPE_FILE_R
    wfile.STREAM_TYPE_FILE_W
@@ -58,3 +59,8 @@ erefuflw.ERR_REFCOUNT_UNDERFLOW
    const.DAGC_NODE_CONST
     load.DAGC_NODE_LOAD
    store.DAGC_NODE_STORE
+
+  native.SCOPE_NATIVE
+ userdef.SCOPE_USER_DEFINED
+
+     add.NATIVE_ADD
