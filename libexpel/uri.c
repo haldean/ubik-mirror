@@ -30,7 +30,7 @@ __set_hash(struct xl_uri *uri)
 
         uri->hash = uri->version;
         uri->hash ^= uri->scope;
-        for (i = 0; uri->name[i] != 0; i++)
+        for (i = 0; i < uri->name_len; i++)
                 uri->hash ^= ((uint64_t) uri->name[i] << 32) |
                              ((uint64_t) uri->name[i]);
         return OK;
@@ -45,6 +45,8 @@ xl_uri_local(
         uri->version = 0;
         uri->scope = 0;
         uri->name_len = wcslen(name);
+        uri->refcount = 0;
+        uri->tag = TAG_URI;
         return __set_hash(uri);
 }
 
@@ -77,5 +79,12 @@ xl_uri_from_value(struct xl_uri *uri, struct xl_value *uri_val)
         uri->scope = uri_val->right.p->left.v;
         err = xl_read_string(
                 &uri->name, &uri->name_len, uri_val->right.p->right.p);
+        if (err != OK)
+                return err;
+
+        uri->tag = TAG_URI;
+        uri->refcount = 0;
+
+        err = __set_hash(uri);
         return err;
 }

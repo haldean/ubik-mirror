@@ -29,9 +29,9 @@ typedef uint8_t tag_t;
 typedef uint64_t word_t;
 
 #define TAG_TYPE_MASK   0xF0
-#define TAG_VALUE       0x00
-#define TAG_GRAPH       0x10
-#define TAG_URI         0x20
+#define TAG_VALUE       0x10
+#define TAG_GRAPH       0x20
+#define TAG_URI         0x30
 
 #define TAG_LEFT_NODE   0x01
 #define TAG_LEFT_WORD   0x02

@@ -82,7 +82,7 @@ def pack_string(s):
     return t(len(bytes), tree)
 
 def pack_tree(t):
-    tag = 0
+    tag = 0x10
 
     if isinstance(t[0], tuple):
         tag |= 0x01

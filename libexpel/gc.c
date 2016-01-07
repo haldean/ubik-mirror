@@ -32,6 +32,7 @@
 #include "expel/dagc.h"
 #include "expel/expel.h"
 #include "expel/gc.h"
+#include "expel/uri.h"
 #include "expel/util.h"
 
 static struct xl_alloc_page *page_tail;
@@ -139,6 +140,7 @@ xl_take(void *p)
 {
         struct xl_value *v;
         struct xl_dagc *g;
+        struct xl_uri *u;
         tag_t tag;
 
         tag = *((tag_t *) p);
@@ -157,6 +159,14 @@ xl_take(void *p)
                 if (unlikely(g->refcount == UINT16_MAX))
                         return xl_raise(ERR_REFCOUNT_OVERFLOW, "take");
                 g->refcount++;
+                return OK;
+        }
+        if ((tag & TAG_TYPE_MASK) == TAG_URI)
+        {
+                u = (struct xl_uri *) p;
+                if (unlikely(u->refcount == UINT16_MAX))
+                        return xl_raise(ERR_REFCOUNT_OVERFLOW, "take");
+                u->refcount++;
                 return OK;
         }
         return xl_raise(ERR_BAD_TAG, "take");
@@ -333,6 +343,19 @@ __release_graph(struct xl_dagc *g)
         gc_stats->n_graph_frees++;
         #endif
 
+        free(g);
+        return OK;
+}
+
+no_ignore static xl_error_t
+__release_uri(struct xl_uri *u)
+{
+        u->refcount--;
+        if (u->refcount)
+                return OK;
+
+        free(u->name);
+        free(u);
         return OK;
 }
 
@@ -345,5 +368,7 @@ xl_release(void *v)
                 return __release_value((struct xl_value *) v);
         if ((tag & TAG_TYPE_MASK) == TAG_GRAPH)
                 return __release_graph((struct xl_dagc *) v);
+        if ((tag & TAG_TYPE_MASK) == TAG_URI)
+                return __release_uri((struct xl_uri *) v);
         return xl_raise(ERR_BAD_TAG, "release");
 }
