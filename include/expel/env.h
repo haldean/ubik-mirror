@@ -30,9 +30,10 @@
 
 /* An association between a URI and a value */
 struct xl_binding {
-        struct xl_uri   *uri;
-        struct xl_value *value;
-        struct xl_value *type;
+        struct xl_uri           *uri;
+        word_t                  value_type;
+        union xl_value_or_graph value;
+        struct xl_value         *type;
 };
 
 /* A hash mapping from URI to value. */
@@ -64,8 +65,9 @@ xl_env_free(struct xl_env *env);
  * */
 no_ignore xl_error_t
 xl_get(
-        struct xl_value **value,
+        union xl_value_or_graph *value,
         struct xl_value **type,
+        word_t *value_type,
         struct xl_env *env,
         struct xl_uri *uri);
 
@@ -80,8 +82,9 @@ no_ignore xl_error_t
 xl_overwrite(
         struct xl_env *env,
         struct xl_uri *uri,
-        struct xl_value *value,
-        struct xl_value *type);
+        union xl_value_or_graph value,
+        struct xl_value *type,
+        word_t value_type);
 
 /* Inserts the given value in at the given URI if the URI is
  * not already defined.
@@ -97,7 +100,8 @@ no_ignore xl_error_t
 xl_set(
         struct xl_env *env,
         struct xl_uri *uri,
-        struct xl_value *value,
-        struct xl_value *type);
+        union xl_value_or_graph value,
+        struct xl_value *type,
+        word_t value_type);
 
 #endif

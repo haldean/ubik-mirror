@@ -162,16 +162,18 @@ env()
         #define N_TEST_URIS 2000
 
         struct xl_env env;
-        struct xl_value *v, *r, *t, *rt;
+        union xl_value_or_graph v, r;
+        struct xl_value *t, *rt;
         struct xl_uri u;
+        word_t value_type;
         int i;
         wchar_t *key;
         struct xl_uri uris[N_TEST_URIS];
 
-        assert(xl_new(&v) == OK);
-        v->tag = TAG_LEFT_WORD | TAG_RIGHT_WORD;
-        v->left.v = 0x1234567890123456;
-        v->right.v = 0;
+        assert(xl_new(&v.tree) == OK);
+        v.tree->tag = TAG_LEFT_WORD | TAG_RIGHT_WORD;
+        v.tree->left.v = 0x1234567890123456;
+        v.tree->right.v = 0;
 
         assert(xl_new(&t) == OK);
         t->tag = TAG_LEFT_WORD | TAG_RIGHT_WORD;
@@ -185,16 +187,18 @@ env()
         assert(u.hash != 0);
 
         assert(xl_env_init(&env) == OK);
-        assert(xl_set(&env, &u, v, t) == OK);
-        assert(xl_get(&r, &rt, &env, &u) == OK);
-        assert(r == v);
-        assert(v->refcount == 2);
+        assert(xl_set(&env, &u, v, t, DAGC_TYPE_VALUE) == OK);
+        assert(xl_get(&r, &rt, &value_type, &env, &u) == OK);
+        assert(r.tree == v.tree);
+        assert(value_type == DAGC_TYPE_VALUE);
+        assert(v.tree->refcount == 2);
 
-        assert(xl_set(&env, &u, v, t)->error_code == ERR_PRESENT);
-        assert(v->refcount == 2);
+        assert(xl_set(
+                &env, &u, v, t, DAGC_TYPE_VALUE)->error_code == ERR_PRESENT);
+        assert(v.tree->refcount == 2);
 
-        assert(xl_overwrite(&env, &u, v, t) == OK);
-        assert(v->refcount == 2);
+        assert(xl_overwrite(&env, &u, v, t, DAGC_TYPE_VALUE) == OK);
+        assert(v.tree->refcount == 2);
 
         for (i = 0; i < N_TEST_URIS; i++)
         {
@@ -205,12 +209,13 @@ env()
 
         for (i = 0; i < N_TEST_URIS; i++)
         {
-                assert(xl_overwrite(&env, &uris[i], v, t) == OK);
+                assert(xl_overwrite(
+                        &env, &uris[i], v, t, DAGC_TYPE_VALUE) == OK);
         }
 
-        assert(v->refcount == N_TEST_URIS + 1);
+        assert(v.tree->refcount == N_TEST_URIS + 1);
         assert(xl_env_free(&env) == OK);
-        assert(v->refcount == 1);
+        assert(v.tree->refcount == 1);
         return ok;
 }
 

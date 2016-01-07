@@ -86,34 +86,31 @@ __eval_const(struct xl_env *env, struct xl_dagc_const *node)
 no_ignore static xl_error_t
 __eval_load(struct xl_env *env, struct xl_dagc_load *node)
 {
-        struct xl_value *value;
+        union xl_value_or_graph value;
         struct xl_value *type;
+        word_t value_type;
         xl_error_t err;
 
-        err = xl_get(&value, &type, env, node->loc);
+        err = xl_get(&value, &type, &value_type, env, node->loc);
         if (err != OK)
                 return err;
 
-        node->head.value_type = DAGC_TYPE_VALUE;
+        node->head.value_type = value_type;
         node->head.known_type = type;
-        node->head.known.tree = value;
+        node->head.known = value;
         return OK;
 }
 
 no_ignore static xl_error_t
 __eval_store(struct xl_env *env, struct xl_dagc_store *node)
 {
-        struct xl_value *known_tree;
-        struct xl_value *known_type;
-        xl_error_t err;
+        node->head.value_type = node->value->value_type;
+        node->head.known_type = node->value->known_type;
+        node->head.known = node->value->known;
 
-        err = xl_dagc_known_value(&known_tree, &known_type, node->value);
-        if (err != OK)
-                return err;
-
-        node->head.value_type = DAGC_TYPE_VALUE;
-        node->head.known_type = known_type;
-        return xl_set(env, node->loc, known_tree, known_type);
+        return xl_set(
+                env, node->loc, node->value->known, node->value->known_type,
+                node->value->value_type);
 }
 
 no_ignore static xl_error_t

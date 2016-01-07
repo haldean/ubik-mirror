@@ -47,11 +47,14 @@ xl_env_free(struct xl_env *env)
         {
                 for (i = 0; i < env->cap; i++)
                 {
-                        if (env->bindings[i].value == NULL)
-                                continue;
-                        err = xl_release(env->bindings[i].value);
-                        if (err != OK)
-                                return err;
+                        if (env->bindings[i].value_type == DAGC_TYPE_VALUE)
+                        {
+                                if (env->bindings[i].value.tree == NULL)
+                                        continue;
+                                err = xl_release(env->bindings[i].value.tree);
+                                if (err != OK)
+                                        return err;
+                        }
                 }
                 free(env->bindings);
         }
@@ -63,8 +66,9 @@ xl_env_free(struct xl_env *env)
 
 no_ignore xl_error_t
 xl_get(
-        struct xl_value **value,
+        union xl_value_or_graph *value,
         struct xl_value **type,
+        word_t *value_type,
         struct xl_env *env,
         struct xl_uri *uri)
 {
@@ -83,6 +87,7 @@ xl_get(
                 if (xl_uri_eq(uri, env->bindings[i].uri))
                 {
                         *value = env->bindings[i].value;
+                        *value_type = env->bindings[i].value_type;
                         *type = env->bindings[i].type;
                         found = true;
                         break;
@@ -105,21 +110,19 @@ no_ignore static xl_error_t
 __insert(
         struct xl_binding *binds,
         size_t cap,
-        struct xl_uri *uri,
-        struct xl_value *value,
-        struct xl_value *type,
+        struct xl_binding *insert,
         bool overwrite)
 {
         size_t i;
         size_t probed;
         xl_error_t err;
 
-        i = uri->hash % cap;
+        i = insert->uri->hash % cap;
         for (probed = 0; probed < cap; probed++)
         {
                 if (binds[i].uri == NULL)
                         break;
-                if (xl_uri_eq(binds[i].uri, uri))
+                if (xl_uri_eq(binds[i].uri, insert->uri))
                         break;
                 i = (i + 1) % cap;
         }
@@ -129,19 +132,17 @@ __insert(
         /* There was already a value at this key, we need to release our
          * reference on it. */
         err = OK;
-        if (unlikely(binds[i].value != NULL))
+        if (unlikely(binds[i].value.tree != NULL))
         {
                 if (!overwrite)
                         return xl_raise(ERR_PRESENT, "env overwrite");
-                err = xl_release(binds[i].value);
+                if (binds[i].value_type == DAGC_TYPE_VALUE)
+                        err = xl_release(binds[i].value.tree);
+                // TODO: release graph
         }
 
         if (err == OK)
-        {
-                binds[i].uri = uri;
-                binds[i].value = value;
-                binds[i].type = type;
-        }
+                binds[i] = *insert;
         return err;
 }
 
@@ -177,13 +178,7 @@ __resize_rebalance(struct xl_env *env)
                 if (env->bindings[i].uri == NULL)
                         continue;
 
-                err = __insert(
-                        new_binds,
-                        new_cap,
-                        env->bindings[i].uri,
-                        env->bindings[i].value,
-                        env->bindings[i].type,
-                        false);
+                err = __insert(new_binds, new_cap, &env->bindings[i], false);
                 if (err != OK)
                         break;
         }
@@ -205,11 +200,13 @@ no_ignore static xl_error_t
 __set(
         struct xl_env *env,
         struct xl_uri *uri,
-        struct xl_value *value,
+        union xl_value_or_graph value,
         struct xl_value *type,
+        word_t value_type,
         bool overwrite)
 {
         struct xl_uri *uri_copied;
+        struct xl_binding new_binding;
         xl_error_t err, ignore;
 
         err = OK;
@@ -224,20 +221,27 @@ __set(
         uri_copied = malloc(sizeof(struct xl_uri));
         memcpy(uri_copied, uri, sizeof(struct xl_uri));
 
+        new_binding.uri = uri_copied;
+        new_binding.value = value;
+        new_binding.value_type = value_type;
+        new_binding.type = type;
+
         /* Take a reference to the value. We do this before we know whether the
          * insert succeeded, because the insert can result in a release, which
          * itself can result in a GC. We want to make sure that this doesn't get
          * GCed if we are going to keep this thing, so we take a reference now
          * and release it if the insert fails later. */
-        err = xl_take(value);
-        if (err != OK)
-                return err;
+        if (value_type == DAGC_TYPE_VALUE)
+        {
+                err = xl_take(value.tree);
+                if (err != OK)
+                        return err;
+        }
 
-        err = __insert(env->bindings, env->cap, uri_copied, value,
-                       type, overwrite);
+        err = __insert(env->bindings, env->cap, &new_binding, overwrite);
         if (err == OK)
                 env->n++;
-        else
+        else if (value_type == DAGC_TYPE_VALUE)
         {
                 /* We're on the clean-up codepath, and we want the returned
                  * error to be the actual error, not whatever went wrong during
@@ -245,7 +249,7 @@ __set(
                  *
                  * (I like that it takes this much effort to ignore an
                  * unignorable parameter) */
-                ignore = xl_release(value);
+                ignore = xl_release(value.tree);
                 unused(ignore);
         }
 
@@ -256,18 +260,20 @@ no_ignore xl_error_t
 xl_set(
         struct xl_env *env,
         struct xl_uri *uri,
-        struct xl_value *value,
-        struct xl_value *type)
+        union xl_value_or_graph value,
+        struct xl_value *type,
+        word_t value_type)
 {
-        return __set(env, uri, value, type, false);
+        return __set(env, uri, value, type, value_type, false);
 }
 
 no_ignore xl_error_t
 xl_overwrite(
         struct xl_env *env,
         struct xl_uri *uri,
-        struct xl_value *value,
-        struct xl_value *type)
+        union xl_value_or_graph value,
+        struct xl_value *type,
+        word_t value_type)
 {
-        return __set(env, uri, value, type, true);
+        return __set(env, uri, value, type, value_type, true);
 }
