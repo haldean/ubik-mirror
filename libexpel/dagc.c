@@ -25,6 +25,10 @@
 #include "expel/dagc.h"
 #include "expel/expel.h"
 
+// DO NOT SUBMIT
+#include "expel/util.h"
+#include <stdio.h>
+
 /* Gets the dependencies of a node.
  *
  * For nodes with two dependencies, d1 and d2 will be filled in
@@ -43,22 +47,25 @@ xl_dagc_get_deps(
                 *d1 = ((struct xl_dagc_apply *) n)->func;
                 *d2 = ((struct xl_dagc_apply *) n)->arg;
                 return OK;
+
         case DAGC_NODE_LOAD:
                 *d1 = ((struct xl_dagc_load *) n)->dependent_store;
                 *d2 = NULL;
                 return OK;
+
         case DAGC_NODE_STORE:
                 *d1 = ((struct xl_dagc_store *) n)->value;
                 *d2 = NULL;
                 return OK;
+
         case DAGC_NODE_CONST:
         case DAGC_NODE_INPUT:
+        case DAGC_NODE_NATIVE:
                 *d1 = NULL;
                 *d2 = NULL;
                 return OK;
-        default:
-                return xl_raise(ERR_UNKNOWN_TYPE, "get deps");
         }
+        return xl_raise(ERR_UNKNOWN_TYPE, "get deps");
 }
 
 static int

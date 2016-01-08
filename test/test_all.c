@@ -183,7 +183,7 @@ env()
         u.hash = 0;
         key = calloc(64, sizeof(wchar_t));
         swprintf(key, 64, L"test_var_0");
-        assert(xl_uri_local(&u, key) == OK);
+        assert(xl_uri_user(&u, key) == OK);
         assert(u.hash != 0);
 
         assert(xl_env_init(&env) == OK);
@@ -204,7 +204,7 @@ env()
         {
                 key = calloc(64, sizeof(wchar_t));
                 swprintf(key, 64, L"test_var_%d", i);
-                assert(xl_uri_local(&uris[i], key) == OK);
+                assert(xl_uri_user(&uris[i], key) == OK);
         }
 
         for (i = 0; i < N_TEST_URIS; i++)
@@ -277,6 +277,12 @@ gc()
         return ok;
 }
 
+test_t
+natives()
+{
+        return ok;
+}
+
 int
 main()
 {
@@ -293,5 +299,6 @@ main()
         run(host_to_net);
         run(env);
         run(gc);
+        run(natives);
         finish();
 }

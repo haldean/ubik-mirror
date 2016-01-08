@@ -83,6 +83,27 @@ struct xl_dagc_input
         struct xl_value *required_type;
 };
 
+/* The native_out node is a piece of magic that is enabled by the
+ * graph evaluator; if a graph has the native tag, then the
+ * evaluator evalutes the value of the graph using native code and
+ * populates the native node in the graph with the result. The
+ * native node is provided only as a thing for the caller to latch
+ * on to for the result. */
+struct xl_dagc_native_out
+{
+        struct xl_dagc_node head;
+};
+
+struct xl_dagc_native
+{
+        /* xl_dagc_native pointers are equivalent to an xl_dagc
+         * pointer */
+        struct xl_dagc graph;
+
+        /* The function used to evaluate this graph. */
+        xl_error_t (*evaluator)(struct xl_dagc *graph);
+};
+
 /* Gets the dependencies of a node.
  *
  * For nodes with two dependencies, d1 and d2 will be filled in

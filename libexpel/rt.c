@@ -17,12 +17,21 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include "expel/env.h"
 #include "expel/expel.h"
 #include "expel/gc.h"
+#include "expel/natives.h"
 
 xl_error_t
 xl_start()
 {
+        xl_error_t err;
+
         xl_gc_start();
+
+        err = xl_register_natives(xl_env_get_root());
+        if (err != OK)
+                return err;
+
         return OK;
 }

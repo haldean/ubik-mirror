@@ -28,13 +28,21 @@
 #define ENV_INIT_CAP 8
 #define ENV_CAP_SCALE 2
 
+static struct xl_env root;
+
+struct xl_env *
+xl_env_get_root()
+{
+        return &root;
+}
+
 no_ignore xl_error_t
 xl_env_init(struct xl_env *env)
 {
         env->bindings = NULL;
         env->n = 0;
         env->cap = 0;
-        env->parent = NULL;
+        env->parent = xl_env_get_root();
         return OK;
 }
 
@@ -85,26 +93,34 @@ xl_get(
         size_t probed;
         bool found;
 
-        if (env->cap == 0)
-                return xl_raise(ERR_ABSENT, "xl_get: env is empty");
+        found = false;
 
-        i = uri->hash % env->cap;
-        for (probed = 0; probed < env->cap; probed++)
+        if (env->cap != 0)
         {
-                if (env->bindings[i].uri->hash != uri->hash)
-                        continue;
-                if (xl_uri_eq(uri, env->bindings[i].uri))
+                i = uri->hash % env->cap;
+                for (probed = 0; probed < env->cap; probed++)
                 {
-                        *value = env->bindings[i].value;
-                        *value_type = env->bindings[i].value_type;
-                        *type = env->bindings[i].type;
-                        found = true;
-                        break;
+                        if (env->bindings[i].uri == NULL)
+                                break;
+                        if (env->bindings[i].uri->hash != uri->hash)
+                                continue;
+                        if (xl_uri_eq(uri, env->bindings[i].uri))
+                        {
+                                *value = env->bindings[i].value;
+                                *value_type = env->bindings[i].value_type;
+                                *type = env->bindings[i].type;
+                                found = true;
+                                break;
+                        }
+                        i = (i + 1) % env->cap;
                 }
-                i = (i + 1) % env->cap;
         }
 
-        return found ? OK : xl_raise(ERR_ABSENT, "xl_get");
+        if (found)
+                return OK;
+        if (env->parent == NULL)
+                return xl_raise(ERR_ABSENT, "xl_get");
+        return xl_get(value, type, value_type, env->parent, uri);
 }
 
 /* Inserts the given URI-value pair into the given binding array.

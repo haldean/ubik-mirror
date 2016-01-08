@@ -38,7 +38,13 @@ struct xl_uri {
 
 /* Creates a URI for a local resource. */
 no_ignore xl_error_t
-xl_uri_local(
+xl_uri_user(
+        struct xl_uri *uri,
+        wchar_t *name);
+
+/* Creates a URI for a local resource. */
+no_ignore xl_error_t
+xl_uri_native(
         struct xl_uri *uri,
         wchar_t *name);
 

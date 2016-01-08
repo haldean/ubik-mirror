@@ -37,13 +37,27 @@ __set_hash(struct xl_uri *uri)
 }
 
 no_ignore xl_error_t
-xl_uri_local(
+xl_uri_user(
         struct xl_uri *uri,
         wchar_t *name)
 {
         uri->name = name;
         uri->version = 0;
-        uri->scope = 0;
+        uri->scope = SCOPE_USER_DEFINED;
+        uri->name_len = wcslen(name);
+        uri->refcount = 0;
+        uri->tag = TAG_URI;
+        return __set_hash(uri);
+}
+
+no_ignore xl_error_t
+xl_uri_native(
+        struct xl_uri *uri,
+        wchar_t *name)
+{
+        uri->name = name;
+        uri->version = 0;
+        uri->scope = SCOPE_NATIVE;
         uri->name_len = wcslen(name);
         uri->refcount = 0;
         uri->tag = TAG_URI;

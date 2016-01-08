@@ -52,6 +52,13 @@ xl_env_init(struct xl_env *env);
 no_ignore xl_error_t
 xl_env_make_child(struct xl_env *child, struct xl_env *parent);
 
+/* Returns the root environment.
+ *
+ * This environment is the parent of any environment that isn't
+ * explicitly created as a child. */
+struct xl_env *
+xl_env_get_root();
+
 /* Frees memory associated with the environment struct.
  *
  * Returns OK if successful. If this method returns an error code,
