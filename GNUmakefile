@@ -15,17 +15,13 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-COPTS := $(COPTS) -std=c11 -pedantic -Werror -Wall -Wextra -Iinclude \
-	-Idist/include -ggdb -O0 -D_GNU_SOURCE -fPIC -fsanitize=undefined \
-	-fsanitize=address -DXL_GC_DEBUG
-LDOPTS := $(LDOPTS) -L./dist -fsanitize=undefined
+-include res/build-config.mk
 
 objects := $(patsubst libexpel/%.c,build/%.o,$(wildcard libexpel/*.c))
 
-sharedlib := dist/libexpel.so
-executable := dist/runexpel
-testexe := build/test-expel
-exeenv := LD_LIBRARY_PATH="$(PWD)/dist"
+sharedlib := $(DIST_DIR)/libexpel.so
+executable := $(DIST_DIR)/runexpel
+testexe := $(BUILD_DIR)/test-expel
 testldopts := $(LDOPTS) -lm -lpthread -lrt
 
 all: $(executable) test
@@ -39,21 +35,21 @@ dist/include/expel/const.h: res/const.txt res/compile-const.awk
 # -MD builds makefiles with dependencies in-line with the object files. We
 # include them in the -include directive below
 build/%.o: libexpel/%.c dist/include/expel/const.h
-	@test -d build || mkdir build
-	$(CC) $(COPTS) -MD -c -o $@ $<
+	@mkdir -p `dirname $@`
+	$(CC) $(COPTS) -fPIC -MD -c -o $@ $<
 
 -include $(patsubst build/%.o,build/%.d,$(objects))
 
 $(sharedlib): $(objects)
-	@test -d dist || mkdir dist
+	@mkdir -p `dirname $(sharedlib)`
 	$(CC) $(objects) -fPIC $(LDOPTS) -shared -o $@
 
 $(executable): expelrt/*.c $(sharedlib)
-	@test -d dist || mkdir dist
+	@mkdir -p `dirname $(executable)`
 	$(CC) $(COPTS) $(LDOPTS) $< -lexpel -o $@
 
 $(testexe): test/unit/*.c $(sharedlib)
-	@test -d build || mkdir build
+	@mkdir -p `dirname $(testexe)`
 	$(CC) $(COPTS) $(LDOPTS) $(testldopts) $< -lexpel -o $@
 
 clean:
@@ -61,7 +57,7 @@ clean:
 	make -C test/pyasm clean
 
 test: $(testexe) test/pyasm/*
-	$(exeenv) $(testexe)
+	$(testexe)
 	make -C test/pyasm
 
 .PHONY: clean test all

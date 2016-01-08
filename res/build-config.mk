@@ -1,4 +1,4 @@
-# Makefile for bytecode tests
+# Build configuration directives
 # Copyright (C) 2016, Haldean Brown
 #
 # This program is free software; you can redistribute it and/or modify
@@ -15,21 +15,27 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
--include ../../res/build-config.mk
+RES_DIR := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
+ROOT_DIR := $(shell dirname $(RES_DIR))
+DIST_DIR := $(ROOT_DIR)/dist
+BUILD_DIR := $(ROOT_DIR)/build
 
-test_runner := test-runner
-asms := $(patsubst %.xlpy,%.xlb,$(wildcard *.xlpy))
+LD_LIBRARY_PATH := $(DIST_DIR)
+export LD_LIBRARY_PATH
 
-test: $(asms) $(test_runner)
-	LD_LIBRARY_PATH=../../dist $(test_runner) $(asms)
+COPTS := $(COPTS) -std=c11 -pedantic -Werror -Wall -Wextra \
+	-I$(ROOT_DIR)/include -I$(ROOT_DIR)/dist/include \
+	-D_GNU_SOURCE
 
-clean:
-	rm -f $(asms) $(test_runner)
+LDOPTS := $(LDOPTS) -L$(DIST_DIR)
 
-$(test_runner): pyasm.c
-	$(CC) $(COPTS) $(LDOPTS) -lexpel -o $@ $<
+ifeq ($(type),release)
+$(info creating release build)
+COPTS := $(COPTS) -O2
 
-%.xlb: %.xlpy
-	PYTHONPATH=../.. python $< $@
-
-.PHONY: test clean
+else
+$(info creating debug build)
+COPTS := $(COPTS) -ggdb -O0 -DXL_GC_DEBUG \
+	 -fsanitize=undefined -fsanitize=address
+LDOPTS := $(LDOPTS) -fsanitize=undefined -fsanitize=address
+endif

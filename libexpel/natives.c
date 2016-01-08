@@ -135,6 +135,7 @@ __register_unsigned_add(struct xl_env *env)
         struct xl_value *type;
         union xl_value_or_graph ins;
 
+        add_graph = NULL;
         err = __create_op(&add_graph, 2, __native_unsigned_add);
         if (err != OK)
                 return err;
