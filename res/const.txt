@@ -28,6 +28,8 @@
     type.BASE_TYPE_TYPE
   lambda.BASE_TYPE_FUNC
 
+    char.PACK_TYPE_CHAR
+
    rfile.STREAM_TYPE_FILE_R
    wfile.STREAM_TYPE_FILE_W
   buffer.STREAM_TYPE_BUFFER

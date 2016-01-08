@@ -1,5 +1,5 @@
 /*
- * value.h: encoding and decoding xl_values
+ * types.h: runtime type system for expel
  * Copyright (C) 2016, Haldean Brown
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,16 +17,31 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include <stdbool.h>
-#include <wchar.h>
-
 #include "expel/expel.h"
+#include "expel/types.h"
+#include "expel/value.h"
 
 bool
-xl_value_eq(struct xl_value *v1, struct xl_value *v2);
+xl_type_satisfied(
+        struct xl_value *constraint,
+        struct xl_value *type)
+{
+        /* Eventually this will have to be way more complicated. */
+        return xl_value_eq(constraint, type);
+}
 
 no_ignore xl_error_t
-xl_read_packed(uint8_t **dest, size_t *n, struct xl_value *src);
+xl_type_word(struct xl_value *value)
+{
+        value->left.v = BASE_TYPE_WORD;
+        value->right.v = 0;
+        return OK;
+}
 
 no_ignore xl_error_t
-xl_read_string(wchar_t **dest, size_t *n, struct xl_value *src);
+xl_type_string(struct xl_value *value)
+{
+        value->left.v = BASE_TYPE_PACKED;
+        value->right.v = PACK_TYPE_CHAR;
+        return OK;
+}

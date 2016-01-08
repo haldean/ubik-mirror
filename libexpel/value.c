@@ -26,17 +26,46 @@
 #include "expel/util.h"
 #include "expel/value.h"
 
+bool
+xl_value_eq(struct xl_value *v1, struct xl_value *v2)
+{
+        if (v1->tag != v2->tag)
+                return false;
+        if (v1->tag & TAG_LEFT_WORD)
+        {
+                if (v1->left.v != v2->left.v)
+                        return false;
+        }
+        else
+        {
+                if (!xl_value_eq(v1->left.p, v2->left.p))
+                        return false;
+        }
+
+        if (v1->tag & TAG_RIGHT_WORD)
+        {
+                if (v1->right.v != v2->right.v)
+                        return false;
+        }
+        else
+        {
+                if (!xl_value_eq(v1->right.p, v2->right.p))
+                        return false;
+        }
+        return true;
+}
+
 no_ignore xl_error_t
-xl_read_packed(char **dest, size_t *n, struct xl_value *src)
+xl_read_packed(uint8_t **dest, size_t *n, struct xl_value *src)
 {
         size_t i, n_bytes, n_copy;
         word_t p;
         struct xl_value *v;
-        char *res;
+        uint8_t *res;
 
         n_bytes = src->left.v;
         *n = n_bytes;
-        res = calloc(n_bytes + 1, sizeof(char));
+        res = calloc(n_bytes + 1, sizeof(uint8_t));
         if (res == NULL)
                 return xl_raise(ERR_NO_MEMORY, "read packed");
 
@@ -63,7 +92,7 @@ xl_read_string(wchar_t **dest, size_t *n, struct xl_value *src)
         size_t str_size, buf_size;
         char *buf, *orig_buf;
 
-        err = xl_read_packed(&buf, &buf_size, src);
+        err = xl_read_packed((uint8_t **) &buf, &buf_size, src);
         if (err != OK)
                 return err;
 

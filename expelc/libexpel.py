@@ -107,7 +107,7 @@ def pack_tree(t):
 
     return struct.pack(">B", tag) + left + right
 
-def encode(graphs):
+def encode(graphs, expect=None):
     if len(sys.argv) < 2:
         print "missing output file"
         return
@@ -150,4 +150,7 @@ def encode(graphs):
                     f.write(struct.pack(">Q", node["arg_num"]))
                     f.write(pack_tree(node["req_type"]))
                 else:
-                    raise NotImplementedError("node type %s not supported" % node_type)
+                    raise NotImplementedError(
+                        "node type %s not supported" % node_type)
+        if expect is not None:
+            f.write(pack_tree(expect))

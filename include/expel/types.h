@@ -1,5 +1,5 @@
 /*
- * value.h: encoding and decoding xl_values
+ * types.h: runtime type system for expel
  * Copyright (C) 2016, Haldean Brown
  *
  * This program is free software; you can redistribute it and/or modify
@@ -18,15 +18,16 @@
  */
 
 #include <stdbool.h>
-#include <wchar.h>
 
 #include "expel/expel.h"
 
 bool
-xl_value_eq(struct xl_value *v1, struct xl_value *v2);
+xl_type_satisfied(
+        struct xl_value *constraint,
+        struct xl_value *type);
 
 no_ignore xl_error_t
-xl_read_packed(uint8_t **dest, size_t *n, struct xl_value *src);
+xl_type_word(struct xl_value *value);
 
 no_ignore xl_error_t
-xl_read_string(wchar_t **dest, size_t *n, struct xl_value *src);
+xl_type_string(struct xl_value *value);

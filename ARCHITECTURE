@@ -142,7 +142,8 @@ are four kinds of nodes in a DAGC:
                     function is partially applied the value of the node is
                     a function that has an arity of one fewer than the
                     input function.
-        `const`     A constant type and value.
+        `const`     A constant type and value; the value can be either a
+                    tree or a graph.
         `load`      A load operation. Has a required URI and an optional
                     dependent store; the URI references where the value
                     should come from and the dependent store adds a
@@ -150,7 +151,15 @@ are four kinds of nodes in a DAGC:
         `store`     A store operation. Has a URI and a reference to a node
                     with a value, and stores the given value at that URI.
         `input`     The input to a DAGC.
-        `dispatch`  Reference to a different DAGC.
+        `native`    This one is sneaky; the native node is a node that
+                    is filled in by native code in "native DAGCs".
+                    Native DAGCs are backed by native code and
+                    evaluating them just calls the associated native
+                    code block. That code block then fills in the result
+                    of the compuation over the graph on the native node.
+                    Reading native nodes in from expel bytecode is not
+                    supported; this is only a construct used internally
+                    in the runtime.
 
 Each individual DAGC represents a function; each DAGC contains an input
 node for each of the function's arguments, and a single terminal node
@@ -163,6 +172,14 @@ them from each other. When a `dispatch` node is applied, a copy of the
 referenced DAGC is made and that DAGC's `input` nodes are completed.
 Once all required input nodes have been completed, the DAGC can be
 evaluated.
+
+An expel bytecode blob contains some number of graphs; the various
+graphs can reference each other, and in general their ordering in the
+bytecode does not matter. There is only one exception: when evaluating a
+bytecode blob, the first graph is considered to represent the desired
+computation; the other graphs are only evaluated if it is necessary to
+do so to computate the value of the first graph. In this sense, the
+first graph is the "main method" of other languages.
 
 Encoding in-flight and at-rest -----------------------------------------
 
@@ -259,3 +276,8 @@ Tree decoding proceeds in much the same way: Take a byte off of the head
 of the stream. If the byte indicates the left is a node, recurse. If it
 indicates the left is a value, read the value as a little-endian 8-byte
 integer. Repeat the same operation for the right node.
+
+Expel bytecode blobs may have arbitrary data following the data encoded
+by the standard; conforming parsers will ignore the data that follows
+the encoded graphs. This is provided as a means for tools to attach
+metadata onto the end of the bytecode if so desired.
