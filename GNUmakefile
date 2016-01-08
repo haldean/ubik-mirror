@@ -52,7 +52,7 @@ $(executable): expelrt/*.c $(sharedlib)
 	@test -d dist || mkdir dist
 	$(CC) $(COPTS) $(LDOPTS) $< -lexpel -o $@
 
-$(testexe): test/*.c $(sharedlib)
+$(testexe): test/unit/*.c $(sharedlib)
 	@test -d build || mkdir build
 	$(CC) $(COPTS) $(LDOPTS) $(testldopts) $< -lexpel -o $@
 
