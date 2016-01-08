@@ -1,4 +1,5 @@
-from expelc.libexpel import *
+# vi: ft=python
+from pyasm.libexpel import *
 
 c0 = const(uint8(), t(7, 0))
 c1 = const(uint8(), t(2, 0))

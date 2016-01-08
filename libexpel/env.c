@@ -78,6 +78,8 @@ xl_env_free(struct xl_env *env)
 
         env->n = 0;
         env->cap = 0;
+        env->bindings = NULL;
+        env->parent = xl_env_get_root();
         return OK;
 }
 

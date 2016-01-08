@@ -42,6 +42,22 @@ xl_stream_wfile(struct xl_stream *sp, char *file)
         return sp->file == NULL ? xl_raise(ERR_ABSENT, "wfile") : OK;
 }
 
+no_ignore xl_error_t
+xl_stream_rfilep(struct xl_stream *sp, FILE *file)
+{
+        sp->stream_type = STREAM_TYPE_FILE_R;
+        sp->file = file;
+        return OK;
+}
+
+no_ignore xl_error_t
+xl_stream_wfilep(struct xl_stream *sp, FILE *file)
+{
+        sp->stream_type = STREAM_TYPE_FILE_W;
+        sp->file = file;
+        return OK;
+}
+
 /* Opens a stream backed by an in-memory buffer. */
 no_ignore xl_error_t
 xl_stream_buffer(struct xl_stream *sp)

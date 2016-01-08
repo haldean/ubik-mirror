@@ -23,6 +23,7 @@
 #include <string.h>
 
 #include "expel/expel.h"
+#include "expel/stream.h"
 #include "expel/util.h"
 #include "expel/value.h"
 
@@ -115,5 +116,63 @@ xl_read_string(wchar_t **dest, size_t *n, struct xl_value *src)
                 return xl_raise(ERR_NO_MEMORY, "read string");
         }
         *n = str_size;
+        return OK;
+}
+
+no_ignore xl_error_t
+xl_print_value(struct xl_stream *out, struct xl_value *v)
+{
+        size_t written;
+        size_t n;
+        char buf[64];
+        xl_error_t err;
+
+        if ((v->tag & TAG_TYPE_MASK) != TAG_VALUE)
+                return xl_raise(ERR_BAD_TAG, "print value: not a value");
+
+        buf[0] = '(';
+        written = xl_stream_write(out, buf, 1);
+        if (written != 1)
+                return xl_raise(ERR_WRITE_FAILED, "print value");
+
+        if (v->tag & TAG_LEFT_WORD)
+        {
+                n = snprintf(buf, 64, "0x%lX", v->left.v);
+                written = xl_stream_write(out, buf, n);
+                if (written != n)
+                        return xl_raise(ERR_WRITE_FAILED, "print value");
+        }
+        else if (v->tag & TAG_LEFT_NODE)
+        {
+                err = xl_print_value(out, v->left.p);
+                if (err != OK)
+                        return err;
+        }
+        else return xl_raise(ERR_BAD_TAG, "print value");
+
+        buf[0] = ','; buf[1] = ' ';
+        written = xl_stream_write(out, buf, 2);
+        if (written != 2)
+                return xl_raise(ERR_WRITE_FAILED, "print value");
+
+        if (v->tag & TAG_RIGHT_WORD)
+        {
+                n = snprintf(buf, 64, "0x%lX", v->right.v);
+                written = xl_stream_write(out, buf, n);
+                if (written != n)
+                        return xl_raise(ERR_WRITE_FAILED, "print value");
+        }
+        else if (v->tag & TAG_RIGHT_NODE)
+        {
+                err = xl_print_value(out, v->right.p);
+                if (err != OK)
+                        return err;
+        }
+        else return xl_raise(ERR_BAD_TAG, "print value");
+
+        buf[0] = ')';
+        written = xl_stream_write(out, buf, 1);
+        if (written != 1)
+                return xl_raise(ERR_WRITE_FAILED, "print value");
         return OK;
 }

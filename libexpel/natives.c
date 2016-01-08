@@ -113,6 +113,7 @@ __native_unsigned_add(struct xl_env *env, struct xl_dagc *graph)
         if (err != OK)
                 return err;
 
+        res->tag |= TAG_LEFT_WORD | TAG_RIGHT_WORD;
         res->left.v = graph->nodes[0]->known.tree->left.v +
                       graph->nodes[1]->known.tree->left.v;
         res->right.v = 0;

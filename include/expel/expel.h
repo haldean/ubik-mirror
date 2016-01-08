@@ -55,9 +55,12 @@ struct xl_error
 {
         word_t error_code;
         char *tag;
+        char *file;
+        uint32_t lineno;
 };
 typedef struct xl_error * xl_error_t;
 #define OK ((xl_error_t) NULL)
+#define xl_raise(code, tag) xl_new_error((code), (tag), __FILE__, __LINE__)
 
 #define no_ignore __attribute__((__warn_unused_result__))
 
@@ -156,6 +159,12 @@ struct xl_dagc
 no_ignore xl_error_t
 xl_start();
 
+/* Stops the expel runtime.
+ *
+ * Returns OK on success. */
+no_ignore xl_error_t
+xl_teardown();
+
 /* Creates a new value.
  *
  * The returned value has a refcount of one; callers to xl_new do
@@ -227,7 +236,7 @@ xl_dagc_eval(struct xl_env *env, struct xl_dagc *graph);
 
 /* Create an error object. */
 xl_error_t
-xl_raise(word_t code, char *tag);
+xl_new_error(word_t code, char *tag, char *file, uint32_t lineno);
 
 /* Creates a string representation of an error object. */
 char *

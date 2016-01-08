@@ -24,12 +24,14 @@
 #include "expel/util.h"
 
 xl_error_t
-xl_raise(word_t code, char *tag)
+xl_new_error(word_t code, char *tag, char *file, uint32_t lineno)
 {
         struct xl_error *res;
         res = calloc(1, sizeof(struct xl_error));
         res->error_code = code;
         res->tag = tag;
+        res->file = file;
+        res->lineno = lineno;
         return res;
 }
 
@@ -37,7 +39,8 @@ char *
 xl_explain_error(xl_error_t err)
 {
         char *res;
-        asprintf(&res, "error \"%s\" in \"%s\"",
-                 xl_explain_word(err->error_code), err->tag);
+        asprintf(&res, "error %s at %s:%u: %s",
+                 xl_explain_word(err->error_code),
+                 err->file, err->lineno, err->tag);
         return res;
 }
