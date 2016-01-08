@@ -94,6 +94,12 @@ struct xl_dagc_native_out
         struct xl_dagc_node head;
 };
 
+/* This syntax is terrible; it defines xl_native_evaluator_t as a
+ * function pointer that takes an env and a dagc and returns an
+ * xl_error_t. */
+typedef xl_error_t (*xl_native_evaluator_t)(
+        struct xl_env *env, struct xl_dagc *graph);
+
 struct xl_dagc_native
 {
         /* xl_dagc_native pointers are equivalent to an xl_dagc
@@ -101,7 +107,7 @@ struct xl_dagc_native
         struct xl_dagc graph;
 
         /* The function used to evaluate this graph. */
-        xl_error_t (*evaluator)(struct xl_env *env, struct xl_dagc *graph);
+        xl_native_evaluator_t evaluator;
 };
 
 /* Gets the dependencies of a node.

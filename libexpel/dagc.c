@@ -223,6 +223,10 @@ xl_dagc_init(struct xl_dagc *graph)
                 {
                         next_in = ((struct xl_dagc_input *) p)->arg_num;
                         xl_assert(next_in < graph->in_arity);
+                        if (graph->inputs[next_in] != NULL)
+                                return xl_raise(
+                                        ERR_BAD_GRAPH,
+                                        "multiple inputs with same arg num");
                         graph->inputs[next_in] = p;
                 }
                 if (p->is_terminal)

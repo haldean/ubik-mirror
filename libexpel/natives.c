@@ -24,6 +24,83 @@
 #include "expel/natives.h"
 #include "expel/util.h"
 
+#include <wchar.h>
+
+no_ignore static xl_error_t
+__native_uri(struct xl_uri **uri, wchar_t *name)
+{
+        xl_error_t err;
+
+        *uri = calloc(1, sizeof(struct xl_uri));
+        if (*uri == NULL)
+                return xl_raise(ERR_NO_MEMORY, "create native uri");
+        err = xl_uri_native(*uri, name);
+        return err;
+}
+
+no_ignore static xl_error_t
+__create_op(
+        struct xl_dagc **graph_ptr,
+        size_t arity,
+        xl_native_evaluator_t evaluator)
+{
+        struct xl_dagc *graph;
+        struct xl_dagc_native *ngraph;
+        struct xl_dagc_input *in;
+        size_t i;
+        xl_error_t err;
+
+        ngraph = calloc(1, sizeof(struct xl_dagc_native));
+        if (ngraph == NULL)
+                return xl_raise(ERR_NO_MEMORY, "create native dagc");
+        graph = (struct xl_dagc *) ngraph;
+        *graph_ptr = graph;
+
+        graph->nodes = calloc(arity + 1, sizeof(struct xl_dagc_node *));
+        if (graph->nodes == NULL)
+                return xl_raise(ERR_NO_MEMORY, "create native dagc nodes");
+
+        /* Create input nodes */
+        for (i = 0; i < arity; i++)
+        {
+                in = calloc(1, sizeof(struct xl_dagc_input));
+                if (in == NULL)
+                        return xl_raise(ERR_NO_MEMORY, "create native dagc");
+                in->head.node_type = DAGC_NODE_INPUT;
+                in->head.value_type = DAGC_TYPE_UNKNOWN;
+                in->head.known_type = NULL;
+                in->head.known.any = NULL;
+                in->head.is_terminal = 0x00;
+                in->head.flags = 0x00;
+                in->arg_num = i;
+                err = xl_new(&in->required_type);
+                if (err != OK)
+                        return err;
+                graph->nodes[i] = (struct xl_dagc_node *) in;
+        }
+
+        /* Create output native node */
+        graph->nodes[arity] = calloc(1, sizeof(struct xl_dagc_native));
+        if (graph->nodes[arity] == NULL)
+                return xl_raise(ERR_NO_MEMORY, "create native dagc");
+        graph->nodes[arity]->node_type = DAGC_NODE_NATIVE;
+        graph->nodes[arity]->value_type = DAGC_TYPE_UNKNOWN;
+        graph->nodes[arity]->known_type = NULL;
+        graph->nodes[arity]->known.any = NULL;
+        graph->nodes[arity]->is_terminal = 0x01;
+        graph->nodes[arity]->flags = 0x00;
+
+        graph->n = arity + 1;
+
+        err = xl_dagc_init(graph);
+        if (err != OK)
+                return err;
+        graph->tag |= TAG_NATIVE_GRAPH;
+        ngraph->evaluator = evaluator;
+
+        return OK;
+}
+
 static xl_error_t
 __native_unsigned_add(struct xl_env *env, struct xl_dagc *graph)
 {
@@ -53,67 +130,18 @@ __register_unsigned_add(struct xl_env *env)
         xl_error_t err;
 
         struct xl_dagc *add_graph;
-        struct xl_dagc_native *native_graph;
         struct xl_uri *uri;
         struct xl_value *type;
-        struct xl_dagc_input *in;
         union xl_value_or_graph ins;
 
-        add_graph = calloc(1, sizeof(struct xl_dagc_native));
-        native_graph = (struct xl_dagc_native *) add_graph;
-
-        add_graph->nodes = calloc(3, sizeof(struct xl_dagc_node *));
-
-        in = calloc(1, sizeof(struct xl_dagc_input));
-        in->head.node_type = DAGC_NODE_INPUT;
-        in->head.value_type = DAGC_TYPE_UNKNOWN;
-        in->head.known_type = NULL;
-        in->head.known.any = NULL;
-        in->head.is_terminal = 0x00;
-        in->head.flags = 0x00;
-        in->arg_num = 0;
-        err = xl_new(&in->required_type);
+        err = __create_op(&add_graph, 2, __native_unsigned_add);
         if (err != OK)
                 return err;
-        add_graph->nodes[0] = (struct xl_dagc_node *) in;
-
-        in = calloc(1, sizeof(struct xl_dagc_input));
-        in->head.node_type = DAGC_NODE_INPUT;
-        in->head.value_type = DAGC_TYPE_UNKNOWN;
-        in->head.known_type = NULL;
-        in->head.known.any = NULL;
-        in->head.is_terminal = 0x00;
-        in->head.flags = 0x00;
-        in->arg_num = 1;
-        err = xl_new(&in->required_type);
+        err = __native_uri(&uri, L"uadd");
         if (err != OK)
                 return err;
-        add_graph->nodes[1] = (struct xl_dagc_node *) in;
-
-        add_graph->nodes[2] = calloc(1, sizeof(struct xl_dagc_input));
-        add_graph->nodes[2]->node_type = DAGC_NODE_NATIVE;
-        add_graph->nodes[2]->value_type = DAGC_TYPE_UNKNOWN;
-        add_graph->nodes[2]->known_type = NULL;
-        add_graph->nodes[2]->known.any = NULL;
-        add_graph->nodes[2]->is_terminal = 0x01;
-        add_graph->nodes[2]->flags = 0x00;
-
-        add_graph->n = 3;
-
-        err = xl_dagc_init(add_graph);
-        if (err != OK)
-                return err;
-        add_graph->tag |= TAG_NATIVE_GRAPH;
 
         err = xl_new(&type);
-        if (err != OK)
-                return err;
-        // TODO: fill in type
-
-        native_graph->evaluator = __native_unsigned_add;
-
-        uri = calloc(1, sizeof(struct xl_uri));
-        err = xl_uri_native(uri, L"uadd");
         if (err != OK)
                 return err;
 

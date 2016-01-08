@@ -33,6 +33,7 @@
   buffer.STREAM_TYPE_BUFFER
 
  eabsent.ERR_ABSENT
+ ebgraph.ERR_BAD_GRAPH
   ebhead.ERR_BAD_HEADER
    ebtag.ERR_BAD_TAG
   ebtype.ERR_BAD_TYPE
