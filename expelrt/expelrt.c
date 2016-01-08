@@ -25,13 +25,23 @@
 #include "expel/expel.h"
 #include "expel/stream.h"
 #include "expel/util.h"
+#include "expel/value.h"
+
+#define CHECK_ERR(msg) \
+        do { if (err != OK) \
+        { \
+                printf(msg ": %s\n", xl_explain_error(err)); \
+                return EXIT_FAILURE; \
+        } } while(0)
 
 int
 main(int argc, char *argv[])
 {
         struct xl_stream stream;
+        struct xl_stream sstdout;
         struct xl_dagc *graphs;
         struct xl_env env;
+        struct xl_value *val;
         size_t n_graphs;
         xl_error_t err;
 
@@ -42,44 +52,21 @@ main(int argc, char *argv[])
         }
 
         err = xl_start();
-        if (err != OK)
-        {
-                fprintf(stderr, "couldn't start expel: %s\n",
-                        xl_explain_error(err));
-                return EXIT_FAILURE;
-        }
+        CHECK_ERR("couldn't start runtime");
 
         err = xl_stream_rfile(&stream, argv[1]);
-        if (err != OK)
-        {
-                fprintf(stderr, "couldn't open %s: %s\n",
-                        argv[1], xl_explain_error(err));
-                return EXIT_FAILURE;
-        }
+        CHECK_ERR("couldn't open file");
+
+        err = xl_stream_wfilep(&sstdout, stdout);
 
         err = xl_load(&graphs, &n_graphs, &stream);
-        if (err != OK)
-        {
-                fprintf(stderr, "couldn't load %s: %s\n",
-                        argv[1], xl_explain_error(err));
-                return EXIT_FAILURE;
-        }
+        CHECK_ERR("couldn't load graphs");
 
         err = xl_env_init(&env);
-        if (err != OK)
-        {
-                fprintf(stderr, "couldn't create environment: %s\n",
-                        xl_explain_error(err));
-                return EXIT_FAILURE;
-        }
+        CHECK_ERR("couldn't create environment");
 
         err = xl_dagc_eval(&env, graphs);
-        if (err != OK)
-        {
-                fprintf(stderr, "couldn't eval dagc: %s\n",
-                        xl_explain_error(err));
-                return EXIT_FAILURE;
-        }
+        CHECK_ERR("couldn't evaluate graph");
 
         size_t i;
         for (i = 0; i < graphs->n; i++)
@@ -87,6 +74,8 @@ main(int argc, char *argv[])
                 printf("% 4d %hx %s: ", (int) i,
                        (short)((uintptr_t) graphs->nodes[i]),
                        xl_explain_word(graphs->nodes[i]->node_type));
+                val = graphs->nodes[i]->known.tree;
+
                 if ((graphs->nodes[i]->flags & XL_DAGC_FLAG_COMPLETE) == 0)
                         printf("not evaluated\n");
                 else if (graphs->nodes[i]->value_type == DAGC_TYPE_GRAPH)
@@ -94,8 +83,11 @@ main(int argc, char *argv[])
                 else if (graphs->nodes[i]->known.tree == NULL)
                         printf("no value\n");
                 else
-                        printf("left %lu\n",
-                               graphs->nodes[i]->known.tree->left.v);
+                {
+                        err = xl_print_value(&sstdout, val);
+                        printf("\n");
+                        CHECK_ERR("couldn't print value");
+                }
         }
 
         return EXIT_SUCCESS;

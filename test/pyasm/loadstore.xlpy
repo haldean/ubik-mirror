@@ -11,4 +11,4 @@ g0 = [g_ref, s, l]
 c0 = const(uint8(), t(7, 10), terminal=True)
 g1 = [c0]
 
-encode([g0, g1])
+encode([g0, g1], expect=t(7, 10))

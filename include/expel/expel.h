@@ -60,7 +60,6 @@ struct xl_error
 };
 typedef struct xl_error * xl_error_t;
 #define OK ((xl_error_t) NULL)
-#define xl_raise(code, tag) xl_new_error((code), (tag), __FILE__, __LINE__)
 
 #define no_ignore __attribute__((__warn_unused_result__))
 
@@ -241,5 +240,8 @@ xl_new_error(word_t code, char *tag, char *file, uint32_t lineno);
 /* Creates a string representation of an error object. */
 char *
 xl_explain_error(xl_error_t err);
+
+/* Raise an error with the current file and line populated. */
+#define xl_raise(code, tag) xl_new_error((code), (tag), __FILE__, __LINE__)
 
 #endif

@@ -58,6 +58,7 @@ $(testexe): test/unit/*.c $(sharedlib)
 
 clean:
 	rm -rf build dist
+	make -C test/pyasm clean
 
 test: $(testexe) test/pyasm/*
 	$(exeenv) $(testexe)

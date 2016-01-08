@@ -344,7 +344,6 @@ __release_graph(struct xl_dagc *g)
         gc_stats->n_graph_frees++;
         #endif
 
-        free(g);
         return OK;
 }
 

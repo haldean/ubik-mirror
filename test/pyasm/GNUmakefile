@@ -26,10 +26,13 @@ LDOPTS := $(LDOPTS) -lexpel -L../../dist/ -fsanitize=undefined -fsanitize=addres
 test: $(asms) $(test_runner)
 	LD_LIBRARY_PATH=../../dist $(test_runner) $(asms)
 
+clean:
+	rm -f $(asms) $(test_runner)
+
 $(test_runner): pyasm.c
 	$(CC) $(COPTS) $(LDOPTS) -o $@ $<
 
 %.xlb: %.xlpy
 	PYTHONPATH=../.. python $< $@
 
-.PHONY: test
+.PHONY: test clean

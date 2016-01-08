@@ -24,6 +24,7 @@
 #include "expel/env.h"
 #include "expel/expel.h"
 #include "expel/stream.h"
+#include "expel/timer.h"
 #include "expel/util.h"
 #include "expel/value.h"
 
@@ -42,12 +43,20 @@ test_file(char *fname)
         struct xl_dagc *graphs;
         struct xl_env env;
         struct xl_value *expected, *actual;
-        size_t n_graphs;
+        size_t n_graphs, i;
         xl_error_t err, teardown_err;
+        struct xl_timer *timer;
+        int64_t elapsed;
 
         err = OK;
 
         printf("%s\n", fname);
+
+        err = xl_timer_new(&timer);
+        CHECK_ERR("couldn't create timer");
+
+        err = xl_timer_start(timer);
+        CHECK_ERR("couldn't start timer");
 
         err = xl_start();
         CHECK_ERR("couldn't start expel");
@@ -82,13 +91,16 @@ test_file(char *fname)
         err = xl_dagc_eval(&env, &graphs[0]);
         CHECK_ERR("couldn't evaluate graph");
 
+        err = xl_timer_elapsed(&elapsed, timer);
+        CHECK_ERR("couldn't read timer");
+        printf("\ttime from start to evaluated: %ld usec\n", elapsed);
+
         if (expected != NULL)
         {
                 if (graphs->out_arity != 1)
                 {
-                        fprintf(stderr,
-                                "can't find value of graph with out arity %lu\n",
-                                graphs->out_arity);
+                        printf("can't find value of graph with out arity %lu\n",
+                               graphs->out_arity);
                         err = xl_raise(ERR_BAD_GRAPH, "out arity");
                         goto teardown;
                 }
@@ -111,6 +123,17 @@ test_file(char *fname)
         }
 
 teardown:
+        free(timer);
+
+        for (i = 0; i < n_graphs; i++)
+        {
+                teardown_err = xl_release(&graphs[i]);
+                if (teardown_err != OK)
+                        printf("graph release failed: %s\n",
+                                xl_explain_error(teardown_err));
+        }
+        free(graphs);
+
         teardown_err = xl_teardown();
         if (teardown_err != OK)
                 printf("teardown failed: %s\n",
