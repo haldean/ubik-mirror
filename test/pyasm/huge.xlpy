@@ -1,7 +1,7 @@
 # vi: ft=python
 from pyasm.libexpel import *
 
-n_nodes = int(1e5)
+n_nodes = 20000
 tree = t(0x1234567890123456, t(66, 0xBADDEADBEEF))
 g = [const(uint8(), tree)] * (n_nodes - 1) + [const(uint8(), tree, terminal=True)]
 

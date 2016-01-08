@@ -58,6 +58,6 @@ clean:
 
 test: $(testexe) test/pyasm/*
 	$(testexe)
-	make -C test/pyasm
+	+make -C test/pyasm
 
 .PHONY: clean test all

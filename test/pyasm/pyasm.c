@@ -70,6 +70,10 @@ test_file(char *fname)
         err = xl_load(&graphs, &n_graphs, &stream);
         CHECK_ERR("couldn't load file");
 
+        err = xl_timer_elapsed(&elapsed, timer);
+        CHECK_ERR("couldn't read timer");
+        printf("\ttime from start to loaded:    %ld usec\n", elapsed);
+
         err = xl_new(&expected);
         CHECK_ERR("couldn't create expected value");
 
@@ -160,8 +164,8 @@ main(int argc, char *argv[])
         }
 
         if (n_failures)
-                printf("%d/%d failed\n", n_failures, argc - 1);
+                printf("%d of %d failed\n", n_failures, argc - 1);
         else
-                printf("%d/%d succeeded\n", argc - 1, argc - 1);
+                printf("all %d succeeded\n", argc - 1);
         return n_failures;
 }
