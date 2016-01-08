@@ -28,20 +28,22 @@
 
 no_ignore xl_error_t
 xl_dagc_apply_arg(
-        struct xl_dagc *result,
+        struct xl_dagc **res_ptr,
         struct xl_dagc *proto,
         struct xl_dagc_node *arg)
 {
         xl_error_t err;
         struct xl_dagc_input *input;
+        struct xl_dagc *result;
         size_t i;
 
         if (proto->in_arity == 0)
                 return xl_raise(ERR_BAD_TYPE, "apply: graph has no inputs");
 
-        err = xl_dagc_copy(result, proto);
+        err = xl_dagc_copy(res_ptr, proto);
         if (err != OK)
                 return err;
+        result = *res_ptr;
 
         err = xl_take(result);
         if (err != OK)

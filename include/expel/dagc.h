@@ -101,7 +101,7 @@ struct xl_dagc_native
         struct xl_dagc graph;
 
         /* The function used to evaluate this graph. */
-        xl_error_t (*evaluator)(struct xl_dagc *graph);
+        xl_error_t (*evaluator)(struct xl_env *env, struct xl_dagc *graph);
 };
 
 /* Gets the dependencies of a node.
@@ -158,7 +158,7 @@ xl_dagc_node_eval(struct xl_env *env, struct xl_dagc_node *node);
  * updates all internal references between nodes. */
 no_ignore xl_error_t
 xl_dagc_copy(
-        struct xl_dagc *result,
+        struct xl_dagc **result,
         struct xl_dagc *proto);
 
 #endif

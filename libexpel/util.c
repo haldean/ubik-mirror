@@ -89,7 +89,6 @@ xl_explain_word(word_t word)
 {
         size_t i;
         char *res;
-        word = htonw(word);
         res = calloc(9, sizeof(char));
         if (res == NULL)
                 return res;

@@ -19,6 +19,7 @@
 
 #include <string.h>
 
+#include "expel/assert.h"
 #include "expel/expel.h"
 #include "expel/uri.h"
 #include "expel/value.h"

@@ -117,8 +117,8 @@ xl_dagc_init(struct xl_dagc *graph)
         size_t i, j, a, next_in, next_out;
         xl_error_t err;
 
-        /* Set the tag */
         graph->tag = TAG_GRAPH;
+        graph->refcount = 1;
 
         /* Adjacency is stored as a sorted list of adjacency
          * lists; the first element in each list is the child and
@@ -295,8 +295,11 @@ __sizeof(size_t *res, struct xl_dagc_node *n)
         case DAGC_NODE_STORE:
                 *res = sizeof(struct xl_dagc_store);
                 return OK;
+        case DAGC_NODE_NATIVE:
+                *res = sizeof(struct xl_dagc_native_out);
+                return OK;
         }
-        return xl_raise(ERR_BAD_TYPE, "apply sizeof");
+        return xl_raise(ERR_BAD_TYPE, "dagc sizeof");
 }
 
 no_ignore static xl_error_t
@@ -355,6 +358,7 @@ __replace_node_refs(
 
         case DAGC_NODE_CONST:
         case DAGC_NODE_INPUT:
+        case DAGC_NODE_NATIVE:
                 return OK;
         }
         return xl_raise(ERR_UNKNOWN_TYPE, "replace node refs");
@@ -385,6 +389,7 @@ __increment_value_refs(struct xl_dagc_node *node)
         switch (node->node_type)
         {
         case DAGC_NODE_APPLY:
+        case DAGC_NODE_NATIVE:
                 return OK;
 
         case DAGC_NODE_INPUT:
@@ -406,22 +411,32 @@ __increment_value_refs(struct xl_dagc_node *node)
                         return err;
                 return xl_take(c->value.any);
         }
-        return xl_raise(ERR_UNKNOWN_TYPE, "replace node refs");
+        return xl_raise(ERR_UNKNOWN_TYPE, "inc value refs");
 }
 
 no_ignore xl_error_t
 xl_dagc_copy(
-        struct xl_dagc *result,
+        struct xl_dagc **res_ptr,
         struct xl_dagc *proto)
 {
         struct __xl_dagc_adjacency *adj;
+        struct xl_dagc *result;
         size_t i, j, size;
         xl_error_t err;
 
         /* Start by making a direct copy, then replace all of the references.
          * Since the nodes are all different sizes, this is unfortunately more
          * complicated than just a memcpy from proto to result :( */
-        memcpy(result, proto, sizeof(struct xl_dagc));
+        size = sizeof(struct xl_dagc);
+        if (proto->tag & TAG_NATIVE_GRAPH)
+                size = sizeof(struct xl_dagc_native);
+
+        result = calloc(1, size);
+        if (result == NULL)
+                return xl_raise(ERR_NO_MEMORY, "dagc copy");
+        *res_ptr = result;
+
+        memcpy(result, proto, size);
         result->refcount = 0;
 
         result->nodes = calloc(proto->n, sizeof(struct xl_dagc_node *));
@@ -432,7 +447,7 @@ xl_dagc_copy(
                         return err;
                 result->nodes[i] = calloc(1, size);
                 if (result->nodes[i] == NULL)
-                        return xl_raise(ERR_NO_MEMORY, "apply copy");
+                        return xl_raise(ERR_NO_MEMORY, "dagc copy");
                 memcpy(result->nodes[i], proto->nodes[i], size);
         }
 

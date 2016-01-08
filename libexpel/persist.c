@@ -176,13 +176,15 @@ no_ignore static xl_error_t
 __load_const(struct xl_dagc_const **node, struct xl_stream *sp)
 {
         word_t graph_index;
+        word_t value_type;
         xl_error_t err;
 
         *node = calloc(1, sizeof(struct xl_dagc_const));
         if (*node == NULL)
                 return xl_raise(ERR_NO_MEMORY, "const alloc");
 
-        READ_INTO((*node)->head.value_type, sp);
+        READ_INTO(value_type, sp);
+        (*node)->head.value_type = ntohw(value_type);
 
         err = xl_new(&(*node)->type);
         if (err != OK)
@@ -309,6 +311,8 @@ __load_node(struct xl_dagc_node **node, struct xl_stream *sp)
         uint8_t terminal;
 
         READ_INTO(node_type, sp);
+        node_type = ntohw(node_type);
+
         READ_INTO(terminal, sp);
 
         if (xl_stream_drop(sp, 3) != 3)

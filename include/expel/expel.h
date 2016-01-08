@@ -209,7 +209,11 @@ xl_save_value(struct xl_stream *sp, struct xl_value *in);
  *
  * Callers should create a dagc struct, populate the nodes and the
  * n fields, and then call this method to compute all derived
- * quantities. */
+ * quantities.
+ *
+ * This resets the refcount of the given graph to 1; initializers
+ * of graph structs do not need to take a reference to the graph
+ * after initialization. */
 no_ignore xl_error_t
 xl_dagc_init(struct xl_dagc *graph);
 

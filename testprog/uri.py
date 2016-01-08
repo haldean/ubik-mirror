@@ -1,5 +1,5 @@
 from expelc.libexpel import *
 
-encode([
-    const(uint8(), uri("hello world")),
-])
+encode([[
+    const(uint8(), uri("hello", scope=pack("native"))),
+]])

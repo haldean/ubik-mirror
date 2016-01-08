@@ -20,12 +20,12 @@ $0 ~ /^[^-]/ {
         # requiring only 32 bits from each of our accumulators
         acc1 = 0
         for (i = 1; i <= 4; i++) {
-                c = substr($1, 9 - i, 1)
+                c = substr($1, i, 1)
                 acc1 = or(lshift(acc1, 8), ascii[c])
         }
         acc2 = 0
         for (i = 5; i <= 8; i++) {
-                c = substr($1, 9 - i, 1)
+                c = substr($1, i, 1)
                 acc2 = or(lshift(acc2, 8), ascii[c])
         }
         print "#define " sprintf("% 24s", $2) " " sprintf("0x%X%X", acc1, acc2)

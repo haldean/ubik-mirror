@@ -27,36 +27,19 @@
 no_ignore static xl_error_t
 __eval_apply(struct xl_env *env, struct xl_dagc_apply *node)
 {
-        struct xl_dagc *graph;
         xl_error_t err;
 
         unused(env);
 
-        graph = calloc(1, sizeof(struct xl_dagc));
-        if (graph == NULL)
-                return xl_raise(ERR_NO_MEMORY, "eval apply: graph alloc");
-
-        graph->n = 0;
-        graph->nodes = NULL;
-        err = xl_dagc_init(graph);
+        err = xl_dagc_apply_arg(
+                &node->head.known.graph, node->func->known.graph, node->arg);
         if (err != OK)
                 return err;
 
-        err = xl_take(graph);
+        err = xl_take(node->head.known.graph);
         if (err != OK)
                 return err;
 
-        if (node->func->value_type != DAGC_TYPE_GRAPH)
-                return xl_raise(
-                        ERR_BAD_TYPE, "eval apply: func node is not a graph");
-
-        err = xl_dagc_apply_arg(graph, node->func->known.graph, node->arg);
-        if (err != OK)
-                return err;
-
-        /* We let the node own the graph; it inherits the reference we
-         * took above. */
-        node->head.known.graph = graph;
         node->head.value_type = DAGC_TYPE_GRAPH;
         return OK;
 }
@@ -180,6 +163,8 @@ xl_dagc_node_eval(struct xl_env *env, struct xl_dagc_node *node)
         case DAGC_NODE_INPUT:
                 err = __eval_input(env, (struct xl_dagc_input *) node);
                 break;
+        case DAGC_NODE_NATIVE:
+                return xl_raise(ERR_BAD_TYPE, "node_eval: can't eval native");
         default:
                 return xl_raise(ERR_UNKNOWN_TYPE, "node_eval");
         }

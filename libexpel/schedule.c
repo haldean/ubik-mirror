@@ -224,6 +224,23 @@ __notify_parents(
         return OK;
 }
 
+no_ignore static xl_error_t
+__eval_native_dagc(struct xl_env *env, struct xl_dagc_native *ngraph)
+{
+        size_t i;
+        xl_error_t err;
+        struct xl_dagc *graph;
+
+        graph = (struct xl_dagc *) ngraph;
+        err = ngraph->evaluator(env, graph);
+        if (err != OK)
+                return err;
+
+        for (i = 0; i < graph->out_arity; i++)
+                graph->terminals[i]->flags |= XL_DAGC_FLAG_COMPLETE;
+        return OK;
+}
+
 no_ignore xl_error_t
 xl_dagc_eval(struct xl_env *env, struct xl_dagc *graph)
 {
@@ -231,6 +248,10 @@ xl_dagc_eval(struct xl_env *env, struct xl_dagc *graph)
         struct xl_node_schedule *schedule, *to_exec;
         size_t n_nodes;
         xl_error_t err;
+
+        /* Native graphs get to cheat and skip all this biz. */
+        if (graph->tag & TAG_NATIVE_GRAPH)
+                return __eval_native_dagc(env, (struct xl_dagc_native *) graph);
 
         reachable = calloc(graph->n, sizeof(struct xl_node *));
         if (reachable == NULL)

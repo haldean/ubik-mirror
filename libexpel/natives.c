@@ -17,6 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include "expel/assert.h"
 #include "expel/dagc.h"
 #include "expel/env.h"
 #include "expel/expel.h"
@@ -24,10 +25,12 @@
 #include "expel/util.h"
 
 static xl_error_t
-__native_unsigned_add(struct xl_dagc *graph)
+__native_unsigned_add(struct xl_env *env, struct xl_dagc *graph)
 {
         struct xl_value *res;
         xl_error_t err;
+
+        unused(env);
 
         err = xl_new(&res);
         if (err != OK)
@@ -100,6 +103,7 @@ __register_unsigned_add(struct xl_env *env)
         err = xl_dagc_init(add_graph);
         if (err != OK)
                 return err;
+        add_graph->tag |= TAG_NATIVE_GRAPH;
 
         err = xl_new(&type);
         if (err != OK)

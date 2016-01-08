@@ -23,7 +23,7 @@
  * argument to the graph. */
 no_ignore xl_error_t
 xl_dagc_apply_arg(
-        struct xl_dagc *result,
+        struct xl_dagc **result,
         struct xl_dagc *proto,
         struct xl_dagc_node *arg);
 
