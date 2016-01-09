@@ -31,7 +31,9 @@
 #define CHECK_ERR(msg) \
         do { if (err != OK) \
         { \
-                printf(msg ": %s\n", xl_explain_error(err)); \
+                char *expl = xl_explain_error(err); \
+                printf(msg ": %s\n", expl); \
+                free(err); free(expl); \
                 goto teardown; \
         } } while(0)
 
@@ -49,6 +51,8 @@ test_file(char *fname)
         int64_t elapsed;
 
         err = OK;
+        n_graphs = 0;
+        graphs = NULL;
 
         printf("%s\n", fname);
 
@@ -99,6 +103,9 @@ test_file(char *fname)
         CHECK_ERR("couldn't read timer");
         printf("\ttime from start to evaluated: %ld usec\n", elapsed);
 
+        err = xl_env_free(&env);
+        CHECK_ERR("couldn't free environment");
+
         if (expected != NULL)
         {
                 if (graphs->out_arity != 1)
@@ -133,15 +140,26 @@ teardown:
         {
                 teardown_err = xl_release(&graphs[i]);
                 if (teardown_err != OK)
-                        printf("graph release failed: %s\n",
-                                xl_explain_error(teardown_err));
+                {
+                        char *explain = xl_explain_error(teardown_err);
+                        printf("graph release failed: %s\n", explain);
+                        free(explain);
+                        free(teardown_err);
+                }
+
         }
         free(graphs);
 
         teardown_err = xl_teardown();
         if (teardown_err != OK)
-                printf("teardown failed: %s\n",
-                        xl_explain_error(teardown_err));
+        {
+                char *explain = xl_explain_error(teardown_err);
+                printf("teardown failed: %s\n", explain);
+                free(explain);
+                free(teardown_err);
+        }
+
+        xl_stream_close(&stream);
 
         if (err == OK)
                 printf("OK\n");

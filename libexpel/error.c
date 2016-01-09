@@ -58,8 +58,12 @@ char *
 xl_explain_error(xl_error_t err)
 {
         char *res;
+        char *err_word_expl;
+
+        err_word_expl = xl_explain_word(err->error_code);
         asprintf(&res, "error %s at %s:%u: %s",
-                 xl_explain_word(err->error_code),
-                 err->file, err->lineno, err->tag);
+                 err_word_expl, err->file, err->lineno, err->tag);
+
+        free(err_word_expl);
         return res;
 }

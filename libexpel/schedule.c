@@ -296,5 +296,6 @@ xl_dagc_eval(struct xl_env *env, struct xl_dagc *graph)
                 free(to_exec);
         }
 
+        free(reachable);
         return OK;
 }

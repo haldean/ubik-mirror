@@ -45,7 +45,7 @@ xl_teardown()
         if (err != OK)
                 return err;
 
-        xl_gc_free_all();
+        xl_gc_teardown();
 
         return OK;
 }

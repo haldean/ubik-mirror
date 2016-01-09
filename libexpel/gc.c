@@ -50,6 +50,14 @@ xl_gc_start()
 }
 
 void
+xl_gc_teardown()
+{
+        xl_gc_free_all();
+        free(gc_stats);
+        gc_stats = NULL;
+}
+
+void
 xl_gc_get_stats(struct xl_gc_info *stats)
 {
         memcpy(stats, gc_stats, sizeof(struct xl_gc_info));
@@ -338,6 +346,12 @@ __release_graph(struct xl_dagc *g)
 
         free(g->inputs);
         free(g->terminals);
+
+        /* Native graphs are the only ones where the runtime is responsible for
+         * cleaning them up; user-created graphs are the responsibility of
+         * whoever is using the runtime. */
+        if (g->tag & TAG_NATIVE_GRAPH)
+                free(g);
 
         #ifdef XL_GC_DEBUG
         #ifdef XL_GC_DEBUG_V

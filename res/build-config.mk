@@ -31,6 +31,8 @@ COPTS := $(CFLAGS) $(COPTS) -std=c11 -pedantic -Werror -Wall -Wextra \
 
 LDOPTS := $(LDOPTS) -L$(DIST_DIR)
 
+asan := yes
+
 ifeq ($(type),release)
 $(info creating release build)
 COPTS := $(COPTS) -O2
@@ -38,6 +40,9 @@ COPTS := $(COPTS) -O2
 else
 $(info creating debug build)
 COPTS := $(COPTS) -ggdb -O0 -DXL_GC_DEBUG \
-	 -fsanitize=undefined -fsanitize=address -fstack-protector-strong
+	 -fsanitize=undefined
+ifeq ($(asan),yes)
+COPTS := $(COPTS) -fsanitize=address -fstack-protector-strong
 LDOPTS := $(LDOPTS) -fsanitize=undefined -fsanitize=address
+endif
 endif

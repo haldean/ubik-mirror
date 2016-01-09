@@ -69,6 +69,12 @@ xl_env_free(struct xl_env *env)
                 {
                         if (env->bindings[i].value.any == NULL)
                                 continue;
+                        err = xl_release(env->bindings[i].uri);
+                        if (err != OK)
+                                return err;
+                        err = xl_release(env->bindings[i].type);
+                        if (err != OK)
+                                return err;
                         err = xl_release(env->bindings[i].value.any);
                         if (err != OK)
                                 return err;
@@ -159,7 +165,7 @@ __insert(
         /* There was already a value at this key, we need to release our
          * reference on it. */
         err = OK;
-        if (unlikely(binds[i].value.tree != NULL))
+        if (unlikely(binds[i].value.any != NULL))
         {
                 if (!overwrite)
                         return xl_raise(ERR_PRESENT, "env overwrite");
@@ -230,7 +236,6 @@ __set(
         word_t value_type,
         bool overwrite)
 {
-        struct xl_uri *uri_copied;
         struct xl_binding new_binding;
         xl_error_t err, ignore;
 
@@ -242,13 +247,7 @@ __set(
         if (err != OK)
                 return err;
 
-        /* copy the URI into a new struct to avoid post-modification bugs. */
-        uri_copied = calloc(1, sizeof(struct xl_uri));
-        if (uri_copied == NULL)
-                return xl_raise(ERR_NO_MEMORY, "env set: uri alloc");
-        memcpy(uri_copied, uri, sizeof(struct xl_uri));
-
-        new_binding.uri = uri_copied;
+        new_binding.uri = uri;
         new_binding.value = value;
         new_binding.value_type = value_type;
         new_binding.type = type;
@@ -259,6 +258,12 @@ __set(
          * GCed if we are going to keep this thing, so we take a reference now
          * and release it if the insert fails later. */
         err = xl_take(value.any);
+        if (err != OK)
+                return err;
+        err = xl_take(type);
+        if (err != OK)
+                return err;
+        err = xl_take(uri);
         if (err != OK)
                 return err;
 
@@ -274,6 +279,10 @@ __set(
                  * (I like that it takes this much effort to ignore an
                  * unignorable parameter) */
                 ignore = xl_release(value.any);
+                unused(ignore);
+                ignore = xl_release(type);
+                unused(ignore);
+                ignore = xl_release(uri);
                 unused(ignore);
         }
 

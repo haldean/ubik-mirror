@@ -65,6 +65,14 @@ struct xl_gc_info
 void
 xl_gc_start();
 
+/* Teardown the garbage collector.
+ *
+ * Frees all memory known to the garbage collector. After calling
+ * this, ou must call xl_gc_start again if you want to use the
+ * runtime again. */
+void
+xl_gc_teardown();
+
 /* Get garbage collector stats. */
 void
 xl_gc_get_stats(struct xl_gc_info *stats);

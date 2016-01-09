@@ -24,17 +24,30 @@
 #include "expel/natives.h"
 #include "expel/util.h"
 
+#include <string.h>
 #include <wchar.h>
 
 no_ignore static xl_error_t
 __native_uri(struct xl_uri **uri, wchar_t *name)
 {
         xl_error_t err;
+        wchar_t *heap_name;
+        size_t name_len;
 
         *uri = calloc(1, sizeof(struct xl_uri));
         if (*uri == NULL)
                 return xl_raise(ERR_NO_MEMORY, "create native uri");
-        err = xl_uri_native(*uri, name);
+
+        name_len = wcslen(name);
+        if (unlikely(name_len < 1))
+                return xl_raise(ERR_BAD_VALUE, "native uri must have name");
+
+        /* URI memory management assumes that the name lives on the heap; we
+         * copy these names onto the heap here to minimize the complexity of the
+         * memory manager. */
+        heap_name = calloc(name_len + 1, sizeof(wchar_t));
+        wcscpy(heap_name, name);
+        err = xl_uri_native(*uri, heap_name);
         return err;
 }
 
@@ -140,7 +153,11 @@ __register_unsigned_add(struct xl_env *env)
         err = __create_op(&add_graph, 2, __native_unsigned_add);
         if (err != OK)
                 return err;
+
         err = __native_uri(&uri, L"uadd");
+        if (err != OK)
+                return err;
+        err = xl_take(uri);
         if (err != OK)
                 return err;
 
