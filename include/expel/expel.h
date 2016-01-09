@@ -54,8 +54,9 @@ struct __xl_dagc_adjacency;
 struct xl_error
 {
         word_t error_code;
-        char *tag;
-        char *file;
+        const char *tag;
+        const char *file;
+        const char *function;
         uint32_t lineno;
 };
 typedef struct xl_error * xl_error_t;
@@ -238,13 +239,19 @@ xl_dagc_eval(struct xl_env *env, struct xl_dagc *graph);
 
 /* Create an error object. */
 xl_error_t
-xl_new_error(word_t code, char *tag, char *file, uint32_t lineno);
+xl_new_error(
+        const word_t code,
+        const char *tag,
+        const char *file,
+        const uint32_t lineno,
+        const char *function);
 
 /* Creates a string representation of an error object. */
 char *
 xl_explain_error(xl_error_t err);
 
 /* Raise an error with the current file and line populated. */
-#define xl_raise(code, tag) xl_new_error((code), (tag), __FILE__, __LINE__)
+#define xl_raise(code, tag) \
+        xl_new_error((code), (tag), __FILE__, __LINE__, __FUNCTION__)
 
 #endif

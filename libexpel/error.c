@@ -29,7 +29,12 @@ static struct xl_error error_pool[ERROR_POOL_SIZE];
 static size_t next_error;
 
 xl_error_t
-xl_new_error(word_t code, char *tag, char *file, uint32_t lineno)
+xl_new_error(
+        const word_t code,
+        const char *tag,
+        const char *file,
+        const uint32_t lineno,
+        const char *function)
 {
         struct xl_error *res;
 
@@ -45,6 +50,7 @@ xl_new_error(word_t code, char *tag, char *file, uint32_t lineno)
         res->tag = tag;
         res->file = file;
         res->lineno = lineno;
+        res->function = function;
         return res;
 }
 
