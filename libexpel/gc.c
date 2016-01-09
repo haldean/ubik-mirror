@@ -340,6 +340,9 @@ __release_graph(struct xl_dagc *g)
         free(g->terminals);
 
         #ifdef XL_GC_DEBUG
+        #ifdef XL_GC_DEBUG_V
+        fprintf(gc_out, "released graph\n");
+        #endif
         gc_stats->n_graph_frees++;
         #endif
 

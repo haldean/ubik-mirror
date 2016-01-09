@@ -29,15 +29,42 @@ no_ignore static xl_error_t
 __eval_apply(struct xl_env *env, struct xl_dagc_apply *node)
 {
         xl_error_t err;
+        struct xl_dagc_input *input;
+        struct xl_dagc *result;
+        struct xl_dagc *proto;
+        size_t i;
 
         unused(env);
 
-        err = xl_dagc_apply_arg(
-                &node->head.known.graph, node->func->known.graph, node->arg);
+        proto = node->func->known.graph;
+        if (proto->in_arity == 0)
+                return xl_raise(ERR_BAD_TYPE, "apply: graph has no inputs");
+
+        err = xl_dagc_copy(&result, proto);
+        if (err != OK)
+                return err;
+        node->head.known.graph = result;
+
+        err = xl_take(result);
         if (err != OK)
                 return err;
 
-        err = xl_take(node->head.known.graph);
+        /* Take an input node off the front, shift the remaining ones left. */
+        input = (struct xl_dagc_input *) result->inputs[0];
+        result->in_arity--;
+        for (i = 0; i < result->in_arity; i++)
+                result->inputs[i] = result->inputs[i + 1];
+
+        input->head.value_type = node->arg->value_type;
+        input->head.flags |= XL_DAGC_READY_MASK;
+
+        input->head.known_type = node->arg->known_type;
+        err = xl_take(input->head.known_type);
+        if (err != OK)
+                return err;
+
+        input->head.known = node->arg->known;
+        err = xl_take(input->head.known.any);
         if (err != OK)
                 return err;
 

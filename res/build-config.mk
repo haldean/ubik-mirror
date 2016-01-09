@@ -25,7 +25,7 @@ SHARED_LIB := $(DIST_DIR)/libexpel.so
 LD_LIBRARY_PATH := $(DIST_DIR)
 export LD_LIBRARY_PATH
 
-COPTS := $(COPTS) -std=c11 -pedantic -Werror -Wall -Wextra \
+COPTS := $(CFLAGS) $(COPTS) -std=c11 -pedantic -Werror -Wall -Wextra \
 	-I$(ROOT_DIR)/include -I$(ROOT_DIR)/dist/include \
 	-D_GNU_SOURCE
 
