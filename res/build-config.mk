@@ -38,6 +38,6 @@ COPTS := $(COPTS) -O2
 else
 $(info creating debug build)
 COPTS := $(COPTS) -ggdb -O0 -DXL_GC_DEBUG \
-	 -fsanitize=undefined -fsanitize=address
+	 -fsanitize=undefined -fsanitize=address -fstack-protector-strong
 LDOPTS := $(LDOPTS) -fsanitize=undefined -fsanitize=address
 endif

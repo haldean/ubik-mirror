@@ -63,4 +63,6 @@ pyasm_test: test/pyasm/* $(SHARED_LIB)
 
 test: unit_test pyasm_test
 
+lib: $(SHARED_LIB)
+
 .PHONY: clean test all unit_test pyasm_test
