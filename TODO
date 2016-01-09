@@ -6,4 +6,3 @@ clang format or whatever
 valgrind
 afl-fuzz
 precommit donotsubmit
-error pool
