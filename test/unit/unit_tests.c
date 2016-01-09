@@ -101,7 +101,7 @@ load_save()
         v = calloc(1, sizeof(struct xl_value));
         assert(xl_load_value(v, &s) == OK);
 
-        // make sure tags are correct.
+        /* make sure tags are correct. */
         assert(v->tag == u[0].tag);
         assert(v->right.p->tag == u[1].tag);
         assert(v->right.p->left.p->tag == u[2].tag);
@@ -109,7 +109,7 @@ load_save()
         assert(v->right.p->left.p->right.p->tag == u[4].tag);
         assert(v->right.p->left.p->left.p->left.p->tag == u[5].tag);
 
-        // make sure refcounts are all 1 except the root, which is not taken.
+        /* make sure refcounts are all 1 except the root, which is not taken. */
         assert(v->refcount == 0);
         assert(v->right.p->refcount == 1);
         assert(v->right.p->left.p->refcount == 1);
@@ -117,24 +117,24 @@ load_save()
         assert(v->right.p->left.p->right.p->refcount == 1);
         assert(v->right.p->left.p->left.p->left.p->refcount == 1);
 
-        // 0.left
+        /* 0.left */
         assert(v->left.v == u->left.v);
-        // 5.left
+        /* 5.left */
         assert(v->right.p->left.p->left.p->left.p->left.v ==
                u->right.p->left.p->left.p->left.p->left.v);
-        // 5.right
+        /* 5.right */
         assert(v->right.p->left.p->left.p->left.p->right.v ==
                u->right.p->left.p->left.p->left.p->right.v);
-        // 3.right
+        /* 3.right */
         assert(v->right.p->left.p->left.p->right.v ==
                u->right.p->left.p->left.p->right.v);
-        // 4.left
+        /* 4.left */
         assert(v->right.p->left.p->right.p->left.v ==
                u->right.p->left.p->right.p->left.v);
-        // 4.right
+        /* 4.right */
         assert(v->right.p->left.p->right.p->right.v ==
                u->right.p->left.p->right.p->right.v);
-        // 1.right
+        /* 1.right */
         assert(v->right.p->right.v == u->right.p->right.v);
 
         return ok;

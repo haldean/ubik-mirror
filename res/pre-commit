@@ -8,16 +8,25 @@ if [[ res/pre-commit -nt $0 ]]; then
         exit $?
 fi
 
-found=$(grep -R "DO NOT SUBMIT" libexpel include test)
-res="$?"
-if [[ "$res" != 0 ]]; then
+do_not_submits=$(grep -R "DO NOT SUBMIT" libexpel include test)
+dns_res="$?"
+
+old_comments=$(grep -R "^[ ]*//" libexpel include test)
+oc_res="$?"
+
+if [ "$dns_res" != 0 -a "$oc_res" != 0 ]; then
         exit 0
 fi
 
-echo "not committing, fix these first."
+echo "not committing, fix these issues first."
+echo
+echo "old-style comments:"
+cat <<EOF
+$old_comments
+EOF
 echo
 echo "do not submits:"
 cat <<EOF
-$found
+$do_not_submits
 EOF
 exit 1

@@ -36,7 +36,6 @@ size_min(size_t a, size_t b)
         return a < b ? a : b;
 }
 
-// converts a word from host byte order to network byte order
 word_t
 htonw(word_t w)
 {
@@ -50,8 +49,8 @@ htonw(word_t w)
 #error "unsupported byte order" __BYTE_ORDER__
 #endif
 #else
-        // byte order test macros aren't defined, we have to roll our own
-        // runtime tests instead.
+        /* byte order test macros aren't defined, we have to roll our own
+         * runtime tests instead. */
         uint32_t test_int = 1;
         if (*((char *) &test_int) == 0)
                 return w;
@@ -60,7 +59,6 @@ htonw(word_t w)
 #endif
 }
 
-// converts a word from network byte order to host byte order
 word_t
 ntohw(word_t w)
 {
@@ -74,8 +72,8 @@ ntohw(word_t w)
 #error "unsupported byte order" __BYTE_ORDER__
 #endif
 #else
-        // byte order test macros aren't defined, we have to roll our own
-        // runtime tests instead.
+        /* byte order test macros aren't defined, we have to roll our own
+         * runtime tests instead. */
         uint32_t test_int = 1;
         if (*((char *) &test_int) == 0)
                 return w;
