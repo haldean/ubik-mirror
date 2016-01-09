@@ -3,9 +3,10 @@ from pyasm.libexpel import *
 
 tree = t(0x1234567890123456, t(66, 0xBADDEADBEEF))
 
-encode([[
-    const(uint8(), t(0, 0)),
-    const(uint8(), t(1, 0)),
-    const(uint8(), tree, terminal=True),
-    const(uint8(), t(0, 1)),
-]], expect=tree)
+encode([
+    graph([const(uint8(), t(0, 0)),
+           const(uint8(), t(1, 0)),
+           const(uint8(), tree, terminal=True),
+           const(uint8(), t(0, 1)),
+          ], 2),
+], expect=tree)

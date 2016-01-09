@@ -29,7 +29,7 @@ clean:
 $(test_runner): pyasm.c $(SHARED_LIB)
 	$(CC) $(COPTS) $(LDOPTS) -lexpel -o $@ $<
 
-%.xlb: %.xlpy
+%.xlb: %.xlpy ../../pyasm/*
 	PYTHONPATH=../.. python $< $@
 
 .PHONY: test clean

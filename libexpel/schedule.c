@@ -234,7 +234,6 @@ __notify_parents(
 no_ignore static xl_error_t
 __eval_native_dagc(struct xl_env *env, struct xl_dagc_native *ngraph)
 {
-        size_t i;
         xl_error_t err;
         struct xl_dagc *graph;
 
@@ -243,8 +242,7 @@ __eval_native_dagc(struct xl_env *env, struct xl_dagc_native *ngraph)
         if (err != OK)
                 return err;
 
-        for (i = 0; i < graph->out_arity; i++)
-                graph->terminals[i]->flags |= XL_DAGC_FLAG_COMPLETE;
+        graph->result->flags |= XL_DAGC_FLAG_COMPLETE;
         return OK;
 }
 

@@ -552,6 +552,15 @@ xl_dagc_copy(
                         return err;
         }
 
+        if (proto->result != NULL)
+        {
+                err = __replace_ref(
+                        &result->result, proto->nodes, result->nodes,
+                        result->n);
+                if (err != OK)
+                        return err;
+        }
+
         result->adjacency =
                 calloc(result->n, sizeof(struct __xl_dagc_adjacency));
         memcpy(result->adjacency, proto->adjacency,

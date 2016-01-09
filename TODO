@@ -5,4 +5,4 @@ type-based dispatch node
 clang format or whatever
 valgrind
 afl-fuzz
-output node with single output per graph
+one big alloc per graph

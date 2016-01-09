@@ -184,16 +184,22 @@ are four kinds of nodes in a DAGC:
                     in the runtime.
 
 Each individual DAGC represents a function; each DAGC contains an input
-node for each of the function's arguments, and a single terminal node
-that represents the function's result. The minimal set of nodes required
-to evaluate the terminal node is found, and all nodes in that set are
-evaluated in turn. This gives the result for the DAGC.
+node for each of the function's arguments, and a single result node that
+represents the function's result. However, the graph may have multiple
+nodes whose value must be evaluated for the graph to have been called
+fully evaluated; these nodes are called terminal nodes, and the result
+node is one of them. The minimal set of nodes required to evaluate all
+terminal nodes is found, and all nodes in that set are evaluated in
+turn. This gives the result for the DAGC. Once evaluated, the DAGC is
+semantically and computationally equivalent to a single value; this is
+possible because all functions in Expel are idempotent, and thus a
+zero-arity function is equivalent to a value.
 
 Logic is then built up by creating a number of graphs and referencing
-them from each other. When a `dispatch` node is applied, a copy of the
-referenced DAGC is made and that DAGC's `input` nodes are completed.
-Once all required input nodes have been completed, the DAGC can be
-evaluated.
+them from each other. When a node with a graph value is applied, a copy
+of the referenced DAGC is made and that DAGC's `input` nodes are
+completed.  Once all required input nodes have been completed, the DAGC
+can be evaluated.
 
 An expel bytecode blob contains some number of graphs; the various
 graphs can reference each other, and in general their ordering in the
@@ -229,6 +235,7 @@ The graph encoding has a header of its own:
 
         Byte index   Field
                0-7   The number of nodes in the graph
+              8-15   The index of the result node in the graph
 
 Following the graph header, the specified number of node encodings
 follows. The order of encoding matters; each node is identified by other

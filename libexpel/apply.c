@@ -49,6 +49,7 @@ xl_dagc_apply_arg(
         if (err != OK)
                 return err;
 
+        /* Take an input node off the front, shift the remaining ones left. */
         input = (struct xl_dagc_input *) result->inputs[0];
         result->in_arity--;
         for (i = 0; i < result->in_arity; i++)
@@ -81,15 +82,10 @@ xl_dagc_collapse_graph(struct xl_dagc_node *node, struct xl_env *env)
                 return OK;
         graph = node->known.graph;
 
-        /* Graph is fully applied; we can evaluate it to find the value of this
-         * node. */
-        if (graph->out_arity != 1)
-                return xl_raise(
-                        ERR_BAD_TYPE,
-                        "collapse: can't call graph with multiple terminals");
-
         if (graph->in_arity != 0)
                 return OK;
+        /* Graph is fully applied; we can evaluate it to find the value of this
+         * node. */
 
         /* Create a child environment to execute the function in. */
         child_env = calloc(1, sizeof(struct xl_env));
@@ -106,14 +102,14 @@ xl_dagc_collapse_graph(struct xl_dagc_node *node, struct xl_env *env)
                 return err;
         free(child_env);
 
-        node->value_type = graph->terminals[0]->value_type;
+        node->value_type = graph->result->value_type;
 
-        node->known = graph->terminals[0]->known;
+        node->known = graph->result->known;
         err = xl_take(node->known.any);
         if (err != OK)
                 return err;
 
-        node->known_type = graph->terminals[0]->known_type;
+        node->known_type = graph->result->known_type;
         err = xl_take(node->known_type);
         if (err != OK)
                 return err;

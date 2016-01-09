@@ -479,11 +479,15 @@ no_ignore static xl_error_t
 __load_graph(struct xl_dagc *graph, struct xl_stream *sp)
 {
         word_t n_nodes;
+        word_t result_idx;
         size_t i;
         xl_error_t err;
 
         READ_INTO(n_nodes, sp);
         n_nodes = ntohw(n_nodes);
+
+        READ_INTO(result_idx, sp);
+        result_idx = ntohw(result_idx);
 
         /* This binary is too large to be read on this machine. Note that
          * performing this check up front means that we don't have to worry
@@ -496,6 +500,9 @@ __load_graph(struct xl_dagc *graph, struct xl_stream *sp)
          * terabytes of memory. Good luck. */
         if (n_nodes > (uint64_t) UINTPTR_MAX)
                 return xl_raise(ERR_NO_MEMORY, "n_nodes too big");
+
+        if (result_idx >= n_nodes)
+                return xl_raise(ERR_BAD_HEADER, "result_idx > n_nodes");
 
         graph->n = n_nodes;
         graph->nodes = calloc(n_nodes, sizeof(struct xl_dagc_node *));
@@ -512,6 +519,9 @@ __load_graph(struct xl_dagc *graph, struct xl_stream *sp)
                 if (err != OK)
                         return err;
         }
+        graph->result = graph->nodes[result_idx];
+        if (!graph->result->is_terminal)
+                return xl_raise(ERR_BAD_GRAPH, "result node is not terminal");
 
         /* Now replace indeces with pointers; now that we've loaded all of them
          * we know what the appropriate pointers are. */

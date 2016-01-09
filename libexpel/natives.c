@@ -91,6 +91,7 @@ __create_op(
         graph->nodes[arity]->flags = 0x00;
 
         graph->n = arity + 1;
+        graph->result = graph->nodes[arity];
 
         err = xl_dagc_init(graph);
         if (err != OK)
@@ -118,9 +119,14 @@ __native_unsigned_add(struct xl_env *env, struct xl_dagc *graph)
                       graph->nodes[1]->known.tree->left.v;
         res->right.v = 0;
 
-        graph->terminals[0]->known.tree = res;
-        graph->terminals[0]->known_type = graph->nodes[0]->known_type;
-        graph->terminals[0]->value_type = DAGC_TYPE_VALUE;
+        graph->result->known.tree = res;
+        graph->result->known_type = graph->nodes[0]->known_type;
+        graph->result->value_type = DAGC_TYPE_VALUE;
+
+        /* We already own the tree because we just new'ed it. */
+        err = xl_take(graph->result->known_type);
+        if (err != OK)
+                return err;
 
         return OK;
 }

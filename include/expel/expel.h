@@ -150,6 +150,9 @@ struct xl_dagc
         /* The terminal nodes in the graph. */
         struct xl_dagc_node **terminals;
         size_t out_arity;
+
+        /* The result node in the graph. */
+        struct xl_dagc_node *result;
 };
 
 /* Starts the expel runtime.

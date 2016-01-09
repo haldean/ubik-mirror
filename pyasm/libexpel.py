@@ -27,7 +27,7 @@ def const(typ, val, terminal=False):
 def const_word(val, terminal=False):
     return const(word(), t(val, 0))
 
-def graph(typ, graph_num, terminal=False):
+def graph_ref(typ, graph_num, terminal=False):
     return dict(
         type="const",
         ctype=typ,
@@ -125,6 +125,12 @@ def pack_tree(t):
 
     return struct.pack(">B", tag) + left + right
 
+def graph(nodes, result_idx):
+    return dict(
+        nodes=nodes,
+        result_idx=result_idx,
+    )
+
 def encode(graphs, expect=None):
     if len(sys.argv) < 2:
         print "missing output file"
@@ -135,8 +141,14 @@ def encode(graphs, expect=None):
         f.write(struct.pack(">I", 1))
         f.write(struct.pack(">Q", len(graphs)))
 
-        for nodes in graphs:
+        for graph in graphs:
+            nodes = graph["nodes"]
+            result_idx = graph["result_idx"]
+            if result_idx < 0:
+                result_idx += len(nodes)
+
             f.write(struct.pack(">Q", len(nodes)))
+            f.write(struct.pack(">Q", result_idx))
             for i, node in enumerate(nodes):
                 node["idx"] = i
 
