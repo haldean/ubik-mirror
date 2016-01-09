@@ -19,7 +19,6 @@
 
 objects := $(patsubst libexpel/%.c,build/%.o,$(wildcard libexpel/*.c))
 
-sharedlib := $(DIST_DIR)/libexpel.so
 executable := $(DIST_DIR)/runexpel
 testexe := $(BUILD_DIR)/test-expel
 testldopts := $(LDOPTS) -lm -lpthread -lrt
@@ -40,15 +39,15 @@ build/%.o: libexpel/%.c dist/include/expel/const.h
 
 -include $(patsubst build/%.o,build/%.d,$(objects))
 
-$(sharedlib): $(objects)
-	@mkdir -p `dirname $(sharedlib)`
+$(SHARED_LIB): $(objects)
+	@mkdir -p `dirname $(SHARED_LIB)`
 	$(CC) $(objects) -fPIC $(LDOPTS) -shared -o $@
 
-$(executable): expelrt/*.c $(sharedlib)
+$(executable): expelrt/*.c $(SHARED_LIB)
 	@mkdir -p `dirname $(executable)`
 	$(CC) $(COPTS) $(LDOPTS) $< -lexpel -o $@
 
-$(testexe): test/unit/*.c $(sharedlib)
+$(testexe): test/unit/*.c $(SHARED_LIB)
 	@mkdir -p `dirname $(testexe)`
 	$(CC) $(COPTS) $(LDOPTS) $(testldopts) $< -lexpel -o $@
 
@@ -56,8 +55,12 @@ clean:
 	rm -rf build dist
 	make -C test/pyasm clean
 
-test: $(testexe) test/pyasm/*
+unit_test: $(testexe)
 	$(testexe)
+
+pyasm_test: test/pyasm/* $(SHARED_LIB)
 	+make -C test/pyasm
 
-.PHONY: clean test all
+test: unit_test pyasm_test
+
+.PHONY: clean test all unit_test pyasm_test

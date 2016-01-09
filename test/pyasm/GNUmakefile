@@ -26,7 +26,7 @@ test: $(asms) $(test_runner)
 clean:
 	rm -f $(asms) $(test_runner)
 
-$(test_runner): pyasm.c
+$(test_runner): pyasm.c $(SHARED_LIB)
 	$(CC) $(COPTS) $(LDOPTS) -lexpel -o $@ $<
 
 %.xlb: %.xlpy

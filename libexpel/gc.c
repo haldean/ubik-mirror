@@ -260,6 +260,7 @@ __release_node(struct xl_dagc_node *n)
         switch (n->node_type)
         {
         case DAGC_NODE_APPLY:
+        case DAGC_NODE_COND:
         case DAGC_NODE_NATIVE:
                 break;
 

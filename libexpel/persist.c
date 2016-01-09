@@ -304,6 +304,31 @@ __load_input(struct xl_dagc_input **node, struct xl_stream *sp)
 }
 
 no_ignore static xl_error_t
+__load_cond(struct xl_dagc_cond **node, struct xl_stream *sp)
+{
+        uint64_t node_index;
+
+        *node = calloc(1, sizeof(struct xl_dagc_cond));
+        if (*node == NULL)
+                return xl_raise(ERR_NO_MEMORY, "cond alloc");
+        (*node)->head.value_type = DAGC_TYPE_UNKNOWN;
+
+        READ_INTO(node_index, sp);
+        node_index = ntohw(node_index);
+        (*node)->condition = (struct xl_dagc_node *) node_index;
+
+        READ_INTO(node_index, sp);
+        node_index = ntohw(node_index);
+        (*node)->if_true = (struct xl_dagc_node *) node_index;
+
+        READ_INTO(node_index, sp);
+        node_index = ntohw(node_index);
+        (*node)->if_false = (struct xl_dagc_node *) node_index;
+
+        return OK;
+}
+
+no_ignore static xl_error_t
 __load_node(struct xl_dagc_node **node, struct xl_stream *sp)
 {
         xl_error_t err;
@@ -335,6 +360,9 @@ __load_node(struct xl_dagc_node **node, struct xl_stream *sp)
         case DAGC_NODE_INPUT:
                 err = __load_input((struct xl_dagc_input **) node, sp);
                 break;
+        case DAGC_NODE_COND:
+                err = __load_cond((struct xl_dagc_cond **) node, sp);
+                break;
         default:
                 return xl_raise(ERR_UNKNOWN_TYPE, "load node");
         }
@@ -356,6 +384,7 @@ __set_node_pointers(
         struct xl_dagc_apply *apply;
         struct xl_dagc_load *load;
         struct xl_dagc_store *store;
+        struct xl_dagc_cond *cond;
 
         switch (node->node_type)
         {
@@ -368,6 +397,20 @@ __set_node_pointers(
 
                 apply->func = all_nodes[(uintptr_t) apply->func];
                 apply->arg = all_nodes[(uintptr_t) apply->arg];
+                break;
+
+        case DAGC_NODE_COND:
+                cond = (struct xl_dagc_cond *) node;
+                if ((uintptr_t) cond->condition >= n_nodes)
+                        return xl_raise(ERR_OUT_OF_BOUNDS, "cond condition idx");
+                if ((uintptr_t) cond->if_true >= n_nodes)
+                        return xl_raise(ERR_OUT_OF_BOUNDS, "cond true idx");
+                if ((uintptr_t) cond->if_false >= n_nodes)
+                        return xl_raise(ERR_OUT_OF_BOUNDS, "cond false idx");
+
+                cond->condition = all_nodes[(uintptr_t) cond->condition];
+                cond->if_true = all_nodes[(uintptr_t) cond->if_true];
+                cond->if_false = all_nodes[(uintptr_t) cond->if_false];
                 break;
 
         case DAGC_NODE_LOAD:

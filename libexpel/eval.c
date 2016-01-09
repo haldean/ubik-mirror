@@ -23,6 +23,7 @@
 #include "expel/env.h"
 #include "expel/expel.h"
 #include "expel/util.h"
+#include "expel/value.h"
 
 no_ignore static xl_error_t
 __eval_apply(struct xl_env *env, struct xl_dagc_apply *node)
@@ -110,6 +111,33 @@ __eval_load(struct xl_env *env, struct xl_dagc_load *node)
 }
 
 no_ignore static xl_error_t
+__eval_cond(struct xl_env *env, struct xl_dagc_cond *cond)
+{
+        struct xl_dagc_node *res;
+        xl_error_t err;
+        bool condition;
+
+        unused(env);
+
+        err = xl_value_as_bool(&condition, cond->condition->known.tree);
+        if (err != OK)
+                return err;
+
+        res = condition ? cond->if_true : cond->if_false;
+        cond->head.value_type = res->value_type;
+        cond->head.known_type = res->known_type;
+        cond->head.known = res->known;
+
+        err = xl_take(cond->head.known_type);
+        if (err != OK)
+                return err;
+        err = xl_take(cond->head.known.any);
+        if (err != OK)
+                return err;
+        return OK;
+}
+
+no_ignore static xl_error_t
 __eval_store(struct xl_env *env, struct xl_dagc_store *node)
 {
         xl_error_t err;
@@ -162,6 +190,9 @@ xl_dagc_node_eval(struct xl_env *env, struct xl_dagc_node *node)
                 break;
         case DAGC_NODE_INPUT:
                 err = __eval_input(env, (struct xl_dagc_input *) node);
+                break;
+        case DAGC_NODE_COND:
+                err = __eval_cond(env, (struct xl_dagc_cond *) node);
                 break;
         case DAGC_NODE_NATIVE:
                 return xl_raise(ERR_BAD_TYPE, "node_eval: can't eval native");

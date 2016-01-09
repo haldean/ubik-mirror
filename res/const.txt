@@ -35,6 +35,7 @@
   buffer.STREAM_TYPE_BUFFER
 
  eabsent.ERR_ABSENT
+ ebvalue.ERR_BAD_VALUE
  ebgraph.ERR_BAD_GRAPH
   ebhead.ERR_BAD_HEADER
    ebtag.ERR_BAD_TAG
@@ -54,6 +55,7 @@ ebadtest.ERR_TEST_FAILED
   ewfail.ERR_WRITE_FAILED
 
    apply.DAGC_NODE_APPLY
+    cond.DAGC_NODE_COND
    const.DAGC_NODE_CONST
    input.DAGC_NODE_INPUT
     load.DAGC_NODE_LOAD

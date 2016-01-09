@@ -1,0 +1,8 @@
+# vi: ft=python
+from pyasm.libexpel import *
+
+nc = const(boolean(), t(1, 0))
+nt = const_word(0x12)
+nf = const_word(0xFF)
+nr = cond(nc, nt, nf, terminal=True)
+encode([[nc, nt, nf, nr]], expect=t(0x12, 0))

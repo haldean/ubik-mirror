@@ -28,8 +28,10 @@
 #define XL_DAGC_FLAG_D1_READY 0x02
 /* node's second dependency is fully evaluated */
 #define XL_DAGC_FLAG_D2_READY 0x04
-/* d1_ready | d2_ready */
-#define XL_DAGC_READY_MASK    0x06
+/* node's third dependency is fully evaluated */
+#define XL_DAGC_FLAG_D3_READY 0x08
+/* d1_ready | d2_ready | d3_ready */
+#define XL_DAGC_READY_MASK    0x0E
 
 struct __xl_dagc_adjacency
 {
@@ -83,15 +85,28 @@ struct xl_dagc_input
         struct xl_value *required_type;
 };
 
-/* The native_out node is a piece of magic that is enabled by the
- * graph evaluator; if a graph has the native tag, then the
- * evaluator evalutes the value of the graph using native code and
- * populates the native node in the graph with the result. The
- * native node is provided only as a thing for the caller to latch
- * on to for the result. */
+/* The native_out node is a piece of magic that is enabled
+ * by the graph evaluator; if a graph has the native tag,
+ * then the evaluator evalutes the value of the graph using
+ * native code and populates the native node in the graph
+ * with the result. The native node is provided only as a
+ * thing for the caller to latch on to for the result. */
 struct xl_dagc_native_out
 {
         struct xl_dagc_node head;
+};
+
+struct xl_dagc_cond
+{
+        struct xl_dagc_node head;
+        /* The node that contains the condition */
+        struct xl_dagc_node *condition;
+        /* The node that contains the value that is used if
+         * the condition evaluates to true */
+        struct xl_dagc_node *if_true;
+        /* The node that contains the value that is used if
+         * the condition evaluates to false */
+        struct xl_dagc_node *if_false;
 };
 
 /* This syntax is terrible; it defines xl_native_evaluator_t as a
@@ -112,14 +127,13 @@ struct xl_dagc_native
 
 /* Gets the dependencies of a node.
  *
- * For nodes with two dependencies, d1 and d2 will be filled in
- * with valid pointers. For nodes with one dependency, d1 will be
- * filled in with a pointer and d2 will be set to NULL. For nodes
- * with no dependencies, both will be NULL. */
+ * For nodes with N dependencies, d1 through dN will be
+ * filled in and the result will be NULL. */
 no_ignore xl_error_t
 xl_dagc_get_deps(
         struct xl_dagc_node **d1,
         struct xl_dagc_node **d2,
+        struct xl_dagc_node **d3,
         struct xl_dagc_node *n);
 
 /* Retrieve the parents of the given node.

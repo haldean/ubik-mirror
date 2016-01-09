@@ -33,3 +33,6 @@ xl_read_packed(uint8_t **dest, size_t *n, struct xl_value *src);
 
 no_ignore xl_error_t
 xl_read_string(wchar_t **dest, size_t *n, struct xl_value *src);
+
+no_ignore xl_error_t
+xl_value_as_bool(bool *res, struct xl_value *v);

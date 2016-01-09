@@ -77,13 +77,13 @@ full list of base type codes is:
                          Code   Description
                      ....word   unsigned 64-bit integer
                      ...sword   signed 64-bit integer
+                     ....bool   boolean
                      ....list   homogenous list
                      ...tuple   fixed-length tuple
                      ..packed   packed list
                      ....type   type descriptor
                      .....uri   expel resource identifier
                      ..lambda   function
-                     .nlambda   native function
 
 Each type code is actually a word that contains the numeric equivalent
 of a 8-byte string, with the first letter in the byte with the lowest
@@ -145,10 +145,6 @@ final element is a 64-bit integer represending the scope of the
 resource. The meanings of these fields will be covered in the Bindings
 section below.
 
-Function types (`lambda` and `nlambda`) work slightly differently; the
-types are stored as tree values but the function bodies are stored as...
-what?
-
 
 Building logic ---------------------------------------------------------
 
@@ -172,6 +168,11 @@ are four kinds of nodes in a DAGC:
         `store`     A store operation. Has a URI and a reference to a node
                     with a value, and stores the given value at that URI.
         `input`     The input to a DAGC.
+        `cond`      Points to a condition, a true value node and a false
+                    value node. If the condition evaluates as true, the
+                    value of the node is the value of the true value
+                    node; if it evaluates as false, it as the value of
+                    the false value node.
         `native`    This one is sneaky; the native node is a node that
                     is filled in by native code in "native DAGCs".
                     Native DAGCs are backed by native code and
@@ -285,6 +286,13 @@ Nodes with node type `   input` have the following body:
         Byte index   Field
                0-7   Argument index of the node
               8...   The tree-encoded type requirement on the argument
+
+Nodes with node type `    cond` have the following body:
+
+        Byte index   Field
+               0-7   Node index of the condition
+              8-15   Node index of the true value
+             16-23   Node index of the false value
 
 The tree encoding proceeds as follows: Begin with the root of the tree
 to be encoded. The node's 8-bit tag is written to the stream, followed

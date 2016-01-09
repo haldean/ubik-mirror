@@ -3,6 +3,18 @@
 import struct
 import sys
 
+def t(l, r):
+    return (l, r)
+
+def uint8():
+    return t(pack("uint08"), 0)
+
+def word():
+    return t(pack("word"), 0)
+
+def boolean():
+    return t(pack("bool"), 0)
+
 def const(typ, val, terminal=False):
     return dict(
         type="const",
@@ -11,6 +23,9 @@ def const(typ, val, terminal=False):
         subtype=pack("cvalue"),
         is_term=terminal,
     )
+
+def const_word(val, terminal=False):
+    return const(word(), t(val, 0))
 
 def graph(typ, graph_num, terminal=False):
     return dict(
@@ -53,11 +68,14 @@ def arg(arg_num, type, terminal=False):
         is_term=terminal,
     )
 
-def t(l, r):
-    return (l, r)
-
-def uint8():
-    return t(pack("uint08"), 0)
+def cond(condition, true, false, terminal=False):
+    return dict(
+        type="cond",
+        condition=condition,
+        true=true,
+        false=false,
+        is_term=terminal,
+    )
 
 def pack(s):
     if len(s) > 8:
@@ -149,6 +167,10 @@ def encode(graphs, expect=None):
                 elif node_type == "input":
                     f.write(struct.pack(">Q", node["arg_num"]))
                     f.write(pack_tree(node["req_type"]))
+                elif node_type == "cond":
+                    f.write(struct.pack(">Q", node["condition"]["idx"]))
+                    f.write(struct.pack(">Q", node["true"]["idx"]))
+                    f.write(struct.pack(">Q", node["false"]["idx"]))
                 else:
                     raise NotImplementedError(
                         "node type %s not supported" % node_type)

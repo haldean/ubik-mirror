@@ -33,7 +33,7 @@ struct xl_node_schedule
 
 /* Adds elem to set if elem isn't already in set, modifying the
  * provided size if necessary. Returns true if the element was
- * added to the set. */ 
+ * added to the set. */
 static bool
 __set_add(struct xl_dagc_node **set, size_t *n, struct xl_dagc_node *elem)
 {
@@ -64,11 +64,11 @@ __set_add(struct xl_dagc_node **set, size_t *n, struct xl_dagc_node *elem)
  * reachable do not need to be evaluated. */
 no_ignore static xl_error_t
 __find_reachable_nodes(
-                struct xl_dagc_node **reachable, 
-                size_t *rn,
-                struct xl_dagc *graph)
+        struct xl_dagc_node **reachable,
+        size_t *rn,
+        struct xl_dagc *graph)
 {
-        struct xl_dagc_node *n, *d1, *d2;
+        struct xl_dagc_node *n, *d1, *d2, *d3;
         size_t i;
         xl_error_t err;
         bool done;
@@ -95,13 +95,15 @@ __find_reachable_nodes(
                 #ifdef XL_SCHEDULE_DEBUG
                 fprintf(stderr, "reachable  %hx\n", (short)((uintptr_t) n));
                 #endif
-                err = xl_dagc_get_deps(&d1, &d2, n);
+                err = xl_dagc_get_deps(&d1, &d2, &d3, n);
                 if (err != OK)
                         return err;
                 if (d1 != NULL)
                         done &= !__set_add(reachable, rn, d1);
                 if (d2 != NULL)
                         done &= !__set_add(reachable, rn, d2);
+                if (d3 != NULL)
+                        done &= !__set_add(reachable, rn, d3);
         }
 
         return OK;
@@ -114,7 +116,7 @@ __find_reachable_nodes(
 no_ignore static xl_error_t
 __set_initial_ready(struct xl_dagc_node **nodes, size_t n_nodes)
 {
-        struct xl_dagc_node *n, *d1, *d2;
+        struct xl_dagc_node *n, *d1, *d2, *d3;
         xl_error_t err;
         size_t i;
 
@@ -130,7 +132,7 @@ __set_initial_ready(struct xl_dagc_node **nodes, size_t n_nodes)
                 if (n->node_type == DAGC_NODE_INPUT)
                         continue;
 
-                err = xl_dagc_get_deps(&d1, &d2, n);
+                err = xl_dagc_get_deps(&d1, &d2, &d3, n);
                 if (err != OK)
                         return err;
 
@@ -138,6 +140,8 @@ __set_initial_ready(struct xl_dagc_node **nodes, size_t n_nodes)
                         n->flags |= XL_DAGC_FLAG_D1_READY;
                 if (d2 == NULL || d2->flags & XL_DAGC_FLAG_COMPLETE)
                         n->flags |= XL_DAGC_FLAG_D2_READY;
+                if (d3 == NULL || d3->flags & XL_DAGC_FLAG_COMPLETE)
+                        n->flags |= XL_DAGC_FLAG_D3_READY;
         }
 
         return OK;
@@ -189,7 +193,7 @@ __notify_parents(
                 struct xl_dagc *graph,
                 struct xl_dagc_node *node)
 {
-        struct xl_dagc_node **parents, *d1, *d2, *p;
+        struct xl_dagc_node **parents, *d1, *d2, *d3, *p;
         size_t i, n_parents;
         xl_error_t err;
 
@@ -201,7 +205,7 @@ __notify_parents(
         {
                 p = parents[i];
 
-                err = xl_dagc_get_deps(&d1, &d2, p);
+                err = xl_dagc_get_deps(&d1, &d2, &d3, p);
                 if (err != OK)
                         return err;
 
@@ -209,6 +213,9 @@ __notify_parents(
                         p->flags |= XL_DAGC_FLAG_D1_READY;
                 if (node == d2)
                         p->flags |= XL_DAGC_FLAG_D2_READY;
+                if (node == d3)
+                        p->flags |= XL_DAGC_FLAG_D3_READY;
+
                 if ((p->flags & XL_DAGC_READY_MASK) == XL_DAGC_READY_MASK)
                 {
                         #ifdef XL_SCHEDULE_DEBUG

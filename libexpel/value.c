@@ -176,3 +176,18 @@ xl_print_value(struct xl_stream *out, struct xl_value *v)
                 return xl_raise(ERR_WRITE_FAILED, "print value");
         return OK;
 }
+
+no_ignore xl_error_t
+xl_value_as_bool(bool *res, struct xl_value *v)
+{
+        word_t left;
+        if (!(v->tag & TAG_LEFT_WORD))
+                return xl_raise(ERR_BAD_TYPE,
+                                "value cannot be interpreted as a boolean");
+        left = v->left.v;
+        if (left != 0 && left != 1)
+                return xl_raise(ERR_BAD_VALUE,
+                                "boolean value is not zero or one");
+        *res = left == 1;
+        return OK;
+}

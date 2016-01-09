@@ -39,6 +39,7 @@ no_ignore xl_error_t
 xl_dagc_get_deps(
                 struct xl_dagc_node **d1,
                 struct xl_dagc_node **d2,
+                struct xl_dagc_node **d3,
                 struct xl_dagc_node *n)
 {
         switch (n->node_type)
@@ -46,16 +47,25 @@ xl_dagc_get_deps(
         case DAGC_NODE_APPLY:
                 *d1 = ((struct xl_dagc_apply *) n)->func;
                 *d2 = ((struct xl_dagc_apply *) n)->arg;
+                *d3 = NULL;
+                return OK;
+
+        case DAGC_NODE_COND:
+                *d1 = ((struct xl_dagc_cond *) n)->condition;
+                *d2 = ((struct xl_dagc_cond *) n)->if_true;
+                *d3 = ((struct xl_dagc_cond *) n)->if_false;
                 return OK;
 
         case DAGC_NODE_LOAD:
                 *d1 = ((struct xl_dagc_load *) n)->dependent_store;
                 *d2 = NULL;
+                *d3 = NULL;
                 return OK;
 
         case DAGC_NODE_STORE:
                 *d1 = ((struct xl_dagc_store *) n)->value;
                 *d2 = NULL;
+                *d3 = NULL;
                 return OK;
 
         case DAGC_NODE_CONST:
@@ -63,6 +73,7 @@ xl_dagc_get_deps(
         case DAGC_NODE_NATIVE:
                 *d1 = NULL;
                 *d2 = NULL;
+                *d3 = NULL;
                 return OK;
         }
         return xl_raise(ERR_UNKNOWN_TYPE, "get deps");
@@ -81,7 +92,7 @@ __cmp_adjacency(const void *v1, const void *v2)
         return 0;
 }
 
-static no_ignore xl_error_t
+no_ignore static xl_error_t
 __find_adjacency(
         size_t *i,
         struct __xl_dagc_adjacency *adjacencies,
@@ -109,12 +120,61 @@ __find_adjacency(
         return xl_raise(ERR_ABSENT, "find adjacency");
 }
 
+no_ignore static xl_error_t
+__increment_n_parents(
+        struct xl_dagc *graph,
+        struct xl_dagc_node *child)
+{
+        xl_error_t err;
+        size_t i;
+
+        i = graph->n;
+        err = __find_adjacency(&i, graph->adjacency, graph->n, child);
+        if (err != OK)
+                return err;
+        if (unlikely(i >= graph->n))
+                return xl_raise(ERR_UNEXPECTED_FAILURE,
+                                "find adjacent result bogus");
+        graph->adjacency[i].n_parents++;
+        return OK;
+}
+
+no_ignore static xl_error_t
+__add_parent(
+        struct xl_dagc *graph,
+        struct xl_dagc_node *parent,
+        struct xl_dagc_node *child)
+{
+        struct __xl_dagc_adjacency *adj;
+        size_t adj_i, parent_i;
+        xl_error_t err;
+
+        adj_i = graph->n;
+        err = __find_adjacency(
+                &adj_i, graph->adjacency, graph->n, child);
+        if (err != OK)
+                return err;
+        if (unlikely(adj_i >= graph->n))
+                return xl_raise(ERR_UNEXPECTED_FAILURE,
+                                "find adjacent result bogus");
+        adj = &graph->adjacency[adj_i];
+        /* Find the first NULL parent entry. */
+        for (parent_i = 0;
+             adj->parents[parent_i] && parent_i < adj->n_parents;
+             parent_i++);
+        if (adj->parents[parent_i] != NULL)
+                return xl_raise(ERR_UNEXPECTED_FAILURE,
+                                "all parents full already");
+        adj->parents[parent_i] = parent;
+        return OK;
+}
+
 no_ignore xl_error_t
 xl_dagc_init(struct xl_dagc *graph)
 {
-        struct xl_dagc_node *p, *c1, *c2;
+        struct xl_dagc_node *p, *d1, *d2, *d3;
         struct __xl_dagc_adjacency *adj;
-        size_t i, j, a, next_in, next_out;
+        size_t i, next_in, next_out;
         xl_error_t err;
 
         graph->tag = TAG_GRAPH;
@@ -139,31 +199,27 @@ xl_dagc_init(struct xl_dagc *graph)
         for (i = 0; i < graph->n; i++)
         {
                 p = graph->nodes[i];
-                err = xl_dagc_get_deps(&c1, &c2, p);
+                err = xl_dagc_get_deps(&d1, &d2, &d3, p);
                 if (err != OK)
                         return err;
 
-                if (c1 != NULL)
+                if (d1 != NULL)
                 {
-                        a = graph->n;
-                        err = __find_adjacency(
-                                &a, graph->adjacency, graph->n, c1);
+                        err = __increment_n_parents(graph, d1);
                         if (err != OK)
                                 return err;
-                        if (unlikely(a >= graph->n))
-                                return xl_raise(ERR_UNEXPECTED_FAILURE, NULL);
-                        graph->adjacency[a].n_parents++;
                 }
-                if (c2 != NULL)
+                if (d2 != NULL)
                 {
-                        a = graph->n;
-                        err = __find_adjacency(
-                                &a, graph->adjacency, graph->n, c2);
-                        if (unlikely(a >= graph->n))
-                                return xl_raise(ERR_UNEXPECTED_FAILURE, NULL);
+                        err = __increment_n_parents(graph, d2);
                         if (err != OK)
                                 return err;
-                        graph->adjacency[a].n_parents++;
+                }
+                if (d3 != NULL)
+                {
+                        err = __increment_n_parents(graph, d3);
+                        if (err != OK)
+                                return err;
                 }
         }
 
@@ -179,36 +235,27 @@ xl_dagc_init(struct xl_dagc *graph)
         for (i = 0; i < graph->n; i++)
         {
                 p = graph->nodes[i];
-                err = xl_dagc_get_deps(&c1, &c2, p);
+                err = xl_dagc_get_deps(&d1, &d2, &d3, p);
                 if (err != OK)
                         return err;
 
-                if (c1 != NULL)
+                if (d1 != NULL)
                 {
-                        a = graph->n;
-                        err = __find_adjacency(
-                                &a, graph->adjacency, graph->n, c1);
+                        err = __add_parent(graph, p, d1);
                         if (err != OK)
                                 return err;
-                        if (unlikely(a >= graph->n))
-                                return xl_raise(ERR_UNEXPECTED_FAILURE, NULL);
-                        adj = &graph->adjacency[a];
-                        /* Find the first NULL parent entry. */
-                        for (j = 0; adj->parents[j] && j < adj->n_parents; j++);
-                        adj->parents[j] = p;
                 }
-                if (c2 != NULL)
+                if (d2 != NULL)
                 {
-                        a = graph->n;
-                        err = __find_adjacency(
-                                &a, graph->adjacency, graph->n, c2);
+                        err = __add_parent(graph, p, d2);
                         if (err != OK)
                                 return err;
-                        if (unlikely(a >= graph->n))
-                                return xl_raise(ERR_UNEXPECTED_FAILURE, NULL);
-                        adj = &graph->adjacency[a];
-                        for (j = 0; adj->parents[j] && j < adj->n_parents; j++);
-                        adj->parents[j] = p;
+                }
+                if (d3 != NULL)
+                {
+                        err = __add_parent(graph, p, d3);
+                        if (err != OK)
+                                return err;
                 }
         }
 
