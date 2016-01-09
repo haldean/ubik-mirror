@@ -1,0 +1,23 @@
+#!/bin/bash
+# vi: ft=sh
+
+if [[ res/pre-commit -nt $0 ]]; then
+        echo "found a newer pre-commit, updating"
+        cp res/pre-commit $0
+        bash $0
+        exit $?
+fi
+
+found=$(grep -R "DO NOT SUBMIT" libexpel include test)
+res="$?"
+if [[ "$res" != 0 ]]; then
+        exit 0
+fi
+
+echo "not committing, fix these first."
+echo
+echo "do not submits:"
+cat <<EOF
+$found
+EOF
+exit 1

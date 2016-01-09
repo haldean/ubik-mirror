@@ -7,6 +7,9 @@ This document attempts to fully explain the implementation and behavior
 of the Expel runtime. When the code and this document disagree, the code
 is incorrect; on the other hand, don't trust anything in this document.
 
+
+Structure of the project -----------------------------------------------
+
 The project itself is divided into a few software components. By far the
 most interesting is libexpel, which is the shared library that contains
 the entirety of the Expel runtime. There's runexpel, which is a simple
@@ -24,6 +27,11 @@ Building the shared library is as simple as `make dist/libexpel.so`. To
 make a release build (optimizations turned on, instrumentation turned
 off), pass `type=release` to make, like `make type=release
 dist/libexpel.so`.
+
+One last thing: before contributing, please ensure you have installed
+the pre-commit hook in the `res` directory before you commit anything.
+It does some simple checks to make sure that you're not doing anything
+dumb.
 
 The rest of this document is more interesting, I promise.
 
