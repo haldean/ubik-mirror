@@ -147,84 +147,72 @@ xl_save_value(struct xl_stream *sp, struct xl_value *in)
 }
 
 no_ignore static xl_error_t
-__load_apply(struct xl_dagc_apply **node, struct xl_stream *sp)
+__load_apply(struct xl_dagc_apply *node, struct xl_stream *sp)
 {
         uint64_t node_index;
 
-        *node = calloc(1, sizeof(struct xl_dagc_apply));
-        if (*node == NULL)
-                return xl_raise(ERR_NO_MEMORY, "apply alloc");
-
-        (*node)->head.value_type = DAGC_TYPE_UNKNOWN;
+        node->head.value_type = DAGC_TYPE_UNKNOWN;
 
         /* Because of the check to make sure that the number of nodes does not
          * exceed the size of a pointer inside xl_load, we can safely jam this
          * index into a pointer. */
         READ_INTO(node_index, sp);
         node_index = ntohw(node_index);
-        (*node)->func = (struct xl_dagc_node *) node_index;
+        node->func = (struct xl_dagc_node *) node_index;
 
         READ_INTO(node_index, sp);
         node_index = ntohw(node_index);
-        (*node)->arg = (struct xl_dagc_node *) node_index;
+        node->arg = (struct xl_dagc_node *) node_index;
 
         return OK;
 }
 
 
 no_ignore static xl_error_t
-__load_const(struct xl_dagc_const **node, struct xl_stream *sp)
+__load_const(struct xl_dagc_const *node, struct xl_stream *sp)
 {
         word_t graph_index;
         word_t value_type;
         xl_error_t err;
 
-        *node = calloc(1, sizeof(struct xl_dagc_const));
-        if (*node == NULL)
-                return xl_raise(ERR_NO_MEMORY, "const alloc");
-
         READ_INTO(value_type, sp);
-        (*node)->head.value_type = ntohw(value_type);
+        node->head.value_type = ntohw(value_type);
 
-        err = xl_new(&(*node)->type);
+        err = xl_new(&node->type);
         if (err != OK)
                 return err;
-        err = xl_load_value((*node)->type, sp);
+        err = xl_load_value(node->type, sp);
 
-        if ((*node)->head.value_type == DAGC_TYPE_VALUE)
+        if (node->head.value_type == DAGC_TYPE_VALUE)
         {
-                err = xl_new(&(*node)->value.tree);
+                err = xl_new(&node->value.tree);
                 if (err != OK)
                         return err;
-                err = xl_load_value((*node)->value.tree, sp);
+                err = xl_load_value(node->value.tree, sp);
                 return err;
         }
-        if ((*node)->head.value_type == DAGC_TYPE_GRAPH)
+        if (node->head.value_type == DAGC_TYPE_GRAPH)
         {
                 READ_INTO(graph_index, sp);
                 graph_index = ntohw(graph_index);
-                (*node)->value.graph = (struct xl_dagc *) graph_index;
+                node->value.graph = (struct xl_dagc *) graph_index;
                 return OK;
         }
         return xl_raise(ERR_BAD_HEADER, "const subtype");
 }
 
 no_ignore static xl_error_t
-__load_load(struct xl_dagc_load **node, struct xl_stream *sp)
+__load_load(struct xl_dagc_load *node, struct xl_stream *sp)
 {
         xl_error_t err;
         uint64_t node_index;
         struct xl_value *uri_val;
 
-        *node = calloc(1, sizeof(struct xl_dagc_load));
-        if (*node == NULL)
-                return xl_raise(ERR_NO_MEMORY, "load alloc");
-
-        (*node)->head.value_type = DAGC_TYPE_UNKNOWN;
+        node->head.value_type = DAGC_TYPE_UNKNOWN;
 
         READ_INTO(node_index, sp);
         node_index = ntohw(node_index);
-        (*node)->dependent_store = (struct xl_dagc_node *) node_index;
+        node->dependent_store = (struct xl_dagc_node *) node_index;
 
         err = xl_new(&uri_val);
         if (err != OK)
@@ -233,12 +221,12 @@ __load_load(struct xl_dagc_load **node, struct xl_stream *sp)
         if (err != OK)
                 return err;
 
-        (*node)->loc = calloc(1, sizeof(struct xl_uri));
-        err = xl_uri_from_value((*node)->loc, uri_val);
+        node->loc = calloc(1, sizeof(struct xl_uri));
+        err = xl_uri_from_value(node->loc, uri_val);
         if (err != OK)
                 return err;
 
-        err = xl_take((*node)->loc);
+        err = xl_take(node->loc);
         if (err != OK)
                 return err;
 
@@ -247,21 +235,17 @@ __load_load(struct xl_dagc_load **node, struct xl_stream *sp)
 }
 
 no_ignore static xl_error_t
-__load_store(struct xl_dagc_store **node, struct xl_stream *sp)
+__load_store(struct xl_dagc_store *node, struct xl_stream *sp)
 {
         xl_error_t err;
         uint64_t node_index;
         struct xl_value *uri_val;
 
-        *node = calloc(1, sizeof(struct xl_dagc_store));
-        if (*node == NULL)
-                return xl_raise(ERR_NO_MEMORY, "store alloc");
-
-        (*node)->head.value_type = DAGC_TYPE_UNKNOWN;
+        node->head.value_type = DAGC_TYPE_UNKNOWN;
 
         READ_INTO(node_index, sp);
         node_index = ntohw(node_index);
-        (*node)->value = (struct xl_dagc_node *) node_index;
+        node->value = (struct xl_dagc_node *) node_index;
 
         err = xl_new(&uri_val);
         if (err != OK)
@@ -270,12 +254,12 @@ __load_store(struct xl_dagc_store **node, struct xl_stream *sp)
         if (err != OK)
                 return err;
 
-        (*node)->loc = calloc(1, sizeof(struct xl_uri));
-        err = xl_uri_from_value((*node)->loc, uri_val);
+        node->loc = calloc(1, sizeof(struct xl_uri));
+        err = xl_uri_from_value(node->loc, uri_val);
         if (err != OK)
                 return err;
 
-        err = xl_take((*node)->loc);
+        err = xl_take(node->loc);
         if (err != OK)
                 return err;
 
@@ -284,52 +268,45 @@ __load_store(struct xl_dagc_store **node, struct xl_stream *sp)
 }
 
 no_ignore static xl_error_t
-__load_input(struct xl_dagc_input **node, struct xl_stream *sp)
+__load_input(struct xl_dagc_input *node, struct xl_stream *sp)
 {
         xl_error_t err;
         word_t arg_num;
 
-        *node = calloc(1, sizeof(struct xl_dagc_input));
-        if (*node == NULL)
-                return xl_raise(ERR_NO_MEMORY, "input alloc");
-
         READ_INTO(arg_num, sp);
-        (*node)->arg_num = ntohw(arg_num);
+        node->arg_num = ntohw(arg_num);
 
-        err = xl_new(&(*node)->required_type);
+        err = xl_new(&node->required_type);
         if (err != OK)
                 return err;
-        err = xl_load_value((*node)->required_type, sp);
+        err = xl_load_value(node->required_type, sp);
         return err;
 }
 
 no_ignore static xl_error_t
-__load_cond(struct xl_dagc_cond **node, struct xl_stream *sp)
+__load_cond(struct xl_dagc_cond *node, struct xl_stream *sp)
 {
         uint64_t node_index;
 
-        *node = calloc(1, sizeof(struct xl_dagc_cond));
-        if (*node == NULL)
-                return xl_raise(ERR_NO_MEMORY, "cond alloc");
-        (*node)->head.value_type = DAGC_TYPE_UNKNOWN;
+        node->head.value_type = DAGC_TYPE_UNKNOWN;
 
         READ_INTO(node_index, sp);
         node_index = ntohw(node_index);
-        (*node)->condition = (struct xl_dagc_node *) node_index;
+        node->condition = (struct xl_dagc_node *) node_index;
 
         READ_INTO(node_index, sp);
         node_index = ntohw(node_index);
-        (*node)->if_true = (struct xl_dagc_node *) node_index;
+        node->if_true = (struct xl_dagc_node *) node_index;
 
         READ_INTO(node_index, sp);
         node_index = ntohw(node_index);
-        (*node)->if_false = (struct xl_dagc_node *) node_index;
+        node->if_false = (struct xl_dagc_node *) node_index;
 
         return OK;
 }
 
 no_ignore static xl_error_t
-__load_node(struct xl_dagc_node **node, struct xl_stream *sp)
+__load_node(struct xl_dagc_node *node, struct xl_stream *sp)
 {
         xl_error_t err;
         word_t node_type;
@@ -346,22 +323,22 @@ __load_node(struct xl_dagc_node **node, struct xl_stream *sp)
         switch (node_type)
         {
         case DAGC_NODE_APPLY:
-                err = __load_apply((struct xl_dagc_apply **) node, sp);
+                err = __load_apply((struct xl_dagc_apply *) node, sp);
                 break;
         case DAGC_NODE_CONST:
-                err = __load_const((struct xl_dagc_const **) node, sp);
+                err = __load_const((struct xl_dagc_const *) node, sp);
                 break;
         case DAGC_NODE_LOAD:
-                err = __load_load((struct xl_dagc_load **) node, sp);
+                err = __load_load((struct xl_dagc_load *) node, sp);
                 break;
         case DAGC_NODE_STORE:
-                err = __load_store((struct xl_dagc_store **) node, sp);
+                err = __load_store((struct xl_dagc_store *) node, sp);
                 break;
         case DAGC_NODE_INPUT:
-                err = __load_input((struct xl_dagc_input **) node, sp);
+                err = __load_input((struct xl_dagc_input *) node, sp);
                 break;
         case DAGC_NODE_COND:
-                err = __load_cond((struct xl_dagc_cond **) node, sp);
+                err = __load_cond((struct xl_dagc_cond *) node, sp);
                 break;
         default:
                 return xl_raise(ERR_UNKNOWN_TYPE, "load node");
@@ -369,9 +346,9 @@ __load_node(struct xl_dagc_node **node, struct xl_stream *sp)
 
         if (err != OK)
                 return err;
-        (*node)->node_type = node_type;
-        (*node)->is_terminal = terminal;
-        (*node)->flags = 0;
+        node->node_type = node_type;
+        node->is_terminal = terminal;
+        node->flags = 0;
         return OK;
 }
 
@@ -381,57 +358,53 @@ __set_node_pointers(
         struct xl_dagc_node **all_nodes,
         size_t n_nodes)
 {
-        struct xl_dagc_apply *apply;
-        struct xl_dagc_load *load;
-        struct xl_dagc_store *store;
-        struct xl_dagc_cond *cond;
+        union xl_dagc_any_node *n;
+        n = (union xl_dagc_any_node *) node;
 
         switch (node->node_type)
         {
         case DAGC_NODE_APPLY:
-                apply = (struct xl_dagc_apply *) node;
-                if ((uintptr_t) apply->func >= n_nodes)
+                if ((uintptr_t) n->as_apply.func >= n_nodes)
                         return xl_raise(ERR_OUT_OF_BOUNDS, "apply func idx");
-                if ((uintptr_t) apply->arg >= n_nodes)
+                if ((uintptr_t) n->as_apply.arg >= n_nodes)
                         return xl_raise(ERR_OUT_OF_BOUNDS, "apply arg idx");
 
-                apply->func = all_nodes[(uintptr_t) apply->func];
-                apply->arg = all_nodes[(uintptr_t) apply->arg];
+                n->as_apply.func = all_nodes[(uintptr_t) n->as_apply.func];
+                n->as_apply.arg = all_nodes[(uintptr_t) n->as_apply.arg];
                 break;
 
         case DAGC_NODE_COND:
-                cond = (struct xl_dagc_cond *) node;
-                if ((uintptr_t) cond->condition >= n_nodes)
+                if ((uintptr_t) n->as_cond.condition >= n_nodes)
                         return xl_raise(ERR_OUT_OF_BOUNDS, "cond condition idx");
-                if ((uintptr_t) cond->if_true >= n_nodes)
+                if ((uintptr_t) n->as_cond.if_true >= n_nodes)
                         return xl_raise(ERR_OUT_OF_BOUNDS, "cond true idx");
-                if ((uintptr_t) cond->if_false >= n_nodes)
+                if ((uintptr_t) n->as_cond.if_false >= n_nodes)
                         return xl_raise(ERR_OUT_OF_BOUNDS, "cond false idx");
 
-                cond->condition = all_nodes[(uintptr_t) cond->condition];
-                cond->if_true = all_nodes[(uintptr_t) cond->if_true];
-                cond->if_false = all_nodes[(uintptr_t) cond->if_false];
+                n->as_cond.condition =
+                        all_nodes[(uintptr_t) n->as_cond.condition];
+                n->as_cond.if_true =
+                        all_nodes[(uintptr_t) n->as_cond.if_true];
+                n->as_cond.if_false =
+                        all_nodes[(uintptr_t) n->as_cond.if_false];
                 break;
 
         case DAGC_NODE_LOAD:
-                load = (struct xl_dagc_load *) node;
-                if ((uintptr_t) load->dependent_store == UINTPTR_MAX)
+                if ((uintptr_t) n->as_load.dependent_store == UINTPTR_MAX)
                 {
-                        load->dependent_store = NULL;
+                        n->as_load.dependent_store = NULL;
                         break;
                 }
-                if ((uintptr_t) load->dependent_store >= n_nodes)
+                if ((uintptr_t) n->as_load.dependent_store >= n_nodes)
                         return xl_raise(ERR_OUT_OF_BOUNDS, "load depstore idx");
-                load->dependent_store =
-                        all_nodes[(uintptr_t) load->dependent_store];
+                n->as_load.dependent_store =
+                        all_nodes[(uintptr_t) n->as_load.dependent_store];
                 break;
 
         case DAGC_NODE_STORE:
-                store = (struct xl_dagc_store *) node;
-                if ((uintptr_t) store->value >= n_nodes)
+                if ((uintptr_t) n->as_store.value >= n_nodes)
                         return xl_raise(ERR_OUT_OF_BOUNDS, "store value idx");
-
-                store->value = all_nodes[(uintptr_t) store->value];
+                n->as_store.value = all_nodes[(uintptr_t) n->as_store.value];
                 break;
 
         case DAGC_NODE_CONST:
@@ -504,8 +477,9 @@ __load_graph(struct xl_dagc *graph, struct xl_stream *sp)
         if (result_idx >= n_nodes)
                 return xl_raise(ERR_BAD_HEADER, "result_idx > n_nodes");
 
-        graph->n = n_nodes;
-        graph->nodes = calloc(n_nodes, sizeof(struct xl_dagc_node *));
+        err = xl_dagc_alloc(graph, n_nodes);
+        if (err != OK)
+                return err;
 
         /* First we go through and read all available node information; when
          * this process is done everything has been loaded from the files but
@@ -515,7 +489,7 @@ __load_graph(struct xl_dagc *graph, struct xl_stream *sp)
          * different. */
         for (i = 0; i < n_nodes; i++)
         {
-                err = __load_node(&graph->nodes[i], sp);
+                err = __load_node(graph->nodes[i], sp);
                 if (err != OK)
                         return err;
         }

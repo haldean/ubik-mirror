@@ -56,14 +56,14 @@ __create_op(
         graph = (struct xl_dagc *) ngraph;
         *graph_ptr = graph;
 
-        graph->nodes = calloc(arity + 1, sizeof(struct xl_dagc_node *));
-        if (graph->nodes == NULL)
-                return xl_raise(ERR_NO_MEMORY, "create native dagc nodes");
+        err = xl_dagc_alloc(graph, arity + 1);
+        if (err != OK)
+                return err;
 
         /* Create input nodes */
         for (i = 0; i < arity; i++)
         {
-                in = calloc(1, sizeof(struct xl_dagc_input));
+                in = (struct xl_dagc_input *) graph->nodes[i];
                 if (in == NULL)
                         return xl_raise(ERR_NO_MEMORY, "create native dagc");
                 in->head.node_type = DAGC_NODE_INPUT;
@@ -76,13 +76,9 @@ __create_op(
                 err = xl_new(&in->required_type);
                 if (err != OK)
                         return err;
-                graph->nodes[i] = (struct xl_dagc_node *) in;
         }
 
         /* Create output native node */
-        graph->nodes[arity] = calloc(1, sizeof(struct xl_dagc_native));
-        if (graph->nodes[arity] == NULL)
-                return xl_raise(ERR_NO_MEMORY, "create native dagc");
         graph->nodes[arity]->node_type = DAGC_NODE_NATIVE;
         graph->nodes[arity]->value_type = DAGC_TYPE_UNKNOWN;
         graph->nodes[arity]->known_type = NULL;
@@ -90,7 +86,6 @@ __create_op(
         graph->nodes[arity]->is_terminal = 0x01;
         graph->nodes[arity]->flags = 0x00;
 
-        graph->n = arity + 1;
         graph->result = graph->nodes[arity];
 
         err = xl_dagc_init(graph);

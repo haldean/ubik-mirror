@@ -24,10 +24,38 @@
 #include "expel/assert.h"
 #include "expel/dagc.h"
 #include "expel/expel.h"
-
-// DO NOT SUBMIT
 #include "expel/util.h"
-#include <stdio.h>
+
+no_ignore xl_error_t
+xl_dagc_alloc(struct xl_dagc *graph, size_t n_nodes)
+{
+        size_t i;
+        union xl_dagc_any_node *node_memory;
+
+        /* Every node is a different size in this regime of ours, which means we
+         * can't just allocate a list of xl_dagc_nodes and call it a day; they
+         * would all be too small. But we want the API of the graph to make it
+         * look like everything is a node, so here's what we do; we allocate a
+         * big memory region that we're going to use for all of our nodes, and
+         * then we make references into that region that are all spaced
+         * max-node-sized apart. While this means there's an extra indirection
+         * for each access to a node, sequential node access is rare and the API
+         * niceness is worth it. */
+        node_memory = calloc(n_nodes, sizeof(union xl_dagc_any_node));
+        if (node_memory == NULL)
+                return xl_raise(ERR_NO_MEMORY, "graph allocation");
+
+        graph->nodes = calloc(n_nodes, sizeof(struct xl_dagc_node *));
+        if (graph->nodes == NULL)
+                return xl_raise(ERR_NO_MEMORY, "graph allocation");
+
+        for (i = 0; i < n_nodes; i++)
+        {
+                graph->nodes[i] = (struct xl_dagc_node *) &node_memory[i];
+        }
+        graph->n = n_nodes;
+        return OK;
+}
 
 /* Gets the dependencies of a node.
  *
@@ -342,33 +370,6 @@ xl_dagc_get_parents(
 }
 
 no_ignore static xl_error_t
-__sizeof(size_t *res, struct xl_dagc_node *n)
-{
-        switch (n->node_type)
-        {
-        case DAGC_NODE_APPLY:
-                *res = sizeof(struct xl_dagc_apply);
-                return OK;
-        case DAGC_NODE_CONST:
-                *res = sizeof(struct xl_dagc_const);
-                return OK;
-        case DAGC_NODE_INPUT:
-                *res = sizeof(struct xl_dagc_input);
-                return OK;
-        case DAGC_NODE_LOAD:
-                *res = sizeof(struct xl_dagc_load);
-                return OK;
-        case DAGC_NODE_STORE:
-                *res = sizeof(struct xl_dagc_store);
-                return OK;
-        case DAGC_NODE_NATIVE:
-                *res = sizeof(struct xl_dagc_native_out);
-                return OK;
-        }
-        return xl_raise(ERR_BAD_TYPE, "dagc sizeof");
-}
-
-no_ignore static xl_error_t
 __replace_ref(
         struct xl_dagc_node **ref,
         struct xl_dagc_node **proto,
@@ -505,17 +506,11 @@ xl_dagc_copy(
         memcpy(result, proto, size);
         result->refcount = 0;
 
-        result->nodes = calloc(proto->n, sizeof(struct xl_dagc_node *));
-        for (i = 0; i < proto->n; i++)
-        {
-                err = __sizeof(&size, proto->nodes[i]);
-                if (err != OK)
-                        return err;
-                result->nodes[i] = calloc(1, size);
-                if (result->nodes[i] == NULL)
-                        return xl_raise(ERR_NO_MEMORY, "dagc copy");
-                memcpy(result->nodes[i], proto->nodes[i], size);
-        }
+        err = xl_dagc_alloc(result, proto->n);
+        if (err != OK)
+                return err;
+        memcpy(result->nodes[0], proto->nodes[0],
+               proto->n * sizeof(union xl_dagc_any_node));
 
         for (i = 0; i < result->n; i++)
         {

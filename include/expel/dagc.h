@@ -125,6 +125,28 @@ struct xl_dagc_native
         xl_native_evaluator_t evaluator;
 };
 
+/* It can be anything you want it to be.
+ *
+ * It also happens to be the maximum size of all of the nodes,
+ * which has advantages for allocating big lists of nodes. */
+union xl_dagc_any_node
+{
+        struct xl_dagc_node node;
+        struct xl_dagc_apply as_apply;
+        struct xl_dagc_cond as_cond;
+        struct xl_dagc_const as_const;
+        struct xl_dagc_input as_input;
+        struct xl_dagc_load as_load;
+        struct xl_dagc_store as_store;
+};
+
+/* Allocates space for the node structure.
+ *
+ * The memory allocation behind graphs is a little tricky,
+ * so this handles it for you. */
+no_ignore xl_error_t
+xl_dagc_alloc(struct xl_dagc *g, size_t n);
+
 /* Gets the dependencies of a node.
  *
  * For nodes with N dependencies, d1 through dN will be

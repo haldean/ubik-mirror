@@ -249,15 +249,14 @@ __release_value(struct xl_value *v)
 }
 
 no_ignore static xl_error_t
-__release_node(struct xl_dagc_node *n)
+__release_node(struct xl_dagc_node *node)
 {
-        struct xl_dagc_load *l;
-        struct xl_dagc_store *s;
-        struct xl_dagc_const *c;
-        struct xl_dagc_input *i;
+        union xl_dagc_any_node *n;
         xl_error_t err;
 
-        switch (n->node_type)
+        n = (union xl_dagc_any_node *) node;
+
+        switch (node->node_type)
         {
         case DAGC_NODE_APPLY:
         case DAGC_NODE_COND:
@@ -265,32 +264,28 @@ __release_node(struct xl_dagc_node *n)
                 break;
 
         case DAGC_NODE_CONST:
-                c = (struct xl_dagc_const *) n;
-                err = xl_release(c->type);
+                err = xl_release(n->as_const.type);
                 if (err != OK)
                         return err;
-                err = xl_release(c->value.any);
+                err = xl_release(n->as_const.value.any);
                 if (err != OK)
                         return err;
                 break;
 
         case DAGC_NODE_LOAD:
-                l = (struct xl_dagc_load *) n;
-                err = xl_release(l->loc);
+                err = xl_release(n->as_load.loc);
                 if (err != OK)
                         return err;
                 break;
 
         case DAGC_NODE_STORE:
-                s = (struct xl_dagc_store *) n;
-                err = xl_release(s->loc);
+                err = xl_release(n->as_store.loc);
                 if (err != OK)
                         return err;
                 break;
 
         case DAGC_NODE_INPUT:
-                i = (struct xl_dagc_input *) n;
-                err = xl_release(i->required_type);
+                err = xl_release(n->as_input.required_type);
                 if (err != OK)
                         return err;
                 break;
@@ -299,15 +294,15 @@ __release_node(struct xl_dagc_node *n)
                 return xl_raise(ERR_UNKNOWN_TYPE, "release node: node type");
         }
 
-        if (n->known_type != NULL)
+        if (node->known_type != NULL)
         {
-                err = xl_release(n->known_type);
+                err = xl_release(node->known_type);
                 if (err != OK)
                         return err;
         }
-        if (n->known.any != NULL)
+        if (node->known.any != NULL)
         {
-                err = xl_release(n->known.any);
+                err = xl_release(node->known.any);
                 if (err != OK)
                         return err;
         }
@@ -330,8 +325,11 @@ __release_graph(struct xl_dagc *g)
                 err = __release_node(g->nodes[i]);
                 if (err != OK)
                         return err;
-                free(g->nodes[i]);
         }
+        /* This is tricky; the nodes are allocated all at once, even though it
+         * looks like they're all allocated on their own. Check out
+         * xl_dagc_graph_alloc for more deets. */
+        free(g->nodes[0]);
         free(g->nodes);
 
         for (i = 0; i < g->n; i++)

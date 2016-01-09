@@ -59,20 +59,12 @@ __eval_const(struct xl_env *env, struct xl_dagc_const *node)
         if (err != OK)
                 return err;
 
-        /* Aren't unions just grand? */
-        err = xl_take(node->value.any);
-        if (err != OK)
+        if (node->head.value_type == DAGC_TYPE_VALUE ||
+                node->head.value_type == DAGC_TYPE_GRAPH)
+        {
+                node->head.known = node->value;
+                err = xl_take(node->head.known.any);
                 return err;
-
-        if (node->head.value_type == DAGC_TYPE_VALUE)
-        {
-                node->head.known.tree = node->value.tree;
-                return OK;
-        }
-        if (node->head.value_type == DAGC_TYPE_GRAPH)
-        {
-                node->head.known.graph = node->value.graph;
-                return OK;
         }
 
         /* Release the reference we took to the value that we don't actually
