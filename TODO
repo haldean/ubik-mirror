@@ -7,4 +7,3 @@ valgrind
 afl-fuzz
 precommit donotsubmit
 error pool
-unlikely

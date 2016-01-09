@@ -21,8 +21,8 @@
 #define EXPEL_UTIL_H__
 
 #define unused(x) (void)(x)
-#define likely(x) (x)
-#define unlikely(x) (x)
+#define likely(x) __builtin_expect((x), 1)
+#define unlikely(x) __builtin_expect((x), 0)
 
 size_t
 size_max(size_t a, size_t b);
