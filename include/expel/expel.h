@@ -48,7 +48,7 @@ struct xl_env;
 struct xl_stream;
 struct xl_user;
 struct xl_uri;
-struct __xl_dagc_adjacency;
+struct xl_dagc_adjacency;
 
 /* Used to communicate errors through the stack. */
 struct xl_error
@@ -142,7 +142,7 @@ struct xl_dagc
 
         /* A list of structs which encode backlinks from child to
          * parent. */
-        struct __xl_dagc_adjacency *adjacency;
+        struct xl_dagc_adjacency *adjacency;
 
         /* The input nodes in the graph. */
         struct xl_dagc_node **inputs;

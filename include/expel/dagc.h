@@ -33,7 +33,7 @@
 /* d1_ready | d2_ready | d3_ready */
 #define XL_DAGC_READY_MASK    0x0E
 
-struct __xl_dagc_adjacency
+struct xl_dagc_adjacency
 {
         struct xl_dagc_node *child;
         struct xl_dagc_node **parents;

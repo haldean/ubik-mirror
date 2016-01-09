@@ -123,7 +123,7 @@ __cmp_adjacency(const void *v1, const void *v2)
 no_ignore static xl_error_t
 __find_adjacency(
         size_t *i,
-        struct __xl_dagc_adjacency *adjacencies,
+        struct xl_dagc_adjacency *adjacencies,
         size_t n,
         struct xl_dagc_node *child)
 {
@@ -173,7 +173,7 @@ __add_parent(
         struct xl_dagc_node *parent,
         struct xl_dagc_node *child)
 {
-        struct __xl_dagc_adjacency *adj;
+        struct xl_dagc_adjacency *adj;
         size_t adj_i, parent_i;
         xl_error_t err;
 
@@ -201,7 +201,7 @@ no_ignore xl_error_t
 xl_dagc_init(struct xl_dagc *graph)
 {
         struct xl_dagc_node *p, *d1, *d2, *d3;
-        struct __xl_dagc_adjacency *adj;
+        struct xl_dagc_adjacency *adj;
         size_t i, next_in, next_out;
         xl_error_t err;
 
@@ -211,7 +211,7 @@ xl_dagc_init(struct xl_dagc *graph)
         /* Adjacency is stored as a sorted list of adjacency
          * lists; the first element in each list is the child and
          * the remaining elements are parents. */
-        graph->adjacency = calloc(graph->n, sizeof(struct __xl_dagc_adjacency));
+        graph->adjacency = calloc(graph->n, sizeof(struct xl_dagc_adjacency));
 
         for (i = 0; i < graph->n; i++)
         {
@@ -221,7 +221,7 @@ xl_dagc_init(struct xl_dagc *graph)
         }
 
         qsort(graph->adjacency, graph->n,
-              sizeof(struct __xl_dagc_adjacency), __cmp_adjacency);
+              sizeof(struct xl_dagc_adjacency), __cmp_adjacency);
 
         /* First go through and count how many parents each one has. */
         for (i = 0; i < graph->n; i++)
@@ -486,7 +486,7 @@ xl_dagc_copy(
         struct xl_dagc **res_ptr,
         struct xl_dagc *proto)
 {
-        struct __xl_dagc_adjacency *adj;
+        struct xl_dagc_adjacency *adj;
         struct xl_dagc *result;
         size_t i, j, size;
         xl_error_t err;
@@ -557,9 +557,9 @@ xl_dagc_copy(
         }
 
         result->adjacency =
-                calloc(result->n, sizeof(struct __xl_dagc_adjacency));
+                calloc(result->n, sizeof(struct xl_dagc_adjacency));
         memcpy(result->adjacency, proto->adjacency,
-               result->n * sizeof(struct __xl_dagc_adjacency));
+               result->n * sizeof(struct xl_dagc_adjacency));
 
         for (i = 0; i < result->n; i++)
         {
