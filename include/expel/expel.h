@@ -40,7 +40,12 @@ typedef uint64_t word_t;
 #define TAG_RIGHT_WORD    0x08
 
 /* Graph tags */
-#define TAG_NATIVE_GRAPH  0x01
+#define TAG_GRAPH_NATIVE  0x01
+/* Managed graphs are those which are allocated by the runtime, and thus the
+ * runtime is responsible for the memory of the graph structure itself. If this
+ * tag is set, the graph garbage collector will free the graph struct when the
+ * refcount of the graph drops to zero. */
+#define TAG_GRAPH_MANAGED 0x02
 
 /* Private data structures referenced by public data structures. */
 struct xl_alloc_page;

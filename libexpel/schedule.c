@@ -255,7 +255,7 @@ xl_dagc_eval(struct xl_env *env, struct xl_dagc *graph)
         xl_error_t err;
 
         /* Native graphs get to cheat and skip all this biz. */
-        if (graph->tag & TAG_NATIVE_GRAPH)
+        if (graph->tag & TAG_GRAPH_NATIVE)
                 return __eval_native_dagc(env, (struct xl_dagc_native *) graph);
 
         reachable = calloc(graph->n, sizeof(struct xl_node *));

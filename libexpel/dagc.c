@@ -491,11 +491,9 @@ xl_dagc_copy(
         size_t i, j, size;
         xl_error_t err;
 
-        /* Start by making a direct copy, then replace all of the references.
-         * Since the nodes are all different sizes, this is unfortunately more
-         * complicated than just a memcpy from proto to result :( */
+        /* Start by making a direct copy, then replace all of the references. */
         size = sizeof(struct xl_dagc);
-        if (proto->tag & TAG_NATIVE_GRAPH)
+        if (proto->tag & TAG_GRAPH_NATIVE)
                 size = sizeof(struct xl_dagc_native);
 
         result = calloc(1, size);
@@ -511,6 +509,10 @@ xl_dagc_copy(
                 return err;
         memcpy(result->nodes[0], proto->nodes[0],
                proto->n * sizeof(union xl_dagc_any_node));
+
+        /* Since we're allocating this one on our own, it's our responsibility
+         * to clean it up as well. */
+        result->tag |= TAG_GRAPH_MANAGED;
 
         for (i = 0; i < result->n; i++)
         {

@@ -104,7 +104,7 @@ __create_op(
         err = xl_dagc_init(graph);
         if (err != OK)
                 return err;
-        graph->tag |= TAG_NATIVE_GRAPH;
+        graph->tag |= TAG_GRAPH_NATIVE | TAG_GRAPH_MANAGED;
         ngraph->evaluator = evaluator;
 
         return OK;
