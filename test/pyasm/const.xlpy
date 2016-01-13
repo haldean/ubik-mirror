@@ -1,5 +1,5 @@
 # vi: ft=python
-from pyasm.libexpel import *
+from pyasm import *
 
 tree = t(0x1234567890123456, t(66, 0xBADDEADBEEF))
 

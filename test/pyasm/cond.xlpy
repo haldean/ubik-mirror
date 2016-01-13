@@ -1,5 +1,5 @@
 # vi: ft=python
-from pyasm.libexpel import *
+from pyasm import *
 
 nc = const(boolean(), t(1, 0))
 nt = const_word(0x12)
