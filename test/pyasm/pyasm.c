@@ -42,7 +42,7 @@ test_file(char *fname)
 {
         struct xl_stream stream;
         struct xl_stream sstdout;
-        struct xl_dagc *graphs;
+        struct xl_dagc **graphs;
         struct xl_env env;
         struct xl_value *expected, *actual;
         size_t n_graphs, i;
@@ -96,7 +96,7 @@ test_file(char *fname)
         err = xl_env_init(&env);
         CHECK_ERR("couldn't create environment");
 
-        err = xl_dagc_eval(&env, &graphs[0]);
+        err = xl_dagc_eval(&env, graphs[0]);
         CHECK_ERR("couldn't evaluate graph");
 
         err = xl_timer_elapsed(&elapsed, timer);
@@ -108,14 +108,14 @@ test_file(char *fname)
 
         if (expected != NULL)
         {
-                if (graphs->out_arity != 1)
+                if (graphs[0]->out_arity != 1)
                 {
                         printf("can't find value of graph with out arity %lu\n",
-                               graphs->out_arity);
+                               graphs[0]->out_arity);
                         err = xl_raise(ERR_BAD_GRAPH, "out arity");
                         goto teardown;
                 }
-                actual = graphs->terminals[0]->known.tree;
+                actual = graphs[0]->terminals[0]->known.tree;
                 printf("\texpected:  ");
                 err = xl_print_value(&sstdout, expected);
                 CHECK_ERR("couldn't print expected");
@@ -138,7 +138,7 @@ teardown:
 
         for (i = 0; i < n_graphs; i++)
         {
-                teardown_err = xl_release(&graphs[i]);
+                teardown_err = xl_release(graphs[i]);
                 if (teardown_err != OK)
                 {
                         char *explain = xl_explain_error(teardown_err);

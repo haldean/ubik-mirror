@@ -63,15 +63,11 @@ __create_op(
         size_t i;
         xl_error_t err;
 
-        ngraph = calloc(1, sizeof(struct xl_dagc_native));
-        if (ngraph == NULL)
-                return xl_raise(ERR_NO_MEMORY, "create native dagc");
-        graph = (struct xl_dagc *) ngraph;
-        *graph_ptr = graph;
-
-        err = xl_dagc_alloc(graph, arity + 1);
+        err = xl_alloc_dagc_with_size(&graph, arity + 1, sizeof(struct xl_dagc_native), NULL);
         if (err != OK)
                 return err;
+        ngraph = (struct xl_dagc_native *) graph;
+        *graph_ptr = graph;
 
         /* Create input nodes */
         for (i = 0; i < arity; i++)
@@ -104,7 +100,7 @@ __create_op(
         err = xl_dagc_init(graph);
         if (err != OK)
                 return err;
-        graph->tag |= TAG_GRAPH_NATIVE | TAG_GRAPH_MANAGED;
+        graph->tag |= TAG_GRAPH_NATIVE;
         ngraph->evaluator = evaluator;
 
         return OK;

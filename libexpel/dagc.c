@@ -27,10 +27,19 @@
 #include "expel/util.h"
 
 no_ignore xl_error_t
-xl_dagc_alloc(struct xl_dagc *graph, size_t n_nodes)
+xl_alloc_dagc_with_size(
+        struct xl_dagc **graph,
+        size_t n_nodes,
+        size_t size,
+        void *copy_from)
 {
         size_t i;
         union xl_dagc_any_node *node_memory;
+
+        *graph = calloc(1, size);
+
+        if (copy_from != NULL)
+                memcpy(*graph, copy_from, size);
 
         /* Every node is a different size in this regime of ours, which means we
          * can't just allocate a list of xl_dagc_nodes and call it a day; they
@@ -45,16 +54,23 @@ xl_dagc_alloc(struct xl_dagc *graph, size_t n_nodes)
         if (node_memory == NULL)
                 return xl_raise(ERR_NO_MEMORY, "graph allocation");
 
-        graph->nodes = calloc(n_nodes, sizeof(struct xl_dagc_node *));
-        if (graph->nodes == NULL)
+        (*graph)->nodes = calloc(n_nodes, sizeof(struct xl_dagc_node *));
+        if ((*graph)->nodes == NULL)
                 return xl_raise(ERR_NO_MEMORY, "graph allocation");
 
         for (i = 0; i < n_nodes; i++)
         {
-                graph->nodes[i] = (struct xl_dagc_node *) &node_memory[i];
+                (*graph)->nodes[i] = (struct xl_dagc_node *) &node_memory[i];
         }
-        graph->n = n_nodes;
+        (*graph)->n = n_nodes;
         return OK;
+}
+
+no_ignore xl_error_t
+xl_new_dagc(struct xl_dagc **graph, size_t n_nodes)
+{
+        return xl_alloc_dagc_with_size(
+                graph, n_nodes, sizeof(struct xl_dagc), NULL);
 }
 
 /* Gets the dependencies of a node.
@@ -401,6 +417,7 @@ __replace_node_refs(
         struct xl_dagc_apply *a;
         struct xl_dagc_load *l;
         struct xl_dagc_store *s;
+        struct xl_dagc_cond *c;
         xl_error_t err;
 
         switch (node->node_type)
@@ -421,6 +438,17 @@ __replace_node_refs(
         case DAGC_NODE_STORE:
                 s = (struct xl_dagc_store *) node;
                 err = __replace_ref(&s->value, proto, copied, n);
+                return err;
+
+        case DAGC_NODE_COND:
+                c = (struct xl_dagc_cond *) node;
+                err = __replace_ref(&c->condition, proto, copied, n);
+                if (err != OK)
+                        return err;
+                err = __replace_ref(&c->if_true, proto, copied, n);
+                if (err != OK)
+                        return err;
+                err = __replace_ref(&c->if_false, proto, copied, n);
                 return err;
 
         case DAGC_NODE_CONST:
@@ -496,23 +524,15 @@ xl_dagc_copy(
         if (proto->tag & TAG_GRAPH_NATIVE)
                 size = sizeof(struct xl_dagc_native);
 
-        result = calloc(1, size);
-        if (result == NULL)
-                return xl_raise(ERR_NO_MEMORY, "dagc copy");
-        *res_ptr = result;
-
-        memcpy(result, proto, size);
-        result->refcount = 0;
-
-        err = xl_dagc_alloc(result, proto->n);
+        err = xl_alloc_dagc_with_size(&result, proto->n, size, proto);
         if (err != OK)
                 return err;
+        *res_ptr = result;
+
+        result->refcount = 0;
+
         memcpy(result->nodes[0], proto->nodes[0],
                proto->n * sizeof(union xl_dagc_any_node));
-
-        /* Since we're allocating this one on our own, it's our responsibility
-         * to clean it up as well. */
-        result->tag |= TAG_GRAPH_MANAGED;
 
         for (i = 0; i < result->n; i++)
         {

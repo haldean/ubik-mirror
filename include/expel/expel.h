@@ -41,11 +41,6 @@ typedef uint64_t word_t;
 
 /* Graph tags */
 #define TAG_GRAPH_NATIVE  0x01
-/* Managed graphs are those which are allocated by the runtime, and thus the
- * runtime is responsible for the memory of the graph structure itself. If this
- * tag is set, the graph garbage collector will free the graph struct when the
- * refcount of the graph drops to zero. */
-#define TAG_GRAPH_MANAGED 0x02
 
 /* Private data structures referenced by public data structures. */
 struct xl_alloc_page;
@@ -197,11 +192,11 @@ xl_take(void *v);
 no_ignore xl_error_t
 xl_release(void *v);
 
-/* Loads a graph from a stream.
+/* Loads an expel bytecode blob from a stream.
  *
  * Returns OK on success, or a nonzero error word. */
 no_ignore xl_error_t
-xl_load(struct xl_dagc **out, size_t *n_graphs, struct xl_stream *sp);
+xl_load(struct xl_dagc ***out, size_t *n_graphs, struct xl_stream *sp);
 
 /* Saves a graph to a stream.
  *
@@ -221,6 +216,13 @@ xl_load_value(struct xl_value *out, struct xl_stream *sp);
  * Returns OK on success, or a nonzero error word. */
 no_ignore xl_error_t
 xl_save_value(struct xl_stream *sp, struct xl_value *in);
+
+/* Allocates a graph object.
+ *
+ * All graph objects must be allocated on the heap; call into this
+ * method to allocate a graph of a given size. */
+no_ignore xl_error_t
+xl_new_dagc(struct xl_dagc **g, size_t n);
 
 /* Initializes derived quantities on graphs.
  *

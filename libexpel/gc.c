@@ -346,12 +346,7 @@ __release_graph(struct xl_dagc *g)
 
         free(g->inputs);
         free(g->terminals);
-
-        /* Managed graphs are the only ones where the runtime is responsible for
-         * cleaning them up; user-created graphs are the responsibility of
-         * whoever is using the runtime. */
-        if (g->tag & TAG_GRAPH_MANAGED)
-                free(g);
+        free(g);
 
         #ifdef XL_GC_DEBUG
         #ifdef XL_GC_DEBUG_V

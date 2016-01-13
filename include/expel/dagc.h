@@ -140,17 +140,22 @@ union xl_dagc_any_node
         struct xl_dagc_store as_store;
 };
 
-/* Allocates space for the node structure.
+/* Allocates a graph object in a memory region of the given size.
  *
- * The memory allocation behind graphs is a little tricky,
- * so this handles it for you. */
+ * If copy_from is not NULL, this also copies size bytes from
+ * copy_from into the graph before allocating all of the
+ * substructures of the graph. */
 no_ignore xl_error_t
-xl_dagc_alloc(struct xl_dagc *g, size_t n);
+xl_alloc_dagc_with_size(
+        struct xl_dagc **graph,
+        size_t n_nodes,
+        size_t size,
+        void *copy_from);
 
 /* Gets the dependencies of a node.
  *
- * For nodes with N dependencies, d1 through dN will be
- * filled in and the result will be NULL. */
+ * For nodes with N dependencies, d1 through dN will be filled in
+ * and the result will be NULL. */
 no_ignore xl_error_t
 xl_dagc_get_deps(
         struct xl_dagc_node **d1,

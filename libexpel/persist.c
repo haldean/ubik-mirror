@@ -419,7 +419,7 @@ __set_node_pointers(
 no_ignore static xl_error_t
 __set_graph_pointers(
         struct xl_dagc *graph,
-        struct xl_dagc *all_graphs,
+        struct xl_dagc **all_graphs,
         size_t n_graphs)
 {
         struct xl_dagc_const *n;
@@ -438,7 +438,7 @@ __set_graph_pointers(
                 graph_i = (uintptr_t) n->value.graph;
                 if (graph_i >= n_graphs)
                         return xl_raise(ERR_OUT_OF_BOUNDS, "const graph idx");
-                n->value.graph = &all_graphs[graph_i];
+                n->value.graph = all_graphs[graph_i];
 
                 err = xl_take(n->value.graph);
                 if (err != OK)
@@ -449,7 +449,7 @@ __set_graph_pointers(
 }
 
 no_ignore static xl_error_t
-__load_graph(struct xl_dagc *graph, struct xl_stream *sp)
+__load_graph(struct xl_dagc **graph, struct xl_stream *sp)
 {
         word_t n_nodes;
         word_t result_idx;
@@ -458,6 +458,10 @@ __load_graph(struct xl_dagc *graph, struct xl_stream *sp)
 
         READ_INTO(n_nodes, sp);
         n_nodes = ntohw(n_nodes);
+
+        err = xl_new_dagc(graph, n_nodes);
+        if (err != OK)
+                return err;
 
         READ_INTO(result_idx, sp);
         result_idx = ntohw(result_idx);
@@ -477,10 +481,6 @@ __load_graph(struct xl_dagc *graph, struct xl_stream *sp)
         if (result_idx >= n_nodes)
                 return xl_raise(ERR_BAD_HEADER, "result_idx > n_nodes");
 
-        err = xl_dagc_alloc(graph, n_nodes);
-        if (err != OK)
-                return err;
-
         /* First we go through and read all available node information; when
          * this process is done everything has been loaded from the files but
          * inter-node references are still indeces, not pointers. During this
@@ -489,12 +489,12 @@ __load_graph(struct xl_dagc *graph, struct xl_stream *sp)
          * different. */
         for (i = 0; i < n_nodes; i++)
         {
-                err = __load_node(graph->nodes[i], sp);
+                err = __load_node((*graph)->nodes[i], sp);
                 if (err != OK)
                         return err;
         }
-        graph->result = graph->nodes[result_idx];
-        if (!graph->result->is_terminal)
+        (*graph)->result = (*graph)->nodes[result_idx];
+        if (!(*graph)->result->is_terminal)
                 return xl_raise(ERR_BAD_GRAPH, "result node is not terminal");
 
         /* Now replace indeces with pointers; now that we've loaded all of them
@@ -502,16 +502,16 @@ __load_graph(struct xl_dagc *graph, struct xl_stream *sp)
         for (i = 0; i < n_nodes; i++)
         {
                 err = __set_node_pointers(
-                        graph->nodes[i], graph->nodes, n_nodes);
+                        (*graph)->nodes[i], (*graph)->nodes, n_nodes);
                 if (err != OK)
                         return err;
         }
 
-        return xl_dagc_init(graph);
+        return xl_dagc_init(*graph);
 }
 
 no_ignore xl_error_t
-xl_load(struct xl_dagc **graphs, size_t *n_graphs, struct xl_stream *sp)
+xl_load(struct xl_dagc ***graphs, size_t *n_graphs, struct xl_stream *sp)
 {
 
         char header[4];
@@ -532,7 +532,7 @@ xl_load(struct xl_dagc **graphs, size_t *n_graphs, struct xl_stream *sp)
         READ_INTO(n, sp);
         n = ntohw(n);
         *n_graphs = n;
-        *graphs = calloc(n, sizeof(struct xl_dagc));
+        *graphs = calloc(n, sizeof(struct xl_dagc *));
 
         for (i = 0; i < n; i++)
         {
@@ -542,7 +542,7 @@ xl_load(struct xl_dagc **graphs, size_t *n_graphs, struct xl_stream *sp)
         }
         for (i = 0; i < n; i++)
         {
-                err = __set_graph_pointers(&(*graphs)[i], *graphs, n);
+                err = __set_graph_pointers((*graphs)[i], *graphs, n);
                 if (err != OK)
                         return err;
         }
