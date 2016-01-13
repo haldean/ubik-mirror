@@ -136,10 +136,24 @@ def encode(graphs, expect=None):
         print "missing output file"
         return
 
+    valueset = set()
+    for graph in graphs:
+        nodes = graph["nodes"]
+        for node in nodes:
+            for v in node.itervalues():
+                if isinstance(v, tuple):
+                    valueset.add(v)
+    values = list(valueset)
+    val_to_idx = dict((v, i) for v, i in zip(values, range(len(valueset))))
+
     with open(sys.argv[1], "wb") as f:
         f.write("expl")
         f.write(struct.pack(">I", 1))
         f.write(struct.pack(">Q", len(graphs)))
+        f.write(struct.pack(">Q", len(values)))
+
+        for value in values:
+            f.write(pack_tree(value))
 
         for graph in graphs:
             nodes = graph["nodes"]
@@ -159,26 +173,26 @@ def encode(graphs, expect=None):
 
                 if node_type == "const":
                     f.write(node["subtype"])
-                    f.write(pack_tree(node["ctype"]))
+                    f.write(struct.pack(">Q", val_to_idx[node["ctype"]]))
                     if node["subtype"] == "  cgraph":
                         f.write(struct.pack(">Q", node["cvalue"]))
                     else:
-                        f.write(pack_tree(node["cvalue"]))
+                        f.write(struct.pack(">Q", val_to_idx[node["cvalue"]]))
                 elif node_type == "load":
                     if node["dep"] is None:
                         f.write(struct.pack(">Q", 0xFFFFFFFFFFFFFFFF))
                     else:
                         f.write(struct.pack(">Q", node["dep"]["idx"]))
-                    f.write(pack_tree(node["uri"]))
+                    f.write(struct.pack(">Q", val_to_idx[node["uri"]]))
                 elif node_type == "store":
                     f.write(struct.pack(">Q", node["value"]["idx"]))
-                    f.write(pack_tree(node["uri"]))
+                    f.write(struct.pack(">Q", val_to_idx[node["uri"]]))
                 elif node_type == "apply":
                     f.write(struct.pack(">Q", node["func"]["idx"]))
                     f.write(struct.pack(">Q", node["arg"]["idx"]))
                 elif node_type == "input":
                     f.write(struct.pack(">Q", node["arg_num"]))
-                    f.write(pack_tree(node["req_type"]))
+                    f.write(struct.pack(">Q", val_to_idx[node["req_type"]]))
                 elif node_type == "cond":
                     f.write(struct.pack(">Q", node["condition"]["idx"]))
                     f.write(struct.pack(">Q", node["true"]["idx"]))
