@@ -178,6 +178,7 @@ __load_const(
         word_t graph_index;
         word_t value_index;
         word_t value_type;
+        xl_error_t err;
 
         READ_INTO(value_type, sp);
         node->head.value_type = ntohw(value_type);
@@ -187,6 +188,9 @@ __load_const(
         if (value_index >= n_values)
                 return xl_raise(ERR_OUT_OF_BOUNDS, "const value index");
         node->type = values[value_index];
+        err = xl_take(node->type);
+        if (err != OK)
+                return err;
 
         if (node->head.value_type == DAGC_TYPE_VALUE)
         {
@@ -195,7 +199,8 @@ __load_const(
                 if (value_index >= n_values)
                         return xl_raise(ERR_OUT_OF_BOUNDS, "const value index");
                 node->value.tree = values[value_index];
-                return OK;
+                err = xl_take(node->value.tree);
+                return err;
         }
         if (node->head.value_type == DAGC_TYPE_GRAPH)
         {
@@ -288,6 +293,7 @@ __load_input(
 {
         word_t value_index;
         word_t arg_num;
+        xl_error_t err;
 
         READ_INTO(arg_num, sp);
         node->arg_num = ntohw(arg_num);
@@ -297,8 +303,8 @@ __load_input(
         if (value_index >= n_values)
                 return xl_raise(ERR_OUT_OF_BOUNDS, "input value index");
         node->required_type = values[value_index];
-
-        return OK;
+        err = xl_take(node->required_type);
+        return err;
 }
 
 no_ignore static xl_error_t
