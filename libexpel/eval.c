@@ -22,6 +22,7 @@
 #include "expel/dagc.h"
 #include "expel/env.h"
 #include "expel/expel.h"
+#include "expel/types.h"
 #include "expel/util.h"
 #include "expel/value.h"
 
@@ -33,6 +34,7 @@ __eval_apply(struct xl_env *env, struct xl_dagc_apply *node)
         struct xl_dagc *result;
         struct xl_dagc *proto;
         size_t i;
+        char *msg;
 
         unused(env);
 
@@ -54,6 +56,22 @@ __eval_apply(struct xl_env *env, struct xl_dagc_apply *node)
         result->in_arity--;
         for (i = 0; i < result->in_arity; i++)
                 result->inputs[i] = result->inputs[i + 1];
+
+        if (!xl_type_satisfied(input->required_type, node->arg->known_type))
+        {
+                fprintf(stderr, "could not apply argument to function:\n");
+
+                msg = xl_explain_type(input->required_type);
+                fprintf(stderr, "required type: %s\n", msg);
+                free(msg);
+
+                msg = xl_explain_type(node->arg->known_type);
+                fprintf(stderr, "got type: %s\n", msg);
+                free(msg);
+
+                return xl_raise(
+                        ERR_BAD_TYPE, "input type and arg type incompatible");
+        }
 
         input->head.value_type = node->arg->value_type;
         input->head.flags |= XL_DAGC_READY_MASK;

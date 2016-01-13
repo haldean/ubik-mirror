@@ -21,6 +21,9 @@
 #include "expel/types.h"
 #include "expel/value.h"
 
+#include <stdio.h>
+#include <stdlib.h>
+
 bool
 xl_type_satisfied(
         struct xl_value *constraint,
@@ -30,9 +33,37 @@ xl_type_satisfied(
         return xl_value_eq(constraint, type);
 }
 
+char *
+xl_explain_type(struct xl_value *type)
+{
+        char *res;
+        if (type->left.v == BASE_TYPE_WORD && type->right.v == 0)
+        {
+                res = calloc(5, sizeof(char));
+                if (res == NULL)
+                        return res;
+                sprintf(res, "word");
+                return res;
+        }
+        if (type->left.v == BASE_TYPE_PACKED && type->right.v == PACK_TYPE_CHAR)
+        {
+                res = calloc(7, sizeof(char));
+                if (res == NULL)
+                        return res;
+                sprintf(res, "string");
+                return res;
+        }
+        res = calloc(8, sizeof(char));
+        if (res == NULL)
+                return res;
+        sprintf(res, "unknown");
+        return res;
+}
+
 no_ignore xl_error_t
 xl_type_word(struct xl_value *value)
 {
+        value->tag |= TAG_LEFT_WORD | TAG_RIGHT_WORD;
         value->left.v = BASE_TYPE_WORD;
         value->right.v = 0;
         return OK;
@@ -41,6 +72,7 @@ xl_type_word(struct xl_value *value)
 no_ignore xl_error_t
 xl_type_string(struct xl_value *value)
 {
+        value->tag |= TAG_LEFT_WORD | TAG_RIGHT_WORD;
         value->left.v = BASE_TYPE_PACKED;
         value->right.v = PACK_TYPE_CHAR;
         return OK;

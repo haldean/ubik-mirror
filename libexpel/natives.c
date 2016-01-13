@@ -22,6 +22,7 @@
 #include "expel/env.h"
 #include "expel/expel.h"
 #include "expel/natives.h"
+#include "expel/types.h"
 #include "expel/util.h"
 
 #include <string.h>
@@ -147,6 +148,14 @@ __register_unsigned_add(struct xl_env *env)
 
         add_graph = NULL;
         err = __create_op(&add_graph, 2, __native_unsigned_add);
+        if (err != OK)
+                return err;
+        err = xl_type_word(
+                ((struct xl_dagc_input *) add_graph->inputs[0])->required_type);
+        if (err != OK)
+                return err;
+        err = xl_type_word(
+                ((struct xl_dagc_input *) add_graph->inputs[1])->required_type);
         if (err != OK)
                 return err;
 

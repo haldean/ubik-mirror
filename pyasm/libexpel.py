@@ -122,7 +122,7 @@ def pack_tree(t):
         else:
             right = struct.pack(">Q", t[1])
 
-
+    assert(tag & 0x0F)
     return struct.pack(">B", tag) + left + right
 
 def graph(nodes, result_idx):

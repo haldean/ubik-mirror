@@ -1,8 +1,8 @@
 # vi: ft=python
 from pyasm.libexpel import *
 
-c0 = const(uint8(), t(7, 0))
-c1 = const(uint8(), t(20, 0))
+c0 = const_word(7)
+c1 = const_word(20)
 l = load(uri=uri(name="uadd", scope=pack("native")))
 partial = apply(func=l, arg=c0)
 res = apply(func=partial, arg=c1, terminal=True)

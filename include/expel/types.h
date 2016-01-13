@@ -26,6 +26,9 @@ xl_type_satisfied(
         struct xl_value *constraint,
         struct xl_value *type);
 
+char *
+xl_explain_type(struct xl_value *type);
+
 no_ignore xl_error_t
 xl_type_word(struct xl_value *value);
 

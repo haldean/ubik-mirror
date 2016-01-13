@@ -3,5 +3,4 @@ runtime instrumentation
 type system
 type-based dispatch node
 clang format or whatever
-valgrind
 afl-fuzz
