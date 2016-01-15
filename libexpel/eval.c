@@ -27,7 +27,7 @@
 #include "expel/value.h"
 
 no_ignore static xl_error_t
-__eval_apply(struct xl_env *env, struct xl_dagc_apply *node)
+_eval_apply(struct xl_env *env, struct xl_dagc_apply *node)
 {
         xl_error_t err;
         struct xl_dagc_input *input;
@@ -91,7 +91,7 @@ __eval_apply(struct xl_env *env, struct xl_dagc_apply *node)
 }
 
 no_ignore static xl_error_t
-__eval_const(struct xl_env *env, struct xl_dagc_const *node)
+_eval_const(struct xl_env *env, struct xl_dagc_const *node)
 {
         xl_error_t err;
         unused(env);
@@ -122,7 +122,7 @@ __eval_const(struct xl_env *env, struct xl_dagc_const *node)
 }
 
 no_ignore static xl_error_t
-__eval_load(struct xl_env *env, struct xl_dagc_load *node)
+_eval_load(struct xl_env *env, struct xl_dagc_load *node)
 {
         union xl_value_or_graph value;
         struct xl_value *type;
@@ -148,7 +148,7 @@ __eval_load(struct xl_env *env, struct xl_dagc_load *node)
 }
 
 no_ignore static xl_error_t
-__eval_cond(struct xl_env *env, struct xl_dagc_cond *cond)
+_eval_cond(struct xl_env *env, struct xl_dagc_cond *cond)
 {
         struct xl_dagc_node *res;
         xl_error_t err;
@@ -175,7 +175,7 @@ __eval_cond(struct xl_env *env, struct xl_dagc_cond *cond)
 }
 
 no_ignore static xl_error_t
-__eval_store(struct xl_env *env, struct xl_dagc_store *node)
+_eval_store(struct xl_env *env, struct xl_dagc_store *node)
 {
         xl_error_t err;
 
@@ -197,7 +197,7 @@ __eval_store(struct xl_env *env, struct xl_dagc_store *node)
 }
 
 no_ignore static xl_error_t
-__eval_input(struct xl_env *env, struct xl_dagc_input *node)
+_eval_input(struct xl_env *env, struct xl_dagc_input *node)
 {
         unused(env);
         unused(node);
@@ -214,22 +214,22 @@ xl_dagc_node_eval(struct xl_env *env, struct xl_dagc_node *node)
         switch (node->node_type)
         {
         case DAGC_NODE_APPLY:
-                err = __eval_apply(env, (struct xl_dagc_apply *) node);
+                err = _eval_apply(env, (struct xl_dagc_apply *) node);
                 break;
         case DAGC_NODE_CONST:
-                err = __eval_const(env, (struct xl_dagc_const *) node);
+                err = _eval_const(env, (struct xl_dagc_const *) node);
                 break;
         case DAGC_NODE_LOAD:
-                err = __eval_load(env, (struct xl_dagc_load *) node);
+                err = _eval_load(env, (struct xl_dagc_load *) node);
                 break;
         case DAGC_NODE_STORE:
-                err = __eval_store(env, (struct xl_dagc_store *) node);
+                err = _eval_store(env, (struct xl_dagc_store *) node);
                 break;
         case DAGC_NODE_INPUT:
-                err = __eval_input(env, (struct xl_dagc_input *) node);
+                err = _eval_input(env, (struct xl_dagc_input *) node);
                 break;
         case DAGC_NODE_COND:
-                err = __eval_cond(env, (struct xl_dagc_cond *) node);
+                err = _eval_cond(env, (struct xl_dagc_cond *) node);
                 break;
         case DAGC_NODE_NATIVE:
                 return xl_raise(ERR_BAD_TYPE, "node_eval: can't eval native");

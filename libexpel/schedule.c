@@ -35,7 +35,7 @@ struct xl_node_schedule
  * provided size if necessary. Returns true if the element was
  * added to the set. */
 static bool
-__set_add(struct xl_dagc_node **set, size_t *n, struct xl_dagc_node *elem)
+_set_add(struct xl_dagc_node **set, size_t *n, struct xl_dagc_node *elem)
 {
         size_t i;
         bool found;
@@ -63,7 +63,7 @@ __set_add(struct xl_dagc_node **set, size_t *n, struct xl_dagc_node *elem)
  * node by traversing dependency edges; nodes that are not
  * reachable do not need to be evaluated. */
 no_ignore static xl_error_t
-__find_reachable_nodes(
+_find_reachable_nodes(
         struct xl_dagc_node **reachable,
         size_t *rn,
         struct xl_dagc *graph)
@@ -99,11 +99,11 @@ __find_reachable_nodes(
                 if (err != OK)
                         return err;
                 if (d1 != NULL)
-                        done &= !__set_add(reachable, rn, d1);
+                        done &= !_set_add(reachable, rn, d1);
                 if (d2 != NULL)
-                        done &= !__set_add(reachable, rn, d2);
+                        done &= !_set_add(reachable, rn, d2);
                 if (d3 != NULL)
-                        done &= !__set_add(reachable, rn, d3);
+                        done &= !_set_add(reachable, rn, d3);
         }
 
         return OK;
@@ -114,7 +114,7 @@ __find_reachable_nodes(
  * A node is ready if it has no incomplete dependencies, and is
  * complete if it has no dependencies. */
 no_ignore static xl_error_t
-__set_initial_ready(struct xl_dagc_node **nodes, size_t n_nodes)
+_set_initial_ready(struct xl_dagc_node **nodes, size_t n_nodes)
 {
         struct xl_dagc_node *n, *d1, *d2, *d3;
         xl_error_t err;
@@ -148,7 +148,7 @@ __set_initial_ready(struct xl_dagc_node **nodes, size_t n_nodes)
 }
 
 no_ignore static xl_error_t
-__schedule(struct xl_node_schedule **schedule, struct xl_dagc_node *node)
+_schedule(struct xl_node_schedule **schedule, struct xl_dagc_node *node)
 {
         struct xl_node_schedule *sched;
 
@@ -161,7 +161,7 @@ __schedule(struct xl_node_schedule **schedule, struct xl_dagc_node *node)
 }
 
 no_ignore static xl_error_t
-__schedule_all_ready(
+_schedule_all_ready(
                 struct xl_node_schedule **schedule,
                 struct xl_dagc_node **nodes,
                 size_t n_nodes)
@@ -178,7 +178,7 @@ __schedule_all_ready(
                         continue;
                 if ((n->flags & XL_DAGC_READY_MASK) == XL_DAGC_READY_MASK)
                 {
-                        err = __schedule(schedule, n);
+                        err = _schedule(schedule, n);
                         if (err != OK)
                                 return err;
                 }
@@ -188,7 +188,7 @@ __schedule_all_ready(
 }
 
 no_ignore static xl_error_t
-__notify_parents(
+_notify_parents(
                 struct xl_node_schedule **schedule,
                 struct xl_dagc *graph,
                 struct xl_dagc_node *node)
@@ -223,7 +223,7 @@ __notify_parents(
                                 (short)((uintptr_t) p),
                                 (short)((uintptr_t) node));
                         #endif
-                        err = __schedule(schedule, p);
+                        err = _schedule(schedule, p);
                         if (err != OK)
                                 return err;
                 }
@@ -232,7 +232,7 @@ __notify_parents(
 }
 
 no_ignore static xl_error_t
-__eval_native_dagc(struct xl_env *env, struct xl_dagc_native *ngraph)
+_eval_native_dagc(struct xl_env *env, struct xl_dagc_native *ngraph)
 {
         xl_error_t err;
         struct xl_dagc *graph;
@@ -256,21 +256,21 @@ xl_dagc_eval(struct xl_env *env, struct xl_dagc *graph)
 
         /* Native graphs get to cheat and skip all this biz. */
         if (graph->tag & TAG_GRAPH_NATIVE)
-                return __eval_native_dagc(env, (struct xl_dagc_native *) graph);
+                return _eval_native_dagc(env, (struct xl_dagc_native *) graph);
 
         reachable = calloc(graph->n, sizeof(struct xl_node *));
         if (reachable == NULL)
                 return xl_raise(ERR_NO_MEMORY, "eval");
 
-        err = __find_reachable_nodes(reachable, &n_nodes, graph);
+        err = _find_reachable_nodes(reachable, &n_nodes, graph);
         if (err != OK)
                 return err;
 
-        err = __set_initial_ready(reachable, n_nodes);
+        err = _set_initial_ready(reachable, n_nodes);
         if (err != OK)
                 return err;
 
-        err = __schedule_all_ready(&schedule, reachable, n_nodes);
+        err = _schedule_all_ready(&schedule, reachable, n_nodes);
         if (err != OK)
                 return err;
 
@@ -289,7 +289,7 @@ xl_dagc_eval(struct xl_env *env, struct xl_dagc *graph)
                                 xl_explain_word(to_exec->node->node_type));
                 #endif
 
-                err = __notify_parents(&schedule, graph, to_exec->node);
+                err = _notify_parents(&schedule, graph, to_exec->node);
                 if (err != OK)
                         return err;
 

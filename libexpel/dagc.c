@@ -124,7 +124,7 @@ xl_dagc_get_deps(
 }
 
 static int
-__cmp_adjacency(const void *v1, const void *v2)
+_cmp_adjacency(const void *v1, const void *v2)
 {
         uintptr_t p1, p2;
         p1 = *((uintptr_t *) v1);
@@ -137,7 +137,7 @@ __cmp_adjacency(const void *v1, const void *v2)
 }
 
 no_ignore static xl_error_t
-__find_adjacency(
+_find_adjacency(
         size_t *i,
         struct xl_dagc_adjacency *adjacencies,
         size_t n,
@@ -165,7 +165,7 @@ __find_adjacency(
 }
 
 no_ignore static xl_error_t
-__increment_n_parents(
+_increment_n_parents(
         struct xl_dagc *graph,
         struct xl_dagc_node *child)
 {
@@ -173,7 +173,7 @@ __increment_n_parents(
         size_t i;
 
         i = graph->n;
-        err = __find_adjacency(&i, graph->adjacency, graph->n, child);
+        err = _find_adjacency(&i, graph->adjacency, graph->n, child);
         if (err != OK)
                 return err;
         if (unlikely(i >= graph->n))
@@ -184,7 +184,7 @@ __increment_n_parents(
 }
 
 no_ignore static xl_error_t
-__add_parent(
+_add_parent(
         struct xl_dagc *graph,
         struct xl_dagc_node *parent,
         struct xl_dagc_node *child)
@@ -194,7 +194,7 @@ __add_parent(
         xl_error_t err;
 
         adj_i = graph->n;
-        err = __find_adjacency(
+        err = _find_adjacency(
                 &adj_i, graph->adjacency, graph->n, child);
         if (err != OK)
                 return err;
@@ -237,7 +237,7 @@ xl_dagc_init(struct xl_dagc *graph)
         }
 
         qsort(graph->adjacency, graph->n,
-              sizeof(struct xl_dagc_adjacency), __cmp_adjacency);
+              sizeof(struct xl_dagc_adjacency), _cmp_adjacency);
 
         /* First go through and count how many parents each one has. */
         for (i = 0; i < graph->n; i++)
@@ -249,19 +249,19 @@ xl_dagc_init(struct xl_dagc *graph)
 
                 if (d1 != NULL)
                 {
-                        err = __increment_n_parents(graph, d1);
+                        err = _increment_n_parents(graph, d1);
                         if (err != OK)
                                 return err;
                 }
                 if (d2 != NULL)
                 {
-                        err = __increment_n_parents(graph, d2);
+                        err = _increment_n_parents(graph, d2);
                         if (err != OK)
                                 return err;
                 }
                 if (d3 != NULL)
                 {
-                        err = __increment_n_parents(graph, d3);
+                        err = _increment_n_parents(graph, d3);
                         if (err != OK)
                                 return err;
                 }
@@ -285,19 +285,19 @@ xl_dagc_init(struct xl_dagc *graph)
 
                 if (d1 != NULL)
                 {
-                        err = __add_parent(graph, p, d1);
+                        err = _add_parent(graph, p, d1);
                         if (err != OK)
                                 return err;
                 }
                 if (d2 != NULL)
                 {
-                        err = __add_parent(graph, p, d2);
+                        err = _add_parent(graph, p, d2);
                         if (err != OK)
                                 return err;
                 }
                 if (d3 != NULL)
                 {
-                        err = __add_parent(graph, p, d3);
+                        err = _add_parent(graph, p, d3);
                         if (err != OK)
                                 return err;
                 }
@@ -374,7 +374,7 @@ xl_dagc_get_parents(
         xl_error_t err;
 
         i = graph->n;
-        err = __find_adjacency(&i, graph->adjacency, graph->n, child);
+        err = _find_adjacency(&i, graph->adjacency, graph->n, child);
         if (err != OK)
                 return err;
         if (unlikely(i >= graph->n))
@@ -386,7 +386,7 @@ xl_dagc_get_parents(
 }
 
 no_ignore static xl_error_t
-__replace_ref(
+_replace_ref(
         struct xl_dagc_node **ref,
         struct xl_dagc_node **proto,
         struct xl_dagc_node **copied,
@@ -408,7 +408,7 @@ __replace_ref(
 }
 
 no_ignore static xl_error_t
-__replace_node_refs(
+_replace_node_refs(
         struct xl_dagc_node *node,
         struct xl_dagc_node **proto,
         struct xl_dagc_node **copied,
@@ -424,31 +424,31 @@ __replace_node_refs(
         {
         case DAGC_NODE_APPLY:
                 a = (struct xl_dagc_apply *) node;
-                err = __replace_ref(&a->func, proto, copied, n);
+                err = _replace_ref(&a->func, proto, copied, n);
                 if (err != OK)
                         return err;
-                err = __replace_ref(&a->arg, proto, copied, n);
+                err = _replace_ref(&a->arg, proto, copied, n);
                 return err;
 
         case DAGC_NODE_LOAD:
                 l = (struct xl_dagc_load *) node;
-                err = __replace_ref(&l->dependent_store, proto, copied, n);
+                err = _replace_ref(&l->dependent_store, proto, copied, n);
                 return err;
 
         case DAGC_NODE_STORE:
                 s = (struct xl_dagc_store *) node;
-                err = __replace_ref(&s->value, proto, copied, n);
+                err = _replace_ref(&s->value, proto, copied, n);
                 return err;
 
         case DAGC_NODE_COND:
                 c = (struct xl_dagc_cond *) node;
-                err = __replace_ref(&c->condition, proto, copied, n);
+                err = _replace_ref(&c->condition, proto, copied, n);
                 if (err != OK)
                         return err;
-                err = __replace_ref(&c->if_true, proto, copied, n);
+                err = _replace_ref(&c->if_true, proto, copied, n);
                 if (err != OK)
                         return err;
-                err = __replace_ref(&c->if_false, proto, copied, n);
+                err = _replace_ref(&c->if_false, proto, copied, n);
                 return err;
 
         case DAGC_NODE_CONST:
@@ -460,7 +460,7 @@ __replace_node_refs(
 }
 
 no_ignore static xl_error_t
-__increment_value_refs(struct xl_dagc_node *node)
+_increment_value_refs(struct xl_dagc_node *node)
 {
         struct xl_dagc_load *l;
         struct xl_dagc_store *s;
@@ -536,12 +536,12 @@ xl_dagc_copy(
 
         for (i = 0; i < result->n; i++)
         {
-                err = __replace_node_refs(
+                err = _replace_node_refs(
                         result->nodes[i], proto->nodes, result->nodes,
                         result->n);
                 if (err != OK)
                         return err;
-                err = __increment_value_refs(result->nodes[i]);
+                err = _increment_value_refs(result->nodes[i]);
                 if (err != OK)
                         return err;
         }
@@ -553,7 +553,7 @@ xl_dagc_copy(
         for (i = 0; i < result->in_arity; i++)
         {
                 result->inputs[i] = proto->inputs[i];
-                err = __replace_ref(
+                err = _replace_ref(
                         &result->inputs[i], proto->nodes, result->nodes,
                         result->n);
                 if (err != OK)
@@ -562,7 +562,7 @@ xl_dagc_copy(
         for (i = 0; i < result->out_arity; i++)
         {
                 result->terminals[i] = proto->terminals[i];
-                err = __replace_ref(
+                err = _replace_ref(
                         &result->terminals[i], proto->nodes, result->nodes,
                         result->n);
                 if (err != OK)
@@ -571,7 +571,7 @@ xl_dagc_copy(
 
         if (proto->result != NULL)
         {
-                err = __replace_ref(
+                err = _replace_ref(
                         &result->result, proto->nodes, result->nodes,
                         result->n);
                 if (err != OK)
@@ -586,7 +586,7 @@ xl_dagc_copy(
         for (i = 0; i < result->n; i++)
         {
                 adj = &result->adjacency[i];
-                err = __replace_ref(
+                err = _replace_ref(
                         &adj->child, proto->nodes, result->nodes, result->n);
                 if (err != OK)
                         return err;
@@ -596,7 +596,7 @@ xl_dagc_copy(
                 memcpy(adj->parents, &proto->adjacency[i], adj->n_parents);
                 for (j = 0; j < adj->n_parents; j++)
                 {
-                        err = __replace_ref(
+                        err = _replace_ref(
                                 &adj->parents[j], proto->nodes,
                                 result->nodes, result->n);
                         if (err != OK)

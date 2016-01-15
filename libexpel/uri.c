@@ -25,7 +25,7 @@
 #include "expel/value.h"
 
 no_ignore static xl_error_t
-__set_hash(struct xl_uri *uri)
+_set_hash(struct xl_uri *uri)
 {
         size_t i;
 
@@ -48,7 +48,7 @@ xl_uri_user(
         uri->name_len = wcslen(name);
         uri->refcount = 0;
         uri->tag = TAG_URI;
-        return __set_hash(uri);
+        return _set_hash(uri);
 }
 
 no_ignore xl_error_t
@@ -62,7 +62,7 @@ xl_uri_native(
         uri->name_len = wcslen(name);
         uri->refcount = 0;
         uri->tag = TAG_URI;
-        return __set_hash(uri);
+        return _set_hash(uri);
 }
 
 bool
@@ -100,6 +100,6 @@ xl_uri_from_value(struct xl_uri *uri, struct xl_value *uri_val)
         uri->tag = TAG_URI;
         uri->refcount = 0;
 
-        err = __set_hash(uri);
+        err = _set_hash(uri);
         return err;
 }

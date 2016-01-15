@@ -140,7 +140,7 @@ xl_get(
  * overwritten. True means that it will be, false means that it
  * will not. */
 no_ignore static xl_error_t
-__insert(
+_insert(
         struct xl_binding *binds,
         size_t cap,
         struct xl_binding *insert,
@@ -186,7 +186,7 @@ __insert(
  * array. If an error occurs during rebalancing, the environment remains
  * unmodified and a nonzero error code is returned. */
 static xl_error_t
-__resize_rebalance(struct xl_env *env)
+_resize_rebalance(struct xl_env *env)
 {
         struct xl_binding *new_binds;
         size_t new_cap;
@@ -209,7 +209,7 @@ __resize_rebalance(struct xl_env *env)
                 if (env->bindings[i].uri == NULL)
                         continue;
 
-                err = __insert(new_binds, new_cap, &env->bindings[i], false);
+                err = _insert(new_binds, new_cap, &env->bindings[i], false);
                 if (err != OK)
                         break;
         }
@@ -228,7 +228,7 @@ __resize_rebalance(struct xl_env *env)
 }
 
 no_ignore static xl_error_t
-__set(
+_set(
         struct xl_env *env,
         struct xl_uri *uri,
         union xl_value_or_graph value,
@@ -241,9 +241,9 @@ __set(
 
         err = OK;
         if (unlikely(env->cap == 0))
-                err = __resize_rebalance(env);
+                err = _resize_rebalance(env);
         else if (unlikely((float) env->n / (float) env->cap > ENV_MAX_LOAD))
-                err = __resize_rebalance(env);
+                err = _resize_rebalance(env);
         if (err != OK)
                 return err;
 
@@ -267,7 +267,7 @@ __set(
         if (err != OK)
                 return err;
 
-        err = __insert(env->bindings, env->cap, &new_binding, overwrite);
+        err = _insert(env->bindings, env->cap, &new_binding, overwrite);
         if (err == OK)
                 env->n++;
         else
@@ -297,7 +297,7 @@ xl_set(
         struct xl_value *type,
         word_t value_type)
 {
-        return __set(env, uri, value, type, value_type, false);
+        return _set(env, uri, value, type, value_type, false);
 }
 
 no_ignore xl_error_t
@@ -308,5 +308,5 @@ xl_overwrite(
         struct xl_value *type,
         word_t value_type)
 {
-        return __set(env, uri, value, type, value_type, true);
+        return _set(env, uri, value, type, value_type, true);
 }

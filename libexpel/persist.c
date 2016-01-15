@@ -147,7 +147,7 @@ xl_save_value(struct xl_stream *sp, struct xl_value *in)
 }
 
 no_ignore static xl_error_t
-__load_apply(struct xl_dagc_apply *node, struct xl_stream *sp)
+_load_apply(struct xl_dagc_apply *node, struct xl_stream *sp)
 {
         uint64_t node_index;
 
@@ -169,7 +169,7 @@ __load_apply(struct xl_dagc_apply *node, struct xl_stream *sp)
 
 
 no_ignore static xl_error_t
-__load_const(
+_load_const(
         struct xl_dagc_const *node,
         struct xl_stream *sp,
         struct xl_value **values,
@@ -213,7 +213,7 @@ __load_const(
 }
 
 no_ignore static xl_error_t
-__load_load(
+_load_load(
         struct xl_dagc_load *node,
         struct xl_stream *sp,
         struct xl_value **values,
@@ -249,7 +249,7 @@ __load_load(
 }
 
 no_ignore static xl_error_t
-__load_store(
+_load_store(
         struct xl_dagc_store *node,
         struct xl_stream *sp,
         struct xl_value **values,
@@ -285,7 +285,7 @@ __load_store(
 }
 
 no_ignore static xl_error_t
-__load_input(
+_load_input(
         struct xl_dagc_input *node,
         struct xl_stream *sp,
         struct xl_value **values,
@@ -308,7 +308,7 @@ __load_input(
 }
 
 no_ignore static xl_error_t
-__load_cond(struct xl_dagc_cond *node, struct xl_stream *sp)
+_load_cond(struct xl_dagc_cond *node, struct xl_stream *sp)
 {
         uint64_t node_index;
 
@@ -330,7 +330,7 @@ __load_cond(struct xl_dagc_cond *node, struct xl_stream *sp)
 }
 
 no_ignore static xl_error_t
-__load_node(
+_load_node(
         struct xl_dagc_node *node,
         struct xl_stream *sp,
         struct xl_value **values,
@@ -353,22 +353,22 @@ __load_node(
         switch (node_type)
         {
         case DAGC_NODE_APPLY:
-                err = __load_apply(&n->as_apply, sp);
+                err = _load_apply(&n->as_apply, sp);
                 break;
         case DAGC_NODE_CONST:
-                err = __load_const(&n->as_const, sp, values, n_values);
+                err = _load_const(&n->as_const, sp, values, n_values);
                 break;
         case DAGC_NODE_LOAD:
-                err = __load_load(&n->as_load, sp, values, n_values);
+                err = _load_load(&n->as_load, sp, values, n_values);
                 break;
         case DAGC_NODE_STORE:
-                err = __load_store(&n->as_store, sp, values, n_values);
+                err = _load_store(&n->as_store, sp, values, n_values);
                 break;
         case DAGC_NODE_INPUT:
-                err = __load_input(&n->as_input, sp, values, n_values);
+                err = _load_input(&n->as_input, sp, values, n_values);
                 break;
         case DAGC_NODE_COND:
-                err = __load_cond(&n->as_cond, sp);
+                err = _load_cond(&n->as_cond, sp);
                 break;
         default:
                 return xl_raise(ERR_UNKNOWN_TYPE, "load node");
@@ -383,7 +383,7 @@ __load_node(
 }
 
 no_ignore static xl_error_t
-__set_node_pointers(
+_set_node_pointers(
         struct xl_dagc_node *node,
         struct xl_dagc_node **all_nodes,
         size_t n_nodes)
@@ -447,7 +447,7 @@ __set_node_pointers(
 }
 
 no_ignore static xl_error_t
-__set_graph_pointers(
+_set_graph_pointers(
         struct xl_dagc *graph,
         struct xl_dagc **all_graphs,
         size_t n_graphs)
@@ -479,7 +479,7 @@ __set_graph_pointers(
 }
 
 no_ignore static xl_error_t
-__load_graph(
+_load_graph(
         struct xl_dagc **graph,
         struct xl_stream *sp,
         struct xl_value **values,
@@ -523,7 +523,7 @@ __load_graph(
          * different. */
         for (i = 0; i < n_nodes; i++)
         {
-                err = __load_node((*graph)->nodes[i], sp, values, n_values);
+                err = _load_node((*graph)->nodes[i], sp, values, n_values);
                 if (err != OK)
                         return err;
         }
@@ -535,7 +535,7 @@ __load_graph(
          * we know what the appropriate pointers are. */
         for (i = 0; i < n_nodes; i++)
         {
-                err = __set_node_pointers(
+                err = _set_node_pointers(
                         (*graph)->nodes[i], (*graph)->nodes, n_nodes);
                 if (err != OK)
                         return err;
@@ -588,13 +588,13 @@ xl_load(struct xl_dagc ***graphs, size_t *ret_n_graphs, struct xl_stream *sp)
 
         for (i = 0; i < n_graphs; i++)
         {
-                err = __load_graph(&(*graphs)[i], sp, values, n_values);
+                err = _load_graph(&(*graphs)[i], sp, values, n_values);
                 if (err != OK)
                         return err;
         }
         for (i = 0; i < n_graphs; i++)
         {
-                err = __set_graph_pointers((*graphs)[i], *graphs, n_graphs);
+                err = _set_graph_pointers((*graphs)[i], *graphs, n_graphs);
                 if (err != OK)
                         return err;
         }

@@ -29,7 +29,7 @@
 #include <wchar.h>
 
 no_ignore static xl_error_t
-__native_uri(struct xl_uri **uri, wchar_t *name)
+_native_uri(struct xl_uri **uri, wchar_t *name)
 {
         xl_error_t err;
         wchar_t *heap_name;
@@ -53,7 +53,7 @@ __native_uri(struct xl_uri **uri, wchar_t *name)
 }
 
 no_ignore static xl_error_t
-__create_op(
+_create_op(
         struct xl_dagc **graph_ptr,
         size_t arity,
         xl_native_evaluator_t evaluator)
@@ -108,7 +108,7 @@ __create_op(
 }
 
 static xl_error_t
-__native_unsigned_add(struct xl_env *env, struct xl_dagc *graph)
+_native_unsigned_add(struct xl_env *env, struct xl_dagc *graph)
 {
         struct xl_value *res;
         xl_error_t err;
@@ -137,7 +137,7 @@ __native_unsigned_add(struct xl_env *env, struct xl_dagc *graph)
 }
 
 no_ignore static xl_error_t
-__register_unsigned_add(struct xl_env *env)
+_register_unsigned_add(struct xl_env *env)
 {
         xl_error_t err;
 
@@ -147,7 +147,7 @@ __register_unsigned_add(struct xl_env *env)
         union xl_value_or_graph ins;
 
         add_graph = NULL;
-        err = __create_op(&add_graph, 2, __native_unsigned_add);
+        err = _create_op(&add_graph, 2, _native_unsigned_add);
         if (err != OK)
                 return err;
         err = xl_type_word(
@@ -159,7 +159,7 @@ __register_unsigned_add(struct xl_env *env)
         if (err != OK)
                 return err;
 
-        err = __native_uri(&uri, L"uadd");
+        err = _native_uri(&uri, L"uadd");
         if (err != OK)
                 return err;
         err = xl_take(uri);
@@ -193,7 +193,7 @@ xl_register_natives(struct xl_env *env)
 {
         xl_error_t err;
 
-        err = __register_unsigned_add(env);
+        err = _register_unsigned_add(env);
         if (err != OK)
                 return err;
 

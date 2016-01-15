@@ -111,7 +111,7 @@ xl_stream_drop(struct xl_stream *src, size_t len)
 /* Allocate enough space in the provided buffer to fit the requested length in
  * after the write pointer. */
 static void
-__buf_realloc(struct _xl_buf *buf, size_t req_len)
+_buf_realloc(struct _xl_buf *buf, size_t req_len)
 {
         size_t n;
         uint8_t *old_start;
@@ -140,7 +140,7 @@ xl_stream_write(struct xl_stream *dst, void *src, size_t len)
                 return fwrite(src, 1, len, dst->file);
         case STREAM_TYPE_BUFFER:
                 if (len + dst->buffer->write >= dst->buffer->end)
-                        __buf_realloc(dst->buffer, len);
+                        _buf_realloc(dst->buffer, len);
                 memcpy(dst->buffer->write, src, len);
                 dst->buffer->write += len;
                 return len;

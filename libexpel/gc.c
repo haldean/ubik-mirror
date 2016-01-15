@@ -216,7 +216,7 @@ xl_run_gc()
 
 /* Releases a reference to the given tree. */
 no_ignore static xl_error_t
-__release_value(struct xl_value *v)
+_release_value(struct xl_value *v)
 {
         xl_error_t err;
         struct xl_alloc_page *p;
@@ -257,7 +257,7 @@ __release_value(struct xl_value *v)
 }
 
 no_ignore static xl_error_t
-__release_node(struct xl_dagc_node *node)
+_release_node(struct xl_dagc_node *node)
 {
         union xl_dagc_any_node *n;
         xl_error_t err;
@@ -318,7 +318,7 @@ __release_node(struct xl_dagc_node *node)
 }
 
 no_ignore static xl_error_t
-__release_graph(struct xl_dagc *g)
+_release_graph(struct xl_dagc *g)
 {
         size_t i;
         xl_error_t err;
@@ -330,7 +330,7 @@ __release_graph(struct xl_dagc *g)
 
         for (i = 0; i < g->n; i++)
         {
-                err = __release_node(g->nodes[i]);
+                err = _release_node(g->nodes[i]);
                 if (err != OK)
                         return err;
         }
@@ -359,7 +359,7 @@ __release_graph(struct xl_dagc *g)
 }
 
 no_ignore static xl_error_t
-__release_uri(struct xl_uri *u)
+_release_uri(struct xl_uri *u)
 {
         u->refcount--;
         if (u->refcount)
@@ -376,10 +376,10 @@ xl_release(void *v)
         tag_t tag;
         tag = *((tag_t *) v);
         if ((tag & TAG_TYPE_MASK) == TAG_VALUE)
-                return __release_value((struct xl_value *) v);
+                return _release_value((struct xl_value *) v);
         if ((tag & TAG_TYPE_MASK) == TAG_GRAPH)
-                return __release_graph((struct xl_dagc *) v);
+                return _release_graph((struct xl_dagc *) v);
         if ((tag & TAG_TYPE_MASK) == TAG_URI)
-                return __release_uri((struct xl_uri *) v);
+                return _release_uri((struct xl_uri *) v);
         return xl_raise(ERR_BAD_TAG, "release");
 }
