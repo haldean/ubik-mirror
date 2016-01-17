@@ -21,6 +21,7 @@ DIST_DIR := $(ROOT_DIR)/dist
 BUILD_DIR := $(ROOT_DIR)/build
 
 SHARED_LIB := $(DIST_DIR)/libexpel.so
+STATIC_LIB := $(DIST_DIR)/libexpel.a
 
 LD_LIBRARY_PATH := $(DIST_DIR)
 export LD_LIBRARY_PATH

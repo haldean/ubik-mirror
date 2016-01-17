@@ -18,18 +18,22 @@
 -include ../../res/build-config.mk
 
 test_runner := test-runner
-asms := $(patsubst %.xlpy,%.xlb,$(wildcard *.xlpy))
+asms := $(patsubst %.xlpy,xlb/%.xlb,$(wildcard *.xlpy))
 
 test: $(asms) $(test_runner)
-	LD_LIBRARY_PATH=../../dist $(test_runner) $(asms)
+	./$(test_runner) $(asms)
+
+profile: $(asms) $(test_runner)
+	LD_PROFILE_OUTPUT=$(PWD) LD_PROFILE=libexpel.so $(test_runner) $(asms)
 
 clean:
 	rm -f $(asms) $(test_runner)
 
 $(test_runner): pyasm.c $(SHARED_LIB)
-	$(CC) $(COPTS) $(LDOPTS) -lexpel -o $@ $<
+	$(CC) $(COPTS) $(LDOPTS) $< -lexpel -o $@
 
-%.xlb: %.xlpy ../../pyasm/*
+xlb/%.xlb: %.xlpy ../../pyasm/*
+	@mkdir -p $(dir $@)
 	PYTHONPATH=../.. python $< $@
 
 .PHONY: test clean
