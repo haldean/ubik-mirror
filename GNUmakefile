@@ -43,10 +43,6 @@ $(SHARED_LIB): $(objects)
 	@mkdir -p `dirname $(SHARED_LIB)`
 	$(CC) $(objects) -fPIC $(LDOPTS) -shared -o $@
 
-$(STATIC_LIB): $(objects)
-	@mkdir -p `dirname $(STATIC_LIB)`
-	$(AR) rcs $@ $(objects)
-
 $(executable): expelrt/*.c $(SHARED_LIB)
 	@mkdir -p `dirname $(executable)`
 	$(CC) $(COPTS) $(LDOPTS) $< -lexpel -o $@
@@ -67,15 +63,10 @@ pyasm_test: test/pyasm/* $(SHARED_LIB)
 
 test: unit_test pyasm_test
 
-ifeq ($(libtype),shared)
 lib: $(SHARED_LIB)
-else
-lib: $(STATIC_LIB)
-endif
 
 fuzz: asan = no
 fuzz: type = release
-fuzz: libtype = shared
 fuzz: CC = afl-gcc
 fuzz: $(SHARED_LIB) pyasm_test
 	afl-fuzz -i test/pyasm/xlb -o test/afl-out test/pyasm/test-runner @@
