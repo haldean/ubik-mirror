@@ -487,6 +487,7 @@ _increment_value_refs(struct xl_dagc_node *node)
         {
         case DAGC_NODE_APPLY:
         case DAGC_NODE_NATIVE:
+        case DAGC_NODE_COND:
                 return OK;
 
         case DAGC_NODE_INPUT:
