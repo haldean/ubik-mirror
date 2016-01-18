@@ -71,7 +71,6 @@ _find_reachable_nodes(
         struct xl_dagc_node *n, *d1, *d2, *d3;
         size_t i;
         xl_error_t err;
-        bool done;
 
         /* Mark appropriate nodes as reachable. */
         *rn = 0;
@@ -99,11 +98,11 @@ _find_reachable_nodes(
                 if (err != OK)
                         return err;
                 if (d1 != NULL)
-                        done &= !_set_add(reachable, rn, d1);
+                        _set_add(reachable, rn, d1);
                 if (d2 != NULL)
-                        done &= !_set_add(reachable, rn, d2);
+                        _set_add(reachable, rn, d2);
                 if (d3 != NULL)
-                        done &= !_set_add(reachable, rn, d3);
+                        _set_add(reachable, rn, d3);
         }
 
         return OK;
