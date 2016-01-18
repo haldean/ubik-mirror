@@ -65,13 +65,12 @@ xl_load_value(struct xl_value *out, struct xl_stream *sp)
 {
         tag_t tag;
         xl_error_t err;
+        xl_error_t err_ignore;
 
         READ_INTO(tag, sp);
         xl_assert(!(tag & TAG_LEFT_WORD) ^ !(tag & TAG_LEFT_NODE));
         xl_assert(!(tag & TAG_RIGHT_WORD) ^ !(tag & TAG_RIGHT_NODE));
         xl_assert((tag & TAG_TYPE_MASK) == TAG_VALUE);
-
-        out->tag = TAG_VALUE | tag;
 
         if (tag & TAG_LEFT_WORD)
         {
@@ -85,7 +84,15 @@ xl_load_value(struct xl_value *out, struct xl_stream *sp)
                         return err;
                 err = xl_load_value(out->left.p, sp);
                 if (err != OK)
+                {
+                        err_ignore = xl_release(out->left.p);
+                        unused(err_ignore);
+
+                        /* unset the tag so that releasing the provided node
+                         * doesn't dereference a freed pointer */
+                        out->tag &= ~TAG_LEFT_NODE;
                         return err;
+                }
                 out->left.p->refcount = 1;
         }
 
@@ -101,10 +108,23 @@ xl_load_value(struct xl_value *out, struct xl_stream *sp)
                         return err;
                 err = xl_load_value(out->right.p, sp);
                 if (err != OK)
+                {
+                        err_ignore = xl_release(out->right.p);
+                        unused(err_ignore);
+
+                        /* unset the tag so that releasing the provided node
+                         * doesn't dereference a freed pointer */
+                        out->tag &= ~TAG_RIGHT_NODE;
                         return err;
+                }
                 out->right.p->refcount = 1;
         }
 
+        /* set the tag only if everything went according to plan. This means
+         * that callers can safely pass the value here into xl_release, and it
+         * won't try to free children that were never populated when we exit
+         * early on an error condition. */
+        out->tag = tag;
         return OK;
 }
 
