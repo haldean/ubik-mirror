@@ -115,17 +115,24 @@ test_file(char *fname)
                         err = xl_raise(ERR_BAD_GRAPH, "out arity");
                         goto teardown;
                 }
-                actual = graphs[0]->terminals[0]->known.tree;
+                actual = graphs[0]->result->known.tree;
                 printf("\texpected:  ");
                 err = xl_print_value(&sstdout, expected);
                 CHECK_ERR("couldn't print expected");
 
                 printf("\n\t  actual:  ");
-                err = xl_print_value(&sstdout, actual);
-                CHECK_ERR("couldn't print actual");
+                if (actual != NULL)
+                {
+                        err = xl_print_value(&sstdout, actual);
+                        CHECK_ERR("couldn't print actual");
+                }
+                else
+                {
+                        printf("not evaluated");
+                }
                 printf("\n");
 
-                if (!xl_value_eq(expected, actual))
+                if (actual == NULL || !xl_value_eq(expected, actual))
                 {
                         printf("FAIL\n");
                         err = xl_raise(ERR_TEST_FAILED, NULL);
