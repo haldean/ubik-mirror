@@ -121,7 +121,7 @@ xl_read_string(wchar_t **dest, size_t *n, struct xl_value *src)
         str_size = mbsrtowcs(*dest, (const char **) &buf, buf_size, NULL);
         free(orig_buf);
 
-        *dest = realloc(*dest, str_size * sizeof(wchar_t));
+        *dest = realloc(*dest, (str_size + 1) * sizeof(wchar_t));
         if (*dest == NULL && str_size > 0)
         {
                 free(*dest);
