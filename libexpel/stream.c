@@ -132,12 +132,18 @@ _buf_realloc(struct _xl_buf *buf, size_t req_len)
 size_t
 xl_stream_write(struct xl_stream *dst, void *src, size_t len)
 {
+        size_t written;
+
         switch (dst->stream_type)
         {
         case STREAM_TYPE_FILE_R:
                 return 0;
         case STREAM_TYPE_FILE_W:
-                return fwrite(src, 1, len, dst->file);
+                written = fwrite(src, 1, len, dst->file);
+#ifdef XL_EAGER_FLUSH
+                fflush(dst->file);
+#endif
+                return written;
         case STREAM_TYPE_BUFFER:
                 if (len + dst->buffer->write >= dst->buffer->end)
                         _buf_realloc(dst->buffer, len);
