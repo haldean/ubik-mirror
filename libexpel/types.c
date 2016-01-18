@@ -90,3 +90,12 @@ xl_type_string(struct xl_value *value)
         value->right.v = PACK_TYPE_CHAR;
         return OK;
 }
+
+no_ignore xl_error_t
+xl_type_bool(struct xl_value *value)
+{
+        value->tag |= TAG_LEFT_WORD | TAG_RIGHT_WORD;
+        value->left.v = BASE_TYPE_BOOL;
+        value->right.v = 0;
+        return OK;
+}
