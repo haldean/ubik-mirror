@@ -23,7 +23,7 @@ executable := $(DIST_DIR)/runexpel
 testexe := $(BUILD_DIR)/test-expel
 testldopts := $(LDOPTS) -lm -lpthread -lrt
 
-all: lib test
+all: lib $(executable) test
 
 
 ################################################################################
@@ -82,10 +82,8 @@ test: unit_test pyasm_test
 clean:
 	rm -rf build dist
 
-fuzz: asan = no
-fuzz: type = release
 fuzz: CC = afl-gcc
-fuzz: $(SHARED_LIB) $(xlb_runner)
-	afl-fuzz -i - -o test/afl-out test/pyasm/test-runner @@
+fuzz: $(SHARED_LIB) $(executable)
+	afl-fuzz -i - -o test/afl-out $(executable) @@
 
 .PHONY: clean test all unit_test pyasm_test lib fuzz
