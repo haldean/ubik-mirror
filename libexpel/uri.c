@@ -85,15 +85,22 @@ no_ignore xl_error_t
 xl_uri_from_value(struct xl_uri *uri, struct xl_value *uri_val)
 {
         xl_error_t err;
+        struct xl_value *uri_right;
+
+        if ((uri_val->tag & ~TAG_TYPE_MASK) != (TAG_LEFT_WORD | TAG_RIGHT_NODE))
+                return xl_raise(ERR_BAD_TAG, "bad tag for URI root");
+
+        uri_right = uri_val->right.p;
+        if ((uri_right->tag & ~TAG_TYPE_MASK) != (TAG_LEFT_WORD | TAG_RIGHT_NODE))
+                return xl_raise(ERR_BAD_TAG, "bad tag for URI right");
 
         /* URIs have the following structure:
          *      L      version
          *      RL     scope
          *      RR     string-encoded name */
         uri->version = uri_val->left.v;
-        uri->scope = uri_val->right.p->left.v;
-        err = xl_read_string(
-                &uri->name, &uri->name_len, uri_val->right.p->right.p);
+        uri->scope = uri_right->left.v;
+        err = xl_read_string(&uri->name, &uri->name_len, uri_right->right.p);
         if (err != OK)
                 return err;
 

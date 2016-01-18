@@ -74,14 +74,23 @@ xl_read_packed(uint8_t **dest, size_t *n, struct xl_value *src)
         v = src->right.p;
         while (n_bytes)
         {
+                if (!(v->tag & TAG_LEFT_WORD))
+                        return xl_raise(ERR_BAD_TAG, "packed val has left node");
                 n_copy = size_min(n_bytes, 8);
                 p = htonw(v->left.v);
                 memcpy(&res[i], &p, n_copy);
                 n_bytes -= n_copy;
                 i += n_copy;
+                if (!(v->tag & TAG_RIGHT_NODE))
+                        break;
                 v = v->right.p;
         }
 
+        if (n_bytes)
+        {
+                free(res);
+                return xl_raise(ERR_BAD_VALUE, "not enough data in tree");
+        }
         *dest = res;
         return OK;
 }
