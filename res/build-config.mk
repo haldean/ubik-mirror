@@ -27,9 +27,9 @@ export LD_LIBRARY_PATH
 
 COPTS := $(CFLAGS) $(COPTS) -std=c11 -pedantic -Werror -Wall -Wextra \
 	-I$(ROOT_DIR)/include -I$(ROOT_DIR)/dist/include \
-	-D_GNU_SOURCE
+	-D_GNU_SOURCE -D_FORTIFY_SOURCE=2 -fPIE -fPIC
 
-LDOPTS := $(LDOPTS) -L$(DIST_DIR)
+LDOPTS := $(LDOPTS) -L$(DIST_DIR) -Wl,-z,relro,-z,now -pie
 
 asan := yes
 
