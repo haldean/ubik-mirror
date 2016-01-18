@@ -596,7 +596,7 @@ xl_dagc_copy(
 
                 adj->parents =
                         calloc(adj->n_parents, sizeof(struct xl_dagc_node *));
-                memcpy(adj->parents, &proto->adjacency[i].parents,
+                memcpy(adj->parents, proto->adjacency[i].parents,
                         adj->n_parents * sizeof(struct xl_dagc_node *));
                 for (j = 0; j < adj->n_parents; j++)
                 {
@@ -607,6 +607,9 @@ xl_dagc_copy(
                                 return err;
                 }
         }
+
+        qsort(result->adjacency, result->n,
+              sizeof(struct xl_dagc_adjacency), _cmp_adjacency);
 
         return OK;
 }
