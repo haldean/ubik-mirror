@@ -20,6 +20,7 @@
 #include <math.h>
 #include <string.h>
 
+#include "expel/assert.h"
 #include "expel/expel.h"
 #include "expel/env.h"
 #include "expel/util.h"
@@ -85,7 +86,8 @@ xl_env_free(struct xl_env *env)
         env->n = 0;
         env->cap = 0;
         env->bindings = NULL;
-        env->parent = xl_env_get_root();
+        if (env != xl_env_get_root())
+                env->parent = xl_env_get_root();
         return OK;
 }
 
@@ -126,6 +128,8 @@ xl_get(
 
         if (found)
                 return OK;
+
+        xl_assert(env->parent != env);
         if (env->parent == NULL)
                 return xl_raise(ERR_ABSENT, "xl_get");
         return xl_get(value, type, value_type, env->parent, uri);
