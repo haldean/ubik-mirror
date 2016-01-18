@@ -493,6 +493,10 @@ _load_graph(
         READ_INTO(n_nodes, sp);
         n_nodes = ntohw(n_nodes);
 
+        if (n_nodes == 0)
+                return xl_raise(
+                        ERR_BAD_GRAPH, "graphs must have at least 1 node");
+
         err = xl_new_dagc(graph, n_nodes);
         if (err != OK)
                 return err;
