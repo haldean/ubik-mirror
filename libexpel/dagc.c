@@ -37,6 +37,8 @@ xl_alloc_dagc_with_size(
         union xl_dagc_any_node *node_memory;
 
         *graph = calloc(1, size);
+        if (*graph == NULL)
+                return xl_raise(ERR_NO_MEMORY, "graph allocation");
 
         if (copy_from != NULL)
                 memcpy(*graph, copy_from, size);
