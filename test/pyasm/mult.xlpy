@@ -1,0 +1,45 @@
+# vi: ft=python
+from pyasm import *
+
+eq  = load(uri=uri(name="eq", scope=pack("native")))
+sub = load(uri=uri(name="usub", scope=pack("native")))
+add = load(uri=uri(name="uadd", scope=pack("native")))
+
+i0  = arg(0, word())
+i1  = arg(1, word())
+
+# i1 == 0
+q0  = const_word(0)
+q1  = apply(func=eq, arg=i1)
+q2  = apply(func=q1, arg=q0)
+
+# f(i0, i1 - 1)
+q3  = const_word(1)
+q4  = apply(func=sub, arg=i1)
+q5  = apply(func=q4, arg=q3)
+q6  = graph_ref(word(), 1)
+q7  = apply(func=q6, arg=i0)
+q8  = apply(func=q7, arg=q5)
+
+# i0 + f(i0, i1 - 1)
+q9  = apply(func=add, arg=i0)
+q10 = apply(func=q9, arg=q8)
+
+# if i1 == 0 return i0 else return i0 + f(i0, i1 - 1)
+q11 = cond(q2, i0, q10, terminal=True)
+
+
+# f(10, 21)
+r0  = const_word(10)
+r1  = const_word(21)
+r2  = graph_ref(word(), 1)
+r3  = apply(r2, r0)
+r4  = apply(r3, r1, terminal=True)
+
+encode([
+    graph([r0, r1, r2, r3, r4], -1),
+    graph([
+        i0, i1, eq, sub, add, q0, q1, q2, q3, q4,
+        q5, q6, q7, q8, q9, q10, q11], -1),
+],
+expect=t(27, 0))
