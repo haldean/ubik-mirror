@@ -64,6 +64,9 @@ xl_read_packed(uint8_t **dest, size_t *n, struct xl_value *src)
         struct xl_value *v;
         uint8_t *res;
 
+        if (src->tag != (TAG_VALUE | TAG_LEFT_WORD | TAG_RIGHT_NODE))
+                return xl_raise(ERR_BAD_TAG, "bad tag for packed root");
+
         n_bytes = src->left.v;
         *n = n_bytes;
         res = calloc(n_bytes + 1, sizeof(uint8_t));
