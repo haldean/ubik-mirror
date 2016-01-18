@@ -147,6 +147,8 @@ teardown:
         {
                 for (i = 0; i < n_graphs; i++)
                 {
+                        if (graphs[i] == NULL)
+                                continue;
                         teardown_err = xl_release(graphs[i]);
                         if (teardown_err != OK)
                         {
