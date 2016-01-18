@@ -47,11 +47,14 @@ xl_explain_error(xl_error_t err)
 {
         char *res;
         char *err_word_expl;
+        int aspr_res;
 
         err_word_expl = xl_explain_word(err->error_code);
-        asprintf(&res, "error %s at %s:%u: %s",
+        aspr_res = asprintf(&res, "error %s at %s:%u: %s",
                  err_word_expl, err->file, err->lineno, err->tag);
 
+        if (aspr_res < 0)
+                res = NULL;
         free(err_word_expl);
         return res;
 }
