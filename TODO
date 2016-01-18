@@ -4,3 +4,5 @@ type system
 type-based dispatch node
 clang format or whatever
 where did a graph come from
+cond always evaluates if_true and if_false
+callback-based scheduler
