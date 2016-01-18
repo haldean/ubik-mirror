@@ -27,6 +27,7 @@
   packed.BASE_TYPE_PACKED
     type.BASE_TYPE_TYPE
   lambda.BASE_TYPE_FUNC
+    bool.BASE_TYPE_BOOL
 
     char.PACK_TYPE_CHAR
 

@@ -24,6 +24,7 @@
 #include "expel/natives.h"
 #include "expel/types.h"
 #include "expel/util.h"
+#include "expel/value.h"
 
 #include <string.h>
 #include <wchar.h>
@@ -136,6 +137,12 @@ _native_unsigned_add(struct xl_env *env, struct xl_dagc *graph)
         return OK;
 }
 
+#define DEF_BINARY_WORD
+#define DEF_OP uadd
+#define DEF_OP_EVAL _native_unsigned_add
+#define DEF_OP_URI L"uadd"
+#include "def-native.h"
+
 static xl_error_t
 _native_unsigned_subtract(struct xl_env *env, struct xl_dagc *graph)
 {
@@ -172,15 +179,70 @@ _native_unsigned_subtract(struct xl_env *env, struct xl_dagc *graph)
 }
 
 #define DEF_BINARY_WORD
-#define DEF_OP uadd
-#define DEF_OP_EVAL _native_unsigned_add
-#define DEF_OP_URI L"uadd"
-#include "def-native.h"
-
-#define DEF_BINARY_WORD
 #define DEF_OP usub
 #define DEF_OP_EVAL _native_unsigned_subtract
 #define DEF_OP_URI L"usub"
+#include "def-native.h"
+
+static xl_error_t
+_native_eq(struct xl_env *env, struct xl_dagc *graph)
+{
+        struct xl_value *res;
+        struct xl_dagc_node *n0, *n1;
+        bool ret;
+        xl_error_t err;
+
+        unused(env);
+
+        n0 = graph->nodes[0];
+        n1 = graph->nodes[1];
+
+        ret = true;
+
+        if (n0->value_type != n1->value_type)
+        {
+                ret = false;
+        }
+        else if (n0->value_type == DAGC_TYPE_GRAPH)
+        {
+                /* TODO: make this a semantic comparison */
+                ret = n0->known.graph == n1->known.graph;
+        }
+        else if (n0->value_type == DAGC_TYPE_VALUE)
+        {
+                ret = xl_value_eq(n0->known.tree, n1->known.tree);
+        }
+        else
+        {
+                return xl_raise(ERR_BAD_TYPE, "unknown value type in eq");
+        }
+
+        err = xl_new(&res);
+        if (err != OK)
+                return err;
+
+        res->tag |= TAG_LEFT_WORD | TAG_RIGHT_WORD;
+        res->left.v = ret ? 1 : 0;
+        res->right.v = 0;
+
+        graph->result->known.tree = res;
+        graph->result->value_type = DAGC_TYPE_VALUE;
+
+        err = xl_new(&graph->result->known_type);
+        if (err != OK)
+                return err;
+        err = xl_type_bool(graph->result->known_type);
+        if (err != OK)
+                return err;
+
+        /* We already own the tree and the type because we just new'ed it. */
+        return OK;
+}
+
+#define DEF_BINARY_WORD_PROP
+#define DEF_OP eq
+#define DEF_OP_EVAL _native_eq
+#define DEF_OP_URI L"eq"
 #include "def-native.h"
 
 no_ignore xl_error_t
@@ -193,6 +255,10 @@ xl_register_natives(struct xl_env *env)
                 return err;
 
         err = _register_usub(env);
+        if (err != OK)
+                return err;
+
+        err = _register_eq(env);
         if (err != OK)
                 return err;
 
