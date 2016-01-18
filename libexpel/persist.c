@@ -557,30 +557,52 @@ xl_load(struct xl_dagc ***graphs, size_t *ret_n_graphs, struct xl_stream *sp)
 
         READ_INTO(header, sp);
         if (strncmp(header, "expl", 4) != 0)
-                return xl_raise(ERR_BAD_HEADER, NULL);
+        {
+                err = xl_raise(ERR_BAD_HEADER, NULL);
+                goto error;
+        }
 
         READ_INTO(version, sp);
         version = ntohl(version);
         if (version != CURRENT_ENCODING_VERSION)
-                return xl_raise(ERR_UNSUPPORTED_VERSION, NULL);
+        {
+                err = xl_raise(ERR_UNSUPPORTED_VERSION, NULL);
+                goto error;
+        }
 
         READ_INTO(n_graphs, sp);
         n_graphs = ntohw(n_graphs);
+        if (n_graphs == 0)
+        {
+                err = xl_raise(ERR_BAD_HEADER, "must have at least one graph");
+                goto error;
+        }
+
         *ret_n_graphs = n_graphs;
         *graphs = calloc(n_graphs, sizeof(struct xl_dagc *));
+        if (*graphs == NULL)
+        {
+                err = xl_raise(ERR_NO_MEMORY, "graph list alloc");
+                goto error;
+        }
 
         READ_INTO(n_values, sp);
         n_values = ntohw(n_values);
         values = calloc(n_values, sizeof(struct xl_value *));
+        if (values == NULL)
+        {
+                err = xl_raise(ERR_NO_MEMORY, "value list alloc");
+                goto error;
+        }
 
         for (i = 0; i < n_values; i++)
         {
                 err = xl_new(&values[i]);
                 if (err != OK)
-                        return err;
+                        goto error;
                 err = xl_load_value(values[i], sp);
                 if (err != OK)
-                        return err;
+                        goto error;
         }
         /* At the end of loading, we own a reference to each value that has been
          * loaded. We then load the graphs and release the values, so only the
@@ -590,21 +612,25 @@ xl_load(struct xl_dagc ***graphs, size_t *ret_n_graphs, struct xl_stream *sp)
         {
                 err = _load_graph(&(*graphs)[i], sp, values, n_values);
                 if (err != OK)
-                        return err;
+                        goto error;
         }
         for (i = 0; i < n_graphs; i++)
         {
                 err = _set_graph_pointers((*graphs)[i], *graphs, n_graphs);
                 if (err != OK)
-                        return err;
+                        goto error;
         }
 
         for (i = 0; i < n_values; i++)
         {
                 err = xl_release(values[i]);
                 if (err != OK)
-                        return err;
+                        goto error;
         }
 
         return OK;
+
+error:
+        *ret_n_graphs = 0;
+        return err;
 }
