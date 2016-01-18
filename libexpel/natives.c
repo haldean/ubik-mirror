@@ -136,64 +136,63 @@ _native_unsigned_add(struct xl_env *env, struct xl_dagc *graph)
         return OK;
 }
 
-no_ignore static xl_error_t
-_register_unsigned_add(struct xl_env *env)
+static xl_error_t
+_native_unsigned_subtract(struct xl_env *env, struct xl_dagc *graph)
 {
+        struct xl_value *res;
         xl_error_t err;
+        word_t v1, v2;
 
-        struct xl_dagc *add_graph;
-        struct xl_uri *uri;
-        struct xl_value *type;
-        union xl_value_or_graph ins;
+        unused(env);
 
-        add_graph = NULL;
-        err = _create_op(&add_graph, 2, _native_unsigned_add);
-        if (err != OK)
-                return err;
-        err = xl_type_word(
-                ((struct xl_dagc_input *) add_graph->inputs[0])->required_type);
-        if (err != OK)
-                return err;
-        err = xl_type_word(
-                ((struct xl_dagc_input *) add_graph->inputs[1])->required_type);
+        err = xl_new(&res);
         if (err != OK)
                 return err;
 
-        err = _native_uri(&uri, L"uadd");
-        if (err != OK)
-                return err;
-        err = xl_take(uri);
-        if (err != OK)
-                return err;
+        v1 = graph->nodes[0]->known.tree->left.v;
+        v2 = graph->nodes[1]->known.tree->left.v;
 
-        err = xl_new(&type);
-        if (err != OK)
-                return err;
+        if (v1 < v2)
+                return xl_raise(ERR_UNDERFLOW, "subtraction underflow");
 
-        ins.graph = add_graph;
-        err = xl_set(env, uri, ins, type, DAGC_TYPE_GRAPH);
-        if (err != OK)
-                return err;
+        res->tag |= TAG_LEFT_WORD | TAG_RIGHT_WORD;
+        res->left.v = v1 - v2;
+        res->right.v = 0;
 
-        err = xl_release(uri);
-        if (err != OK)
-                return err;
-        err = xl_release(type);
-        if (err != OK)
-                return err;
-        err = xl_release(add_graph);
+        graph->result->known.tree = res;
+        graph->result->known_type = graph->nodes[0]->known_type;
+        graph->result->value_type = DAGC_TYPE_VALUE;
+
+        /* We already own the tree because we just new'ed it. */
+        err = xl_take(graph->result->known_type);
         if (err != OK)
                 return err;
 
         return OK;
 }
 
+#define DEF_BINARY_WORD
+#define DEF_OP uadd
+#define DEF_OP_EVAL _native_unsigned_add
+#define DEF_OP_URI L"uadd"
+#include "def-native.h"
+
+#define DEF_BINARY_WORD
+#define DEF_OP usub
+#define DEF_OP_EVAL _native_unsigned_subtract
+#define DEF_OP_URI L"usub"
+#include "def-native.h"
+
 no_ignore xl_error_t
 xl_register_natives(struct xl_env *env)
 {
         xl_error_t err;
 
-        err = _register_unsigned_add(env);
+        err = _register_uadd(env);
+        if (err != OK)
+                return err;
+
+        err = _register_usub(env);
         if (err != OK)
                 return err;
 
