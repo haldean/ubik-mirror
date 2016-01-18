@@ -39,10 +39,10 @@ COPTS := $(COPTS) -O2
 
 else
 $(info creating debug build)
-COPTS := $(COPTS) -ggdb -O0 -DXL_GC_DEBUG \
-	 -fsanitize=undefined
+COPTS := $(COPTS) -ggdb -O0 -DXL_GC_DEBUG
 ifeq ($(asan),yes)
-COPTS := $(COPTS) -fsanitize=address -fstack-protector-strong
-LDOPTS := $(LDOPTS) -fsanitize=undefined -fsanitize=address
+COPTS := $(COPTS) -fsanitize=undefined -fsanitize=address -fsanitize=leak \
+	-fstack-protector-strong
+LDOPTS := $(LDOPTS) -fsanitize=undefined -fsanitize=address -fsanitize=leak
 endif
 endif
