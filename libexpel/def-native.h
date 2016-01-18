@@ -34,9 +34,9 @@
 #define concatr(a, ...) a ## __VA_ARGS__
 #endif
 
-#ifdef DEF_BINARY_WORD
-
 #define _op_name concat(_register_, DEF_OP)
+
+#ifdef DEF_BINARY_WORD
 
 no_ignore static xl_error_t
 _op_name(struct xl_env *env)
@@ -71,6 +71,7 @@ _op_name(struct xl_env *env)
         err = xl_new(&type);
         if (err != OK)
                 return err;
+        /* TODO: set type here */
 
         ins.graph = ngraph;
         err = xl_set(env, uri, ins, type, DAGC_TYPE_GRAPH);
@@ -91,7 +92,65 @@ _op_name(struct xl_env *env)
 }
 
 #else
-#error operation was not binary
+
+#ifdef DEF_BINARY_WORD_PROP
+
+no_ignore static xl_error_t
+_op_name(struct xl_env *env)
+{
+        xl_error_t err;
+
+        struct xl_dagc *ngraph;
+        struct xl_uri *uri;
+        struct xl_value *type;
+        union xl_value_or_graph ins;
+
+        ngraph = NULL;
+        err = _create_op(&ngraph, 2, DEF_OP_EVAL);
+        if (err != OK)
+                return err;
+        err = xl_type_word(
+                ((struct xl_dagc_input *) ngraph->inputs[0])->required_type);
+        if (err != OK)
+                return err;
+        err = xl_type_word(
+                ((struct xl_dagc_input *) ngraph->inputs[1])->required_type);
+        if (err != OK)
+                return err;
+
+        err = _native_uri(&uri, DEF_OP_URI);
+        if (err != OK)
+                return err;
+        err = xl_take(uri);
+        if (err != OK)
+                return err;
+
+        err = xl_new(&type);
+        if (err != OK)
+                return err;
+        /* TODO: set type here */
+
+        ins.graph = ngraph;
+        err = xl_set(env, uri, ins, type, DAGC_TYPE_GRAPH);
+        if (err != OK)
+                return err;
+
+        err = xl_release(uri);
+        if (err != OK)
+                return err;
+        err = xl_release(type);
+        if (err != OK)
+                return err;
+        err = xl_release(ngraph);
+        if (err != OK)
+                return err;
+
+        return OK;
+}
+
+#else
+#error operation was not one of [DEF_BINARY_WORD, DEF_BINARY_WORD_PROP]
+#endif
 #endif
 
 #undef DEF_OP
