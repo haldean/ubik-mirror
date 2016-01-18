@@ -61,6 +61,19 @@ xl_explain_type(struct xl_value *type)
 }
 
 no_ignore xl_error_t
+xl_type_func_apply(
+        struct xl_value *result,
+        struct xl_value *func_type)
+{
+        /* This is super dumb, and is provided only as a way to see if this used
+         * to be causing a crash. */
+        result->tag = func_type->tag;
+        result->left.v = func_type->left.v;
+        result->right.v = func_type->right.v;
+        return OK;
+}
+
+no_ignore xl_error_t
 xl_type_word(struct xl_value *value)
 {
         value->tag |= TAG_LEFT_WORD | TAG_RIGHT_WORD;

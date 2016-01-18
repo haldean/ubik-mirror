@@ -89,6 +89,12 @@ _eval_apply(struct xl_env *env, struct xl_dagc_apply *node)
                 return err;
 
         node->head.value_type = DAGC_TYPE_GRAPH;
+        err = xl_new(&node->head.known_type);
+        if (err != OK)
+                return err;
+        err = xl_type_func_apply(node->head.known_type, node->func->known_type);
+        if (err != OK)
+                return err;
         return OK;
 }
 

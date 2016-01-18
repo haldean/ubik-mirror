@@ -26,6 +26,13 @@ xl_type_satisfied(
         struct xl_value *constraint,
         struct xl_value *type);
 
+/* Creates a type object that is the result of applying a single argument to the
+ * given function type. */
+no_ignore xl_error_t
+xl_type_func_apply(
+        struct xl_value *result,
+        struct xl_value *func_type);
+
 char *
 xl_explain_type(struct xl_value *type);
 
