@@ -596,7 +596,8 @@ xl_dagc_copy(
 
                 adj->parents =
                         calloc(adj->n_parents, sizeof(struct xl_dagc_node *));
-                memcpy(adj->parents, &proto->adjacency[i], adj->n_parents);
+                memcpy(adj->parents, &proto->adjacency[i].parents,
+                        adj->n_parents * sizeof(struct xl_dagc_node *));
                 for (j = 0; j < adj->n_parents; j++)
                 {
                         err = _replace_ref(
