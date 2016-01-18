@@ -23,7 +23,11 @@ executable := $(DIST_DIR)/runexpel
 testexe := $(BUILD_DIR)/test-expel
 testldopts := $(LDOPTS) -lm -lpthread -lrt
 
-all: $(executable) test
+all: lib test
+
+
+################################################################################
+# Build shared library
 
 dist/include/expel/const.h: res/const.txt res/compile-const.awk
 	@test -d dist || mkdir dist
@@ -43,32 +47,45 @@ $(SHARED_LIB): $(objects)
 	@mkdir -p `dirname $(SHARED_LIB)`
 	$(CC) $(objects) -fPIC $(LDOPTS) -shared -o $@
 
-$(executable): expelrt/*.c $(SHARED_LIB)
+lib: $(SHARED_LIB)
+
+
+################################################################################
+# Build expelrt executable
+
+$(executable): expelrt/expelrt.c $(SHARED_LIB)
 	@mkdir -p `dirname $(executable)`
 	$(CC) $(COPTS) $(LDOPTS) $< -lexpel -o $@
+
+
+################################################################################
+# Build tests
+
+asms := $(patsubst test/pyasm/%.xlpy,build/xlb/%.xlb,$(wildcard test/pyasm/*.xlpy))
 
 $(testexe): test/unit/*.c $(SHARED_LIB)
 	@mkdir -p `dirname $(testexe)`
 	$(CC) $(COPTS) $(LDOPTS) $(testldopts) $< -lexpel -o $@
 
-clean:
-	rm -rf build dist
-	make -C test/pyasm clean
-
 unit_test: $(testexe)
 	$(testexe)
 
-pyasm_test: test/pyasm/* $(SHARED_LIB)
-	+make -C test/pyasm
+build/xlb/%.xlb: test/pyasm/%.xlpy pyasm/*.py
+	@mkdir -p $(dir $@)
+	PYTHONPATH=. python $< $@
+
+pyasm_test: $(asms) $(executable)
+	$(executable) $(asms)
 
 test: unit_test pyasm_test
 
-lib: $(SHARED_LIB)
+clean:
+	rm -rf build dist
 
 fuzz: asan = no
 fuzz: type = release
 fuzz: CC = afl-gcc
-fuzz: $(SHARED_LIB) pyasm_test
-	afl-fuzz -i test/pyasm/xlb -o test/afl-out test/pyasm/test-runner @@
+fuzz: $(SHARED_LIB) $(xlb_runner)
+	afl-fuzz -i - -o test/afl-out test/pyasm/test-runner @@
 
-.PHONY: clean test all unit_test pyasm_test so a
+.PHONY: clean test all unit_test pyasm_test lib fuzz
