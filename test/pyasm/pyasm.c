@@ -143,19 +143,22 @@ test_file(char *fname)
 teardown:
         free(timer);
 
-        for (i = 0; i < n_graphs; i++)
+        if (graphs != NULL)
         {
-                teardown_err = xl_release(graphs[i]);
-                if (teardown_err != OK)
+                for (i = 0; i < n_graphs; i++)
                 {
-                        char *explain = xl_explain_error(teardown_err);
-                        printf("graph release failed: %s\n", explain);
-                        free(explain);
-                        free(teardown_err);
-                }
+                        teardown_err = xl_release(graphs[i]);
+                        if (teardown_err != OK)
+                        {
+                                char *explain = xl_explain_error(teardown_err);
+                                printf("graph release failed: %s\n", explain);
+                                free(explain);
+                                free(teardown_err);
+                        }
 
+                }
+                free(graphs);
         }
-        free(graphs);
 
         teardown_err = xl_teardown();
         if (teardown_err != OK)
