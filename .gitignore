@@ -2,3 +2,4 @@ dist
 build
 /*.xl
 *.pyc
+test/afl-out
