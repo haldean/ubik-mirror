@@ -73,6 +73,14 @@ xl_type_func_apply(
         return OK;
 }
 
+bool
+xl_type_is_prim_word(struct xl_value *value)
+{
+        return value->left.v == BASE_TYPE_WORD
+                || value->left.v == BASE_TYPE_SWORD
+                || value->left.v == BASE_TYPE_BOOL;
+}
+
 no_ignore xl_error_t
 xl_type_word(struct xl_value *value)
 {

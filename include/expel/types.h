@@ -36,6 +36,12 @@ xl_type_func_apply(
 char *
 xl_explain_type(struct xl_value *type);
 
+/* Returns true if the values of the given type are "primitive words", meaning
+ * that their representation is entirely contained in the left value of their
+ * associated node. */
+bool
+xl_type_is_prim_word(struct xl_value *value);
+
 no_ignore xl_error_t
 xl_type_word(struct xl_value *value);
 
