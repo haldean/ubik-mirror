@@ -87,7 +87,7 @@ struct xl_value
         /* The number of references to the value, used by the
          * garbage collector. Special hell awaits those who modify
          * this value. */
-        uint16_t refcount;
+        uint64_t refcount;
 };
 
 struct xl_dagc;

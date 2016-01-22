@@ -33,7 +33,7 @@ struct xl_uri {
         word_t   version;
         word_t   scope;
 
-        word_t   refcount;
+        uint64_t refcount;
 };
 
 /* Creates a URI for a local resource. */

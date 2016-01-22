@@ -156,7 +156,7 @@ xl_take(void *p)
         if ((tag & TAG_TYPE_MASK) == TAG_VALUE)
         {
                 v = (struct xl_value *) p;
-                if (unlikely(v->refcount == UINT16_MAX))
+                if (unlikely(v->refcount == UINT64_MAX))
                         return xl_raise(ERR_REFCOUNT_OVERFLOW, "take");
                 v->refcount++;
                 return OK;
@@ -164,7 +164,7 @@ xl_take(void *p)
         if ((tag & TAG_TYPE_MASK) == TAG_GRAPH)
         {
                 g = (struct xl_dagc *) p;
-                if (unlikely(g->refcount == UINT16_MAX))
+                if (unlikely(g->refcount == UINT64_MAX))
                         return xl_raise(ERR_REFCOUNT_OVERFLOW, "take");
                 g->refcount++;
                 return OK;
@@ -172,7 +172,7 @@ xl_take(void *p)
         if ((tag & TAG_TYPE_MASK) == TAG_URI)
         {
                 u = (struct xl_uri *) p;
-                if (unlikely(u->refcount == UINT16_MAX))
+                if (unlikely(u->refcount == UINT64_MAX))
                         return xl_raise(ERR_REFCOUNT_OVERFLOW, "take");
                 u->refcount++;
                 return OK;
