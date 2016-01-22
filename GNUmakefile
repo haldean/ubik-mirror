@@ -83,7 +83,7 @@ clean:
 	rm -rf build dist
 
 fuzz: CC = afl-gcc
-fuzz: $(SHARED_LIB) $(executable)
-	afl-fuzz -i - -o test/afl-out $(executable) @@
+fuzz: $(SHARED_LIB) $(executable) $(asms)
+	afl-fuzz -i build/xlb -o test/afl-out $(executable) @@
 
 .PHONY: clean test all unit_test pyasm_test lib fuzz
