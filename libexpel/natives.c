@@ -113,6 +113,7 @@ _native_unsigned_add(struct xl_env *env, struct xl_dagc *graph)
 {
         struct xl_value *res;
         xl_error_t err;
+        word_t v0, v1;
 
         unused(env);
 
@@ -120,10 +121,14 @@ _native_unsigned_add(struct xl_env *env, struct xl_dagc *graph)
         if (err != OK)
                 return err;
 
+        v0 = graph->nodes[0]->known.tree->left.v;
+        v1 = graph->nodes[1]->known.tree->left.v;
+
         res->tag |= TAG_LEFT_WORD | TAG_RIGHT_WORD;
-        res->left.v = graph->nodes[0]->known.tree->left.v +
-                      graph->nodes[1]->known.tree->left.v;
-        res->right.v = 0;
+        res->left.v = v0 + v1;
+        res->right.v =
+                res->left.v < v0 || res->left.v < v1
+                ? ERR_OVERFLOW : 0;
 
         graph->result->known.tree = res;
         graph->result->known_type = graph->nodes[0]->known_type;
@@ -148,7 +153,7 @@ _native_unsigned_subtract(struct xl_env *env, struct xl_dagc *graph)
 {
         struct xl_value *res;
         xl_error_t err;
-        word_t v1, v2;
+        word_t v0, v1;
 
         unused(env);
 
@@ -156,15 +161,12 @@ _native_unsigned_subtract(struct xl_env *env, struct xl_dagc *graph)
         if (err != OK)
                 return err;
 
-        v1 = graph->nodes[0]->known.tree->left.v;
-        v2 = graph->nodes[1]->known.tree->left.v;
-
-        if (v1 < v2)
-                return xl_raise(ERR_UNDERFLOW, "subtraction underflow");
+        v0 = graph->nodes[0]->known.tree->left.v;
+        v1 = graph->nodes[1]->known.tree->left.v;
 
         res->tag |= TAG_LEFT_WORD | TAG_RIGHT_WORD;
-        res->left.v = v1 - v2;
-        res->right.v = 0;
+        res->left.v = v0 - v1;
+        res->right.v = v0 < v1 ? ERR_UNDERFLOW : 0;
 
         graph->result->known.tree = res;
         graph->result->known_type = graph->nodes[0]->known_type;
@@ -189,6 +191,7 @@ _native_eq(struct xl_env *env, struct xl_dagc *graph)
 {
         struct xl_value *res;
         struct xl_dagc_node *n0, *n1;
+        struct xl_value *v0, *v1;
         bool ret;
         xl_error_t err;
 
@@ -210,7 +213,16 @@ _native_eq(struct xl_env *env, struct xl_dagc *graph)
         }
         else if (n0->value_type == DAGC_TYPE_VALUE)
         {
-                ret = xl_value_eq(n0->known.tree, n1->known.tree);
+                ret = false;
+                if (xl_value_eq(n0->known_type, n1->known_type))
+                {
+                        v0 = n0->known.tree;
+                        v1 = n1->known.tree;
+                        if (xl_type_is_prim_word(n0->known_type))
+                                ret = v0->left.v == v1->left.v;
+                        else
+                                ret = xl_value_eq(v0, v1);
+                }
         }
         else
         {
