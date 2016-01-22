@@ -24,14 +24,14 @@
 
 /* node is fully evaluated */
 #define XL_DAGC_FLAG_COMPLETE 0x01
-/* node's first dependency is fully evaluated */
-#define XL_DAGC_FLAG_D1_READY 0x02
-/* node's second dependency is fully evaluated */
-#define XL_DAGC_FLAG_D2_READY 0x04
-/* node's third dependency is fully evaluated */
-#define XL_DAGC_FLAG_D3_READY 0x08
-/* d1_ready | d2_ready | d3_ready */
-#define XL_DAGC_READY_MASK    0x0E
+/* waiting on node's first dependency */
+#define XL_DAGC_FLAG_WAIT_D1  0x02
+/* waiting on node's second dependency */
+#define XL_DAGC_FLAG_WAIT_D2  0x04
+/* waiting on node's third dependency */
+#define XL_DAGC_FLAG_WAIT_D3  0x08
+/* wait_d1 | wait_d2 | wait_d3 */
+#define XL_DAGC_WAIT_MASK     0x0E
 
 struct xl_dagc_adjacency
 {

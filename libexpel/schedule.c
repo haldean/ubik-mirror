@@ -31,6 +31,11 @@ struct xl_node_schedule
         struct xl_dagc_node *node;
 };
 
+struct xl_scheduler
+{
+        struct xl_node_schedule *head;
+};
+
 /* Adds elem to set if elem isn't already in set, modifying the
  * provided size if necessary. Returns true if the element was
  * added to the set. */
@@ -124,6 +129,8 @@ _set_initial_ready(struct xl_dagc_node **nodes, size_t n_nodes)
         for (i = 0; i < n_nodes; i++)
         {
                 n = nodes[i];
+                n->flags = XL_DAGC_WAIT_MASK;
+
                 /* Input nodes are special; they're only ready once their values
                  * have been filled in, even though they have no dependencies.
                  * Only application of the graph they participate in can make
@@ -135,12 +142,23 @@ _set_initial_ready(struct xl_dagc_node **nodes, size_t n_nodes)
                 if (err != OK)
                         return err;
 
+                /* Cond nodes are also special; they start out only waiting on
+                 * their condition, and then on the basis of their condition
+                 * they are re-waited. */
+                if (n->node_type == DAGC_NODE_COND)
+                {
+                        if (d1->flags & XL_DAGC_FLAG_COMPLETE)
+                                n->flags = 0;
+                        else
+                                n->flags = XL_DAGC_FLAG_WAIT_D1;
+                }
+
                 if (d1 == NULL || d1->flags & XL_DAGC_FLAG_COMPLETE)
-                        n->flags |= XL_DAGC_FLAG_D1_READY;
+                        n->flags ^= XL_DAGC_FLAG_WAIT_D1;
                 if (d2 == NULL || d2->flags & XL_DAGC_FLAG_COMPLETE)
-                        n->flags |= XL_DAGC_FLAG_D2_READY;
+                        n->flags ^= XL_DAGC_FLAG_WAIT_D2;
                 if (d3 == NULL || d3->flags & XL_DAGC_FLAG_COMPLETE)
-                        n->flags |= XL_DAGC_FLAG_D3_READY;
+                        n->flags ^= XL_DAGC_FLAG_WAIT_D3;
         }
 
         return OK;
@@ -175,7 +193,7 @@ _schedule_all_ready(
                 n = nodes[i];
                 if (n->flags & XL_DAGC_FLAG_COMPLETE)
                         continue;
-                if ((n->flags & XL_DAGC_READY_MASK) == XL_DAGC_READY_MASK)
+                if (!(n->flags & XL_DAGC_WAIT_MASK))
                 {
                         err = _schedule(schedule, n);
                         if (err != OK)
@@ -209,13 +227,13 @@ _notify_parents(
                         return err;
 
                 if (node == d1)
-                        p->flags |= XL_DAGC_FLAG_D1_READY;
+                        p->flags &= ~XL_DAGC_FLAG_WAIT_D1;
                 if (node == d2)
-                        p->flags |= XL_DAGC_FLAG_D2_READY;
+                        p->flags &= ~XL_DAGC_FLAG_WAIT_D2;
                 if (node == d3)
-                        p->flags |= XL_DAGC_FLAG_D3_READY;
+                        p->flags &= ~XL_DAGC_FLAG_WAIT_D3;
 
-                if ((p->flags & XL_DAGC_READY_MASK) == XL_DAGC_READY_MASK)
+                if (!(p->flags & XL_DAGC_WAIT_MASK))
                 {
                         #ifdef XL_SCHEDULE_DEBUG
                         fprintf(stderr, "scheduling %hx for %hx\n",

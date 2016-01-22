@@ -76,7 +76,7 @@ _eval_apply(struct xl_env *env, struct xl_dagc_apply *node)
         }
 
         input->head.value_type = node->arg->value_type;
-        input->head.flags |= XL_DAGC_READY_MASK;
+        input->head.flags &= ~XL_DAGC_WAIT_MASK;
 
         input->head.known_type = node->arg->known_type;
         err = xl_take(input->head.known_type);
@@ -95,6 +95,8 @@ _eval_apply(struct xl_env *env, struct xl_dagc_apply *node)
         err = xl_type_func_apply(node->head.known_type, node->func->known_type);
         if (err != OK)
                 return err;
+
+        node->head.flags |= XL_DAGC_FLAG_COMPLETE;
         return OK;
 }
 
@@ -117,6 +119,8 @@ _eval_const(struct xl_env *env, struct xl_dagc_const *node)
         {
                 node->head.known = node->value;
                 err = xl_take(node->head.known.any);
+
+                node->head.flags |= XL_DAGC_FLAG_COMPLETE;
                 return err;
         }
 
@@ -152,6 +156,8 @@ _eval_load(struct xl_env *env, struct xl_dagc_load *node)
         node->head.value_type = value_type;
         node->head.known_type = type;
         node->head.known = value;
+
+        node->head.flags |= XL_DAGC_FLAG_COMPLETE;
         return OK;
 }
 
@@ -169,6 +175,19 @@ _eval_cond(struct xl_env *env, struct xl_dagc_cond *cond)
                 return err;
 
         res = condition ? cond->if_true : cond->if_false;
+
+        if (res->known.any == NULL)
+        {
+                /* If this is true, we just got done evaluating the condition
+                 * but we haven't scheduled the if_true/if_false nodes. We set
+                 * our wait flag on the appropriate node and let the scheduler
+                 * pick it up and reevaluate us later. */
+                cond->head.flags |= condition
+                        ? XL_DAGC_FLAG_WAIT_D2
+                        : XL_DAGC_FLAG_WAIT_D3;
+                return OK;
+        }
+
         cond->head.value_type = res->value_type;
         cond->head.known_type = res->known_type;
         cond->head.known = res->known;
@@ -179,6 +198,8 @@ _eval_cond(struct xl_env *env, struct xl_dagc_cond *cond)
         err = xl_take(cond->head.known.any);
         if (err != OK)
                 return err;
+
+        cond->head.flags |= XL_DAGC_FLAG_COMPLETE;
         return OK;
 }
 
@@ -199,6 +220,7 @@ _eval_store(struct xl_env *env, struct xl_dagc_store *node)
         if (err != OK)
                 return err;
 
+        node->head.flags |= XL_DAGC_FLAG_COMPLETE;
         return xl_set(
                 env, node->loc, node->value->known, node->value->known_type,
                 node->value->value_type);
@@ -209,6 +231,8 @@ _eval_input(struct xl_env *env, struct xl_dagc_input *node)
 {
         unused(env);
         unused(node);
+
+        node->head.flags |= XL_DAGC_FLAG_COMPLETE;
         return OK;
 }
 
@@ -217,7 +241,7 @@ xl_dagc_node_eval(struct xl_env *env, struct xl_dagc_node *node)
 {
         xl_error_t err;
 
-        xl_assert((node->flags & XL_DAGC_READY_MASK) == XL_DAGC_READY_MASK);
+        xl_assert(!(node->flags & XL_DAGC_WAIT_MASK));
 
         switch (node->node_type)
         {
@@ -248,8 +272,7 @@ xl_dagc_node_eval(struct xl_env *env, struct xl_dagc_node *node)
         if (err != OK)
                 return err;
 
-        node->flags |= XL_DAGC_FLAG_COMPLETE;
-
-        err = xl_dagc_collapse_graph(node, env);
+        if (node->flags & XL_DAGC_FLAG_COMPLETE)
+                err = xl_dagc_collapse_graph(node, env);
         return err;
 }
