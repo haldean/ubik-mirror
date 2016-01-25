@@ -21,6 +21,7 @@
 #include <stdlib.h>
 
 #include "expel/expel.h"
+#include "expel/explain.h"
 #include "expel/util.h"
 
 xl_error_t
