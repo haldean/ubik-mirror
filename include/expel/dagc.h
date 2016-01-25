@@ -21,6 +21,7 @@
 #define EXPEL_DAGC_H
 
 #include "expel/expel.h"
+#include "expel/schedule.h"
 
 /* node is fully evaluated */
 #define XL_DAGC_FLAG_COMPLETE 0x01
@@ -196,7 +197,10 @@ xl_dagc_known_value(
 
 /* Evaluates a node and marks it as complete. */
 no_ignore xl_error_t
-xl_dagc_node_eval(struct xl_env *env, struct xl_dagc_node *node);
+xl_dagc_node_eval(
+        struct xl_scheduler *s,
+        struct xl_env *env,
+        struct xl_dagc_node *node);
 
 /* Performs a copy from proto to result.
  *

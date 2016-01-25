@@ -20,6 +20,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 
+#include "expel/assert.h"
 #include "expel/dagc.h"
 #include "expel/env.h"
 #include "expel/expel.h"
@@ -33,85 +34,9 @@ struct xl_node_schedule
 
 struct xl_scheduler
 {
-        struct xl_node_schedule *head;
+        struct xl_node_schedule *ready;
+        struct xl_dagc *graph;
 };
-
-/* Adds elem to set if elem isn't already in set, modifying the
- * provided size if necessary. Returns true if the element was
- * added to the set. */
-static bool
-_set_add(struct xl_dagc_node **set, size_t *n, struct xl_dagc_node *elem)
-{
-        size_t i;
-        bool found;
-
-        found = false;
-        for (i = 0; i < *n; i++)
-        {
-                if (set[i] == elem)
-                {
-                        found = true;
-                        break;
-                }
-        }
-        if (!found)
-        {
-                set[(*n)++] = elem;
-                return true;
-        }
-        return false;
-}
-
-/* Finds reachable nodes in the graph.
- *
- * "Reachable" nodes are ones that are reachable from a terminal
- * node by traversing dependency edges; nodes that are not
- * reachable do not need to be evaluated. */
-no_ignore static xl_error_t
-_find_reachable_nodes(
-        struct xl_dagc_node **reachable,
-        size_t *rn,
-        struct xl_dagc *graph)
-{
-        struct xl_dagc_node *n, *d1, *d2, *d3;
-        size_t i;
-        xl_error_t err;
-
-        /* Mark appropriate nodes as reachable. */
-        *rn = 0;
-
-        /* First find terminal nodes. */
-        for (i = 0; i < graph->n; i++)
-        {
-                n = graph->nodes[i];
-                if (n->is_terminal)
-                        reachable[(*rn)++] = n;
-        }
-
-        /* Now keep finding nodes reachable from reachable nodes
-         * until there are no more. This exploits the moderately
-         * surprising behavior that our loop maximum keeps going
-         * up as we add things to the reachable set, so they will
-         * be reached later in the loop. Kind of a neat trick! */
-        for (i = 0; i < *rn; i++)
-        {
-                n = reachable[i];
-                #ifdef XL_SCHEDULE_DEBUG
-                fprintf(stderr, "reachable  %hx\n", (short)((uintptr_t) n));
-                #endif
-                err = xl_dagc_get_deps(&d1, &d2, &d3, n);
-                if (err != OK)
-                        return err;
-                if (d1 != NULL)
-                        _set_add(reachable, rn, d1);
-                if (d2 != NULL)
-                        _set_add(reachable, rn, d2);
-                if (d3 != NULL)
-                        _set_add(reachable, rn, d3);
-        }
-
-        return OK;
-}
 
 /* Initializes the flags of a given set of nodes.
  *
@@ -129,7 +54,6 @@ _set_initial_ready(struct xl_dagc_node **nodes, size_t n_nodes)
         for (i = 0; i < n_nodes; i++)
         {
                 n = nodes[i];
-                n->flags = XL_DAGC_WAIT_MASK;
 
                 /* Input nodes are special; they're only ready once their values
                  * have been filled in, even though they have no dependencies.
@@ -153,6 +77,7 @@ _set_initial_ready(struct xl_dagc_node **nodes, size_t n_nodes)
                                 n->flags = XL_DAGC_FLAG_WAIT_D1;
                 }
 
+                n->flags = XL_DAGC_WAIT_MASK;
                 if (d1 == NULL || d1->flags & XL_DAGC_FLAG_COMPLETE)
                         n->flags ^= XL_DAGC_FLAG_WAIT_D1;
                 if (d2 == NULL || d2->flags & XL_DAGC_FLAG_COMPLETE)
@@ -165,56 +90,27 @@ _set_initial_ready(struct xl_dagc_node **nodes, size_t n_nodes)
 }
 
 no_ignore static xl_error_t
-_schedule(struct xl_node_schedule **schedule, struct xl_dagc_node *node)
+_schedule(struct xl_scheduler *schedule, struct xl_dagc_node *node)
 {
         struct xl_node_schedule *sched;
+        xl_assert(!(node->flags & XL_DAGC_WAIT_MASK));
 
         sched = calloc(1, sizeof(struct xl_node_schedule));
-        sched->prev = *schedule;
+        sched->prev = schedule->ready;
         sched->node = node;
-        *schedule = sched;
+        schedule->ready = sched;
 
         return OK;
 }
 
 no_ignore static xl_error_t
-_schedule_all_ready(
-                struct xl_node_schedule **schedule,
-                struct xl_dagc_node **nodes,
-                size_t n_nodes)
-{
-        struct xl_dagc_node *n;
-        xl_error_t err;
-        size_t i;
-
-        *schedule = NULL;
-        for (i = 0; i < n_nodes; i++)
-        {
-                n = nodes[i];
-                if (n->flags & XL_DAGC_FLAG_COMPLETE)
-                        continue;
-                if (!(n->flags & XL_DAGC_WAIT_MASK))
-                {
-                        err = _schedule(schedule, n);
-                        if (err != OK)
-                                return err;
-                }
-        }
-
-        return OK;
-}
-
-no_ignore static xl_error_t
-_notify_parents(
-                struct xl_node_schedule **schedule,
-                struct xl_dagc *graph,
-                struct xl_dagc_node *node)
+_notify_parents(struct xl_scheduler *s, struct xl_dagc_node *n)
 {
         struct xl_dagc_node **parents, *d1, *d2, *d3, *p;
         size_t i, n_parents;
         xl_error_t err;
 
-        err = xl_dagc_get_parents(&parents, &n_parents, graph, node);
+        err = xl_dagc_get_parents(&parents, &n_parents, s->graph, n);
         if (err != OK)
                 return err;
 
@@ -226,11 +122,11 @@ _notify_parents(
                 if (err != OK)
                         return err;
 
-                if (node == d1)
+                if (n == d1)
                         p->flags &= ~XL_DAGC_FLAG_WAIT_D1;
-                if (node == d2)
+                if (n == d2)
                         p->flags &= ~XL_DAGC_FLAG_WAIT_D2;
-                if (node == d3)
+                if (n == d3)
                         p->flags &= ~XL_DAGC_FLAG_WAIT_D3;
 
                 if (!(p->flags & XL_DAGC_WAIT_MASK))
@@ -240,12 +136,55 @@ _notify_parents(
                                 (short)((uintptr_t) p),
                                 (short)((uintptr_t) node));
                         #endif
-                        err = _schedule(schedule, p);
+                        err = _schedule(s, p);
                         if (err != OK)
                                 return err;
                 }
         }
         return OK;
+}
+
+no_ignore xl_error_t
+xl_schedule_push(struct xl_scheduler *s, struct xl_dagc_node *n)
+{
+        struct xl_dagc_node *d1, *d2, *d3;
+        xl_error_t err;
+
+        if (n->flags & XL_DAGC_FLAG_COMPLETE)
+        {
+                return _notify_parents(s, n);
+        }
+        if (n->flags & XL_DAGC_WAIT_MASK)
+        {
+                err = xl_dagc_get_deps(&d1, &d2, &d3, n);
+                if (err != OK)
+                        return err;
+
+                if (n->flags & XL_DAGC_FLAG_WAIT_D1)
+                {
+                        xl_assert(d1 != NULL);
+                        err = xl_schedule_push(s, d1);
+                        if (err != OK)
+                                return err;
+                }
+                if (n->flags & XL_DAGC_FLAG_WAIT_D2)
+                {
+                        xl_assert(d2 != NULL);
+                        err = xl_schedule_push(s, d2);
+                        if (err != OK)
+                                return err;
+                }
+                if (n->flags & XL_DAGC_FLAG_WAIT_D3)
+                {
+                        xl_assert(d3 != NULL);
+                        err = xl_schedule_push(s, d3);
+                        if (err != OK)
+                                return err;
+                }
+
+                return OK;
+        }
+        return _schedule(s, n);
 }
 
 no_ignore static xl_error_t
@@ -266,53 +205,40 @@ _eval_native_dagc(struct xl_env *env, struct xl_dagc_native *ngraph)
 no_ignore xl_error_t
 xl_dagc_eval(struct xl_env *env, struct xl_dagc *graph)
 {
-        struct xl_dagc_node **reachable;
-        struct xl_node_schedule *schedule, *to_exec;
-        size_t n_nodes;
+        struct xl_scheduler s;
+        struct xl_node_schedule *to_exec;
         xl_error_t err;
+        size_t i;
 
         /* Native graphs get to cheat and skip all this biz. */
         if (graph->tag & TAG_GRAPH_NATIVE)
                 return _eval_native_dagc(env, (struct xl_dagc_native *) graph);
 
-        reachable = calloc(graph->n, sizeof(struct xl_node *));
-        if (reachable == NULL)
-                return xl_raise(ERR_NO_MEMORY, "eval");
+        s.ready = NULL;
+        s.graph = graph;
 
-        err = _find_reachable_nodes(reachable, &n_nodes, graph);
+        err = _set_initial_ready(graph->nodes, graph->n);
         if (err != OK)
                 return err;
 
-        err = _set_initial_ready(reachable, n_nodes);
-        if (err != OK)
-                return err;
-
-        err = _schedule_all_ready(&schedule, reachable, n_nodes);
-        if (err != OK)
-                return err;
-
-        while (schedule != NULL)
+        for (i = 0; i < graph->out_arity; i++)
         {
-                to_exec = schedule;
-                schedule = to_exec->prev;
-
-                err = xl_dagc_node_eval(env, to_exec->node);
+                err = xl_schedule_push(&s, graph->terminals[i]);
                 if (err != OK)
                         return err;
-
-                #ifdef XL_SCHEDULE_DEBUG
-                        fprintf(stderr, "evaluated  %hx  %s\n",
-                                (short)((uintptr_t) to_exec->node),
-                                xl_explain_word(to_exec->node->node_type));
-                #endif
-
-                err = _notify_parents(&schedule, graph, to_exec->node);
-                if (err != OK)
-                        return err;
-
-                free(to_exec);
         }
 
-        free(reachable);
+        while (s.ready != NULL)
+        {
+                to_exec = s.ready;
+                s.ready = to_exec->prev;
+
+                if (to_exec->node->flags & XL_DAGC_FLAG_COMPLETE)
+                        continue;
+
+                err = xl_dagc_node_eval(&s, env, to_exec->node);
+                if (err != OK)
+                        return err;
+        }
         return OK;
 }

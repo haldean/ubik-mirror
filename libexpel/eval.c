@@ -76,7 +76,7 @@ _eval_apply(struct xl_env *env, struct xl_dagc_apply *node)
         }
 
         input->head.value_type = node->arg->value_type;
-        input->head.flags &= ~XL_DAGC_WAIT_MASK;
+        input->head.flags = XL_DAGC_FLAG_COMPLETE;
 
         input->head.known_type = node->arg->known_type;
         err = xl_take(input->head.known_type);
@@ -237,7 +237,10 @@ _eval_input(struct xl_env *env, struct xl_dagc_input *node)
 }
 
 no_ignore xl_error_t
-xl_dagc_node_eval(struct xl_env *env, struct xl_dagc_node *node)
+xl_dagc_node_eval(
+        struct xl_scheduler *s,
+        struct xl_env *env,
+        struct xl_dagc_node *node)
 {
         xl_error_t err;
 
@@ -273,6 +276,15 @@ xl_dagc_node_eval(struct xl_env *env, struct xl_dagc_node *node)
                 return err;
 
         if (node->flags & XL_DAGC_FLAG_COMPLETE)
+        {
                 err = xl_dagc_collapse_graph(node, env);
-        return err;
+                if (err != OK)
+                        return err;
+        }
+
+        err = xl_schedule_push(s, node);
+        if (err != OK)
+                return err;
+
+        return OK;
 }
