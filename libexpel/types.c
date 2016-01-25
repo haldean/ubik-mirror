@@ -60,7 +60,7 @@ xl_explain_type(struct xl_value *type)
         return res;
 }
 
-no_ignore xl_error_t
+no_ignore xl_error
 xl_type_func_apply(
         struct xl_value *result,
         struct xl_value *func_type)
@@ -82,7 +82,7 @@ xl_type_is_prim_word(struct xl_value *value)
                 || value->left.w == BASE_TYPE_FLOAT;
 }
 
-no_ignore xl_error_t
+no_ignore xl_error
 xl_type_word(struct xl_value *value)
 {
         value->tag |= TAG_LEFT_WORD | TAG_RIGHT_WORD;
@@ -91,7 +91,7 @@ xl_type_word(struct xl_value *value)
         return OK;
 }
 
-no_ignore xl_error_t
+no_ignore xl_error
 xl_type_string(struct xl_value *value)
 {
         value->tag |= TAG_LEFT_WORD | TAG_RIGHT_WORD;
@@ -100,7 +100,7 @@ xl_type_string(struct xl_value *value)
         return OK;
 }
 
-no_ignore xl_error_t
+no_ignore xl_error
 xl_type_bool(struct xl_value *value)
 {
         value->tag |= TAG_LEFT_WORD | TAG_RIGHT_WORD;
@@ -109,7 +109,7 @@ xl_type_bool(struct xl_value *value)
         return OK;
 }
 
-no_ignore xl_error_t
+no_ignore xl_error
 xl_type_float(struct xl_value *value)
 {
         value->tag |= TAG_LEFT_WORD | TAG_RIGHT_WORD;
@@ -118,13 +118,13 @@ xl_type_float(struct xl_value *value)
         return OK;
 }
 
-no_ignore xl_error_t
+no_ignore xl_error
 xl_type_tuple(
         struct xl_value *product,
         struct xl_value **field_types,
         size_t n_field_types)
 {
-        xl_error_t err;
+        xl_error err;
         size_t i;
 
         product->tag |= TAG_LEFT_WORD | TAG_RIGHT_NODE;

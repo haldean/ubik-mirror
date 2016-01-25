@@ -73,8 +73,8 @@ struct xl_error
         const char *function;
         uint32_t lineno;
 };
-typedef struct xl_error * xl_error_t;
-#define OK ((xl_error_t) NULL)
+typedef struct xl_error * xl_error;
+#define OK ((xl_error) NULL)
 
 #define no_ignore __attribute__((__warn_unused_result__))
 
@@ -178,13 +178,13 @@ struct xl_dagc
 /* Starts the expel runtime.
  *
  * Returns OK on success. */
-no_ignore xl_error_t
+no_ignore xl_error
 xl_start();
 
 /* Stops the expel runtime.
  *
  * Returns OK on success. */
-no_ignore xl_error_t
+no_ignore xl_error
 xl_teardown();
 
 /* Creates a new value.
@@ -192,13 +192,13 @@ xl_teardown();
  * The returned value has a refcount of one; callers to xl_new do
  * not need to take the result. This may result in an allocation
  * but is not guaranteed to; xl_values are allocated in pages. */
-no_ignore xl_error_t
+no_ignore xl_error
 xl_new(struct xl_value **v);
 
 /* Takes a reference to the given tree or graph.
  *
  * Returns OK on success, or a nonzero error code on failure. */
-no_ignore xl_error_t
+no_ignore xl_error
 xl_take(void *v);
 
 /* Releases a reference to the given tree or graph.
@@ -208,39 +208,39 @@ xl_take(void *v);
  * to; xl_values are garbage-collected periodically. If passed a
  * graph and the releaser was the last owner of the graph, this
  * will free the graph. */
-no_ignore xl_error_t
+no_ignore xl_error
 xl_release(void *v);
 
 /* Loads an expel bytecode blob from a stream.
  *
  * Returns OK on success, or a nonzero error word. */
-no_ignore xl_error_t
+no_ignore xl_error
 xl_load(struct xl_dagc ***out, size_t *n_graphs, struct xl_stream *sp);
 
 /* Saves a graph to a stream.
  *
  * Returns OK on success, or a nonzero error word. */
-no_ignore xl_error_t
+no_ignore xl_error
 xl_save(struct xl_stream *sp, struct xl_dagc *in);
 
 /* Loads a tree from a stream.
  *
  * The returned tree is not taken; it is up to the caller to take the
  * tree. Returns OK on success, or a nonzero error word. */
-no_ignore xl_error_t
+no_ignore xl_error
 xl_load_value(struct xl_value *out, struct xl_stream *sp);
 
 /* Saves a tree to a stream.
  *
  * Returns OK on success, or a nonzero error word. */
-no_ignore xl_error_t
+no_ignore xl_error
 xl_save_value(struct xl_stream *sp, struct xl_value *in);
 
 /* Allocates a graph object.
  *
  * All graph objects must be allocated on the heap; call into this
  * method to allocate a graph of a given size. */
-no_ignore xl_error_t
+no_ignore xl_error
 xl_new_dagc(struct xl_dagc **g, size_t n);
 
 /* Initializes derived quantities on graphs.
@@ -252,7 +252,7 @@ xl_new_dagc(struct xl_dagc **g, size_t n);
  * This resets the refcount of the given graph to 1; initializers
  * of graph structs do not need to take a reference to the graph
  * after initialization. */
-no_ignore xl_error_t
+no_ignore xl_error
 xl_dagc_init(struct xl_dagc *graph);
 
 /* Evaluates all terminal nodes in a graph.
@@ -260,11 +260,11 @@ xl_dagc_init(struct xl_dagc *graph);
  * This finds all nodes reachable from any node marked terminal,
  * and evaluates all of those nodes to determine the value for the
  * terminal nodes. */
-no_ignore xl_error_t
+no_ignore xl_error
 xl_dagc_eval(struct xl_env *env, struct xl_dagc *graph);
 
 /* Create an error object. */
-xl_error_t
+xl_error
 xl_new_error(
         const xl_word code,
         const char *tag,
@@ -274,7 +274,7 @@ xl_new_error(
 
 /* Creates a string representation of an error object. */
 char *
-xl_explain_error(xl_error_t err);
+xl_explain_error(xl_error err);
 
 /* Raise an error with the current file and line populated. */
 #define xl_raise(code, tag) \

@@ -40,23 +40,23 @@ struct xl_stream {
 };
 
 /* Opens a stream for reading from the given file. */
-no_ignore xl_error_t
+no_ignore xl_error
 xl_stream_rfile(struct xl_stream *sp, char *file);
 
 /* Opens a stream for writing to the given file. */
-no_ignore xl_error_t
+no_ignore xl_error
 xl_stream_wfile(struct xl_stream *sp, char *file);
 
 /* Opens a stream for reading from the given file pointer. */
-no_ignore xl_error_t
+no_ignore xl_error
 xl_stream_rfilep(struct xl_stream *sp, FILE *file);
 
 /* Opens a stream for writing to the given file pointer. */
-no_ignore xl_error_t
+no_ignore xl_error
 xl_stream_wfilep(struct xl_stream *sp, FILE *file);
 
 /* Opens a stream backed by an in-memory buffer. */
-no_ignore xl_error_t
+no_ignore xl_error
 xl_stream_buffer(struct xl_stream *sp);
 
 /* Attempts to read the specified number of bytes from the stream, returning the

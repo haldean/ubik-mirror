@@ -288,7 +288,7 @@ natives()
 int
 main()
 {
-        xl_error_t err;
+        xl_error err;
 
         init();
         if ((err = xl_start()) != OK)

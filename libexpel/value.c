@@ -56,7 +56,7 @@ xl_value_eq(struct xl_value *v1, struct xl_value *v2)
         return true;
 }
 
-no_ignore xl_error_t
+no_ignore xl_error
 xl_read_packed(uint8_t **dest, size_t *n, struct xl_value *src)
 {
         size_t i, n_bytes, n_copy;
@@ -98,10 +98,10 @@ xl_read_packed(uint8_t **dest, size_t *n, struct xl_value *src)
         return OK;
 }
 
-no_ignore xl_error_t
+no_ignore xl_error
 xl_read_string(wchar_t **dest, size_t *n, struct xl_value *src)
 {
-        xl_error_t err;
+        xl_error err;
         size_t str_size, buf_size;
         char *buf, *orig_buf;
 
@@ -131,13 +131,13 @@ xl_read_string(wchar_t **dest, size_t *n, struct xl_value *src)
         return OK;
 }
 
-no_ignore xl_error_t
+no_ignore xl_error
 xl_print_value(struct xl_stream *out, struct xl_value *v)
 {
         size_t written;
         size_t n;
         char buf[64];
-        xl_error_t err;
+        xl_error err;
 
         if ((v->tag & TAG_TYPE_MASK) != TAG_VALUE)
                 return xl_raise(ERR_BAD_TAG, "print value: not a value");
@@ -189,7 +189,7 @@ xl_print_value(struct xl_stream *out, struct xl_value *v)
         return OK;
 }
 
-no_ignore xl_error_t
+no_ignore xl_error
 xl_value_as_bool(bool *res, struct xl_value *v)
 {
         xl_word left;

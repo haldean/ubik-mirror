@@ -30,7 +30,7 @@ struct xl_timer
         struct timespec start_time;
 };
 
-no_ignore xl_error_t
+no_ignore xl_error
 xl_timer_new(struct xl_timer **t)
 {
         *t = calloc(1, sizeof(struct xl_timer));
@@ -39,7 +39,7 @@ xl_timer_new(struct xl_timer **t)
         return OK;
 }
 
-no_ignore xl_error_t
+no_ignore xl_error
 xl_timer_start(struct xl_timer *t)
 {
         int res;
@@ -50,7 +50,7 @@ xl_timer_start(struct xl_timer *t)
         return OK;
 }
 
-no_ignore xl_error_t
+no_ignore xl_error
 xl_timer_elapsed(int64_t *microsec, struct xl_timer *t)
 {
         int ret;

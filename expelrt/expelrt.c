@@ -37,7 +37,7 @@
                 goto teardown; \
         } } while(0)
 
-xl_error_t
+xl_error
 test_file(char *fname)
 {
         struct xl_stream stream;
@@ -46,7 +46,7 @@ test_file(char *fname)
         struct xl_env env;
         struct xl_value *expected, *actual;
         size_t n_graphs, i;
-        xl_error_t err, teardown_err;
+        xl_error err, teardown_err;
         struct xl_timer *timer;
         int64_t elapsed;
 

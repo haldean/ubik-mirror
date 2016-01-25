@@ -25,12 +25,12 @@
 #include "expel/expel.h"
 #include "expel/util.h"
 
-no_ignore xl_error_t
+no_ignore xl_error
 xl_dagc_collapse_graph(struct xl_dagc_node *node, struct xl_env *env)
 {
         struct xl_dagc *graph;
         struct xl_env *child_env;
-        xl_error_t err;
+        xl_error err;
 
         if (node->value_type != DAGC_TYPE_GRAPH)
                 return OK;

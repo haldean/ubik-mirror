@@ -22,10 +22,10 @@
 #include "expel/gc.h"
 #include "expel/natives.h"
 
-xl_error_t
+xl_error
 xl_start()
 {
-        xl_error_t err;
+        xl_error err;
 
         xl_gc_start();
 
@@ -36,10 +36,10 @@ xl_start()
         return OK;
 }
 
-xl_error_t
+xl_error
 xl_teardown()
 {
-        xl_error_t err;
+        xl_error err;
 
         err = xl_env_free(xl_env_get_root());
         if (err != OK)

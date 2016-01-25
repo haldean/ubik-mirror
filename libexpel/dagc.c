@@ -26,7 +26,7 @@
 #include "expel/expel.h"
 #include "expel/util.h"
 
-no_ignore xl_error_t
+no_ignore xl_error
 xl_alloc_dagc_with_size(
         struct xl_dagc **graph,
         size_t n_nodes,
@@ -68,7 +68,7 @@ xl_alloc_dagc_with_size(
         return OK;
 }
 
-no_ignore xl_error_t
+no_ignore xl_error
 xl_new_dagc(struct xl_dagc **graph, size_t n_nodes)
 {
         return xl_alloc_dagc_with_size(
@@ -81,7 +81,7 @@ xl_new_dagc(struct xl_dagc **graph, size_t n_nodes)
  * with valid pointers. For nodes with one dependency, d1 will be
  * filled in with a pointer and d2 will be set to NULL. For nodes
  * with no dependencies, both will be NULL. */
-no_ignore xl_error_t
+no_ignore xl_error
 xl_dagc_get_deps(
                 struct xl_dagc_node **d1,
                 struct xl_dagc_node **d2,
@@ -138,7 +138,7 @@ _cmp_adjacency(const void *v1, const void *v2)
         return 0;
 }
 
-no_ignore static xl_error_t
+no_ignore static xl_error
 _find_adjacency(
         size_t *i,
         struct xl_dagc_adjacency *adjacencies,
@@ -166,12 +166,12 @@ _find_adjacency(
         return xl_raise(ERR_ABSENT, "find adjacency");
 }
 
-no_ignore static xl_error_t
+no_ignore static xl_error
 _increment_n_parents(
         struct xl_dagc *graph,
         struct xl_dagc_node *child)
 {
-        xl_error_t err;
+        xl_error err;
         size_t i;
 
         i = graph->n;
@@ -185,7 +185,7 @@ _increment_n_parents(
         return OK;
 }
 
-no_ignore static xl_error_t
+no_ignore static xl_error
 _add_parent(
         struct xl_dagc *graph,
         struct xl_dagc_node *parent,
@@ -193,7 +193,7 @@ _add_parent(
 {
         struct xl_dagc_adjacency *adj;
         size_t adj_i, parent_i;
-        xl_error_t err;
+        xl_error err;
 
         adj_i = graph->n;
         err = _find_adjacency(
@@ -215,13 +215,13 @@ _add_parent(
         return OK;
 }
 
-no_ignore xl_error_t
+no_ignore xl_error
 xl_dagc_init(struct xl_dagc *graph)
 {
         struct xl_dagc_node *p, *d1, *d2, *d3;
         struct xl_dagc_adjacency *adj;
         size_t i, next_in, next_out;
-        xl_error_t err;
+        xl_error err;
 
         graph->tag = TAG_GRAPH;
         graph->refcount = 1;
@@ -341,7 +341,7 @@ xl_dagc_init(struct xl_dagc *graph)
         return OK;
 }
 
-no_ignore xl_error_t
+no_ignore xl_error
 xl_dagc_known_value(
         struct xl_value **value,
         struct xl_value **type,
@@ -365,7 +365,7 @@ xl_dagc_known_value(
         return xl_raise(ERR_BAD_TYPE, "known_value node type");
 }
 
-no_ignore xl_error_t
+no_ignore xl_error
 xl_dagc_get_parents(
         struct xl_dagc_node ***parents,
         size_t *n_parents,
@@ -373,7 +373,7 @@ xl_dagc_get_parents(
         struct xl_dagc_node *child)
 {
         size_t i;
-        xl_error_t err;
+        xl_error err;
 
         i = graph->n;
         err = _find_adjacency(&i, graph->adjacency, graph->n, child);
@@ -387,7 +387,7 @@ xl_dagc_get_parents(
         return OK;
 }
 
-no_ignore static xl_error_t
+no_ignore static xl_error
 _replace_ref(
         struct xl_dagc_node **ref,
         struct xl_dagc_node **proto,
@@ -409,7 +409,7 @@ _replace_ref(
         return xl_raise(ERR_ABSENT, "replace ref");
 }
 
-no_ignore static xl_error_t
+no_ignore static xl_error
 _replace_node_refs(
         struct xl_dagc_node *node,
         struct xl_dagc_node **proto,
@@ -420,7 +420,7 @@ _replace_node_refs(
         struct xl_dagc_load *l;
         struct xl_dagc_store *s;
         struct xl_dagc_cond *c;
-        xl_error_t err;
+        xl_error err;
 
         switch (node->node_type)
         {
@@ -461,14 +461,14 @@ _replace_node_refs(
         return xl_raise(ERR_UNKNOWN_TYPE, "replace node refs");
 }
 
-no_ignore static xl_error_t
+no_ignore static xl_error
 _increment_value_refs(struct xl_dagc_node *node)
 {
         struct xl_dagc_load *l;
         struct xl_dagc_store *s;
         struct xl_dagc_const *c;
         struct xl_dagc_input *i;
-        xl_error_t err;
+        xl_error err;
 
         if (node->known.any != NULL)
         {
@@ -512,7 +512,7 @@ _increment_value_refs(struct xl_dagc_node *node)
         return xl_raise(ERR_UNKNOWN_TYPE, "inc value refs");
 }
 
-no_ignore xl_error_t
+no_ignore xl_error
 xl_dagc_copy(
         struct xl_dagc **res_ptr,
         struct xl_dagc *proto)
@@ -520,7 +520,7 @@ xl_dagc_copy(
         struct xl_dagc_adjacency *adj;
         struct xl_dagc *result;
         size_t i, j, size;
-        xl_error_t err;
+        xl_error err;
 
         /* Start by making a direct copy, then replace all of the references. */
         size = sizeof(struct xl_dagc);

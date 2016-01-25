@@ -60,12 +60,12 @@
  * integer. Repeat the same operation for the right node.
  */
 
-no_ignore xl_error_t
+no_ignore xl_error
 xl_load_value(struct xl_value *out, struct xl_stream *sp)
 {
         xl_tag tag;
-        xl_error_t err;
-        xl_error_t err_ignore;
+        xl_error err;
+        xl_error err_ignore;
 
         READ_INTO(tag, sp);
         tag = ntohs(tag);
@@ -136,12 +136,12 @@ xl_load_value(struct xl_value *out, struct xl_stream *sp)
         return OK;
 }
 
-no_ignore xl_error_t
+no_ignore xl_error
 xl_save_value(struct xl_stream *sp, struct xl_value *in)
 {
         xl_tag tag;
         xl_word val;
-        xl_error_t err;
+        xl_error err;
 
         tag = htons(in->tag);
         if (xl_stream_write(sp, &tag, sizeof(xl_tag)) != sizeof(xl_tag))
@@ -176,7 +176,7 @@ xl_save_value(struct xl_stream *sp, struct xl_value *in)
         return OK;
 }
 
-no_ignore static xl_error_t
+no_ignore static xl_error
 _load_apply(struct xl_dagc_apply *node, struct xl_stream *sp)
 {
         uint64_t node_index;
@@ -198,7 +198,7 @@ _load_apply(struct xl_dagc_apply *node, struct xl_stream *sp)
 }
 
 
-no_ignore static xl_error_t
+no_ignore static xl_error
 _load_const(
         struct xl_dagc_const *node,
         struct xl_stream *sp,
@@ -208,7 +208,7 @@ _load_const(
         xl_word graph_index;
         xl_word value_index;
         xl_word value_type;
-        xl_error_t err;
+        xl_error err;
 
         READ_INTO(value_type, sp);
         node->head.value_type = ntohw(value_type);
@@ -242,14 +242,14 @@ _load_const(
         return xl_raise(ERR_BAD_HEADER, "const subtype");
 }
 
-no_ignore static xl_error_t
+no_ignore static xl_error
 _load_load(
         struct xl_dagc_load *node,
         struct xl_stream *sp,
         struct xl_value **values,
         size_t n_values)
 {
-        xl_error_t err;
+        xl_error err;
         xl_word value_index;
         xl_word node_index;
         struct xl_value *uri_val;
@@ -278,14 +278,14 @@ _load_load(
         return err;
 }
 
-no_ignore static xl_error_t
+no_ignore static xl_error
 _load_store(
         struct xl_dagc_store *node,
         struct xl_stream *sp,
         struct xl_value **values,
         size_t n_values)
 {
-        xl_error_t err;
+        xl_error err;
         xl_word value_index;
         xl_word node_index;
         struct xl_value *uri_val;
@@ -314,7 +314,7 @@ _load_store(
         return err;
 }
 
-no_ignore static xl_error_t
+no_ignore static xl_error
 _load_input(
         struct xl_dagc_input *node,
         struct xl_stream *sp,
@@ -323,7 +323,7 @@ _load_input(
 {
         xl_word value_index;
         xl_word arg_num;
-        xl_error_t err;
+        xl_error err;
 
         READ_INTO(arg_num, sp);
         node->arg_num = ntohw(arg_num);
@@ -337,7 +337,7 @@ _load_input(
         return err;
 }
 
-no_ignore static xl_error_t
+no_ignore static xl_error
 _load_cond(struct xl_dagc_cond *node, struct xl_stream *sp)
 {
         uint64_t node_index;
@@ -359,14 +359,14 @@ _load_cond(struct xl_dagc_cond *node, struct xl_stream *sp)
         return OK;
 }
 
-no_ignore static xl_error_t
+no_ignore static xl_error
 _load_node(
         struct xl_dagc_node *node,
         struct xl_stream *sp,
         struct xl_value **values,
         size_t n_values)
 {
-        xl_error_t err;
+        xl_error err;
         xl_word node_type;
         xl_word node_id;
         uint8_t terminal;
@@ -419,7 +419,7 @@ _load_node(
         return OK;
 }
 
-no_ignore static xl_error_t
+no_ignore static xl_error
 _set_node_pointers(
         struct xl_dagc_node *node,
         struct xl_dagc_node **all_nodes,
@@ -483,7 +483,7 @@ _set_node_pointers(
         return OK;
 }
 
-no_ignore static xl_error_t
+no_ignore static xl_error
 _set_graph_pointers(
         struct xl_dagc *graph,
         struct xl_dagc **all_graphs,
@@ -492,7 +492,7 @@ _set_graph_pointers(
         struct xl_dagc_const *n;
         size_t graph_i;
         size_t i;
-        xl_error_t err;
+        xl_error err;
 
         for (i = 0; i < graph->n; i++)
         {
@@ -515,7 +515,7 @@ _set_graph_pointers(
         return OK;
 }
 
-no_ignore static xl_error_t
+no_ignore static xl_error
 _load_graph(
         struct xl_dagc **graph,
         struct xl_stream *sp,
@@ -525,7 +525,7 @@ _load_graph(
         xl_word n_nodes;
         xl_word result_idx;
         size_t i;
-        xl_error_t err;
+        xl_error err;
 
         READ_INTO(n_nodes, sp);
         n_nodes = ntohw(n_nodes);
@@ -585,7 +585,7 @@ _load_graph(
         return xl_dagc_init(*graph);
 }
 
-no_ignore xl_error_t
+no_ignore xl_error
 xl_load(struct xl_dagc ***graphs, size_t *ret_n_graphs, struct xl_stream *sp)
 {
 
@@ -593,7 +593,7 @@ xl_load(struct xl_dagc ***graphs, size_t *ret_n_graphs, struct xl_stream *sp)
         uint32_t version;
         struct xl_value **values;
         xl_word n_graphs, n_values;
-        xl_error_t err;
+        xl_error err;
         size_t i;
 
         READ_INTO(header, sp);

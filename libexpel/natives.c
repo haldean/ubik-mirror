@@ -29,10 +29,10 @@
 #include <string.h>
 #include <wchar.h>
 
-no_ignore static xl_error_t
+no_ignore static xl_error
 _native_uri(struct xl_uri **uri, wchar_t *name)
 {
-        xl_error_t err;
+        xl_error err;
         wchar_t *heap_name;
         size_t name_len;
 
@@ -53,7 +53,7 @@ _native_uri(struct xl_uri **uri, wchar_t *name)
         return err;
 }
 
-no_ignore static xl_error_t
+no_ignore static xl_error
 _create_op(
         struct xl_dagc **graph_ptr,
         size_t arity,
@@ -63,7 +63,7 @@ _create_op(
         struct xl_dagc_native *ngraph;
         struct xl_dagc_input *in;
         size_t i;
-        xl_error_t err;
+        xl_error err;
 
         err = xl_alloc_dagc_with_size(&graph, arity + 1, sizeof(struct xl_dagc_native), NULL);
         if (err != OK)
@@ -108,11 +108,11 @@ _create_op(
         return OK;
 }
 
-static xl_error_t
+static xl_error
 _native_unsigned_add(struct xl_env *env, struct xl_dagc *graph)
 {
         struct xl_value *res;
-        xl_error_t err;
+        xl_error err;
         xl_word v0, v1;
 
         unused(env);
@@ -148,11 +148,11 @@ _native_unsigned_add(struct xl_env *env, struct xl_dagc *graph)
 #define DEF_OP_URI L"uadd"
 #include "def-native.h"
 
-static xl_error_t
+static xl_error
 _native_unsigned_subtract(struct xl_env *env, struct xl_dagc *graph)
 {
         struct xl_value *res;
-        xl_error_t err;
+        xl_error err;
         xl_word v0, v1;
 
         unused(env);
@@ -186,14 +186,14 @@ _native_unsigned_subtract(struct xl_env *env, struct xl_dagc *graph)
 #define DEF_OP_URI L"usub"
 #include "def-native.h"
 
-static xl_error_t
+static xl_error
 _native_eq(struct xl_env *env, struct xl_dagc *graph)
 {
         struct xl_value *res;
         struct xl_dagc_node *n0, *n1;
         struct xl_value *v0, *v1;
         bool ret;
-        xl_error_t err;
+        xl_error err;
 
         unused(env);
 
@@ -257,10 +257,10 @@ _native_eq(struct xl_env *env, struct xl_dagc *graph)
 #define DEF_OP_URI L"eq"
 #include "def-native.h"
 
-no_ignore xl_error_t
+no_ignore xl_error
 xl_register_natives(struct xl_env *env)
 {
-        xl_error_t err;
+        xl_error err;
 
         err = _register_uadd(env);
         if (err != OK)

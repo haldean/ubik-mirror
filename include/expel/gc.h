@@ -89,6 +89,6 @@ xl_gc_free_all();
  * There should be no reason to call this; xl_release calls it
  * when appropriate.  This is provided as an API for garbage
  * collection testing only. */
-no_ignore xl_error_t
+no_ignore xl_error
 xl_run_gc();
 

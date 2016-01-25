@@ -26,10 +26,10 @@
 #include "expel/util.h"
 #include "expel/value.h"
 
-no_ignore static xl_error_t
+no_ignore static xl_error
 _eval_apply(struct xl_env *env, struct xl_dagc_apply *node)
 {
-        xl_error_t err;
+        xl_error err;
         struct xl_dagc_input *input;
         struct xl_dagc *result;
         struct xl_dagc *proto;
@@ -100,10 +100,10 @@ _eval_apply(struct xl_env *env, struct xl_dagc_apply *node)
         return OK;
 }
 
-no_ignore static xl_error_t
+no_ignore static xl_error
 _eval_const(struct xl_env *env, struct xl_dagc_const *node)
 {
-        xl_error_t err;
+        xl_error err;
         unused(env);
 
         /* We end up having two references for a single value from a single
@@ -133,13 +133,13 @@ _eval_const(struct xl_env *env, struct xl_dagc_const *node)
         return xl_raise(ERR_BAD_TYPE, "eval_const subtype");
 }
 
-no_ignore static xl_error_t
+no_ignore static xl_error
 _eval_load(struct xl_env *env, struct xl_dagc_load *node)
 {
         union xl_value_or_graph value;
         struct xl_value *type;
         xl_word value_type;
-        xl_error_t err;
+        xl_error err;
 
         err = xl_get(&value, &type, &value_type, env, node->loc);
         if (err != OK)
@@ -161,11 +161,11 @@ _eval_load(struct xl_env *env, struct xl_dagc_load *node)
         return OK;
 }
 
-no_ignore static xl_error_t
+no_ignore static xl_error
 _eval_cond(struct xl_env *env, struct xl_dagc_cond *cond)
 {
         struct xl_dagc_node *res;
-        xl_error_t err;
+        xl_error err;
         bool condition;
 
         unused(env);
@@ -203,10 +203,10 @@ _eval_cond(struct xl_env *env, struct xl_dagc_cond *cond)
         return OK;
 }
 
-no_ignore static xl_error_t
+no_ignore static xl_error
 _eval_store(struct xl_env *env, struct xl_dagc_store *node)
 {
-        xl_error_t err;
+        xl_error err;
 
         node->head.value_type = node->value->value_type;
         node->head.known_type = node->value->known_type;
@@ -226,7 +226,7 @@ _eval_store(struct xl_env *env, struct xl_dagc_store *node)
                 node->value->value_type);
 }
 
-no_ignore static xl_error_t
+no_ignore static xl_error
 _eval_input(struct xl_env *env, struct xl_dagc_input *node)
 {
         unused(env);
@@ -236,13 +236,13 @@ _eval_input(struct xl_env *env, struct xl_dagc_input *node)
         return OK;
 }
 
-no_ignore xl_error_t
+no_ignore xl_error
 xl_dagc_node_eval(
         struct xl_scheduler *s,
         struct xl_env *env,
         struct xl_dagc_node *node)
 {
-        xl_error_t err;
+        xl_error err;
 
         xl_assert(!(node->flags & XL_DAGC_WAIT_MASK));
 

@@ -37,19 +37,19 @@ struct xl_uri {
 };
 
 /* Creates a URI for a local resource. */
-no_ignore xl_error_t
+no_ignore xl_error
 xl_uri_user(
         struct xl_uri *uri,
         wchar_t *name);
 
 /* Creates a URI for a local resource. */
-no_ignore xl_error_t
+no_ignore xl_error
 xl_uri_native(
         struct xl_uri *uri,
         wchar_t *name);
 
 /* Creates a URI struct from a value-encoded URI. */
-no_ignore xl_error_t
+no_ignore xl_error
 xl_uri_from_value(struct xl_uri *uri, struct xl_value *uri_val);
 
 /* Returns true if the provided URIs are equal. */

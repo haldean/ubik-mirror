@@ -24,7 +24,7 @@
 #include "expel/explain.h"
 #include "expel/util.h"
 
-xl_error_t
+xl_error
 xl_new_error(
         const xl_word code,
         const char *tag,
@@ -44,7 +44,7 @@ xl_new_error(
 }
 
 char *
-xl_explain_error(xl_error_t err)
+xl_explain_error(xl_error err)
 {
         char *res;
         char *err_word_expl;

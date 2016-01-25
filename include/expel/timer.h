@@ -21,11 +21,11 @@
 
 struct xl_timer;
 
-no_ignore xl_error_t
+no_ignore xl_error
 xl_timer_new(struct xl_timer **t);
 
-no_ignore xl_error_t
+no_ignore xl_error
 xl_timer_start(struct xl_timer *t);
 
-no_ignore xl_error_t
+no_ignore xl_error
 xl_timer_elapsed(int64_t *microsec, struct xl_timer *t);

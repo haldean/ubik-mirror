@@ -38,10 +38,10 @@
 
 #ifdef DEF_BINARY_WORD
 
-no_ignore static xl_error_t
+no_ignore static xl_error
 _op_name(struct xl_env *env)
 {
-        xl_error_t err;
+        xl_error err;
 
         struct xl_dagc *ngraph;
         struct xl_uri *uri;
@@ -95,10 +95,10 @@ _op_name(struct xl_env *env)
 
 #ifdef DEF_BINARY_WORD_PROP
 
-no_ignore static xl_error_t
+no_ignore static xl_error
 _op_name(struct xl_env *env)
 {
-        xl_error_t err;
+        xl_error err;
 
         struct xl_dagc *ngraph;
         struct xl_uri *uri;

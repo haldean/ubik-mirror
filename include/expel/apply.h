@@ -24,7 +24,7 @@
  *
  * If the graph in the node is not suitable for collapsing, this
  * operation is a no-op and returns OK. */
-no_ignore xl_error_t
+no_ignore xl_error
 xl_dagc_collapse_graph(
         struct xl_dagc_node *node,
         struct xl_env *env);

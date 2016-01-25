@@ -78,7 +78,7 @@ xl_gc_free_all()
 }
 
 /* Creates a new value. */
-no_ignore xl_error_t
+no_ignore xl_error
 xl_new(struct xl_value **v)
 {
         struct xl_alloc_page *p;
@@ -143,7 +143,7 @@ xl_new(struct xl_value **v)
 }
 
 /* Takes a reference to the given tree. */
-no_ignore xl_error_t
+no_ignore xl_error
 xl_take(void *p)
 {
         struct xl_value *v;
@@ -180,7 +180,7 @@ xl_take(void *p)
         return xl_raise(ERR_BAD_TAG, "take");
 }
 
-no_ignore xl_error_t
+no_ignore xl_error
 xl_run_gc()
 {
         struct xl_alloc_page *p;
@@ -215,10 +215,10 @@ xl_run_gc()
 }
 
 /* Releases a reference to the given tree. */
-no_ignore static xl_error_t
+no_ignore static xl_error
 _release_value(struct xl_value *v)
 {
-        xl_error_t err;
+        xl_error err;
         struct xl_alloc_page *p;
 
         if (unlikely(v->refcount == 0))
@@ -256,11 +256,11 @@ _release_value(struct xl_value *v)
         return err;
 }
 
-no_ignore static xl_error_t
+no_ignore static xl_error
 _release_node(struct xl_dagc_node *node)
 {
         union xl_dagc_any_node *n;
-        xl_error_t err;
+        xl_error err;
 
         n = (union xl_dagc_any_node *) node;
 
@@ -317,11 +317,11 @@ _release_node(struct xl_dagc_node *node)
         return OK;
 }
 
-no_ignore static xl_error_t
+no_ignore static xl_error
 _release_graph(struct xl_dagc *g)
 {
         size_t i;
-        xl_error_t err;
+        xl_error err;
 
         g->refcount--;
 
@@ -358,7 +358,7 @@ _release_graph(struct xl_dagc *g)
         return OK;
 }
 
-no_ignore static xl_error_t
+no_ignore static xl_error
 _release_uri(struct xl_uri *u)
 {
         u->refcount--;
@@ -370,7 +370,7 @@ _release_uri(struct xl_uri *u)
         return OK;
 }
 
-no_ignore xl_error_t
+no_ignore xl_error
 xl_release(void *v)
 {
         xl_tag tag;

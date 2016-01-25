@@ -43,11 +43,11 @@ struct xl_scheduler
  *
  * A node is ready if it has no incomplete dependencies, and is
  * complete if it has no dependencies. */
-no_ignore static xl_error_t
+no_ignore static xl_error
 _set_initial_ready(struct xl_dagc_node **nodes, size_t n_nodes)
 {
         struct xl_dagc_node *n, *d1, *d2, *d3;
-        xl_error_t err;
+        xl_error err;
         size_t i;
 
         /* Set the ready flag on everyone whose dependencies are
@@ -92,7 +92,7 @@ _set_initial_ready(struct xl_dagc_node **nodes, size_t n_nodes)
         return OK;
 }
 
-no_ignore static xl_error_t
+no_ignore static xl_error
 _schedule(struct xl_scheduler *schedule, struct xl_dagc_node *node)
 {
         struct xl_node_schedule *sched;
@@ -106,12 +106,12 @@ _schedule(struct xl_scheduler *schedule, struct xl_dagc_node *node)
         return OK;
 }
 
-no_ignore static xl_error_t
+no_ignore static xl_error
 _notify_parents(struct xl_scheduler *s, struct xl_dagc_node *n)
 {
         struct xl_dagc_node **parents, *d1, *d2, *d3, *p;
         size_t i, n_parents;
-        xl_error_t err;
+        xl_error err;
 
         err = xl_dagc_get_parents(&parents, &n_parents, s->graph, n);
         if (err != OK)
@@ -146,11 +146,11 @@ _notify_parents(struct xl_scheduler *s, struct xl_dagc_node *n)
         return OK;
 }
 
-no_ignore xl_error_t
+no_ignore xl_error
 xl_schedule_push(struct xl_scheduler *s, struct xl_dagc_node *n)
 {
         struct xl_dagc_node *d1, *d2, *d3;
-        xl_error_t err;
+        xl_error err;
 
         if (n->flags & XL_DAGC_FLAG_COMPLETE)
         {
@@ -202,10 +202,10 @@ xl_schedule_push(struct xl_scheduler *s, struct xl_dagc_node *n)
         return _schedule(s, n);
 }
 
-no_ignore static xl_error_t
+no_ignore static xl_error
 _eval_native_dagc(struct xl_env *env, struct xl_dagc_native *ngraph)
 {
-        xl_error_t err;
+        xl_error err;
         struct xl_dagc *graph;
 
         graph = (struct xl_dagc *) ngraph;
@@ -217,12 +217,12 @@ _eval_native_dagc(struct xl_env *env, struct xl_dagc_native *ngraph)
         return OK;
 }
 
-no_ignore xl_error_t
+no_ignore xl_error
 xl_dagc_eval(struct xl_env *env, struct xl_dagc *graph)
 {
         struct xl_scheduler s;
         struct xl_node_schedule *to_exec;
-        xl_error_t err;
+        xl_error err;
         size_t i;
 
         /* Native graphs get to cheat and skip all this biz. */

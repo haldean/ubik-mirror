@@ -112,8 +112,8 @@ struct xl_dagc_cond
 
 /* This syntax is terrible; it defines xl_native_evaluator_t as a
  * function pointer that takes an env and a dagc and returns an
- * xl_error_t. */
-typedef xl_error_t (*xl_native_evaluator_t)(
+ * xl_error. */
+typedef xl_error (*xl_native_evaluator_t)(
         struct xl_env *env, struct xl_dagc *graph);
 
 struct xl_dagc_native
@@ -146,7 +146,7 @@ union xl_dagc_any_node
  * If copy_from is not NULL, this also copies size bytes from
  * copy_from into the graph before allocating all of the
  * substructures of the graph. */
-no_ignore xl_error_t
+no_ignore xl_error
 xl_alloc_dagc_with_size(
         struct xl_dagc **graph,
         size_t n_nodes,
@@ -157,7 +157,7 @@ xl_alloc_dagc_with_size(
  *
  * For nodes with N dependencies, d1 through dN will be filled in
  * and the result will be NULL. */
-no_ignore xl_error_t
+no_ignore xl_error
 xl_dagc_get_deps(
         struct xl_dagc_node **d1,
         struct xl_dagc_node **d2,
@@ -177,7 +177,7 @@ xl_dagc_get_deps(
  * pointer. The pointer we're returning is itself a pointer
  * to a list of pointers. So we're asking you to pass us a
  * pointer to a pointer of pointers. I'm sorry. */
-no_ignore xl_error_t
+no_ignore xl_error
 xl_dagc_get_parents(
         struct xl_dagc_node ***parents,
         size_t *n_parents,
@@ -189,14 +189,14 @@ xl_dagc_get_parents(
  * Assumes that the provided node is complete. For nodes that do
  * not have a value (i.e., store nodes), ERR_BAD_TYPE is returned.
  * If the node is not complete, the returned value is unspecified. */
-no_ignore xl_error_t
+no_ignore xl_error
 xl_dagc_known_value(
         struct xl_value **value,
         struct xl_value **type,
         struct xl_dagc_node *node);
 
 /* Evaluates a node and marks it as complete. */
-no_ignore xl_error_t
+no_ignore xl_error
 xl_dagc_node_eval(
         struct xl_scheduler *s,
         struct xl_env *env,
@@ -207,7 +207,7 @@ xl_dagc_node_eval(
  * This is a deep copy of the nodes but not the values within
  * them. This copies all information, including adjacency, and
  * updates all internal references between nodes. */
-no_ignore xl_error_t
+no_ignore xl_error
 xl_dagc_copy(
         struct xl_dagc **result,
         struct xl_dagc *proto);

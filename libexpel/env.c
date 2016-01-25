@@ -37,7 +37,7 @@ xl_env_get_root()
         return &root;
 }
 
-no_ignore xl_error_t
+no_ignore xl_error
 xl_env_init(struct xl_env *env)
 {
         env->bindings = NULL;
@@ -47,10 +47,10 @@ xl_env_init(struct xl_env *env)
         return OK;
 }
 
-no_ignore xl_error_t
+no_ignore xl_error
 xl_env_make_child(struct xl_env *child, struct xl_env *parent)
 {
-        xl_error_t err;
+        xl_error err;
         err = xl_env_init(child);
         if (err != OK)
                 return err;
@@ -58,10 +58,10 @@ xl_env_make_child(struct xl_env *child, struct xl_env *parent)
         return OK;
 }
 
-no_ignore xl_error_t
+no_ignore xl_error
 xl_env_free(struct xl_env *env)
 {
-        xl_error_t err;
+        xl_error err;
         size_t i;
 
         if (likely(env->bindings != NULL))
@@ -91,7 +91,7 @@ xl_env_free(struct xl_env *env)
         return OK;
 }
 
-no_ignore xl_error_t
+no_ignore xl_error
 xl_get(
         union xl_value_or_graph *value,
         struct xl_value **type,
@@ -143,7 +143,7 @@ xl_get(
  * The overwrite parameter controls whether existing data will be
  * overwritten. True means that it will be, false means that it
  * will not. */
-no_ignore static xl_error_t
+no_ignore static xl_error
 _insert(
         struct xl_binding *binds,
         size_t cap,
@@ -152,7 +152,7 @@ _insert(
 {
         size_t i;
         size_t probed;
-        xl_error_t err;
+        xl_error err;
 
         i = insert->uri->hash % cap;
         for (probed = 0; probed < cap; probed++)
@@ -189,14 +189,14 @@ _insert(
  * frees the old array and updates the env struct to reference the new
  * array. If an error occurs during rebalancing, the environment remains
  * unmodified and a nonzero error code is returned. */
-static xl_error_t
+static xl_error
 _resize_rebalance(struct xl_env *env)
 {
         struct xl_binding *new_binds;
         size_t new_cap;
         size_t i;
         size_t reinserted;
-        xl_error_t err;
+        xl_error err;
 
         if (env->cap == 0)
                 new_cap = ENV_INIT_CAP;
@@ -231,7 +231,7 @@ _resize_rebalance(struct xl_env *env)
         return OK;
 }
 
-no_ignore static xl_error_t
+no_ignore static xl_error
 _set(
         struct xl_env *env,
         struct xl_uri *uri,
@@ -241,7 +241,7 @@ _set(
         bool overwrite)
 {
         struct xl_binding new_binding;
-        xl_error_t err, ignore;
+        xl_error err, ignore;
 
         err = OK;
         if (unlikely(env->cap == 0))
@@ -293,7 +293,7 @@ _set(
         return err;
 }
 
-no_ignore xl_error_t
+no_ignore xl_error
 xl_set(
         struct xl_env *env,
         struct xl_uri *uri,
@@ -304,7 +304,7 @@ xl_set(
         return _set(env, uri, value, type, value_type, false);
 }
 
-no_ignore xl_error_t
+no_ignore xl_error
 xl_overwrite(
         struct xl_env *env,
         struct xl_uri *uri,

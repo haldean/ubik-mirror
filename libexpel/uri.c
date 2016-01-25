@@ -24,7 +24,7 @@
 #include "expel/uri.h"
 #include "expel/value.h"
 
-no_ignore static xl_error_t
+no_ignore static xl_error
 _set_hash(struct xl_uri *uri)
 {
         size_t i;
@@ -37,7 +37,7 @@ _set_hash(struct xl_uri *uri)
         return OK;
 }
 
-no_ignore xl_error_t
+no_ignore xl_error
 xl_uri_user(
         struct xl_uri *uri,
         wchar_t *name)
@@ -51,7 +51,7 @@ xl_uri_user(
         return _set_hash(uri);
 }
 
-no_ignore xl_error_t
+no_ignore xl_error
 xl_uri_native(
         struct xl_uri *uri,
         wchar_t *name)
@@ -81,10 +81,10 @@ xl_uri_eq(struct xl_uri *u0, struct xl_uri *u1)
         return true;
 }
 
-no_ignore xl_error_t
+no_ignore xl_error
 xl_uri_from_value(struct xl_uri *uri, struct xl_value *uri_val)
 {
-        xl_error_t err;
+        xl_error err;
         struct xl_value *uri_right;
 
         if ((uri_val->tag & ~TAG_TYPE_MASK) != (TAG_LEFT_WORD | TAG_RIGHT_NODE))

@@ -25,7 +25,7 @@
 #include "expel/util.h"
 
 /* Opens a stream for reading from the given file. */
-no_ignore xl_error_t
+no_ignore xl_error
 xl_stream_rfile(struct xl_stream *sp, char *file)
 {
         sp->stream_type = STREAM_TYPE_FILE_R;
@@ -34,7 +34,7 @@ xl_stream_rfile(struct xl_stream *sp, char *file)
 }
 
 /* Opens a stream for writing to the given file. */
-no_ignore xl_error_t
+no_ignore xl_error
 xl_stream_wfile(struct xl_stream *sp, char *file)
 {
         sp->stream_type = STREAM_TYPE_FILE_W;
@@ -42,7 +42,7 @@ xl_stream_wfile(struct xl_stream *sp, char *file)
         return sp->file == NULL ? xl_raise(ERR_ABSENT, "wfile") : OK;
 }
 
-no_ignore xl_error_t
+no_ignore xl_error
 xl_stream_rfilep(struct xl_stream *sp, FILE *file)
 {
         sp->stream_type = STREAM_TYPE_FILE_R;
@@ -50,7 +50,7 @@ xl_stream_rfilep(struct xl_stream *sp, FILE *file)
         return OK;
 }
 
-no_ignore xl_error_t
+no_ignore xl_error
 xl_stream_wfilep(struct xl_stream *sp, FILE *file)
 {
         sp->stream_type = STREAM_TYPE_FILE_W;
@@ -59,7 +59,7 @@ xl_stream_wfilep(struct xl_stream *sp, FILE *file)
 }
 
 /* Opens a stream backed by an in-memory buffer. */
-no_ignore xl_error_t
+no_ignore xl_error
 xl_stream_buffer(struct xl_stream *sp)
 {
         sp->stream_type = STREAM_TYPE_BUFFER;

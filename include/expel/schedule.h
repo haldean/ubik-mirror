@@ -27,5 +27,5 @@ struct xl_scheduler;
  * the node is marked as completed, the nodes waiting on this node are
  * scheduled. If the node is marked as waiting, the nodes that the node is
  * waiting on will be scheduled. */
-no_ignore xl_error_t
+no_ignore xl_error
 xl_schedule_push(struct xl_scheduler *s, struct xl_dagc_node *n);

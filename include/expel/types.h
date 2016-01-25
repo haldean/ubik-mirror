@@ -28,7 +28,7 @@ xl_type_satisfied(
 
 /* Creates a type object that is the result of applying a single argument to the
  * given function type. */
-no_ignore xl_error_t
+no_ignore xl_error
 xl_type_func_apply(
         struct xl_value *result,
         struct xl_value *func_type);
@@ -42,19 +42,19 @@ xl_explain_type(struct xl_value *type);
 bool
 xl_type_is_prim_word(struct xl_value *value);
 
-no_ignore xl_error_t
+no_ignore xl_error
 xl_type_word(struct xl_value *value);
 
-no_ignore xl_error_t
+no_ignore xl_error
 xl_type_string(struct xl_value *value);
 
-no_ignore xl_error_t
+no_ignore xl_error
 xl_type_bool(struct xl_value *value);
 
-no_ignore xl_error_t
+no_ignore xl_error
 xl_type_float(struct xl_value *value);
 
-no_ignore xl_error_t
+no_ignore xl_error
 xl_type_tuple(
         struct xl_value *product,
         struct xl_value **field_types,
