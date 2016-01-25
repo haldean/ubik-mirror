@@ -30,8 +30,8 @@ q11 = cond(q2, q0, q10, terminal=True, nid="q11")
 
 
 # f(10, 21)
-r0  = const_word(10, nid="r0")
-r1  = const_word(21, nid="r1")
+r0  = const_word(100, nid="r0")
+r1  = const_word(500, nid="r1")
 r2  = graph_ref(word(), 1, nid="r2")
 r3  = apply(r2, r0, nid="r3")
 r4  = apply(r3, r1, terminal=True, nid="r4")
@@ -42,4 +42,4 @@ encode([
         i0, i1, eq, sub, add, q0, q1, q2, q3, q4,
         q5, q6, q7, q8, q9, q10, q11], -1),
 ],
-expect=t(210, 0))
+expect=t(50000, 0))
