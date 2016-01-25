@@ -121,13 +121,13 @@ _native_unsigned_add(struct xl_env *env, struct xl_dagc *graph)
         if (err != OK)
                 return err;
 
-        v0 = graph->nodes[0]->known.tree->left.v;
-        v1 = graph->nodes[1]->known.tree->left.v;
+        v0 = graph->nodes[0]->known.tree->left.w;
+        v1 = graph->nodes[1]->known.tree->left.w;
 
         res->tag |= TAG_LEFT_WORD | TAG_RIGHT_WORD;
-        res->left.v = v0 + v1;
-        res->right.v =
-                res->left.v < v0 || res->left.v < v1
+        res->left.w = v0 + v1;
+        res->right.w =
+                res->left.w < v0 || res->left.w < v1
                 ? ERR_OVERFLOW : 0;
 
         graph->result->known.tree = res;
@@ -161,12 +161,12 @@ _native_unsigned_subtract(struct xl_env *env, struct xl_dagc *graph)
         if (err != OK)
                 return err;
 
-        v0 = graph->nodes[0]->known.tree->left.v;
-        v1 = graph->nodes[1]->known.tree->left.v;
+        v0 = graph->nodes[0]->known.tree->left.w;
+        v1 = graph->nodes[1]->known.tree->left.w;
 
         res->tag |= TAG_LEFT_WORD | TAG_RIGHT_WORD;
-        res->left.v = v0 - v1;
-        res->right.v = v0 < v1 ? ERR_UNDERFLOW : 0;
+        res->left.w = v0 - v1;
+        res->right.w = v0 < v1 ? ERR_UNDERFLOW : 0;
 
         graph->result->known.tree = res;
         graph->result->known_type = graph->nodes[0]->known_type;
@@ -219,7 +219,7 @@ _native_eq(struct xl_env *env, struct xl_dagc *graph)
                         v0 = n0->known.tree;
                         v1 = n1->known.tree;
                         if (xl_type_is_prim_word(n0->known_type))
-                                ret = v0->left.v == v1->left.v;
+                                ret = v0->left.w == v1->left.w;
                         else
                                 ret = xl_value_eq(v0, v1);
                 }
@@ -234,8 +234,8 @@ _native_eq(struct xl_env *env, struct xl_dagc *graph)
                 return err;
 
         res->tag |= TAG_LEFT_WORD | TAG_RIGHT_WORD;
-        res->left.v = ret ? 1 : 0;
-        res->right.v = 0;
+        res->left.w = ret ? 1 : 0;
+        res->right.w = 0;
 
         graph->result->known.tree = res;
         graph->result->value_type = DAGC_TYPE_VALUE;

@@ -37,7 +37,7 @@ char *
 xl_explain_type(struct xl_value *type)
 {
         char *res;
-        if (type->left.v == BASE_TYPE_WORD && type->right.v == 0)
+        if (type->left.w == BASE_TYPE_WORD && type->right.w == 0)
         {
                 res = calloc(5, sizeof(char));
                 if (res == NULL)
@@ -45,7 +45,7 @@ xl_explain_type(struct xl_value *type)
                 sprintf(res, "word");
                 return res;
         }
-        if (type->left.v == BASE_TYPE_PACKED && type->right.v == PACK_TYPE_CHAR)
+        if (type->left.w == BASE_TYPE_PACKED && type->right.w == PACK_TYPE_CHAR)
         {
                 res = calloc(7, sizeof(char));
                 if (res == NULL)
@@ -68,25 +68,26 @@ xl_type_func_apply(
         /* This is super dumb, and is provided only as a way to see if this used
          * to be causing a crash. */
         result->tag = func_type->tag;
-        result->left.v = func_type->left.v;
-        result->right.v = func_type->right.v;
+        result->left.w = func_type->left.w;
+        result->right.w = func_type->right.w;
         return OK;
 }
 
 bool
 xl_type_is_prim_word(struct xl_value *value)
 {
-        return value->left.v == BASE_TYPE_WORD
-                || value->left.v == BASE_TYPE_SWORD
-                || value->left.v == BASE_TYPE_BOOL;
+        return value->left.w == BASE_TYPE_WORD
+                || value->left.w == BASE_TYPE_SWORD
+                || value->left.w == BASE_TYPE_BOOL
+                || value->left.w == BASE_TYPE_FLOAT;
 }
 
 no_ignore xl_error_t
 xl_type_word(struct xl_value *value)
 {
         value->tag |= TAG_LEFT_WORD | TAG_RIGHT_WORD;
-        value->left.v = BASE_TYPE_WORD;
-        value->right.v = 0;
+        value->left.w = BASE_TYPE_WORD;
+        value->right.w = 0;
         return OK;
 }
 
@@ -94,8 +95,8 @@ no_ignore xl_error_t
 xl_type_string(struct xl_value *value)
 {
         value->tag |= TAG_LEFT_WORD | TAG_RIGHT_WORD;
-        value->left.v = BASE_TYPE_PACKED;
-        value->right.v = PACK_TYPE_CHAR;
+        value->left.w = BASE_TYPE_PACKED;
+        value->right.w = PACK_TYPE_CHAR;
         return OK;
 }
 
@@ -103,7 +104,16 @@ no_ignore xl_error_t
 xl_type_bool(struct xl_value *value)
 {
         value->tag |= TAG_LEFT_WORD | TAG_RIGHT_WORD;
-        value->left.v = BASE_TYPE_BOOL;
-        value->right.v = 0;
+        value->left.w = BASE_TYPE_BOOL;
+        value->right.w = 0;
+        return OK;
+}
+
+no_ignore xl_error_t
+xl_type_float(struct xl_value *value)
+{
+        value->tag |= TAG_LEFT_WORD | TAG_RIGHT_WORD;
+        value->left.w = BASE_TYPE_FLOAT;
+        value->right.w = 0;
         return OK;
 }

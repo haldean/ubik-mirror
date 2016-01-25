@@ -74,18 +74,18 @@ xl_load_value(struct xl_value *out, struct xl_stream *sp)
 
         if (tag & TAG_LEFT_WORD)
         {
-                READ_INTO(out->left.v, sp);
-                out->left.v = ntohw(out->left.v);
+                READ_INTO(out->left.w, sp);
+                out->left.w = ntohw(out->left.w);
         }
         else
         {
-                err = xl_new(&out->left.p);
+                err = xl_new(&out->left.t);
                 if (err != OK)
                         return err;
-                err = xl_load_value(out->left.p, sp);
+                err = xl_load_value(out->left.t, sp);
                 if (err != OK)
                 {
-                        err_ignore = xl_release(out->left.p);
+                        err_ignore = xl_release(out->left.t);
                         unused(err_ignore);
 
                         /* unset the tag so that releasing the provided node
@@ -93,23 +93,23 @@ xl_load_value(struct xl_value *out, struct xl_stream *sp)
                         out->tag &= ~TAG_LEFT_NODE;
                         return err;
                 }
-                out->left.p->refcount = 1;
+                out->left.t->refcount = 1;
         }
 
         if (tag & TAG_RIGHT_WORD)
         {
-                READ_INTO(out->right.v, sp);
-                out->right.v = ntohw(out->right.v);
+                READ_INTO(out->right.w, sp);
+                out->right.w = ntohw(out->right.w);
         }
         else
         {
-                err = xl_new(&out->right.p);
+                err = xl_new(&out->right.t);
                 if (err != OK)
                         return err;
-                err = xl_load_value(out->right.p, sp);
+                err = xl_load_value(out->right.t, sp);
                 if (err != OK)
                 {
-                        err_ignore = xl_release(out->right.p);
+                        err_ignore = xl_release(out->right.t);
                         unused(err_ignore);
 
                         /* unset the tag so that releasing the provided node
@@ -117,7 +117,7 @@ xl_load_value(struct xl_value *out, struct xl_stream *sp)
                         out->tag &= ~TAG_RIGHT_NODE;
                         return err;
                 }
-                out->right.p->refcount = 1;
+                out->right.t->refcount = 1;
         }
 
         /* set the tag only if everything went according to plan. This means
@@ -139,26 +139,26 @@ xl_save_value(struct xl_stream *sp, struct xl_value *in)
 
         if (in->tag & TAG_LEFT_WORD)
         {
-                val = htonw(in->left.v);
+                val = htonw(in->left.w);
                 if (xl_stream_write(sp, &val, sizeof(xl_word)) != sizeof(xl_word))
                         return xl_raise(ERR_WRITE_FAILED, "left value");
         }
         else
         {
-                err = xl_save_value(sp, in->left.p);
+                err = xl_save_value(sp, in->left.t);
                 if (err)
                         return err;
         }
 
         if (in->tag & TAG_RIGHT_WORD)
         {
-                val = htonw(in->right.v);
+                val = htonw(in->right.w);
                 if (xl_stream_write(sp, &val, sizeof(xl_word)) != sizeof(xl_word))
-                        return xl_raise(ERR_WRITE_FAILED, "right value");
+                        return xl_raise(ERR_WRITE_FAILED, "right word");
         }
         else
         {
-                err = xl_save_value(sp, in->right.p);
+                err = xl_save_value(sp, in->right.t);
                 if (err)
                         return err;
         }

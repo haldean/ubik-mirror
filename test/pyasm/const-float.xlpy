@@ -1,0 +1,8 @@
+# vi: ft=python
+from pyasm import *
+
+tree = t(-0.5, t(3e50, 7.0007))
+
+encode([
+    graph([const(flt(), tree, terminal=True)], 0),
+], expect=tree)

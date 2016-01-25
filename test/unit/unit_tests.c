@@ -78,23 +78,23 @@ load_save()
          */
         u = calloc(6, sizeof(struct xl_value));
         u[0].tag = TAG_VALUE | TAG_LEFT_WORD | TAG_RIGHT_NODE;
-        u[0].left.v = 0x1234567890123456;
-        u[0].right.p = &u[1];
+        u[0].left.w = 0x1234567890123456;
+        u[0].right.t = &u[1];
         u[1].tag = TAG_VALUE | TAG_LEFT_NODE | TAG_RIGHT_WORD;
-        u[1].left.p = &u[2];
-        u[1].right.v = 0x456789012345678;
+        u[1].left.t = &u[2];
+        u[1].right.w = 0x456789012345678;
         u[2].tag = TAG_VALUE | TAG_LEFT_NODE | TAG_RIGHT_NODE;
-        u[2].left.p = &u[3];
-        u[2].right.p = &u[4];
+        u[2].left.t = &u[3];
+        u[2].right.t = &u[4];
         u[3].tag = TAG_VALUE | TAG_LEFT_NODE | TAG_RIGHT_WORD;
-        u[3].left.p = &u[5];
-        u[3].right.v = 0x123123123123123;
+        u[3].left.t = &u[5];
+        u[3].right.w = 0x123123123123123;
         u[4].tag = TAG_VALUE | TAG_LEFT_WORD | TAG_RIGHT_WORD;
-        u[4].left.v = 0x00424242424242;
-        u[4].right.v = 0x0000000000000001;
+        u[4].left.w = 0x00424242424242;
+        u[4].right.w = 0x0000000000000001;
         u[5].tag = TAG_VALUE | TAG_LEFT_WORD | TAG_RIGHT_WORD;
-        u[5].left.v = 0x0;
-        u[5].right.v = 0xFFFFFFFFFFFFFFFF;
+        u[5].left.w = 0x0;
+        u[5].right.w = 0xFFFFFFFFFFFFFFFF;
 
         assert(xl_save_value(&s, u) == OK);
 
@@ -103,39 +103,39 @@ load_save()
 
         /* make sure tags are correct. */
         assert(v->tag == u[0].tag);
-        assert(v->right.p->tag == u[1].tag);
-        assert(v->right.p->left.p->tag == u[2].tag);
-        assert(v->right.p->left.p->left.p->tag == u[3].tag);
-        assert(v->right.p->left.p->right.p->tag == u[4].tag);
-        assert(v->right.p->left.p->left.p->left.p->tag == u[5].tag);
+        assert(v->right.t->tag == u[1].tag);
+        assert(v->right.t->left.t->tag == u[2].tag);
+        assert(v->right.t->left.t->left.t->tag == u[3].tag);
+        assert(v->right.t->left.t->right.t->tag == u[4].tag);
+        assert(v->right.t->left.t->left.t->left.t->tag == u[5].tag);
 
         /* make sure refcounts are all 1 except the root, which is not taken. */
         assert(v->refcount == 0);
-        assert(v->right.p->refcount == 1);
-        assert(v->right.p->left.p->refcount == 1);
-        assert(v->right.p->left.p->left.p->refcount == 1);
-        assert(v->right.p->left.p->right.p->refcount == 1);
-        assert(v->right.p->left.p->left.p->left.p->refcount == 1);
+        assert(v->right.t->refcount == 1);
+        assert(v->right.t->left.t->refcount == 1);
+        assert(v->right.t->left.t->left.t->refcount == 1);
+        assert(v->right.t->left.t->right.t->refcount == 1);
+        assert(v->right.t->left.t->left.t->left.t->refcount == 1);
 
         /* 0.left */
-        assert(v->left.v == u->left.v);
+        assert(v->left.w == u->left.w);
         /* 5.left */
-        assert(v->right.p->left.p->left.p->left.p->left.v ==
-               u->right.p->left.p->left.p->left.p->left.v);
+        assert(v->right.t->left.t->left.t->left.t->left.w ==
+               u->right.t->left.t->left.t->left.t->left.w);
         /* 5.right */
-        assert(v->right.p->left.p->left.p->left.p->right.v ==
-               u->right.p->left.p->left.p->left.p->right.v);
+        assert(v->right.t->left.t->left.t->left.t->right.w ==
+               u->right.t->left.t->left.t->left.t->right.w);
         /* 3.right */
-        assert(v->right.p->left.p->left.p->right.v ==
-               u->right.p->left.p->left.p->right.v);
+        assert(v->right.t->left.t->left.t->right.w ==
+               u->right.t->left.t->left.t->right.w);
         /* 4.left */
-        assert(v->right.p->left.p->right.p->left.v ==
-               u->right.p->left.p->right.p->left.v);
+        assert(v->right.t->left.t->right.t->left.w ==
+               u->right.t->left.t->right.t->left.w);
         /* 4.right */
-        assert(v->right.p->left.p->right.p->right.v ==
-               u->right.p->left.p->right.p->right.v);
+        assert(v->right.t->left.t->right.t->right.w ==
+               u->right.t->left.t->right.t->right.w);
         /* 1.right */
-        assert(v->right.p->right.v == u->right.p->right.v);
+        assert(v->right.t->right.w == u->right.t->right.w);
 
         return ok;
 }
@@ -172,13 +172,13 @@ env()
 
         assert(xl_new(&v.tree) == OK);
         v.tree->tag = TAG_VALUE | TAG_LEFT_WORD | TAG_RIGHT_WORD;
-        v.tree->left.v = 0x1234567890123456;
-        v.tree->right.v = 0;
+        v.tree->left.w = 0x1234567890123456;
+        v.tree->right.w = 0;
 
         assert(xl_new(&t) == OK);
         t->tag = TAG_VALUE | TAG_LEFT_WORD | TAG_RIGHT_WORD;
-        t->left.v = BASE_TYPE_WORD;
-        t->right.v = 0;
+        t->left.w = BASE_TYPE_WORD;
+        t->right.w = 0;
 
         u.hash = 0;
         key = calloc(64, sizeof(wchar_t));

@@ -22,12 +22,10 @@
 
     word.BASE_TYPE_WORD
    sword.BASE_TYPE_SWORD
-    list.BASE_TYPE_LIST
-   tuple.BASE_TYPE_TUPLE
   packed.BASE_TYPE_PACKED
-    type.BASE_TYPE_TYPE
   lambda.BASE_TYPE_FUNC
     bool.BASE_TYPE_BOOL
+   float.BASE_TYPE_FLOAT
 
     char.PACK_TYPE_CHAR
 

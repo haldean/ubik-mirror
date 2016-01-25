@@ -34,23 +34,23 @@ xl_value_eq(struct xl_value *v1, struct xl_value *v2)
                 return false;
         if (v1->tag & TAG_LEFT_WORD)
         {
-                if (v1->left.v != v2->left.v)
+                if (v1->left.w != v2->left.w)
                         return false;
         }
         else
         {
-                if (!xl_value_eq(v1->left.p, v2->left.p))
+                if (!xl_value_eq(v1->left.t, v2->left.t))
                         return false;
         }
 
         if (v1->tag & TAG_RIGHT_WORD)
         {
-                if (v1->right.v != v2->right.v)
+                if (v1->right.w != v2->right.w)
                         return false;
         }
         else
         {
-                if (!xl_value_eq(v1->right.p, v2->right.p))
+                if (!xl_value_eq(v1->right.t, v2->right.t))
                         return false;
         }
         return true;
@@ -67,26 +67,26 @@ xl_read_packed(uint8_t **dest, size_t *n, struct xl_value *src)
         if (src->tag != (TAG_VALUE | TAG_LEFT_WORD | TAG_RIGHT_NODE))
                 return xl_raise(ERR_BAD_TAG, "bad tag for packed root");
 
-        n_bytes = src->left.v;
+        n_bytes = src->left.w;
         *n = n_bytes;
         res = calloc(n_bytes + 1, sizeof(uint8_t));
         if (res == NULL)
                 return xl_raise(ERR_NO_MEMORY, "read packed");
 
         i = 0;
-        v = src->right.p;
+        v = src->right.t;
         while (n_bytes)
         {
                 if (!(v->tag & TAG_LEFT_WORD))
                         return xl_raise(ERR_BAD_TAG, "packed val has left node");
                 n_copy = size_min(n_bytes, 8);
-                p = htonw(v->left.v);
+                p = htonw(v->left.w);
                 memcpy(&res[i], &p, n_copy);
                 n_bytes -= n_copy;
                 i += n_copy;
                 if (!(v->tag & TAG_RIGHT_NODE))
                         break;
-                v = v->right.p;
+                v = v->right.t;
         }
 
         if (n_bytes)
@@ -149,14 +149,14 @@ xl_print_value(struct xl_stream *out, struct xl_value *v)
 
         if (v->tag & TAG_LEFT_WORD)
         {
-                n = snprintf(buf, 64, "0x%lX", v->left.v);
+                n = snprintf(buf, 64, "0x%lX", v->left.w);
                 written = xl_stream_write(out, buf, n);
                 if (written != n)
                         return xl_raise(ERR_WRITE_FAILED, "print value");
         }
         else if (v->tag & TAG_LEFT_NODE)
         {
-                err = xl_print_value(out, v->left.p);
+                err = xl_print_value(out, v->left.t);
                 if (err != OK)
                         return err;
         }
@@ -169,14 +169,14 @@ xl_print_value(struct xl_stream *out, struct xl_value *v)
 
         if (v->tag & TAG_RIGHT_WORD)
         {
-                n = snprintf(buf, 64, "0x%lX", v->right.v);
+                n = snprintf(buf, 64, "0x%lX", v->right.w);
                 written = xl_stream_write(out, buf, n);
                 if (written != n)
                         return xl_raise(ERR_WRITE_FAILED, "print value");
         }
         else if (v->tag & TAG_RIGHT_NODE)
         {
-                err = xl_print_value(out, v->right.p);
+                err = xl_print_value(out, v->right.t);
                 if (err != OK)
                         return err;
         }
@@ -196,7 +196,7 @@ xl_value_as_bool(bool *res, struct xl_value *v)
         if (!(v->tag & TAG_LEFT_WORD))
                 return xl_raise(ERR_BAD_TYPE,
                                 "value cannot be interpreted as a boolean");
-        left = v->left.v;
+        left = v->left.w;
         if (left != 0 && left != 1)
                 return xl_raise(ERR_BAD_VALUE,
                                 "boolean value is not zero or one");

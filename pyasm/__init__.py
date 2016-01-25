@@ -15,6 +15,9 @@ def word():
 def boolean():
     return t(pack("bool"), 0)
 
+def flt():
+    return t(pack("float"), 0)
+
 def const(typ, val, terminal=False, nid=None):
     return dict(
         type="const",
@@ -116,6 +119,8 @@ def pack_tree(t):
         tag |= 0x02
         if isinstance(t[0], basestring):
             left = t[0]
+        elif isinstance(t[0], float):
+            left = struct.pack(">d", t[0])
         else:
             left = struct.pack(">Q", t[0])
 
@@ -126,6 +131,8 @@ def pack_tree(t):
         tag |= 0x08
         if isinstance(t[1], basestring):
             right = t[1]
+        elif isinstance(t[1], float):
+            right = struct.pack(">d", t[1])
         else:
             right = struct.pack(">Q", t[1])
 

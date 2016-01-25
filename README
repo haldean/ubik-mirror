@@ -86,12 +86,9 @@ full list of base type codes is:
                      ....word   unsigned 64-bit integer
                      ...sword   signed 64-bit integer
                      ....bool   boolean
-                     ....list   homogenous list
-                     ...tuple   fixed-length tuple
                      ..packed   packed list
-                     ....type   type descriptor
-                     .....uri   expel resource identifier
                      ..lambda   function
+                     ...float   64-bit floating-point number
 
 Each type code is actually a word that contains the numeric equivalent
 of a 8-byte string, with the first letter in the byte with the lowest

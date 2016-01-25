@@ -246,9 +246,9 @@ _release_value(struct xl_value *v)
                 #endif
 
                 if (v->tag & TAG_LEFT_NODE)
-                        err = xl_release(v->left.p);
+                        err = xl_release(v->left.any);
                 if (err == OK && v->tag & TAG_RIGHT_NODE)
-                        err = xl_release(v->right.p);
+                        err = xl_release(v->right.any);
         }
 
         if (unlikely(err == OK && gc_stats->releases_until_gc == 0))

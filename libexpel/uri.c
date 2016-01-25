@@ -90,7 +90,7 @@ xl_uri_from_value(struct xl_uri *uri, struct xl_value *uri_val)
         if ((uri_val->tag & ~TAG_TYPE_MASK) != (TAG_LEFT_WORD | TAG_RIGHT_NODE))
                 return xl_raise(ERR_BAD_TAG, "bad tag for URI root");
 
-        uri_right = uri_val->right.p;
+        uri_right = uri_val->right.t;
         if ((uri_right->tag & ~TAG_TYPE_MASK) != (TAG_LEFT_WORD | TAG_RIGHT_NODE))
                 return xl_raise(ERR_BAD_TAG, "bad tag for URI right");
 
@@ -98,9 +98,9 @@ xl_uri_from_value(struct xl_uri *uri, struct xl_value *uri_val)
          *      L      version
          *      RL     scope
          *      RR     string-encoded name */
-        uri->version = uri_val->left.v;
-        uri->scope = uri_right->left.v;
-        err = xl_read_string(&uri->name, &uri->name_len, uri_right->right.p);
+        uri->version = uri_val->left.w;
+        uri->scope = uri_right->left.w;
+        err = xl_read_string(&uri->name, &uri->name_len, uri_right->right.t);
         if (err != OK)
                 return err;
 

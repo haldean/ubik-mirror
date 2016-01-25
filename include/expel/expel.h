@@ -28,6 +28,16 @@
 typedef uint8_t xl_tag;
 typedef uint64_t xl_word;
 
+#if __SIZEOF_DOUBLE__ == 8
+typedef double xl_float;
+#elif __SIZEOF_FLOAT__ == 8
+typedef float xl_float;
+#elif __SIZEOF_LONG_DOUBLE__ == 8
+typedef long double xl_float;
+#else
+#error "word size and float size do not match"
+#endif
+
 #define TAG_TYPE_MASK     0xF0
 #define TAG_VALUE         0x10
 #define TAG_GRAPH         0x20
@@ -50,6 +60,8 @@ struct xl_user;
 struct xl_uri;
 struct xl_dagc_adjacency;
 
+struct xl_dagc;
+
 /* Used to communicate errors through the stack. */
 struct xl_error
 {
@@ -64,10 +76,13 @@ typedef struct xl_error * xl_error_t;
 
 #define no_ignore __attribute__((__warn_unused_result__))
 
-union _xl_ptr_val
+union _xl_atom
 {
-        struct xl_value *p;
-        xl_word v;
+        struct xl_value *t;
+        struct xl_dagc *g;
+        void *any;
+        xl_word w;
+        xl_float f;
 };
 
 /* The base type of all data in Expel; it's a cons cell. */
@@ -78,8 +93,8 @@ struct xl_value
          * the TAG_VALUE bit. */
         xl_tag tag;
 
-        union _xl_ptr_val left;
-        union _xl_ptr_val right;
+        union _xl_atom left;
+        union _xl_atom right;
 
         /* The page in which the value was allocated, used by the
          * garbage collector. */

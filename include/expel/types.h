@@ -50,3 +50,6 @@ xl_type_string(struct xl_value *value);
 
 no_ignore xl_error_t
 xl_type_bool(struct xl_value *value);
+
+no_ignore xl_error_t
+xl_type_float(struct xl_value *value);
