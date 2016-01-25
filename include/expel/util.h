@@ -38,8 +38,4 @@ htonw(word_t);
 word_t
 ntohw(word_t);
 
-/* Converts a constant to its string value. */
-char *
-xl_explain_word(word_t);
-
 #endif

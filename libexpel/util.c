@@ -81,16 +81,3 @@ ntohw(word_t w)
                ((uint64_t) ntohl((uint32_t) w)) << 32;
 #endif
 }
-
-char *
-xl_explain_word(word_t word)
-{
-        size_t i;
-        char *res;
-        res = calloc(9, sizeof(char));
-        if (res == NULL)
-                return res;
-        for (i = 0; i < 8; i++)
-                res[i] = (char) (word >> (8 * (7 - i)));
-        return res;
-}
