@@ -32,6 +32,11 @@ COPTS := $(CFLAGS) $(COPTS) -std=c11 -pedantic -Werror -Wall -Wextra \
 LDOPTS := $(LDOPTS) -L$(DIST_DIR) -Wl,-z,relro,-z,now -pie
 
 asan := yes
+debug_schedule := no
+
+ifeq ($(debug_schedule),yes)
+COPTS += -DXL_SCHEDULE_DEBUG
+endif
 
 ifeq ($(type),release)
 $(info creating release build)
