@@ -358,12 +358,17 @@ _load_node(
 {
         xl_error_t err;
         word_t node_type;
+        word_t node_id;
         uint8_t terminal;
         union xl_dagc_any_node *n;
+
         n = (union xl_dagc_any_node *) node;
 
         READ_INTO(node_type, sp);
         node_type = ntohw(node_type);
+
+        READ_INTO(node_id, sp);
+        node_id = ntohw(node_id);
 
         READ_INTO(terminal, sp);
 
@@ -396,7 +401,9 @@ _load_node(
 
         if (err != OK)
                 return err;
+
         node->node_type = node_type;
+        node->id = node_id;
         node->is_terminal = terminal;
         node->flags = 0;
         return OK;

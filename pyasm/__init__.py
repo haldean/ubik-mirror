@@ -15,62 +15,69 @@ def word():
 def boolean():
     return t(pack("bool"), 0)
 
-def const(typ, val, terminal=False):
+def const(typ, val, terminal=False, nid=None):
     return dict(
         type="const",
+        id=nid,
         ctype=typ,
         cvalue=val,
         subtype=pack("cvalue"),
         is_term=terminal,
     )
 
-def const_word(val, terminal=False):
-    return const(word(), t(val, 0))
+def const_word(val, **kwargs):
+    return const(word(), t(val, 0), **kwargs)
 
-def graph_ref(typ, graph_num, terminal=False):
+def graph_ref(typ, graph_num, terminal=False, nid=None):
     return dict(
         type="const",
+        id=nid,
         ctype=typ,
         cvalue=graph_num,
         subtype=pack("cgraph"),
         is_term=terminal,
     )
 
-def load(uri, dep=None, terminal=False):
+def load(uri, dep=None, terminal=False, nid=None):
     return dict(
         type="load",
+        id=nid,
         uri=uri,
         dep=dep,
         is_term=terminal,
     )
 
-def store(uri, val, terminal=False):
+def store(uri, val, terminal=False, nid=None):
     return dict(
         type="store",
+        id=nid,
         uri=uri,
         value=val,
         is_term=terminal,
     )
 
-def apply(func, arg, terminal=False):
+def apply(func, arg, terminal=False, nid=None):
     return dict(
         type="apply",
+        id=nid,
         func=func,
         arg=arg,
         is_term=terminal,
     )
 
-def arg(arg_num, type, terminal=False):
+def arg(arg_num, type, terminal=False, nid=None):
     return dict(
         type="input",
+        id=nid,
         arg_num=arg_num,
         req_type=type,
         is_term=terminal,
     )
 
-def cond(condition, true, false, terminal=False):
+def cond(condition, true, false, terminal=False, nid=None):
     return dict(
         type="cond",
+        id=nid,
         condition=condition,
         true=true,
         false=false,
@@ -169,6 +176,11 @@ def encode(graphs, expect=None):
             for node in nodes:
                 node_type = node["type"]
                 f.write(struct.pack("8s", pack(node_type)))
+                if "id" in node and node["id"]:
+                    f.write(struct.pack("8s", pack(node["id"])))
+                else:
+                    f.write(struct.pack(">Q", node["idx"]))
+
                 f.write(struct.pack(">Bxxx", 1 if node["is_term"] else 0))
 
                 if node_type == "const":

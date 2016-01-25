@@ -105,6 +105,8 @@ struct xl_dagc_node
         word_t node_type;
         /* One of the DAGC_TYPE constants */
         word_t value_type;
+        /* The unique identifier of this node */
+        word_t id;
         /* The evaluated type of the node, populated after the
          * node is evaluated by xl_dagc_eval. */
         struct xl_value *known_type;

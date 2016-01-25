@@ -272,10 +272,11 @@ format:
 
         Byte index   Field
                0-7   Node type (word-encoded)
-                 8   Set to 0x01 if the node is a terminal node, meaning
+              8-15   The ID of the node (for error reporting)
+                16   Set to 0x01 if the node is a terminal node, meaning
                      that its value is intended as an output of
                      computation. Set to 0x00 otherwise.
-              9-11   Unused
+             17-23   Unused
 
 Once the header has been loaded, the type-dependent decoding of the body
 is given.
