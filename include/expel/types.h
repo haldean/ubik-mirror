@@ -53,3 +53,9 @@ xl_type_bool(struct xl_value *value);
 
 no_ignore xl_error_t
 xl_type_float(struct xl_value *value);
+
+no_ignore xl_error_t
+xl_type_tuple(
+        struct xl_value *product,
+        struct xl_value **field_types,
+        size_t n_field_types);

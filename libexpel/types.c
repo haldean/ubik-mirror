@@ -117,3 +117,33 @@ xl_type_float(struct xl_value *value)
         value->right.w = 0;
         return OK;
 }
+
+no_ignore xl_error_t
+xl_type_tuple(
+        struct xl_value *product,
+        struct xl_value **field_types,
+        size_t n_field_types)
+{
+        xl_error_t err;
+        size_t i;
+
+        product->tag |= TAG_LEFT_WORD | TAG_RIGHT_NODE;
+        product->left.w = BASE_TYPE_TUPLE;
+
+        for (i = 0; i < n_field_types; i++)
+        {
+                product->tag |= TAG_RIGHT_NODE;
+                err = xl_new(&product->right.t);
+                if (err != OK)
+                        return err;
+                product = product->right.t;
+
+                product->left.t = field_types[i];
+                product->tag |= TAG_LEFT_NODE;
+        }
+
+        product->tag |= TAG_RIGHT_WORD;
+        product->right.w = 0;
+
+        return OK;
+}

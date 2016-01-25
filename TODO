@@ -1,8 +1,11 @@
 reference tracking for graphs
 runtime instrumentation
-type system
 type-based dispatch node
 clang format or whatever
 where did a graph come from
-cond always evaluates if_true and if_false
 callback-based scheduler
+tuples
+don't need value_type, just use tag of child
+lambda types
+full implementation of graph as value child
+        makes sense to wait until tuples are done for testing

@@ -26,6 +26,7 @@
   lambda.BASE_TYPE_FUNC
     bool.BASE_TYPE_BOOL
    float.BASE_TYPE_FLOAT
+   tuple.BASE_TYPE_TUPLE
 
     char.PACK_TYPE_CHAR
 
