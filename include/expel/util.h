@@ -31,11 +31,11 @@ size_t
 size_min(size_t a, size_t b);
 
 /* Converts a word from host byte order to network byte order */
-word_t
-htonw(word_t);
+xl_word
+htonw(xl_word);
 
 /* Converts a word from network byte order to host byte order */
-word_t
-ntohw(word_t);
+xl_word
+ntohw(xl_word);
 
 #endif

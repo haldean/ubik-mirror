@@ -25,8 +25,8 @@
 
 #include "expel/const.h"
 
-typedef uint8_t tag_t;
-typedef uint64_t word_t;
+typedef uint8_t xl_tag;
+typedef uint64_t xl_word;
 
 #define TAG_TYPE_MASK     0xF0
 #define TAG_VALUE         0x10
@@ -53,7 +53,7 @@ struct xl_dagc_adjacency;
 /* Used to communicate errors through the stack. */
 struct xl_error
 {
-        word_t error_code;
+        xl_word error_code;
         const char *tag;
         const char *file;
         const char *function;
@@ -67,7 +67,7 @@ typedef struct xl_error * xl_error_t;
 union _xl_ptr_val
 {
         struct xl_value *p;
-        word_t v;
+        xl_word v;
 };
 
 /* The base type of all data in Expel; it's a cons cell. */
@@ -76,7 +76,7 @@ struct xl_value
         /* A bitset of the TAG_ constants. One each of the
          * TAG_LEFT_ and TAG_RIGHT_ bits must be set, along with
          * the TAG_VALUE bit. */
-        tag_t tag;
+        xl_tag tag;
 
         union _xl_ptr_val left;
         union _xl_ptr_val right;
@@ -102,11 +102,11 @@ union xl_value_or_graph
 struct xl_dagc_node
 {
         /* One of the DAGC_NODE constants */
-        word_t node_type;
+        xl_word node_type;
         /* One of the DAGC_TYPE constants */
-        word_t value_type;
+        xl_word value_type;
         /* The unique identifier of this node */
-        word_t id;
+        xl_word id;
         /* The evaluated type of the node, populated after the
          * node is evaluated by xl_dagc_eval. */
         struct xl_value *known_type;
@@ -127,7 +127,7 @@ struct xl_dagc
         /* Used to determine if a void* is a graph or a value.
          * This is set by xl_dagc_init; users of the DAGC API
          * should not touch it. */
-        tag_t tag;
+        xl_tag tag;
 
         /* The nodes participating in the graph. */
         struct xl_dagc_node **nodes;
@@ -249,7 +249,7 @@ xl_dagc_eval(struct xl_env *env, struct xl_dagc *graph);
 /* Create an error object. */
 xl_error_t
 xl_new_error(
-        const word_t code,
+        const xl_word code,
         const char *tag,
         const char *file,
         const uint32_t lineno,

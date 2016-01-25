@@ -63,7 +63,7 @@
 no_ignore xl_error_t
 xl_load_value(struct xl_value *out, struct xl_stream *sp)
 {
-        tag_t tag;
+        xl_tag tag;
         xl_error_t err;
         xl_error_t err_ignore;
 
@@ -131,16 +131,16 @@ xl_load_value(struct xl_value *out, struct xl_stream *sp)
 no_ignore xl_error_t
 xl_save_value(struct xl_stream *sp, struct xl_value *in)
 {
-        word_t val;
+        xl_word val;
         xl_error_t err;
 
-        if (xl_stream_write(sp, &in->tag, sizeof(tag_t)) != sizeof(tag_t))
+        if (xl_stream_write(sp, &in->tag, sizeof(xl_tag)) != sizeof(xl_tag))
                 return xl_raise(ERR_WRITE_FAILED, "value tag");
 
         if (in->tag & TAG_LEFT_WORD)
         {
                 val = htonw(in->left.v);
-                if (xl_stream_write(sp, &val, sizeof(word_t)) != sizeof(word_t))
+                if (xl_stream_write(sp, &val, sizeof(xl_word)) != sizeof(xl_word))
                         return xl_raise(ERR_WRITE_FAILED, "left value");
         }
         else
@@ -153,7 +153,7 @@ xl_save_value(struct xl_stream *sp, struct xl_value *in)
         if (in->tag & TAG_RIGHT_WORD)
         {
                 val = htonw(in->right.v);
-                if (xl_stream_write(sp, &val, sizeof(word_t)) != sizeof(word_t))
+                if (xl_stream_write(sp, &val, sizeof(xl_word)) != sizeof(xl_word))
                         return xl_raise(ERR_WRITE_FAILED, "right value");
         }
         else
@@ -195,9 +195,9 @@ _load_const(
         struct xl_value **values,
         size_t n_values)
 {
-        word_t graph_index;
-        word_t value_index;
-        word_t value_type;
+        xl_word graph_index;
+        xl_word value_index;
+        xl_word value_type;
         xl_error_t err;
 
         READ_INTO(value_type, sp);
@@ -240,8 +240,8 @@ _load_load(
         size_t n_values)
 {
         xl_error_t err;
-        word_t value_index;
-        word_t node_index;
+        xl_word value_index;
+        xl_word node_index;
         struct xl_value *uri_val;
 
         node->head.value_type = DAGC_TYPE_UNKNOWN;
@@ -276,8 +276,8 @@ _load_store(
         size_t n_values)
 {
         xl_error_t err;
-        word_t value_index;
-        word_t node_index;
+        xl_word value_index;
+        xl_word node_index;
         struct xl_value *uri_val;
 
         node->head.value_type = DAGC_TYPE_UNKNOWN;
@@ -311,8 +311,8 @@ _load_input(
         struct xl_value **values,
         size_t n_values)
 {
-        word_t value_index;
-        word_t arg_num;
+        xl_word value_index;
+        xl_word arg_num;
         xl_error_t err;
 
         READ_INTO(arg_num, sp);
@@ -357,8 +357,8 @@ _load_node(
         size_t n_values)
 {
         xl_error_t err;
-        word_t node_type;
-        word_t node_id;
+        xl_word node_type;
+        xl_word node_id;
         uint8_t terminal;
         union xl_dagc_any_node *n;
 
@@ -512,8 +512,8 @@ _load_graph(
         struct xl_value **values,
         size_t n_values)
 {
-        word_t n_nodes;
-        word_t result_idx;
+        xl_word n_nodes;
+        xl_word result_idx;
         size_t i;
         xl_error_t err;
 
@@ -582,7 +582,7 @@ xl_load(struct xl_dagc ***graphs, size_t *ret_n_graphs, struct xl_stream *sp)
         char header[4];
         uint32_t version;
         struct xl_value **values;
-        word_t n_graphs, n_values;
+        xl_word n_graphs, n_values;
         xl_error_t err;
         size_t i;
 

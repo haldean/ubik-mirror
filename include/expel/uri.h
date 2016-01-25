@@ -25,15 +25,15 @@
 
 /* Identifies values in the expel substrate */
 struct xl_uri {
-        tag_t    tag;
-        word_t   hash;
+        xl_tag    tag;
+        xl_word   hash;
 
-        wchar_t  *name;
-        size_t   name_len;
-        word_t   version;
-        word_t   scope;
+        wchar_t   *name;
+        size_t    name_len;
+        xl_word   version;
+        xl_word   scope;
 
-        uint64_t refcount;
+        uint64_t  refcount;
 };
 
 /* Creates a URI for a local resource. */

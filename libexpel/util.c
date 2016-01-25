@@ -36,8 +36,8 @@ size_min(size_t a, size_t b)
         return a < b ? a : b;
 }
 
-word_t
-htonw(word_t w)
+xl_word
+htonw(xl_word w)
 {
 #ifdef __BYTE_ORDER__
 #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
@@ -59,8 +59,8 @@ htonw(word_t w)
 #endif
 }
 
-word_t
-ntohw(word_t w)
+xl_word
+ntohw(xl_word w)
 {
 #ifdef __BYTE_ORDER__
 #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__

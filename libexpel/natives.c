@@ -113,7 +113,7 @@ _native_unsigned_add(struct xl_env *env, struct xl_dagc *graph)
 {
         struct xl_value *res;
         xl_error_t err;
-        word_t v0, v1;
+        xl_word v0, v1;
 
         unused(env);
 
@@ -153,7 +153,7 @@ _native_unsigned_subtract(struct xl_env *env, struct xl_dagc *graph)
 {
         struct xl_value *res;
         xl_error_t err;
-        word_t v0, v1;
+        xl_word v0, v1;
 
         unused(env);
 

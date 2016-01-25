@@ -81,7 +81,7 @@ struct xl_dagc_input
 {
         struct xl_dagc_node head;
         /* The argument that this corresponds to */
-        word_t arg_num;
+        xl_word arg_num;
         /* The type required by the program */
         struct xl_value *required_type;
 };

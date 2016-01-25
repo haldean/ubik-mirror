@@ -60,7 +60,7 @@ no_ignore xl_error_t
 xl_read_packed(uint8_t **dest, size_t *n, struct xl_value *src)
 {
         size_t i, n_bytes, n_copy;
-        word_t p;
+        xl_word p;
         struct xl_value *v;
         uint8_t *res;
 
@@ -192,7 +192,7 @@ xl_print_value(struct xl_stream *out, struct xl_value *v)
 no_ignore xl_error_t
 xl_value_as_bool(bool *res, struct xl_value *v)
 {
-        word_t left;
+        xl_word left;
         if (!(v->tag & TAG_LEFT_WORD))
                 return xl_raise(ERR_BAD_TYPE,
                                 "value cannot be interpreted as a boolean");

@@ -143,7 +143,7 @@ load_save()
 test_t
 host_to_net()
 {
-        word_t v;
+        xl_word v;
 
         v = 0x0123456789ABCDEF;
         v = htonw(v);
@@ -165,7 +165,7 @@ env()
         union xl_value_or_graph v, r;
         struct xl_value *t, *rt;
         struct xl_uri u;
-        word_t value_type;
+        xl_word value_type;
         int i;
         wchar_t *key;
         struct xl_uri uris[N_TEST_URIS];

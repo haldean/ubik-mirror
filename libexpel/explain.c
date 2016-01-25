@@ -47,7 +47,7 @@ xl_explain_node(struct xl_dagc_node *n)
 }
 
 char *
-xl_explain_word(word_t word)
+xl_explain_word(xl_word word)
 {
         size_t i;
         char *res;

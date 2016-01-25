@@ -138,7 +138,7 @@ _eval_load(struct xl_env *env, struct xl_dagc_load *node)
 {
         union xl_value_or_graph value;
         struct xl_value *type;
-        word_t value_type;
+        xl_word value_type;
         xl_error_t err;
 
         err = xl_get(&value, &type, &value_type, env, node->loc);

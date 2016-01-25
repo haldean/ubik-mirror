@@ -24,4 +24,4 @@ xl_explain_node(struct xl_dagc_node *n);
 
 /* Converts a constant to its string value. */
 char *
-xl_explain_word(word_t);
+xl_explain_word(xl_word);

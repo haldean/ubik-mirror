@@ -149,9 +149,9 @@ xl_take(void *p)
         struct xl_value *v;
         struct xl_dagc *g;
         struct xl_uri *u;
-        tag_t tag;
+        xl_tag tag;
 
-        tag = *((tag_t *) p);
+        tag = *((xl_tag *) p);
 
         if ((tag & TAG_TYPE_MASK) == TAG_VALUE)
         {
@@ -373,8 +373,8 @@ _release_uri(struct xl_uri *u)
 no_ignore xl_error_t
 xl_release(void *v)
 {
-        tag_t tag;
-        tag = *((tag_t *) v);
+        xl_tag tag;
+        tag = *((xl_tag *) v);
         if ((tag & TAG_TYPE_MASK) == TAG_VALUE)
                 return _release_value((struct xl_value *) v);
         if ((tag & TAG_TYPE_MASK) == TAG_GRAPH)

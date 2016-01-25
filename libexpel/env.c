@@ -95,7 +95,7 @@ no_ignore xl_error_t
 xl_get(
         union xl_value_or_graph *value,
         struct xl_value **type,
-        word_t *value_type,
+        xl_word *value_type,
         struct xl_env *env,
         struct xl_uri *uri)
 {
@@ -237,7 +237,7 @@ _set(
         struct xl_uri *uri,
         union xl_value_or_graph value,
         struct xl_value *type,
-        word_t value_type,
+        xl_word value_type,
         bool overwrite)
 {
         struct xl_binding new_binding;
@@ -299,7 +299,7 @@ xl_set(
         struct xl_uri *uri,
         union xl_value_or_graph value,
         struct xl_value *type,
-        word_t value_type)
+        xl_word value_type)
 {
         return _set(env, uri, value, type, value_type, false);
 }
@@ -310,7 +310,7 @@ xl_overwrite(
         struct xl_uri *uri,
         union xl_value_or_graph value,
         struct xl_value *type,
-        word_t value_type)
+        xl_word value_type)
 {
         return _set(env, uri, value, type, value_type, true);
 }

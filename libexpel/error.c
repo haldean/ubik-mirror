@@ -26,7 +26,7 @@
 
 xl_error_t
 xl_new_error(
-        const word_t code,
+        const xl_word code,
         const char *tag,
         const char *file,
         const uint32_t lineno,

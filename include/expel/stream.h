@@ -36,7 +36,7 @@ struct xl_stream {
                 FILE *file;
                 struct _xl_buf *buffer;
         };
-        word_t stream_type;
+        xl_word stream_type;
 };
 
 /* Opens a stream for reading from the given file. */
