@@ -24,6 +24,7 @@
 #include "expel/dagc.h"
 #include "expel/env.h"
 #include "expel/expel.h"
+#include "expel/explain.h"
 #include "expel/util.h"
 
 struct xl_node_schedule
@@ -134,9 +135,8 @@ _notify_parents(struct xl_scheduler *s, struct xl_dagc_node *n)
                 if (!(p->flags & XL_DAGC_WAIT_MASK))
                 {
                         #ifdef XL_SCHEDULE_DEBUG
-                        fprintf(stderr, "scheduling %hx for %hx\n",
-                                (short)((uintptr_t) p),
-                                (short)((uintptr_t) node));
+                        fprintf(stderr, "scheduling %s for %s\n",
+                                xl_explain_node(p), xl_explain_node(n));
                         #endif
                         err = xl_schedule_push(s, p);
                         if (err != OK)
@@ -154,10 +154,18 @@ xl_schedule_push(struct xl_scheduler *s, struct xl_dagc_node *n)
 
         if (n->flags & XL_DAGC_FLAG_COMPLETE)
         {
+                #ifdef XL_SCHEDULE_DEBUG
+                fprintf(stderr, "%s complete\n", xl_explain_node(n));
+                #endif
                 return _notify_parents(s, n);
         }
         if (n->flags & XL_DAGC_WAIT_MASK)
         {
+                #ifdef XL_SCHEDULE_DEBUG
+                fprintf(stderr, "%s waiting, queueing children\n",
+                        xl_explain_node(n));
+                #endif
+
                 err = xl_dagc_get_deps(&d1, &d2, &d3, n);
                 if (err != OK)
                         return err;
@@ -186,6 +194,11 @@ xl_schedule_push(struct xl_scheduler *s, struct xl_dagc_node *n)
 
                 return OK;
         }
+
+        #ifdef XL_SCHEDULE_DEBUG
+        fprintf(stderr, "%s ready, queueing\n",
+                xl_explain_node(n));
+        #endif
         return _schedule(s, n);
 }
 
