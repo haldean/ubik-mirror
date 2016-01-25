@@ -76,14 +76,16 @@ _set_initial_ready(struct xl_dagc_node **nodes, size_t n_nodes)
                         else
                                 n->flags = XL_DAGC_FLAG_WAIT_D1;
                 }
-
-                n->flags = XL_DAGC_WAIT_MASK;
-                if (d1 == NULL || d1->flags & XL_DAGC_FLAG_COMPLETE)
-                        n->flags ^= XL_DAGC_FLAG_WAIT_D1;
-                if (d2 == NULL || d2->flags & XL_DAGC_FLAG_COMPLETE)
-                        n->flags ^= XL_DAGC_FLAG_WAIT_D2;
-                if (d3 == NULL || d3->flags & XL_DAGC_FLAG_COMPLETE)
-                        n->flags ^= XL_DAGC_FLAG_WAIT_D3;
+                else
+                {
+                        n->flags = XL_DAGC_WAIT_MASK;
+                        if (d1 == NULL || d1->flags & XL_DAGC_FLAG_COMPLETE)
+                                n->flags ^= XL_DAGC_FLAG_WAIT_D1;
+                        if (d2 == NULL || d2->flags & XL_DAGC_FLAG_COMPLETE)
+                                n->flags ^= XL_DAGC_FLAG_WAIT_D2;
+                        if (d3 == NULL || d3->flags & XL_DAGC_FLAG_COMPLETE)
+                                n->flags ^= XL_DAGC_FLAG_WAIT_D3;
+                }
         }
 
         return OK;
@@ -136,7 +138,7 @@ _notify_parents(struct xl_scheduler *s, struct xl_dagc_node *n)
                                 (short)((uintptr_t) p),
                                 (short)((uintptr_t) node));
                         #endif
-                        err = _schedule(s, p);
+                        err = xl_schedule_push(s, p);
                         if (err != OK)
                                 return err;
                 }
