@@ -68,16 +68,22 @@ xl_load_value(struct xl_value *out, struct xl_stream *sp)
         xl_error_t err_ignore;
 
         READ_INTO(tag, sp);
-        xl_assert(!(tag & TAG_LEFT_WORD) ^ !(tag & TAG_LEFT_NODE));
-        xl_assert(!(tag & TAG_RIGHT_WORD) ^ !(tag & TAG_RIGHT_NODE));
+        tag = ntohs(tag);
+
+        xl_assert(((tag & TAG_LEFT_WORD) ? 1 : 0)
+                + ((tag & TAG_LEFT_NODE) ? 1 : 0)
+                + ((tag & TAG_LEFT_GRAPH) ? 1 : 0) == 1);
+        xl_assert(((tag & TAG_RIGHT_WORD) ? 1 : 0)
+                + ((tag & TAG_RIGHT_NODE) ? 1 : 0)
+                + ((tag & TAG_RIGHT_GRAPH) ? 1 : 0) == 1);
         xl_assert((tag & TAG_TYPE_MASK) == TAG_VALUE);
 
-        if (tag & TAG_LEFT_WORD)
+        if (tag & (TAG_LEFT_WORD | TAG_LEFT_GRAPH))
         {
                 READ_INTO(out->left.w, sp);
                 out->left.w = ntohw(out->left.w);
         }
-        else
+        else if (tag & TAG_LEFT_NODE)
         {
                 err = xl_new(&out->left.t);
                 if (err != OK)
@@ -95,13 +101,14 @@ xl_load_value(struct xl_value *out, struct xl_stream *sp)
                 }
                 out->left.t->refcount = 1;
         }
+        else return xl_raise(ERR_BAD_TAG, "left is not set");
 
-        if (tag & TAG_RIGHT_WORD)
+        if (tag & (TAG_RIGHT_WORD | TAG_RIGHT_GRAPH))
         {
                 READ_INTO(out->right.w, sp);
                 out->right.w = ntohw(out->right.w);
         }
-        else
+        else if (tag & TAG_RIGHT_NODE)
         {
                 err = xl_new(&out->right.t);
                 if (err != OK)
@@ -119,6 +126,7 @@ xl_load_value(struct xl_value *out, struct xl_stream *sp)
                 }
                 out->right.t->refcount = 1;
         }
+        else return xl_raise(ERR_BAD_TAG, "right is not set");
 
         /* set the tag only if everything went according to plan. This means
          * that callers can safely pass the value here into xl_release, and it
@@ -131,10 +139,12 @@ xl_load_value(struct xl_value *out, struct xl_stream *sp)
 no_ignore xl_error_t
 xl_save_value(struct xl_stream *sp, struct xl_value *in)
 {
+        xl_tag tag;
         xl_word val;
         xl_error_t err;
 
-        if (xl_stream_write(sp, &in->tag, sizeof(xl_tag)) != sizeof(xl_tag))
+        tag = htons(in->tag);
+        if (xl_stream_write(sp, &tag, sizeof(xl_tag)) != sizeof(xl_tag))
                 return xl_raise(ERR_WRITE_FAILED, "value tag");
 
         if (in->tag & TAG_LEFT_WORD)

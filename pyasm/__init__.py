@@ -110,13 +110,13 @@ def pack_string(s):
     return t(len(bytes), tree)
 
 def pack_tree(t):
-    tag = 0x10
+    tag = 0x1000
 
     if isinstance(t[0], tuple):
-        tag |= 0x01
+        tag |= 0x10
         left = pack_tree(t[0])
     else:
-        tag |= 0x02
+        tag |= 0x20
         if isinstance(t[0], basestring):
             left = t[0]
         elif isinstance(t[0], float):
@@ -125,10 +125,10 @@ def pack_tree(t):
             left = struct.pack(">Q", t[0])
 
     if isinstance(t[1], tuple):
-        tag |= 0x04
+        tag |= 0x01
         right = pack_tree(t[1])
     else:
-        tag |= 0x08
+        tag |= 0x02
         if isinstance(t[1], basestring):
             right = t[1]
         elif isinstance(t[1], float):
@@ -136,8 +136,9 @@ def pack_tree(t):
         else:
             right = struct.pack(">Q", t[1])
 
-    assert(tag & 0x0F)
-    return struct.pack(">B", tag) + left + right
+    assert(tag & 0x00F0)
+    assert(tag & 0x000F)
+    return struct.pack(">H", tag) + left + right
 
 def graph(nodes, result_idx):
     return dict(

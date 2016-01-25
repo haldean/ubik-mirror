@@ -52,25 +52,27 @@ tag tells you how to interpret the left and right values.
 
 Tags
 
-Tags are stored in a byte which is the bitwise union of the relevant
-masks:
+Tags are stored in a 16-bit integer which is the bitwise union of the
+relevant masks:
 
-                0b00000001 (0x01): left child is a node
-                0b00000010 (0x02): left child is a word
-                0b00000100 (0x04): right child is a node
-                0b00001000 (0x08): right child is a word
+                0b00000001 (0x01): right child is a node
+                0b00000010 (0x02): right child is a word
+                0b00000100 (0x04): right child is a graph
+                0b00010000 (0x10): left child is a node
+                0b00100000 (0x20): left child is a word
+                0b01000000 (0x40): left child is a graph
 
 Thus, a node whose left value is a node and whose right value is a word
-would have the tag `0b00001001`, or `0x09`.
+would have the tag `0b00001001`, or `0x0009`.
 
 Additionally, the relevant tag type is bitwise-ORed into the tag:
 
-                0b00010000 (0x00): object is a tree
-                0b00100000 (0x10): object is a graph
-                0b00110000 (0x20): object is a URI
+                           0x1000: object is a tree
+                           0x2000: object is a graph
+                           0x3000: object is a URI
 
-So a graph has tag `0x20` and a URI has tag `0x30`, and a tree whose
-left is a node and whose right is a word has tag `0x19`.
+So a graph has tag `0x2000` and a URI has tag `0x3000`, and a tree whose
+left is a node and whose right is a word has tag `0x1012`.
 
 Types
 
@@ -240,10 +242,12 @@ graph or value that is encoded is identified by its index in the file.
 Immediately after the bytecode header comes a series of tree-encoded
 values. The tree encoding proceeds as follows: Begin with the root of
 the tree to be encoded. The node's 8-bit tag is written to the stream,
-followed by the encoding of its left child, then its right child. If a
-child is a value, the value is written to the stream in little-endian
-format as an 8-byte integer. If a child is a node, recurse and apply
-this same operation.
+followed by the encoding of its left child, then its right child.  If
+a child is a value, the value is written to the stream in
+little-endian format as an 8-byte integer. If a child is another
+value, recurse and apply this same operation. If a child is a
+reference to a graph, the word-encoded index of the graph in the blob
+is written.
 
 Tree decoding proceeds in much the same way: Take a byte off of the head
 of the stream. If the byte indicates the left is a node, recurse. If it
