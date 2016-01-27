@@ -257,6 +257,158 @@ _native_eq(struct xl_env *env, struct xl_dagc *graph)
 #define DEF_OP_URI L"eq"
 #include "def-native.h"
 
+no_ignore static xl_error
+_native_emit_float(struct xl_env *env, struct xl_dagc *graph)
+{
+        struct xl_value *res;
+        xl_error err;
+
+        unused(env);
+
+        res = graph->nodes[0]->known.tree;
+        printf("%f\n", res->left.f);
+
+        graph->result->known.tree = res;
+        graph->result->known_type = graph->nodes[0]->known_type;
+        graph->result->value_type = DAGC_TYPE_VALUE;
+
+        err = xl_take(graph->result->known.any);
+        if (err != OK)
+                return err;
+        err = xl_take(graph->result->known_type);
+        if (err != OK)
+                return err;
+
+        return OK;
+}
+
+no_ignore static xl_error
+_native_emit_word(struct xl_env *env, struct xl_dagc *graph)
+{
+        struct xl_value *res;
+        xl_error err;
+
+        unused(env);
+
+        res = graph->nodes[0]->known.tree;
+        printf("%lx\n", res->left.w);
+
+        graph->result->known.tree = res;
+        graph->result->known_type = graph->nodes[0]->known_type;
+        graph->result->value_type = DAGC_TYPE_VALUE;
+
+        err = xl_take(graph->result->known.any);
+        if (err != OK)
+                return err;
+        err = xl_take(graph->result->known_type);
+        if (err != OK)
+                return err;
+
+        return OK;
+}
+
+no_ignore static xl_error
+_register_emit(struct xl_env *env)
+{
+        struct xl_dagc *wgraph;
+        struct xl_dagc *fgraph;
+        struct xl_value *polyfunc;
+        struct xl_value *word_pair;
+        struct xl_value *float_pair;
+
+        struct xl_uri *uri;
+        struct xl_value *type;
+        union xl_value_or_graph ins;
+
+        xl_error err;
+
+        wgraph = NULL;
+        err = _create_op(&wgraph, 1, _native_emit_word);
+        if (err != OK)
+                return err;
+        err = xl_type_word(
+                ((struct xl_dagc_input *) wgraph->inputs[0])->required_type);
+        if (err != OK)
+                return err;
+
+        fgraph = NULL;
+        err = _create_op(&fgraph, 1, _native_emit_float);
+        if (err != OK)
+                return err;
+        err = xl_type_float(
+                ((struct xl_dagc_input *) fgraph->inputs[0])->required_type);
+        if (err != OK)
+                return err;
+
+        /* I need to come up with a better way to write these. */
+        err = xl_new(&polyfunc);
+        if (err != OK)
+                return err;
+        polyfunc->tag |= TAG_LEFT_NODE | TAG_RIGHT_NODE;
+
+        err = xl_new(&polyfunc->left.t);
+        if (err != OK)
+                return err;
+        word_pair = polyfunc->left.t;
+        word_pair->tag |= TAG_LEFT_NODE | TAG_RIGHT_GRAPH;
+
+        err = xl_new(&word_pair->left.t);
+        if (err != OK)
+                return err;
+        err = xl_type_word(word_pair->left.t);
+        if (err != OK)
+                return err;
+        word_pair->right.g = wgraph;
+
+        err = xl_new(&polyfunc->right.t);
+        if (err != OK)
+                return err;
+        polyfunc->right.t->tag |= TAG_LEFT_NODE | TAG_RIGHT_NODE;
+
+        err = xl_new(&polyfunc->right.t->left.t);
+        if (err != OK)
+                return err;
+        float_pair = polyfunc->right.t->left.t;
+        float_pair->tag |= TAG_LEFT_NODE | TAG_RIGHT_GRAPH;
+
+        err = xl_new(&float_pair->left.t);
+        if (err != OK)
+                return err;
+        err = xl_type_float(float_pair->left.t);
+        if (err != OK)
+                return err;
+        float_pair->right.g = fgraph;
+
+        err = _native_uri(&uri, L"emit");
+        if (err != OK)
+                return err;
+        err = xl_take(uri);
+        if (err != OK)
+                return err;
+
+        err = xl_new(&type);
+        if (err != OK)
+                return err;
+        /* TODO: set type here */
+
+        ins.tree = polyfunc;
+        err = xl_set(env, uri, ins, type, DAGC_TYPE_GRAPH);
+        if (err != OK)
+                return err;
+
+        err = xl_release(uri);
+        if (err != OK)
+                return err;
+        err = xl_release(type);
+        if (err != OK)
+                return err;
+        err = xl_release(polyfunc);
+        if (err != OK)
+                return err;
+
+        return OK;
+}
+
 no_ignore xl_error
 xl_register_natives(struct xl_env *env)
 {
@@ -271,6 +423,10 @@ xl_register_natives(struct xl_env *env)
                 return err;
 
         err = _register_eq(env);
+        if (err != OK)
+                return err;
+
+        err = _register_emit(env);
         if (err != OK)
                 return err;
 

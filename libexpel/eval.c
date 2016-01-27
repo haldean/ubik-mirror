@@ -39,8 +39,17 @@ _eval_apply(struct xl_env *env, struct xl_dagc_apply *node)
         unused(env);
 
         if (node->func->value_type != DAGC_TYPE_GRAPH)
-                return xl_raise(ERR_BAD_TYPE, "apply: func is not a graph");
-        proto = node->func->known.graph;
+        {
+                err = xl_type_match_polyfunc(
+                        &proto, node->func->known.tree, node->arg->known_type);
+                if (err != OK)
+                        return err;
+        }
+        else
+        {
+                proto = node->func->known.graph;
+        }
+
         if (proto->in_arity == 0)
                 return xl_raise(ERR_BAD_TYPE, "apply: graph has no inputs");
 

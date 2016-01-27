@@ -1,8 +1,10 @@
 # vi: ft=python
 from pyasm import *
 
-tree = t(-0.5, t(3e50, 7.0007))
+emit = load(nid="emit", uri=uri(name="emit", scope=pack("native")))
+tree = const(flt(), t(-0.5, t(3e50, 7.0007)))
+ap = apply(func=emit, arg=tree, nid="apply", terminal=True)
 
 encode([
-    graph([const(flt(), tree, terminal=True)], 0),
-], expect=tree)
+    graph([emit, tree, ap], -1),
+], expect=t(-0.5, 0))

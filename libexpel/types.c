@@ -73,6 +73,38 @@ xl_type_func_apply(
         return OK;
 }
 
+no_ignore xl_error
+xl_type_match_polyfunc(
+        struct xl_dagc **result,
+        struct xl_value *def,
+        struct xl_value *arg_type)
+{
+        /* Polymorphic functions are defined as a list of pairs, where the left
+         * of the pair is the type node and the right of the pair is the graph
+         * to call. */
+        struct xl_value *pair;
+
+        for (;;)
+        {
+                if (!(def->tag & TAG_LEFT_NODE))
+                        return xl_raise(ERR_BAD_TAG, "bad tag in poly root");
+
+                pair = def->left.t;
+                if (def->tag != (TAG_VALUE | TAG_LEFT_NODE | TAG_RIGHT_GRAPH))
+                        return xl_raise(ERR_BAD_TAG, "bad tag in poly pair");
+
+                if (xl_type_satisfied(pair->left.t, arg_type))
+                {
+                        *result = pair->right.g;
+                        return OK;
+                }
+
+                if (!(def->tag & TAG_RIGHT_NODE))
+                        return xl_raise(ERR_BAD_TYPE, "no func matches type");
+                def = def->right.t;
+        }
+}
+
 bool
 xl_type_is_prim_word(struct xl_value *value)
 {
