@@ -484,7 +484,46 @@ _set_node_pointers(
 }
 
 no_ignore static xl_error
-_set_graph_pointers(
+_set_value_graph_pointers(
+        struct xl_value *value,
+        struct xl_dagc **all_graphs,
+        size_t n_graphs)
+{
+        xl_error err;
+
+        if (value->tag & TAG_LEFT_GRAPH)
+        {
+                if (value->left.w >= n_graphs)
+                        return xl_raise(ERR_OUT_OF_BOUNDS, "bad graph index");
+                value->left.g = all_graphs[value->left.w];
+        }
+        else if (value->tag & TAG_LEFT_NODE)
+        {
+                err = _set_value_graph_pointers(
+                        value->left.t, all_graphs, n_graphs);
+                if (err != OK)
+                        return err;
+        }
+
+        if (value->tag & TAG_RIGHT_GRAPH)
+        {
+                if (value->right.w >= n_graphs)
+                        return xl_raise(ERR_OUT_OF_BOUNDS, "bad graph index");
+                value->right.g = all_graphs[value->right.w];
+        }
+        else if (value->tag & TAG_RIGHT_NODE)
+        {
+                err = _set_value_graph_pointers(
+                        value->right.t, all_graphs, n_graphs);
+                if (err != OK)
+                        return err;
+        }
+
+        return OK;
+}
+
+no_ignore static xl_error
+_set_node_graph_pointers(
         struct xl_dagc *graph,
         struct xl_dagc **all_graphs,
         size_t n_graphs)
@@ -657,13 +696,17 @@ xl_load(struct xl_dagc ***graphs, size_t *ret_n_graphs, struct xl_stream *sp)
         }
         for (i = 0; i < n_graphs; i++)
         {
-                err = _set_graph_pointers((*graphs)[i], *graphs, n_graphs);
+                err = _set_node_graph_pointers((*graphs)[i], *graphs, n_graphs);
                 if (err != OK)
                         goto error;
         }
 
         for (i = 0; i < n_values; i++)
         {
+                err = _set_value_graph_pointers(values[i], *graphs, n_graphs);
+                if (err != OK)
+                        goto error;
+
                 err = xl_release(values[i]);
                 if (err != OK)
                         goto error;
