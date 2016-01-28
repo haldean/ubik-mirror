@@ -245,9 +245,9 @@ _release_value(struct xl_value *v)
                                ((uintptr_t) p) & 0xFFFF);
                 #endif
 
-                if (v->tag & TAG_LEFT_NODE)
+                if (v->tag & (TAG_LEFT_NODE | TAG_LEFT_GRAPH))
                         err = xl_release(v->left.any);
-                if (err == OK && v->tag & TAG_RIGHT_NODE)
+                if (err == OK && (v->tag & (TAG_RIGHT_NODE | TAG_RIGHT_GRAPH)))
                         err = xl_release(v->right.any);
         }
 
