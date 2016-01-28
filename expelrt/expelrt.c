@@ -108,13 +108,6 @@ test_file(char *fname)
 
         if (expected != NULL)
         {
-                if (graphs[0]->out_arity != 1)
-                {
-                        printf("can't find value of graph with out arity %lu\n",
-                               graphs[0]->out_arity);
-                        err = xl_raise(ERR_BAD_GRAPH, "out arity");
-                        goto teardown;
-                }
                 actual = graphs[0]->result->known.tree;
                 printf("\texpected:  ");
                 err = xl_print_value(&sstdout, expected);
