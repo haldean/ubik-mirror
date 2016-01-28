@@ -116,7 +116,7 @@ xl_get(
                                 continue;
                         if (xl_uri_eq(uri, env->bindings[i].uri))
                         {
-                                *value = env->bindings[i].value;
+                                value->any = env->bindings[i].value.any;
                                 *value_type = env->bindings[i].value_type;
                                 *type = env->bindings[i].type;
                                 found = true;

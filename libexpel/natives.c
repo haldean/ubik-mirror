@@ -65,7 +65,8 @@ _create_op(
         size_t i;
         xl_error err;
 
-        err = xl_alloc_dagc_with_size(&graph, arity + 1, sizeof(struct xl_dagc_native), NULL);
+        err = xl_alloc_dagc_with_size(
+                &graph, arity + 1, sizeof(struct xl_dagc_native), NULL);
         if (err != OK)
                 return err;
         ngraph = (struct xl_dagc_native *) graph;
@@ -291,7 +292,7 @@ _native_emit_word(struct xl_env *env, struct xl_dagc *graph)
         unused(env);
 
         res = graph->nodes[0]->known.tree;
-        printf("%lx\n", res->left.w);
+        printf("0x%lx\n", res->left.w);
 
         graph->result->known.tree = res;
         graph->result->known_type = graph->nodes[0]->known_type;
