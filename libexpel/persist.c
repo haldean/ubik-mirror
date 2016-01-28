@@ -635,6 +635,8 @@ xl_load(struct xl_dagc ***graphs, size_t *ret_n_graphs, struct xl_stream *sp)
         xl_error err;
         size_t i;
 
+        values = NULL;
+
         READ_INTO(header, sp);
         if (strncmp(header, "expl", 4) != 0)
         {
@@ -712,9 +714,12 @@ xl_load(struct xl_dagc ***graphs, size_t *ret_n_graphs, struct xl_stream *sp)
                         goto error;
         }
 
+        free(values);
         return OK;
 
 error:
+        if (values != NULL)
+                free(values);
         *ret_n_graphs = 0;
         return err;
 }
