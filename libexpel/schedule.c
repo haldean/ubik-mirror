@@ -254,6 +254,8 @@ xl_dagc_eval(struct xl_env *env, struct xl_dagc *graph)
                 err = xl_dagc_node_eval(&s, env, to_exec->node);
                 if (err != OK)
                         return err;
+
+                free(to_exec);
         }
         return OK;
 }
