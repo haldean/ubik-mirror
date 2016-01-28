@@ -393,7 +393,7 @@ _register_emit(struct xl_env *env)
         /* TODO: set type here */
 
         ins.tree = polyfunc;
-        err = xl_set(env, uri, ins, type, DAGC_TYPE_GRAPH);
+        err = xl_set(env, uri, ins, type, DAGC_TYPE_VALUE);
         if (err != OK)
                 return err;
 
