@@ -90,7 +90,7 @@ xl_type_match_polyfunc(
                         return xl_raise(ERR_BAD_TAG, "bad tag in poly root");
 
                 pair = def->left.t;
-                if (def->tag != (TAG_VALUE | TAG_LEFT_NODE | TAG_RIGHT_GRAPH))
+                if (pair->tag != (TAG_VALUE | TAG_LEFT_NODE | TAG_RIGHT_GRAPH))
                         return xl_raise(ERR_BAD_TAG, "bad tag in poly pair");
 
                 if (xl_type_satisfied(pair->left.t, arg_type))
