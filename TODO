@@ -7,6 +7,4 @@ callback-based scheduler
 tuples
 don't need value_type, just use tag of child
 lambda types
-full implementation of graph as value child
-        makes sense to wait until tuples are done for testing
 remove value type from env, replace with tag
