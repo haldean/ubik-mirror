@@ -27,7 +27,7 @@ export LD_LIBRARY_PATH
 
 COPTS := $(CFLAGS) $(COPTS) -std=c11 -pedantic -Werror -Wall -Wextra \
 	-I$(ROOT_DIR)/include -I$(ROOT_DIR)/dist/include \
-	-D_GNU_SOURCE -D_FORTIFY_SOURCE=2 -fPIE -fPIC
+	-D_GNU_SOURCE -D_FORTIFY_SOURCE=2 -fPIE -fPIC -ggdb
 
 LDOPTS := $(LDOPTS) -L$(DIST_DIR) -Wl,-z,relro,-z,now -pie
 
@@ -44,7 +44,7 @@ COPTS := $(COPTS) -O2
 
 else
 $(info creating debug build)
-COPTS := $(COPTS) -ggdb -O0 -DXL_GC_DEBUG
+COPTS := $(COPTS) -O0 -DXL_GC_DEBUG
 ifeq ($(asan),yes)
 COPTS := $(COPTS) -fsanitize=undefined -fsanitize=address -fsanitize=leak \
 	-fstack-protector-strong
