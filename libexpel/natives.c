@@ -363,7 +363,8 @@ _register_emit(struct xl_env *env)
         err = xl_new(&polyfunc->right.t);
         if (err != OK)
                 return err;
-        polyfunc->right.t->tag |= TAG_LEFT_NODE | TAG_RIGHT_NODE;
+        polyfunc->right.t->tag |= TAG_LEFT_NODE | TAG_RIGHT_WORD;
+        polyfunc->right.t->right.w = 0;
 
         err = xl_new(&polyfunc->right.t->left.t);
         if (err != OK)
