@@ -8,3 +8,4 @@ tuples
 don't need value_type, just use tag of child
 lambda types
 remove value type from env, replace with tag
+circular reference finder
