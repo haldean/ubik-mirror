@@ -249,12 +249,14 @@ xl_dagc_eval(struct xl_env *env, struct xl_dagc *graph)
                 s.ready = to_exec->prev;
 
                 if (to_exec->node->flags & XL_DAGC_FLAG_COMPLETE)
+                {
+                        free(to_exec);
                         continue;
+                }
 
                 err = xl_dagc_node_eval(&s, env, to_exec->node);
                 if (err != OK)
                         return err;
-
                 free(to_exec);
         }
         return OK;
