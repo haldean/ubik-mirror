@@ -323,6 +323,8 @@ _release_graph(struct xl_dagc *g)
         size_t i;
         xl_error err;
 
+        if (unlikely(g->refcount == 0))
+                return xl_raise(ERR_REFCOUNT_UNDERFLOW, "release");
         g->refcount--;
 
         if (g->refcount)
@@ -361,6 +363,9 @@ _release_graph(struct xl_dagc *g)
 no_ignore static xl_error
 _release_uri(struct xl_uri *u)
 {
+        if (unlikely(u->refcount == 0))
+                return xl_raise(ERR_REFCOUNT_UNDERFLOW, "release");
+
         u->refcount--;
         if (u->refcount)
                 return OK;
