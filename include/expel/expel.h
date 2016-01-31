@@ -114,14 +114,13 @@ union xl_value_or_graph
         struct xl_value *tree;
         struct xl_dagc  *graph;
         void            *any;
+        xl_tag          *tag;
 };
 
 struct xl_dagc_node
 {
         /* One of the DAGC_NODE constants */
         xl_word node_type;
-        /* One of the DAGC_TYPE constants */
-        xl_word value_type;
         /* The unique identifier of this node */
         xl_word id;
         /* The evaluated type of the node, populated after the
@@ -129,7 +128,7 @@ struct xl_dagc_node
         struct xl_value *known_type;
         /* The evaluated computation graph of the node, populated
          * after the node is evaluated by xl_dagc_eval. The
-         * value_type field tells you which member of the union to
+         * tag field tells you which member of the union to
          * access. */
         union xl_value_or_graph known;
         /* Nonzero if we want the value of this node at the end of
