@@ -1,6 +1,5 @@
 reference tracking for graphs
 runtime instrumentation
-type-based dispatch node
 clang format or whatever
 where did a graph come from
 callback-based scheduler
