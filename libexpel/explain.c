@@ -27,21 +27,18 @@ xl_explain_node(struct xl_dagc_node *n)
 {
         char *res;
         char *node_type;
-        char *value_type;
         char *id;
 
         node_type = xl_explain_word(n->node_type);
-        value_type = xl_explain_word(n->value_type);
         id = xl_explain_word(n->id);
 
         int aspr_res = asprintf(
-                &res, "%s (%s) %s @%hx",
-                node_type, value_type, id, (short)((uintptr_t) n));
+                &res, "%s %s @%hx",
+                node_type, id, (short)((uintptr_t) n));
 
         if (aspr_res < 0)
                 res = NULL;
         free(node_type);
-        free(value_type);
         free(id);
         return res;
 }

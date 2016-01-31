@@ -74,7 +74,7 @@ _op_name(struct xl_env *env)
         /* TODO: set type here */
 
         ins.graph = ngraph;
-        err = xl_set(env, uri, ins, type, DAGC_TYPE_GRAPH);
+        err = xl_set(env, uri, ins, type);
         if (err != OK)
                 return err;
 
@@ -131,7 +131,7 @@ _op_name(struct xl_env *env)
         /* TODO: set type here */
 
         ins.graph = ngraph;
-        err = xl_set(env, uri, ins, type, DAGC_TYPE_GRAPH);
+        err = xl_set(env, uri, ins, type);
         if (err != OK)
                 return err;
 

@@ -79,7 +79,6 @@ _create_op(
                 if (in == NULL)
                         return xl_raise(ERR_NO_MEMORY, "create native dagc");
                 in->head.node_type = DAGC_NODE_INPUT;
-                in->head.value_type = DAGC_TYPE_UNKNOWN;
                 in->head.known_type = NULL;
                 in->head.known.any = NULL;
                 in->head.is_terminal = 0x00;
@@ -92,7 +91,6 @@ _create_op(
 
         /* Create output native node */
         graph->nodes[arity]->node_type = DAGC_NODE_NATIVE;
-        graph->nodes[arity]->value_type = DAGC_TYPE_UNKNOWN;
         graph->nodes[arity]->known_type = NULL;
         graph->nodes[arity]->known.any = NULL;
         graph->nodes[arity]->is_terminal = 0x01;
@@ -133,7 +131,6 @@ _native_unsigned_add(struct xl_env *env, struct xl_dagc *graph)
 
         graph->result->known.tree = res;
         graph->result->known_type = graph->nodes[0]->known_type;
-        graph->result->value_type = DAGC_TYPE_VALUE;
 
         /* We already own the tree because we just new'ed it. */
         err = xl_take(graph->result->known_type);
@@ -171,7 +168,6 @@ _native_unsigned_subtract(struct xl_env *env, struct xl_dagc *graph)
 
         graph->result->known.tree = res;
         graph->result->known_type = graph->nodes[0]->known_type;
-        graph->result->value_type = DAGC_TYPE_VALUE;
 
         /* We already own the tree because we just new'ed it. */
         err = xl_take(graph->result->known_type);
@@ -193,6 +189,7 @@ _native_eq(struct xl_env *env, struct xl_dagc *graph)
         struct xl_value *res;
         struct xl_dagc_node *n0, *n1;
         struct xl_value *v0, *v1;
+        xl_tag t0, t1;
         bool ret;
         xl_error err;
 
@@ -200,19 +197,21 @@ _native_eq(struct xl_env *env, struct xl_dagc *graph)
 
         n0 = graph->nodes[0];
         n1 = graph->nodes[1];
+        t0 = *n0->known.tag;
+        t1 = *n1->known.tag;
 
         ret = true;
 
-        if (n0->value_type != n1->value_type)
+        if ((t0 & TAG_TYPE_MASK) != (t1 & TAG_TYPE_MASK))
         {
                 ret = false;
         }
-        else if (n0->value_type == DAGC_TYPE_GRAPH)
+        else if ((t0 & TAG_TYPE_MASK) == TAG_GRAPH)
         {
                 /* TODO: make this a semantic comparison */
                 ret = n0->known.graph == n1->known.graph;
         }
-        else if (n0->value_type == DAGC_TYPE_VALUE)
+        else if ((t0 & TAG_TYPE_MASK) == TAG_VALUE)
         {
                 ret = false;
                 if (xl_value_eq(n0->known_type, n1->known_type))
@@ -239,7 +238,6 @@ _native_eq(struct xl_env *env, struct xl_dagc *graph)
         res->right.w = 0;
 
         graph->result->known.tree = res;
-        graph->result->value_type = DAGC_TYPE_VALUE;
 
         err = xl_new(&graph->result->known_type);
         if (err != OK)
@@ -271,7 +269,6 @@ _native_emit_float(struct xl_env *env, struct xl_dagc *graph)
 
         graph->result->known.tree = res;
         graph->result->known_type = graph->nodes[0]->known_type;
-        graph->result->value_type = DAGC_TYPE_VALUE;
 
         err = xl_take(graph->result->known.any);
         if (err != OK)
@@ -296,7 +293,6 @@ _native_emit_word(struct xl_env *env, struct xl_dagc *graph)
 
         graph->result->known.tree = res;
         graph->result->known_type = graph->nodes[0]->known_type;
-        graph->result->value_type = DAGC_TYPE_VALUE;
 
         err = xl_take(graph->result->known.any);
         if (err != OK)
@@ -394,7 +390,7 @@ _register_emit(struct xl_env *env)
         /* TODO: set type here */
 
         ins.tree = polyfunc;
-        err = xl_set(env, uri, ins, type, DAGC_TYPE_VALUE);
+        err = xl_set(env, uri, ins, type);
         if (err != OK)
                 return err;
 

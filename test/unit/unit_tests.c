@@ -165,7 +165,6 @@ env()
         union xl_value_or_graph v, r;
         struct xl_value *t, *rt;
         struct xl_uri u;
-        xl_word value_type;
         int i;
         wchar_t *key;
         struct xl_uri uris[N_TEST_URIS];
@@ -188,17 +187,15 @@ env()
         assert(u.hash != 0);
 
         assert(xl_env_init(&env) == OK);
-        assert(xl_set(&env, &u, v, t, DAGC_TYPE_VALUE) == OK);
-        assert(xl_get(&r, &rt, &value_type, &env, &u) == OK);
+        assert(xl_set(&env, &u, v, t) == OK);
+        assert(xl_get(&r, &rt, &env, &u) == OK);
         assert(r.tree == v.tree);
-        assert(value_type == DAGC_TYPE_VALUE);
         assert(v.tree->refcount == 2);
 
-        assert(xl_set(
-                &env, &u, v, t, DAGC_TYPE_VALUE)->error_code == ERR_PRESENT);
+        assert(xl_set(&env, &u, v, t)->error_code == ERR_PRESENT);
         assert(v.tree->refcount == 2);
 
-        assert(xl_overwrite(&env, &u, v, t, DAGC_TYPE_VALUE) == OK);
+        assert(xl_overwrite(&env, &u, v, t) == OK);
         assert(v.tree->refcount == 2);
 
         for (i = 0; i < N_TEST_URIS; i++)
@@ -211,8 +208,7 @@ env()
 
         for (i = 0; i < N_TEST_URIS; i++)
         {
-                assert(xl_overwrite(
-                        &env, &uris[i], v, t, DAGC_TYPE_VALUE) == OK);
+                assert(xl_overwrite(&env, &uris[i], v, t) == OK);
         }
 
         assert(v.tree->refcount == N_TEST_URIS + 1);

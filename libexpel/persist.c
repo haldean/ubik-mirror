@@ -181,8 +181,6 @@ _load_apply(struct xl_dagc_apply *node, struct xl_stream *sp)
 {
         uint64_t node_index;
 
-        node->head.value_type = DAGC_TYPE_UNKNOWN;
-
         /* Because of the check to make sure that the number of nodes does not
          * exceed the size of a pointer inside xl_load, we can safely jam this
          * index into a pointer. */
@@ -211,7 +209,7 @@ _load_const(
         xl_error err;
 
         READ_INTO(value_type, sp);
-        node->head.value_type = ntohw(value_type);
+        value_type = ntohw(value_type);
 
         READ_INTO(value_index, sp);
         value_index = ntohw(value_index);
@@ -222,7 +220,7 @@ _load_const(
         if (err != OK)
                 return err;
 
-        if (node->head.value_type == DAGC_TYPE_VALUE)
+        if (value_type == DAGC_TYPE_VALUE)
         {
                 READ_INTO(value_index, sp);
                 value_index = ntohw(value_index);
@@ -232,7 +230,7 @@ _load_const(
                 err = xl_take(node->value.tree);
                 return err;
         }
-        if (node->head.value_type == DAGC_TYPE_GRAPH)
+        if (value_type == DAGC_TYPE_GRAPH)
         {
                 READ_INTO(graph_index, sp);
                 graph_index = ntohw(graph_index);
@@ -253,8 +251,6 @@ _load_load(
         xl_word value_index;
         xl_word node_index;
         struct xl_value *uri_val;
-
-        node->head.value_type = DAGC_TYPE_UNKNOWN;
 
         READ_INTO(node_index, sp);
         node_index = ntohw(node_index);
@@ -289,8 +285,6 @@ _load_store(
         xl_word value_index;
         xl_word node_index;
         struct xl_value *uri_val;
-
-        node->head.value_type = DAGC_TYPE_UNKNOWN;
 
         READ_INTO(node_index, sp);
         node_index = ntohw(node_index);
@@ -341,8 +335,6 @@ no_ignore static xl_error
 _load_cond(struct xl_dagc_cond *node, struct xl_stream *sp)
 {
         uint64_t node_index;
-
-        node->head.value_type = DAGC_TYPE_UNKNOWN;
 
         READ_INTO(node_index, sp);
         node_index = ntohw(node_index);
@@ -539,11 +531,9 @@ _set_node_graph_pointers(
                 n = (struct xl_dagc_const *) graph->nodes[i];
                 if (n->head.node_type != DAGC_NODE_CONST)
                         continue;
-                if (n->head.value_type != DAGC_TYPE_GRAPH)
-                        continue;
                 graph_i = (uintptr_t) n->value.graph;
                 if (graph_i >= n_graphs)
-                        return xl_raise(ERR_OUT_OF_BOUNDS, "const graph idx");
+                        continue;
                 n->value.graph = all_graphs[graph_i];
 
                 err = xl_take(n->value.graph);

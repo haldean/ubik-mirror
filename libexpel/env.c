@@ -95,7 +95,6 @@ no_ignore xl_error
 xl_get(
         union xl_value_or_graph *value,
         struct xl_value **type,
-        xl_word *value_type,
         struct xl_env *env,
         struct xl_uri *uri)
 {
@@ -117,7 +116,6 @@ xl_get(
                         if (xl_uri_eq(uri, env->bindings[i].uri))
                         {
                                 value->any = env->bindings[i].value.any;
-                                *value_type = env->bindings[i].value_type;
                                 *type = env->bindings[i].type;
                                 found = true;
                                 break;
@@ -132,7 +130,7 @@ xl_get(
         xl_assert(env->parent != env);
         if (env->parent == NULL)
                 return xl_raise(ERR_ABSENT, "xl_get");
-        return xl_get(value, type, value_type, env->parent, uri);
+        return xl_get(value, type, env->parent, uri);
 }
 
 /* Inserts the given URI-value pair into the given binding array.
@@ -237,7 +235,6 @@ _set(
         struct xl_uri *uri,
         union xl_value_or_graph value,
         struct xl_value *type,
-        xl_word value_type,
         bool overwrite)
 {
         struct xl_binding new_binding;
@@ -253,7 +250,6 @@ _set(
 
         new_binding.uri = uri;
         new_binding.value = value;
-        new_binding.value_type = value_type;
         new_binding.type = type;
 
         /* Take a reference to the value. We do this before we know whether the
@@ -298,10 +294,9 @@ xl_set(
         struct xl_env *env,
         struct xl_uri *uri,
         union xl_value_or_graph value,
-        struct xl_value *type,
-        xl_word value_type)
+        struct xl_value *type)
 {
-        return _set(env, uri, value, type, value_type, false);
+        return _set(env, uri, value, type, false);
 }
 
 no_ignore xl_error
@@ -309,8 +304,7 @@ xl_overwrite(
         struct xl_env *env,
         struct xl_uri *uri,
         union xl_value_or_graph value,
-        struct xl_value *type,
-        xl_word value_type)
+        struct xl_value *type)
 {
-        return _set(env, uri, value, type, value_type, true);
+        return _set(env, uri, value, type, true);
 }

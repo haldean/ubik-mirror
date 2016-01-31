@@ -342,30 +342,6 @@ xl_dagc_init(struct xl_dagc *graph)
 }
 
 no_ignore xl_error
-xl_dagc_known_value(
-        struct xl_value **value,
-        struct xl_value **type,
-        struct xl_dagc_node *node)
-{
-        *type = node->known_type;
-
-        switch (node->node_type)
-        {
-        case DAGC_NODE_CONST:
-        case DAGC_NODE_APPLY:
-        case DAGC_NODE_LOAD:
-        case DAGC_NODE_INPUT:
-                if (node->value_type == DAGC_TYPE_VALUE)
-                {
-                        *value = node->known.tree;
-                        return OK;
-                }
-                return xl_raise(ERR_BAD_TYPE, "known_value value type");
-        }
-        return xl_raise(ERR_BAD_TYPE, "known_value node type");
-}
-
-no_ignore xl_error
 xl_dagc_get_parents(
         struct xl_dagc_node ***parents,
         size_t *n_parents,

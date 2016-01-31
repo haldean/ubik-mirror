@@ -38,7 +38,7 @@ _eval_apply(struct xl_env *env, struct xl_dagc_apply *node)
 
         unused(env);
 
-        if (node->func->value_type != DAGC_TYPE_GRAPH)
+        if ((*node->func->known.tag & TAG_TYPE_MASK) != TAG_GRAPH)
         {
                 err = xl_type_match_polyfunc(
                         &proto, node->func->known.tree, node->arg->known_type);
@@ -84,7 +84,6 @@ _eval_apply(struct xl_env *env, struct xl_dagc_apply *node)
                         ERR_BAD_TYPE, "input type and arg type incompatible");
         }
 
-        input->head.value_type = node->arg->value_type;
         input->head.flags = XL_DAGC_FLAG_COMPLETE;
 
         input->head.known_type = node->arg->known_type;
@@ -97,7 +96,6 @@ _eval_apply(struct xl_env *env, struct xl_dagc_apply *node)
         if (err != OK)
                 return err;
 
-        node->head.value_type = DAGC_TYPE_GRAPH;
         err = xl_new(&node->head.known_type);
         if (err != OK)
                 return err;
@@ -123,23 +121,13 @@ _eval_const(struct xl_env *env, struct xl_dagc_const *node)
         if (err != OK)
                 return err;
 
-        if (node->head.value_type == DAGC_TYPE_VALUE ||
-                node->head.value_type == DAGC_TYPE_GRAPH)
-        {
-                node->head.known = node->value;
-                err = xl_take(node->head.known.any);
-
-                node->head.flags |= XL_DAGC_FLAG_COMPLETE;
+        node->head.known = node->value;
+        err = xl_take(node->head.known.any);
+        if (err != OK)
                 return err;
-        }
 
-        /* Release the reference we took to the value that we don't actually
-         * want anymore, and swallow any errors so we can return the error that
-         * people actually care about. */
-        err = xl_release(node->value.any);
-        unused(err);
-
-        return xl_raise(ERR_BAD_TYPE, "eval_const subtype");
+        node->head.flags |= XL_DAGC_FLAG_COMPLETE;
+        return OK;
 }
 
 no_ignore static xl_error
@@ -147,10 +135,9 @@ _eval_load(struct xl_env *env, struct xl_dagc_load *node)
 {
         union xl_value_or_graph value;
         struct xl_value *type;
-        xl_word value_type;
         xl_error err;
 
-        err = xl_get(&value, &type, &value_type, env, node->loc);
+        err = xl_get(&value, &type, env, node->loc);
         if (err != OK)
                 return err;
 
@@ -162,7 +149,6 @@ _eval_load(struct xl_env *env, struct xl_dagc_load *node)
         if (err != OK)
                 return err;
 
-        node->head.value_type = value_type;
         node->head.known_type = type;
         node->head.known = value;
 
@@ -197,7 +183,6 @@ _eval_cond(struct xl_env *env, struct xl_dagc_cond *cond)
                 return OK;
         }
 
-        cond->head.value_type = res->value_type;
         cond->head.known_type = res->known_type;
         cond->head.known = res->known;
 
@@ -217,7 +202,6 @@ _eval_store(struct xl_env *env, struct xl_dagc_store *node)
 {
         xl_error err;
 
-        node->head.value_type = node->value->value_type;
         node->head.known_type = node->value->known_type;
         node->head.known = node->value->known;
 
@@ -231,8 +215,7 @@ _eval_store(struct xl_env *env, struct xl_dagc_store *node)
 
         node->head.flags |= XL_DAGC_FLAG_COMPLETE;
         return xl_set(
-                env, node->loc, node->value->known, node->value->known_type,
-                node->value->value_type);
+                env, node->loc, node->value->known, node->value->known_type);
 }
 
 no_ignore static xl_error

@@ -32,7 +32,7 @@ xl_dagc_collapse_graph(struct xl_dagc_node *node, struct xl_env *env)
         struct xl_env *child_env;
         xl_error err;
 
-        if (node->value_type != DAGC_TYPE_GRAPH)
+        if ((*node->known.tag & TAG_TYPE_MASK) != TAG_GRAPH)
                 return OK;
         graph = node->known.graph;
 
@@ -55,8 +55,6 @@ xl_dagc_collapse_graph(struct xl_dagc_node *node, struct xl_env *env)
         if (err != OK)
                 return err;
         free(child_env);
-
-        node->value_type = graph->result->value_type;
 
         node->known = graph->result->known;
         err = xl_take(node->known.any);
