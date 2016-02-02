@@ -44,7 +44,7 @@ xl_error_new(
 }
 
 char *
-xl_explain_error(xl_error err)
+xl_error_explain(xl_error err)
 {
         char *res;
         char *err_word_expl;

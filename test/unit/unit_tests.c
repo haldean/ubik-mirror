@@ -289,7 +289,7 @@ main()
         init();
         if ((err = xl_start()) != OK)
         {
-                printf("couldn't start expel: %s\n", xl_explain_error(err));
+                printf("couldn't start expel: %s\n", xl_error_explain(err));
                 return -1;
         }
         run(buffer);

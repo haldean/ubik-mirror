@@ -31,7 +31,7 @@
 #define CHECK_ERR(msg) \
         do { if (err != OK) \
         { \
-                char *expl = xl_explain_error(err); \
+                char *expl = xl_error_explain(err); \
                 printf(msg ": %s\n", expl); \
                 free(err); free(expl); \
                 goto teardown; \
@@ -145,7 +145,7 @@ teardown:
                         teardown_err = xl_release(graphs[i]);
                         if (teardown_err != OK)
                         {
-                                char *explain = xl_explain_error(teardown_err);
+                                char *explain = xl_error_explain(teardown_err);
                                 printf("graph release failed: %s\n", explain);
                                 free(explain);
                                 free(teardown_err);
@@ -158,7 +158,7 @@ teardown:
         teardown_err = xl_teardown();
         if (teardown_err != OK)
         {
-                char *explain = xl_explain_error(teardown_err);
+                char *explain = xl_error_explain(teardown_err);
                 printf("teardown failed: %s\n", explain);
                 free(explain);
                 free(teardown_err);

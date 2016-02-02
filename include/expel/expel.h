@@ -273,7 +273,7 @@ xl_error_new(
 
 /* Creates a string representation of an error object. */
 char *
-xl_explain_error(xl_error err);
+xl_error_explain(xl_error err);
 
 /* Raise an error with the current file and line populated. */
 #define xl_raise(code, tag) \
