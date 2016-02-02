@@ -92,7 +92,7 @@ xl_env_free(struct xl_env *env)
 }
 
 no_ignore xl_error
-xl_get(
+xl_env_get(
         union xl_value_or_graph *value,
         struct xl_value **type,
         struct xl_env *env,
@@ -130,7 +130,7 @@ xl_get(
         xl_assert(env->parent != env);
         if (env->parent == NULL)
                 return xl_raise(ERR_ABSENT, "xl_get");
-        return xl_get(value, type, env->parent, uri);
+        return xl_env_get(value, type, env->parent, uri);
 }
 
 /* Inserts the given URI-value pair into the given binding array.
@@ -290,7 +290,7 @@ _set(
 }
 
 no_ignore xl_error
-xl_set(
+xl_env_set(
         struct xl_env *env,
         struct xl_uri *uri,
         union xl_value_or_graph value,
@@ -300,7 +300,7 @@ xl_set(
 }
 
 no_ignore xl_error
-xl_overwrite(
+xl_env_overwrite(
         struct xl_env *env,
         struct xl_uri *uri,
         union xl_value_or_graph value,

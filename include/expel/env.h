@@ -75,7 +75,7 @@ xl_env_free(struct xl_env *env);
  * found, ERR_ABSENT is returned and the out pointer is unchanged.
  * */
 no_ignore xl_error
-xl_get(
+xl_env_get(
         union xl_value_or_graph *value,
         struct xl_value **type,
         struct xl_env *env,
@@ -89,7 +89,7 @@ xl_get(
  * bindings but modifications to the value will modify the value
  * stored in the environment. */
 no_ignore xl_error
-xl_overwrite(
+xl_env_overwrite(
         struct xl_env *env,
         struct xl_uri *uri,
         union xl_value_or_graph value,
@@ -106,7 +106,7 @@ xl_overwrite(
  * bindings but modifications to the value will modify the value
  * stored in the environment. */
 no_ignore xl_error
-xl_set(
+xl_env_set(
         struct xl_env *env,
         struct xl_uri *uri,
         union xl_value_or_graph value,

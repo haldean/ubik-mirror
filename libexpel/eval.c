@@ -137,7 +137,7 @@ _eval_load(struct xl_env *env, struct xl_dagc_load *node)
         struct xl_value *type;
         xl_error err;
 
-        err = xl_get(&value, &type, env, node->loc);
+        err = xl_env_get(&value, &type, env, node->loc);
         if (err != OK)
                 return err;
 
@@ -214,7 +214,7 @@ _eval_store(struct xl_env *env, struct xl_dagc_store *node)
                 return err;
 
         node->head.flags |= XL_DAGC_FLAG_COMPLETE;
-        return xl_set(
+        return xl_env_set(
                 env, node->loc, node->value->known, node->value->known_type);
 }
 

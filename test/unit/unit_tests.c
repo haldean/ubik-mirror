@@ -187,15 +187,15 @@ env()
         assert(u.hash != 0);
 
         assert(xl_env_init(&env) == OK);
-        assert(xl_set(&env, &u, v, t) == OK);
-        assert(xl_get(&r, &rt, &env, &u) == OK);
+        assert(xl_env_set(&env, &u, v, t) == OK);
+        assert(xl_env_get(&r, &rt, &env, &u) == OK);
         assert(r.tree == v.tree);
         assert(v.tree->refcount == 2);
 
-        assert(xl_set(&env, &u, v, t)->error_code == ERR_PRESENT);
+        assert(xl_env_set(&env, &u, v, t)->error_code == ERR_PRESENT);
         assert(v.tree->refcount == 2);
 
-        assert(xl_overwrite(&env, &u, v, t) == OK);
+        assert(xl_env_overwrite(&env, &u, v, t) == OK);
         assert(v.tree->refcount == 2);
 
         for (i = 0; i < N_TEST_URIS; i++)
@@ -208,7 +208,7 @@ env()
 
         for (i = 0; i < N_TEST_URIS; i++)
         {
-                assert(xl_overwrite(&env, &uris[i], v, t) == OK);
+                assert(xl_env_overwrite(&env, &uris[i], v, t) == OK);
         }
 
         assert(v.tree->refcount == N_TEST_URIS + 1);

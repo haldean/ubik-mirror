@@ -390,7 +390,7 @@ _register_emit(struct xl_env *env)
         /* TODO: set type here */
 
         ins.tree = polyfunc;
-        err = xl_set(env, uri, ins, type);
+        err = xl_env_set(env, uri, ins, type);
         if (err != OK)
                 return err;
 
