@@ -79,7 +79,7 @@ xl_gc_free_all()
 
 /* Creates a new value. */
 no_ignore xl_error
-xl_new(struct xl_value **v)
+xl_value_new(struct xl_value **v)
 {
         struct xl_alloc_page *p;
         size_t i;

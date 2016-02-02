@@ -165,7 +165,7 @@ xl_type_tuple(
         for (i = 0; i < n_field_types; i++)
         {
                 product->tag |= TAG_RIGHT_NODE;
-                err = xl_new(&product->right.t);
+                err = xl_value_new(&product->right.t);
                 if (err != OK)
                         return err;
                 product = product->right.t;

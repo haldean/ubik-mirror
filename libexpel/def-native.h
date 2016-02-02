@@ -68,7 +68,7 @@ _op_name(struct xl_env *env)
         if (err != OK)
                 return err;
 
-        err = xl_new(&type);
+        err = xl_value_new(&type);
         if (err != OK)
                 return err;
         /* TODO: set type here */
@@ -125,7 +125,7 @@ _op_name(struct xl_env *env)
         if (err != OK)
                 return err;
 
-        err = xl_new(&type);
+        err = xl_value_new(&type);
         if (err != OK)
                 return err;
         /* TODO: set type here */

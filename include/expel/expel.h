@@ -192,7 +192,7 @@ xl_teardown();
  * not need to take the result. This may result in an allocation
  * but is not guaranteed to; xl_values are allocated in pages. */
 no_ignore xl_error
-xl_new(struct xl_value **v);
+xl_value_new(struct xl_value **v);
 
 /* Takes a reference to the given tree or graph.
  *

@@ -78,7 +78,7 @@ test_file(char *fname)
         CHECK_ERR("couldn't read timer");
         printf("\ttime from start to loaded:    %ld usec\n", elapsed);
 
-        err = xl_new(&expected);
+        err = xl_value_new(&expected);
         CHECK_ERR("couldn't create expected value");
 
         err = xl_load_value(expected, &stream);

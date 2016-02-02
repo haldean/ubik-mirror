@@ -169,12 +169,12 @@ env()
         wchar_t *key;
         struct xl_uri uris[N_TEST_URIS];
 
-        assert(xl_new(&v.tree) == OK);
+        assert(xl_value_new(&v.tree) == OK);
         v.tree->tag = TAG_VALUE | TAG_LEFT_WORD | TAG_RIGHT_WORD;
         v.tree->left.w = 0x1234567890123456;
         v.tree->right.w = 0;
 
-        assert(xl_new(&t) == OK);
+        assert(xl_value_new(&t) == OK);
         t->tag = TAG_VALUE | TAG_LEFT_WORD | TAG_RIGHT_WORD;
         t->left.w = BASE_TYPE_WORD;
         t->right.w = 0;
@@ -231,7 +231,7 @@ gc()
 
         for (i = 0; i < N_TEST_GC_VALUES; i++)
         {
-                assert(xl_new(&vals[i]) == 0);
+                assert(xl_value_new(&vals[i]) == 0);
         }
         for (i = 0; i < N_TEST_GC_VALUES; i++)
         {
@@ -256,7 +256,7 @@ gc()
 
         for (i = 0; i < XL_GC_PAGE_SIZE * 2; i++)
         {
-                assert(xl_new(&vals[i]) == 0);
+                assert(xl_value_new(&vals[i]) == 0);
         }
         for (i = 0; i < XL_GC_PAGE_SIZE * 2; i++)
         {
@@ -264,7 +264,7 @@ gc()
         }
         for (i = 0; i < XL_GC_PAGE_SIZE * 2; i++)
         {
-                assert(xl_new(&vals[i]) == 0);
+                assert(xl_value_new(&vals[i]) == 0);
         }
 
         xl_gc_get_stats(&gc_stats);

@@ -85,7 +85,7 @@ xl_load_value(struct xl_value *out, struct xl_stream *sp)
         }
         else if (tag & TAG_LEFT_NODE)
         {
-                err = xl_new(&out->left.t);
+                err = xl_value_new(&out->left.t);
                 if (err != OK)
                         return err;
                 err = xl_load_value(out->left.t, sp);
@@ -110,7 +110,7 @@ xl_load_value(struct xl_value *out, struct xl_stream *sp)
         }
         else if (tag & TAG_RIGHT_NODE)
         {
-                err = xl_new(&out->right.t);
+                err = xl_value_new(&out->right.t);
                 if (err != OK)
                         return err;
                 err = xl_load_value(out->right.t, sp);
@@ -669,7 +669,7 @@ xl_load(struct xl_dagc ***graphs, size_t *ret_n_graphs, struct xl_stream *sp)
 
         for (i = 0; i < n_values; i++)
         {
-                err = xl_new(&values[i]);
+                err = xl_value_new(&values[i]);
                 if (err != OK)
                         goto error;
                 err = xl_load_value(values[i], sp);

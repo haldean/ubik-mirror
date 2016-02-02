@@ -84,7 +84,7 @@ _create_op(
                 in->head.is_terminal = 0x00;
                 in->head.flags = 0x00;
                 in->arg_num = i;
-                err = xl_new(&in->required_type);
+                err = xl_value_new(&in->required_type);
                 if (err != OK)
                         return err;
         }
@@ -116,7 +116,7 @@ _native_unsigned_add(struct xl_env *env, struct xl_dagc *graph)
 
         unused(env);
 
-        err = xl_new(&res);
+        err = xl_value_new(&res);
         if (err != OK)
                 return err;
 
@@ -155,7 +155,7 @@ _native_unsigned_subtract(struct xl_env *env, struct xl_dagc *graph)
 
         unused(env);
 
-        err = xl_new(&res);
+        err = xl_value_new(&res);
         if (err != OK)
                 return err;
 
@@ -229,7 +229,7 @@ _native_eq(struct xl_env *env, struct xl_dagc *graph)
                 return xl_raise(ERR_BAD_TYPE, "unknown value type in eq");
         }
 
-        err = xl_new(&res);
+        err = xl_value_new(&res);
         if (err != OK)
                 return err;
 
@@ -239,7 +239,7 @@ _native_eq(struct xl_env *env, struct xl_dagc *graph)
 
         graph->result->known.tree = res;
 
-        err = xl_new(&graph->result->known_type);
+        err = xl_value_new(&graph->result->known_type);
         if (err != OK)
                 return err;
         err = xl_type_bool(graph->result->known_type);
@@ -338,18 +338,18 @@ _register_emit(struct xl_env *env)
                 return err;
 
         /* I need to come up with a better way to write these. */
-        err = xl_new(&polyfunc);
+        err = xl_value_new(&polyfunc);
         if (err != OK)
                 return err;
         polyfunc->tag |= TAG_LEFT_NODE | TAG_RIGHT_NODE;
 
-        err = xl_new(&polyfunc->left.t);
+        err = xl_value_new(&polyfunc->left.t);
         if (err != OK)
                 return err;
         word_pair = polyfunc->left.t;
         word_pair->tag |= TAG_LEFT_NODE | TAG_RIGHT_GRAPH;
 
-        err = xl_new(&word_pair->left.t);
+        err = xl_value_new(&word_pair->left.t);
         if (err != OK)
                 return err;
         err = xl_type_word(word_pair->left.t);
@@ -357,19 +357,19 @@ _register_emit(struct xl_env *env)
                 return err;
         word_pair->right.g = wgraph;
 
-        err = xl_new(&polyfunc->right.t);
+        err = xl_value_new(&polyfunc->right.t);
         if (err != OK)
                 return err;
         polyfunc->right.t->tag |= TAG_LEFT_NODE | TAG_RIGHT_WORD;
         polyfunc->right.t->right.w = 0;
 
-        err = xl_new(&polyfunc->right.t->left.t);
+        err = xl_value_new(&polyfunc->right.t->left.t);
         if (err != OK)
                 return err;
         float_pair = polyfunc->right.t->left.t;
         float_pair->tag |= TAG_LEFT_NODE | TAG_RIGHT_GRAPH;
 
-        err = xl_new(&float_pair->left.t);
+        err = xl_value_new(&float_pair->left.t);
         if (err != OK)
                 return err;
         err = xl_type_float(float_pair->left.t);
@@ -384,7 +384,7 @@ _register_emit(struct xl_env *env)
         if (err != OK)
                 return err;
 
-        err = xl_new(&type);
+        err = xl_value_new(&type);
         if (err != OK)
                 return err;
         /* TODO: set type here */

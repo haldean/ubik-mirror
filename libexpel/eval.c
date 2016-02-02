@@ -96,7 +96,7 @@ _eval_apply(struct xl_env *env, struct xl_dagc_apply *node)
         if (err != OK)
                 return err;
 
-        err = xl_new(&node->head.known_type);
+        err = xl_value_new(&node->head.known_type);
         if (err != OK)
                 return err;
         err = xl_type_func_apply(node->head.known_type, node->func->known_type);
