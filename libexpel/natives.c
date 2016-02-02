@@ -408,7 +408,7 @@ _register_emit(struct xl_env *env)
 }
 
 no_ignore xl_error
-xl_register_natives(struct xl_env *env)
+xl_natives_register(struct xl_env *env)
 {
         xl_error err;
 

@@ -20,5 +20,5 @@
 #include "expel/expel.h"
 
 no_ignore xl_error
-xl_register_natives(struct xl_env *env);
+xl_natives_register(struct xl_env *env);
 

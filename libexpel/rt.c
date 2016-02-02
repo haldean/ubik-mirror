@@ -29,7 +29,7 @@ xl_start()
 
         xl_gc_start();
 
-        err = xl_register_natives(xl_env_get_root());
+        err = xl_natives_register(xl_env_get_root());
         if (err != OK)
                 return err;
 
