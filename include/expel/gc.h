@@ -90,5 +90,5 @@ xl_gc_free_all();
  * when appropriate.  This is provided as an API for garbage
  * collection testing only. */
 no_ignore xl_error
-xl_run_gc();
+xl_gc_run();
 

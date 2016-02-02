@@ -181,7 +181,7 @@ xl_take(void *p)
 }
 
 no_ignore xl_error
-xl_run_gc()
+xl_gc_run()
 {
         struct xl_alloc_page *p;
         struct xl_alloc_page *to_free;
@@ -252,7 +252,7 @@ _release_value(struct xl_value *v)
         }
 
         if (unlikely(err == OK && gc_stats->releases_until_gc == 0))
-                err = xl_run_gc();
+                err = xl_gc_run();
         return err;
 }
 

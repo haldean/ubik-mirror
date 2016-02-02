@@ -245,7 +245,7 @@ gc()
                 assert(gc_stats.n_val_frees >= gc_stats.n_gc_runs);
         #endif
 
-        assert(xl_run_gc() == OK);
+        assert(xl_gc_run() == OK);
         xl_gc_get_stats(&gc_stats);
         #ifdef XL_GC_DEBUG
                 assert(gc_stats.n_page_frees == gc_stats.n_page_allocs);
