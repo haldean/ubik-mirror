@@ -57,7 +57,7 @@ xl_value_eq(struct xl_value *v1, struct xl_value *v2)
 }
 
 no_ignore xl_error
-xl_read_packed(uint8_t **dest, size_t *n, struct xl_value *src)
+xl_packed_read(uint8_t **dest, size_t *n, struct xl_value *src)
 {
         size_t i, n_bytes, n_copy;
         xl_word p;
@@ -99,13 +99,13 @@ xl_read_packed(uint8_t **dest, size_t *n, struct xl_value *src)
 }
 
 no_ignore xl_error
-xl_read_string(wchar_t **dest, size_t *n, struct xl_value *src)
+xl_string_read(wchar_t **dest, size_t *n, struct xl_value *src)
 {
         xl_error err;
         size_t str_size, buf_size;
         char *buf, *orig_buf;
 
-        err = xl_read_packed((uint8_t **) &buf, &buf_size, src);
+        err = xl_packed_read((uint8_t **) &buf, &buf_size, src);
         if (err != OK)
                 return err;
 

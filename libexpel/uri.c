@@ -100,7 +100,7 @@ xl_uri_from_value(struct xl_uri *uri, struct xl_value *uri_val)
          *      RR     string-encoded name */
         uri->version = uri_val->left.w;
         uri->scope = uri_right->left.w;
-        err = xl_read_string(&uri->name, &uri->name_len, uri_right->right.t);
+        err = xl_string_read(&uri->name, &uri->name_len, uri_right->right.t);
         if (err != OK)
                 return err;
 

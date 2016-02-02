@@ -29,10 +29,10 @@ no_ignore xl_error
 xl_value_print(struct xl_stream *out, struct xl_value *v);
 
 no_ignore xl_error
-xl_read_packed(uint8_t **dest, size_t *n, struct xl_value *src);
+xl_packed_read(uint8_t **dest, size_t *n, struct xl_value *src);
 
 no_ignore xl_error
-xl_read_string(wchar_t **dest, size_t *n, struct xl_value *src);
+xl_string_read(wchar_t **dest, size_t *n, struct xl_value *src);
 
 no_ignore xl_error
 xl_value_as_bool(bool *res, struct xl_value *v);
