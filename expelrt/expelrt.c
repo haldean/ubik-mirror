@@ -110,13 +110,13 @@ test_file(char *fname)
         {
                 actual = graphs[0]->result->known.tree;
                 printf("\texpected:  ");
-                err = xl_print_value(&sstdout, expected);
+                err = xl_value_print(&sstdout, expected);
                 CHECK_ERR("couldn't print expected");
 
                 printf("\n\t  actual:  ");
                 if (actual != NULL)
                 {
-                        err = xl_print_value(&sstdout, actual);
+                        err = xl_value_print(&sstdout, actual);
                         CHECK_ERR("couldn't print actual");
                 }
                 else

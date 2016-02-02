@@ -26,7 +26,7 @@ bool
 xl_value_eq(struct xl_value *v1, struct xl_value *v2);
 
 no_ignore xl_error
-xl_print_value(struct xl_stream *out, struct xl_value *v);
+xl_value_print(struct xl_stream *out, struct xl_value *v);
 
 no_ignore xl_error
 xl_read_packed(uint8_t **dest, size_t *n, struct xl_value *src);

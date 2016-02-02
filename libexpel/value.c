@@ -132,7 +132,7 @@ xl_read_string(wchar_t **dest, size_t *n, struct xl_value *src)
 }
 
 no_ignore xl_error
-xl_print_value(struct xl_stream *out, struct xl_value *v)
+xl_value_print(struct xl_stream *out, struct xl_value *v)
 {
         size_t written;
         size_t n;
@@ -156,7 +156,7 @@ xl_print_value(struct xl_stream *out, struct xl_value *v)
         }
         else if (v->tag & TAG_LEFT_NODE)
         {
-                err = xl_print_value(out, v->left.t);
+                err = xl_value_print(out, v->left.t);
                 if (err != OK)
                         return err;
         }
@@ -176,7 +176,7 @@ xl_print_value(struct xl_stream *out, struct xl_value *v)
         }
         else if (v->tag & TAG_RIGHT_NODE)
         {
-                err = xl_print_value(out, v->right.t);
+                err = xl_value_print(out, v->right.t);
                 if (err != OK)
                         return err;
         }
