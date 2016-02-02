@@ -27,7 +27,7 @@
 #include "expel/util.h"
 
 no_ignore xl_error
-xl_alloc_dagc_with_size(
+xl_dagc_alloc(
         struct xl_dagc **graph,
         size_t n_nodes,
         size_t size,
@@ -71,7 +71,7 @@ xl_alloc_dagc_with_size(
 no_ignore xl_error
 xl_dagc_new(struct xl_dagc **graph, size_t n_nodes)
 {
-        return xl_alloc_dagc_with_size(
+        return xl_dagc_alloc(
                 graph, n_nodes, sizeof(struct xl_dagc), NULL);
 }
 
@@ -503,7 +503,7 @@ xl_dagc_copy(
         if (proto->tag & TAG_GRAPH_NATIVE)
                 size = sizeof(struct xl_dagc_native);
 
-        err = xl_alloc_dagc_with_size(&result, proto->n, size, proto);
+        err = xl_dagc_alloc(&result, proto->n, size, proto);
         if (err != OK)
                 return err;
         *res_ptr = result;

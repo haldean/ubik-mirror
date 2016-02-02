@@ -147,7 +147,7 @@ union xl_dagc_any_node
  * copy_from into the graph before allocating all of the
  * substructures of the graph. */
 no_ignore xl_error
-xl_alloc_dagc_with_size(
+xl_dagc_alloc(
         struct xl_dagc **graph,
         size_t n_nodes,
         size_t size,

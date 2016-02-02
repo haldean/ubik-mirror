@@ -65,7 +65,7 @@ _create_op(
         size_t i;
         xl_error err;
 
-        err = xl_alloc_dagc_with_size(
+        err = xl_dagc_alloc(
                 &graph, arity + 1, sizeof(struct xl_dagc_native), NULL);
         if (err != OK)
                 return err;
