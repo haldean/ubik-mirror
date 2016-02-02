@@ -240,7 +240,7 @@ xl_value_save(struct xl_stream *sp, struct xl_value *in);
  * All graph objects must be allocated on the heap; call into this
  * method to allocate a graph of a given size. */
 no_ignore xl_error
-xl_new_dagc(struct xl_dagc **g, size_t n);
+xl_dagc_new(struct xl_dagc **g, size_t n);
 
 /* Initializes derived quantities on graphs.
  *

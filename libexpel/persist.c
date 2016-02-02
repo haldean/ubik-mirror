@@ -563,7 +563,7 @@ _load_graph(
                 return xl_raise(
                         ERR_BAD_GRAPH, "graphs must have at least 1 node");
 
-        err = xl_new_dagc(graph, n_nodes);
+        err = xl_dagc_new(graph, n_nodes);
         if (err != OK)
                 return err;
 

@@ -69,7 +69,7 @@ xl_alloc_dagc_with_size(
 }
 
 no_ignore xl_error
-xl_new_dagc(struct xl_dagc **graph, size_t n_nodes)
+xl_dagc_new(struct xl_dagc **graph, size_t n_nodes)
 {
         return xl_alloc_dagc_with_size(
                 graph, n_nodes, sizeof(struct xl_dagc), NULL);
