@@ -1,6 +1,5 @@
 reference tracking for graphs
 runtime instrumentation
-clang format or whatever
 where did a graph come from
 callback-based scheduler
 tuples
