@@ -42,7 +42,7 @@ xl_type_match_polyfunc(
         struct xl_value *arg_type);
 
 char *
-xl_explain_type(struct xl_value *type);
+xl_type_explain(struct xl_value *type);
 
 /* Returns true if the values of the given type are "primitive words", meaning
  * that their representation is entirely contained in the left value of their

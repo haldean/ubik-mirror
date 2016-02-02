@@ -72,11 +72,11 @@ _eval_apply(struct xl_env *env, struct xl_dagc_apply *node)
         {
                 fprintf(stderr, "could not apply argument to function:\n");
 
-                msg = xl_explain_type(input->required_type);
+                msg = xl_type_explain(input->required_type);
                 fprintf(stderr, "required type: %s\n", msg);
                 free(msg);
 
-                msg = xl_explain_type(node->arg->known_type);
+                msg = xl_type_explain(node->arg->known_type);
                 fprintf(stderr, "got type: %s\n", msg);
                 free(msg);
 

@@ -34,7 +34,7 @@ xl_type_satisfied(
 }
 
 char *
-xl_explain_type(struct xl_value *type)
+xl_type_explain(struct xl_value *type)
 {
         char *res;
         if (type->left.w == BASE_TYPE_WORD && type->right.w == 0)
