@@ -25,7 +25,7 @@
 #include "expel/util.h"
 
 xl_error
-xl_new_error(
+xl_error_new(
         const xl_word code,
         const char *tag,
         const char *file,

@@ -264,7 +264,7 @@ xl_dagc_eval(struct xl_env *env, struct xl_dagc *graph);
 
 /* Create an error object. */
 xl_error
-xl_new_error(
+xl_error_new(
         const xl_word code,
         const char *tag,
         const char *file,
@@ -277,6 +277,6 @@ xl_explain_error(xl_error err);
 
 /* Raise an error with the current file and line populated. */
 #define xl_raise(code, tag) \
-        xl_new_error((code), (tag), __FILE__, __LINE__, __FUNCTION__)
+        xl_error_new((code), (tag), __FILE__, __LINE__, __FUNCTION__)
 
 #endif
