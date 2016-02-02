@@ -96,10 +96,10 @@ load_save()
         u[5].left.w = 0x0;
         u[5].right.w = 0xFFFFFFFFFFFFFFFF;
 
-        assert(xl_save_value(&s, u) == OK);
+        assert(xl_value_save(&s, u) == OK);
 
         v = calloc(1, sizeof(struct xl_value));
-        assert(xl_load_value(v, &s) == OK);
+        assert(xl_value_load(v, &s) == OK);
 
         /* make sure tags are correct. */
         assert(v->tag == u[0].tag);

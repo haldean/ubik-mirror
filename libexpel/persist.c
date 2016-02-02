@@ -61,7 +61,7 @@
  */
 
 no_ignore xl_error
-xl_load_value(struct xl_value *out, struct xl_stream *sp)
+xl_value_load(struct xl_value *out, struct xl_stream *sp)
 {
         xl_tag tag;
         xl_error err;
@@ -88,7 +88,7 @@ xl_load_value(struct xl_value *out, struct xl_stream *sp)
                 err = xl_value_new(&out->left.t);
                 if (err != OK)
                         return err;
-                err = xl_load_value(out->left.t, sp);
+                err = xl_value_load(out->left.t, sp);
                 if (err != OK)
                 {
                         err_ignore = xl_release(out->left.t);
@@ -113,7 +113,7 @@ xl_load_value(struct xl_value *out, struct xl_stream *sp)
                 err = xl_value_new(&out->right.t);
                 if (err != OK)
                         return err;
-                err = xl_load_value(out->right.t, sp);
+                err = xl_value_load(out->right.t, sp);
                 if (err != OK)
                 {
                         err_ignore = xl_release(out->right.t);
@@ -137,7 +137,7 @@ xl_load_value(struct xl_value *out, struct xl_stream *sp)
 }
 
 no_ignore xl_error
-xl_save_value(struct xl_stream *sp, struct xl_value *in)
+xl_value_save(struct xl_stream *sp, struct xl_value *in)
 {
         xl_tag tag;
         xl_word val;
@@ -155,7 +155,7 @@ xl_save_value(struct xl_stream *sp, struct xl_value *in)
         }
         else
         {
-                err = xl_save_value(sp, in->left.t);
+                err = xl_value_save(sp, in->left.t);
                 if (err)
                         return err;
         }
@@ -168,7 +168,7 @@ xl_save_value(struct xl_stream *sp, struct xl_value *in)
         }
         else
         {
-                err = xl_save_value(sp, in->right.t);
+                err = xl_value_save(sp, in->right.t);
                 if (err)
                         return err;
         }
@@ -672,7 +672,7 @@ xl_load(struct xl_dagc ***graphs, size_t *ret_n_graphs, struct xl_stream *sp)
                 err = xl_value_new(&values[i]);
                 if (err != OK)
                         goto error;
-                err = xl_load_value(values[i], sp);
+                err = xl_value_load(values[i], sp);
                 if (err != OK)
                         goto error;
         }

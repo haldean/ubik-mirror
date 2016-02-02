@@ -227,13 +227,13 @@ xl_save(struct xl_stream *sp, struct xl_dagc *in);
  * The returned tree is not taken; it is up to the caller to take the
  * tree. Returns OK on success, or a nonzero error word. */
 no_ignore xl_error
-xl_load_value(struct xl_value *out, struct xl_stream *sp);
+xl_value_load(struct xl_value *out, struct xl_stream *sp);
 
 /* Saves a tree to a stream.
  *
  * Returns OK on success, or a nonzero error word. */
 no_ignore xl_error
-xl_save_value(struct xl_stream *sp, struct xl_value *in);
+xl_value_save(struct xl_stream *sp, struct xl_value *in);
 
 /* Allocates a graph object.
  *

@@ -81,7 +81,7 @@ test_file(char *fname)
         err = xl_value_new(&expected);
         CHECK_ERR("couldn't create expected value");
 
-        err = xl_load_value(expected, &stream);
+        err = xl_value_load(expected, &stream);
         if (err != OK && err->error_code == ERR_NO_DATA)
         {
                 /* No expected result for this run, we'll just run it and make
