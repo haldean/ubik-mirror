@@ -144,7 +144,7 @@ _native_unsigned_add(struct xl_env *env, struct xl_dagc *graph)
 #define DEF_OP uadd
 #define DEF_OP_EVAL _native_unsigned_add
 #define DEF_OP_URI L"uadd"
-#include "def-native.h"
+#include "expel/def-native.h"
 
 static xl_error
 _native_unsigned_subtract(struct xl_env *env, struct xl_dagc *graph)
@@ -181,7 +181,7 @@ _native_unsigned_subtract(struct xl_env *env, struct xl_dagc *graph)
 #define DEF_OP usub
 #define DEF_OP_EVAL _native_unsigned_subtract
 #define DEF_OP_URI L"usub"
-#include "def-native.h"
+#include "expel/def-native.h"
 
 static xl_error
 _native_eq(struct xl_env *env, struct xl_dagc *graph)
@@ -254,7 +254,7 @@ _native_eq(struct xl_env *env, struct xl_dagc *graph)
 #define DEF_OP eq
 #define DEF_OP_EVAL _native_eq
 #define DEF_OP_URI L"eq"
-#include "def-native.h"
+#include "expel/def-native.h"
 
 no_ignore static xl_error
 _native_emit_float(struct xl_env *env, struct xl_dagc *graph)
@@ -310,8 +310,6 @@ _register_emit(struct xl_env *env)
         struct xl_dagc *wgraph;
         struct xl_dagc *fgraph;
         struct xl_value *polyfunc;
-        struct xl_value *word_pair;
-        struct xl_value *float_pair;
 
         struct xl_uri *uri;
         struct xl_value *type;
@@ -337,45 +335,13 @@ _register_emit(struct xl_env *env)
         if (err != OK)
                 return err;
 
-        /* I need to come up with a better way to write these. */
-        err = xl_value_new(&polyfunc);
-        if (err != OK)
-                return err;
-        polyfunc->tag |= TAG_LEFT_NODE | TAG_RIGHT_NODE;
-
-        err = xl_value_new(&polyfunc->left.t);
-        if (err != OK)
-                return err;
-        word_pair = polyfunc->left.t;
-        word_pair->tag |= TAG_LEFT_NODE | TAG_RIGHT_GRAPH;
-
-        err = xl_value_new(&word_pair->left.t);
-        if (err != OK)
-                return err;
-        err = xl_type_word(word_pair->left.t);
-        if (err != OK)
-                return err;
-        word_pair->right.g = wgraph;
-
-        err = xl_value_new(&polyfunc->right.t);
-        if (err != OK)
-                return err;
-        polyfunc->right.t->tag |= TAG_LEFT_NODE | TAG_RIGHT_WORD;
-        polyfunc->right.t->right.w = 0;
-
-        err = xl_value_new(&polyfunc->right.t->left.t);
-        if (err != OK)
-                return err;
-        float_pair = polyfunc->right.t->left.t;
-        float_pair->tag |= TAG_LEFT_NODE | TAG_RIGHT_GRAPH;
-
-        err = xl_value_new(&float_pair->left.t);
-        if (err != OK)
-                return err;
-        err = xl_type_float(float_pair->left.t);
-        if (err != OK)
-                return err;
-        float_pair->right.g = fgraph;
+#pragma buildtree { \
+                { { w:BASE_TYPE_WORD, w:0 }, g:wgraph }, \
+                { \
+                        { { w:BASE_TYPE_FLOAT, w:0 }, g:fgraph }, \
+                        w:0 \
+                } \
+        }; root: polyfunc; on error: return err;
 
         err = _native_uri(&uri, L"emit");
         if (err != OK)

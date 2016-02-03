@@ -15,10 +15,12 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+import re
+
 
 class Stream(object):
     def __init__(self, string):
-        self._string = string
+        self._string = re.sub(r"[\s]", "", string)
         self._pos = 0
 
     def empty(self):
@@ -27,28 +29,24 @@ class Stream(object):
     def take(self):
         if self.empty():
             raise StopIteration("no more elements in stream")
-        res = " "
-        while res == " " and not self.empty():
-            res = self._string[self._pos]
-            self._pos += 1
-        if res == " ":
-            raise StopIteration("no more elements in stream")
+        res = self._string[self._pos]
+        self._pos += 1
         return res
 
     def take_until(self, char):
+        if self.empty():
+            raise StopIteration("no more elements in stream")
         pos = self._string.find(char, self._pos)
-        if pos == -1:
-            return ""
+        if pos < 0:
+            pos = len(self._string)
         res = self._string[self._pos:pos]
         self._pos = pos
-        return res.strip()
+        return res
 
     def push(self):
         if self._pos == 0:
             raise RuntimeException("can't push onto rewound stream")
         self._pos -= 1
-        while self._string[self._pos] == " " and self._pos > 0:
-            self._pos -= 1
 
 
 def build_tree(stream):
@@ -80,38 +78,128 @@ def build_tree(stream):
     return dict(left=left, right=right)
 
 
-def label_tree(root):
+def read_opts(string):
+    opt_pairs = string.split(";")[1:]
+    opt_pairs = map(str.strip, opt_pairs)
+    opt_pairs = filter(bool, opt_pairs)
+    opt_pairs = map(lambda p: p.split(":", 1), opt_pairs)
+    opt_pairs = map(lambda p: (p[0].strip().replace(" ", "_"), p[1].strip()), opt_pairs)
+    options = dict(opt_pairs)
+    options.setdefault("root", "root")
+    options.setdefault("on_error", "return err")
+    return options
+
+
+def label_tree(root, options):
     if "label" not in root:
-        root["label"] = "root"
+        root["label"] = options["root"]
     if isinstance(root["left"], dict):
-        root["left"]["label"] = root["label"] + "->left.v"
-        label_tree(root["left"])
+        root["left"]["label"] = root["label"] + "->left.t"
+        label_tree(root["left"], options)
     if isinstance(root["right"], dict):
-        root["right"]["label"] = root["label"] + "->right.v"
-        label_tree(root["right"])
+        root["right"]["label"] = root["label"] + "->right.t"
+        label_tree(root["right"], options)
     return root
 
 
+def type_to_tag_suffix(typ):
+    if typ == "t":
+        return "NODE"
+    if typ == "g":
+        return "GRAPH"
+    if typ in ("w", "f"):
+        return "WORD"
+    raise Exception("unknown value type %s" % typ)
+
+
+def emit_c_noindent(tree, options):
+    res = """
+err = xl_value_new(&{root});
+if (err != OK)
+        {do_on_err};
+    """.format(root=tree["label"], do_on_err=options["on_error"])
+
+    left = tree["left"]
+    if isinstance(left, dict):
+        left_res = emit_c_noindent(left, options)
+        left_tag = "TAG_LEFT_NODE";
+    else:
+        left_type, left_assign = left.split(":", 1)
+        left_res = "{root}->left.{left_type} = {left_assign};".format(
+            root=tree["label"], **locals())
+        left_tag = "TAG_LEFT_" + type_to_tag_suffix(left_type)
+    res += "\n" + left_res
+
+    right = tree["right"]
+    if isinstance(right, dict):
+        right_res = emit_c_noindent(right, options)
+        right_tag = "TAG_RIGHT_NODE"
+    else:
+        right_type, right_assign = right.split(":", 1)
+        right_res = "{root}->right.{right_type} = {right_assign};".format(
+            root=tree["label"], **locals())
+        right_tag = "TAG_RIGHT_" + type_to_tag_suffix(right_type)
+    res += "\n" + right_res
+
+    res += "\n{root}->tag = TAG_VALUE | {left_tag} | {right_tag};".format(
+        root=tree["label"], left_tag=left_tag, right_tag=right_tag)
+    return res
+
+
+def emit_c(tree, options):
+    res = emit_c_noindent(tree, options)
+    res = "\n".join(map(lambda l: "        %s" % l.rstrip(), res.split("\n")))
+    return res
+
+
 def parse(string):
-    return label_tree(build_tree(Stream(string)))
+    options = read_opts(string)
+    tree = label_tree(build_tree(Stream(string)), options)
+    return tree, options
 
 
-def emit(tree, prefix=""):
-    if isinstance(tree, basestring):
-        print "%s%s" % (prefix, tree)
-        return
+class ParseError(Exception):
+    pass
 
-    def pr(*x):
-        if prefix:
-            print "%s%s" % (prefix, " ".join(x))
-        else:
-            print " ".join(x)
-    pr(tree["label"])
-    pr("left:")
-    emit(tree["left"], prefix + "  ")
-    pr("right:")
-    emit(tree["right"], prefix + "  ")
+
+def parse_iter(f):
+    f_iter = iter(enumerate(f))
+    while True:
+        try:
+            i, line = next(f_iter)
+        except StopIteration:
+            return
+        if not line.startswith("#pragma buildtree"):
+            yield line
+            continue
+
+        lines = [line.replace("#pragma buildtree", "", 1)]
+        while line.strip()[-1] == "\\":
+            try:
+                i, line = next(f_iter)
+            except StopIteration:
+                raise Exception("line %d: no line after line continuation" % i)
+            lines.append(line)
+
+        lines = map(lambda s: s.strip("\\ \n"), lines)
+        pragma = " ".join(lines)
+        print(pragma)
+        tree, options = parse(pragma)
+        res = emit_c(tree, options)
+        yield res
+
+
+def parse_file(in_fname, out_fname):
+    with open(in_fname) as in_f:
+        with open(out_fname, "w") as out_f:
+            for line in parse_iter(in_f):
+                out_f.write(line)
 
 
 if __name__ == "__main__":
-    emit(parse("{{{ t:left->hello, w:20 }, g:ext_ref->func->graph}, w:0 }"))
+    import sys
+    try:
+        parse_file(sys.argv[1], sys.argv[2])
+    except ParseError as e:
+        print(e)
+        sys.exit(1)

@@ -18,6 +18,7 @@
 -include res/build-config.mk
 
 objects := $(patsubst libexpel/%.c,build/%.o,$(wildcard libexpel/*.c))
+postproc := $(patsubst libexpel/%.c,build/%.c,$(wildcard libexpel/*.c))
 
 executable := $(DIST_DIR)/runexpel
 testexe := $(BUILD_DIR)/test-expel
@@ -35,9 +36,13 @@ dist/include/expel/const.h: res/const.txt res/compile-const.awk
 	@test -d dist/include/expel || mkdir dist/include/expel
 	awk -f res/compile-const.awk $< > $@
 
+build/%.c: libexpel/%.c dist/include/expel/const.h res/buildtree/buildtree.py
+	@mkdir -p `dirname $@`
+	python res/buildtree/buildtree.py $< $@
+
 # -MD builds makefiles with dependencies in-line with the object files. We
 # include them in the -include directive below
-build/%.o: libexpel/%.c dist/include/expel/const.h
+build/%.o: build/%.c
 	@mkdir -p `dirname $@`
 	$(CC) $(COPTS) -fPIC -MD -c -o $@ $<
 
