@@ -24,15 +24,17 @@
 #include "expel/schedule.h"
 
 /* node is fully evaluated */
-#define XL_DAGC_FLAG_COMPLETE 0x01
+#define XL_DAGC_FLAG_COMPLETE   0x01
 /* waiting on node's first dependency */
-#define XL_DAGC_FLAG_WAIT_D1  0x02
+#define XL_DAGC_FLAG_WAIT_D1    0x02
 /* waiting on node's second dependency */
-#define XL_DAGC_FLAG_WAIT_D2  0x04
+#define XL_DAGC_FLAG_WAIT_D2    0x04
 /* waiting on node's third dependency */
-#define XL_DAGC_FLAG_WAIT_D3  0x08
-/* wait_d1 | wait_d2 | wait_d3 */
-#define XL_DAGC_WAIT_MASK     0x0E
+#define XL_DAGC_FLAG_WAIT_D3    0x08
+/* waiting on evaluation */
+#define XL_DAGC_FLAG_WAIT_EVAL  0x10
+/* wait_d1 | wait_d2 | wait_d3 | wait_eval */
+#define XL_DAGC_WAIT_MASK       0x1E
 
 struct xl_dagc_adjacency
 {

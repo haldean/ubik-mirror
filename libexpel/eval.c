@@ -266,12 +266,5 @@ xl_dagc_node_eval(
         if (err != OK)
                 return err;
 
-        if (node->flags & XL_DAGC_FLAG_COMPLETE)
-        {
-                err = xl_dagc_collapse_graph(node, env);
-                if (err != OK)
-                        return err;
-        }
-
         return OK;
 }

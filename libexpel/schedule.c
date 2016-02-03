@@ -20,6 +20,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 
+#include "expel/apply.h"
 #include "expel/assert.h"
 #include "expel/dagc.h"
 #include "expel/env.h"
@@ -30,8 +31,12 @@
 struct xl_node_schedule
 {
         struct xl_node_schedule *prev;
+
         struct xl_dagc *graph;
+        struct xl_env *env;
         struct xl_dagc_node *node;
+
+        struct xl_node_schedule *bind_result;
 };
 
 struct xl_scheduler
@@ -79,7 +84,7 @@ _set_initial_ready(struct xl_dagc_node **nodes, size_t n_nodes)
                 }
                 else
                 {
-                        n->flags = XL_DAGC_WAIT_MASK;
+                        n->flags = XL_DAGC_WAIT_MASK & ~XL_DAGC_FLAG_WAIT_EVAL;
                         if (d1 == NULL || d1->flags & XL_DAGC_FLAG_COMPLETE)
                                 n->flags ^= XL_DAGC_FLAG_WAIT_D1;
                         if (d2 == NULL || d2->flags & XL_DAGC_FLAG_COMPLETE)
@@ -95,17 +100,21 @@ _set_initial_ready(struct xl_dagc_node **nodes, size_t n_nodes)
 no_ignore static xl_error
 _schedule(
         struct xl_scheduler *schedule,
-        struct xl_dagc_node *node,
-        struct xl_dagc *graph)
+        struct xl_node_schedule *copy_from)
 {
         struct xl_node_schedule *sched;
-        xl_assert(!(node->flags & XL_DAGC_WAIT_MASK));
+        xl_error err;
+
+        xl_assert(!(copy_from->node->flags & XL_DAGC_WAIT_MASK));
 
         sched = calloc(1, sizeof(struct xl_node_schedule));
+        *sched = *copy_from;
         sched->prev = schedule->ready;
-        sched->node = node;
-        sched->graph = graph;
         schedule->ready = sched;
+
+        err = xl_take(sched->graph);
+        if (err != OK)
+                return err;
 
         return OK;
 }
@@ -145,10 +154,30 @@ _notify_parents(struct xl_scheduler *s, struct xl_node_schedule *n)
                         #endif
                         ps.node = p;
                         ps.graph = n->graph;
+                        ps.bind_result = NULL;
                         err = xl_schedule_push(s, &ps);
                         if (err != OK)
                                 return err;
                 }
+        }
+
+        if (n->bind_result != NULL)
+        {
+                err = xl_release(n->bind_result->node->known.any);
+                if (err != OK)
+                        return err;
+
+                n->bind_result->node->known = n->node->known;
+                err = xl_take(n->bind_result->node->known.any);
+                if (err != OK)
+                        return err;
+
+                n->bind_result->node->known_type = n->node->known_type;
+                err = xl_take(n->bind_result->node->known_type);
+                if (err != OK)
+                        return err;
+
+                n->bind_result->node->flags = XL_DAGC_FLAG_COMPLETE;
         }
         return OK;
 }
@@ -178,11 +207,14 @@ xl_schedule_push(struct xl_scheduler *s, struct xl_node_schedule *n)
                 if (err != OK)
                         return err;
 
+                ds.graph = n->graph;
+                ds.env = n->env;
+                ds.bind_result = NULL;
+
                 if (n->node->flags & XL_DAGC_FLAG_WAIT_D1)
                 {
                         xl_assert(d1 != NULL);
                         ds.node = d1;
-                        ds.graph = n->graph;
                         err = xl_schedule_push(s, &ds);
                         if (err != OK)
                                 return err;
@@ -191,7 +223,6 @@ xl_schedule_push(struct xl_scheduler *s, struct xl_node_schedule *n)
                 {
                         xl_assert(d2 != NULL);
                         ds.node = d2;
-                        ds.graph = n->graph;
                         err = xl_schedule_push(s, &ds);
                         if (err != OK)
                                 return err;
@@ -200,7 +231,6 @@ xl_schedule_push(struct xl_scheduler *s, struct xl_node_schedule *n)
                 {
                         xl_assert(d3 != NULL);
                         ds.node = d3;
-                        ds.graph = n->graph;
                         err = xl_schedule_push(s, &ds);
                         if (err != OK)
                                 return err;
@@ -213,7 +243,7 @@ xl_schedule_push(struct xl_scheduler *s, struct xl_node_schedule *n)
         fprintf(stderr, "%s ready, queueing\n",
                 xl_explain_node(n->node));
         #endif
-        return _schedule(s, n->node, n->graph);
+        return _schedule(s, n);
 }
 
 no_ignore static xl_error
@@ -232,19 +262,15 @@ _eval_native_dagc(struct xl_env *env, struct xl_dagc_native *ngraph)
 }
 
 no_ignore xl_error
-xl_dagc_eval(struct xl_env *env, struct xl_dagc *graph)
+xl_dagc_schedule(
+        struct xl_scheduler *s,
+        struct xl_dagc *graph,
+        struct xl_env *env,
+        struct xl_node_schedule *bind_result)
 {
-        struct xl_scheduler s;
-        struct xl_node_schedule ts;
-        struct xl_node_schedule *to_exec;
-        xl_error err;
         size_t i;
-
-        /* Native graphs get to cheat and skip all this biz. */
-        if (graph->tag & TAG_GRAPH_NATIVE)
-                return _eval_native_dagc(env, (struct xl_dagc_native *) graph);
-
-        s.ready = NULL;
+        struct xl_node_schedule ts;
+        xl_error err;
 
         err = _set_initial_ready(graph->nodes, graph->n);
         if (err != OK)
@@ -254,10 +280,94 @@ xl_dagc_eval(struct xl_env *env, struct xl_dagc *graph)
         {
                 ts.node = graph->terminals[i];
                 ts.graph = graph;
-                err = xl_schedule_push(&s, &ts);
+                ts.env = env;
+                ts.bind_result = NULL;
+                if (ts.node == graph->result && bind_result != NULL)
+                {
+                        ts.bind_result = calloc(
+                                1, sizeof(struct xl_node_schedule));
+                        *ts.bind_result = *bind_result;
+                }
+                err = xl_schedule_push(s, &ts);
                 if (err != OK)
                         return err;
         }
+
+        return OK;
+}
+
+no_ignore xl_error
+xl_dagc_collapse_graph(
+        struct xl_scheduler *s,
+        struct xl_node_schedule *ns,
+        struct xl_env *env)
+{
+        struct xl_dagc *graph;
+        struct xl_env *child_env;
+        xl_error err;
+
+        if ((*ns->node->known.tag & TAG_TYPE_MASK) != TAG_GRAPH)
+                return OK;
+        graph = ns->node->known.graph;
+
+        if (graph->in_arity != 0)
+                return OK;
+        /* Graph is fully applied; we can evaluate it to find the value of this
+         * node. */
+
+        /* Native graphs get to cheat and skip all this biz. */
+        if (graph->tag & TAG_GRAPH_NATIVE)
+        {
+                err = _eval_native_dagc(env, (struct xl_dagc_native *) graph);
+                if (err != OK)
+                        return err;
+
+                ns->node->known.any = graph->result->known.any;
+                err = xl_take(ns->node->known.any);
+                if (err != OK)
+                        return err;
+                ns->node->known_type = graph->result->known_type;
+                err = xl_take(ns->node->known_type);
+                if (err != OK)
+                        return err;
+
+                return OK;
+        }
+
+        /* Create a child environment to execute the function in. */
+        child_env = calloc(1, sizeof(struct xl_env));
+        err = xl_env_make_child(child_env, env);
+        if (err != OK)
+                return err;
+
+        ns->node->flags |= XL_DAGC_FLAG_WAIT_EVAL;
+        ns->node->flags &= ~XL_DAGC_FLAG_COMPLETE;
+
+        /* TODO: free child env when finished */
+        err = xl_dagc_schedule(s, graph, child_env, ns);
+        if (err != OK)
+                return err;
+
+        err = xl_release(graph);
+        return err;
+}
+
+no_ignore xl_error
+xl_dagc_eval(struct xl_env *env, struct xl_dagc *graph)
+{
+        struct xl_scheduler s;
+        struct xl_node_schedule *to_exec;
+        xl_error err;
+
+        /* Native graphs get to cheat and skip all this biz. */
+        if (graph->tag & TAG_GRAPH_NATIVE)
+                return _eval_native_dagc(env, (struct xl_dagc_native *) graph);
+
+        s.ready = NULL;
+
+        err = xl_dagc_schedule(&s, graph, env, NULL);
+        if (err != OK)
+                return err;
 
         while (s.ready != NULL)
         {
@@ -273,6 +383,13 @@ xl_dagc_eval(struct xl_env *env, struct xl_dagc *graph)
                 err = xl_dagc_node_eval(env, to_exec->node);
                 if (err != OK)
                         return err;
+
+                if (to_exec->node->flags & XL_DAGC_FLAG_COMPLETE)
+                {
+                        err = xl_dagc_collapse_graph(&s, to_exec, env);
+                        if (err != OK)
+                                return err;
+                }
 
                 err = xl_schedule_push(&s, to_exec);
                 if (err != OK)

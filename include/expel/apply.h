@@ -18,6 +18,7 @@
  */
 
 #include "expel/expel.h"
+#include "expel/schedule.h"
 
 /* Collapses a graph in a node's known value into a value, if the
  * arity of the graph is zero.
@@ -26,5 +27,6 @@
  * operation is a no-op and returns OK. */
 no_ignore xl_error
 xl_dagc_collapse_graph(
-        struct xl_dagc_node *node,
+        struct xl_scheduler *s,
+        struct xl_node_schedule *node,
         struct xl_env *env);

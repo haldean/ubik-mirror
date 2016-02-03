@@ -5,3 +5,4 @@ callback-based scheduler
 tuples
 lambda types
 circular reference finder
+built source should be read-only
