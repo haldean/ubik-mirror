@@ -169,9 +169,8 @@ def parse_iter(f):
             i, line = next(f_iter)
         except StopIteration:
             return
-        line = line.lstrip()
 
-        if not line.startswith("#pragma buildtree"):
+        if not line.strip().startswith("#pragma buildtree"):
             yield line
             continue
 
