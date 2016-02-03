@@ -335,7 +335,7 @@ _register_emit(struct xl_env *env)
         if (err != OK)
                 return err;
 
-#pragma buildtree { \
+        #pragma buildtree { \
                 { { w:BASE_TYPE_WORD, w:0 }, g:wgraph }, \
                 { \
                         { { w:BASE_TYPE_FLOAT, w:0 }, g:fgraph }, \

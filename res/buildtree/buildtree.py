@@ -169,6 +169,8 @@ def parse_iter(f):
             i, line = next(f_iter)
         except StopIteration:
             return
+        line = line.lstrip()
+
         if not line.startswith("#pragma buildtree"):
             yield line
             continue
@@ -183,7 +185,6 @@ def parse_iter(f):
 
         lines = map(lambda s: s.strip("\\ \n"), lines)
         pragma = " ".join(lines)
-        print(pragma)
         tree, options = parse(pragma)
         res = emit_c(tree, options)
         yield res
