@@ -17,8 +17,6 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#pragma once
-
 #include "expel/expel.h"
 
 struct xl_scheduler;
@@ -68,7 +66,9 @@ xl_schedule_free(struct xl_scheduler *s);
 no_ignore xl_error
 xl_schedule_push(
         struct xl_scheduler *s,
-        struct xl_exec_unit *exec);
+        struct xl_dagc *graph,
+        struct xl_env *env,
+        struct xl_exec_notify *notify);
 
 /* Marks an execution unit complete. */
 no_ignore xl_error

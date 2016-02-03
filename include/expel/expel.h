@@ -254,14 +254,6 @@ xl_dagc_new(struct xl_dagc **g, size_t n);
 no_ignore xl_error
 xl_dagc_init(struct xl_dagc *graph);
 
-/* Evaluates all terminal nodes in a graph.
- *
- * This finds all nodes reachable from any node marked terminal,
- * and evaluates all of those nodes to determine the value for the
- * terminal nodes. */
-no_ignore xl_error
-xl_dagc_eval(struct xl_env *env, struct xl_dagc *graph);
-
 /* Create an error object. */
 xl_error
 xl_error_new(

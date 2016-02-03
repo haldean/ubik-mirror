@@ -67,18 +67,16 @@ xl_schedule_free(struct xl_scheduler *s)
 no_ignore xl_error
 xl_schedule_push(
         struct xl_scheduler *s,
-        struct xl_exec_unit *user_exec)
+        struct xl_dagc *graph,
+        struct xl_env *env,
+        struct xl_exec_notify *notify)
 {
-        struct xl_exec_unit *exec;
+        unused(s);
+        unused(graph);
+        unused(env);
+        unused(notify);
 
-        exec = calloc(1, sizeof(struct xl_exec_unit));
-        if (exec == NULL)
-                return xl_raise(ERR_NO_MEMORY, "exec unit alloc");
-        *exec = *user_exec;
-
-        exec->next = s->wait;
-        s->wait = exec->next;
-        return OK;
+        return xl_raise(ERR_NOT_IMPLEMENTED, "xl_schedule_push");
 }
 
 /* Marks an execution unit complete. */

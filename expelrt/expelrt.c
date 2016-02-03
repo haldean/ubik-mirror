@@ -23,6 +23,7 @@
 #include "expel/dagc.h"
 #include "expel/env.h"
 #include "expel/expel.h"
+#include "expel/schedule.h"
 #include "expel/stream.h"
 #include "expel/timer.h"
 #include "expel/util.h"
@@ -44,6 +45,7 @@ test_file(char *fname)
         struct xl_stream sstdout;
         struct xl_dagc **graphs;
         struct xl_env env;
+        struct xl_scheduler *s;
         struct xl_value *expected, *actual;
         size_t n_graphs, i;
         xl_error err, teardown_err;
@@ -96,8 +98,14 @@ test_file(char *fname)
         err = xl_env_init(&env);
         CHECK_ERR("couldn't create environment");
 
-        err = xl_dagc_eval(&env, graphs[0]);
-        CHECK_ERR("couldn't evaluate graph");
+        err = xl_schedule_new(&s);
+        CHECK_ERR("couldn't create scheduler");
+
+        err = xl_schedule_push(s, graphs[0], &env, NULL);
+        CHECK_ERR("couldn't push graph into scheduler");
+
+        err = xl_schedule_run(s);
+        CHECK_ERR("couldn't run scheduler");
 
         err = xl_timer_elapsed(&elapsed, timer);
         CHECK_ERR("couldn't read timer");
