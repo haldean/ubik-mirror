@@ -20,6 +20,7 @@
 #include "expel/expel.h"
 
 struct xl_scheduler;
+struct xl_node_schedule;
 
 /* Push a node back into the scheduler.
  *
@@ -28,4 +29,4 @@ struct xl_scheduler;
  * scheduled. If the node is marked as waiting, the nodes that the node is
  * waiting on will be scheduled. */
 no_ignore xl_error
-xl_schedule_push(struct xl_scheduler *s, struct xl_dagc_node *n);
+xl_schedule_push(struct xl_scheduler *s, struct xl_node_schedule *n);

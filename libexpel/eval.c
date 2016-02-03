@@ -230,7 +230,6 @@ _eval_input(struct xl_env *env, struct xl_dagc_input *node)
 
 no_ignore xl_error
 xl_dagc_node_eval(
-        struct xl_scheduler *s,
         struct xl_env *env,
         struct xl_dagc_node *node)
 {
@@ -273,10 +272,6 @@ xl_dagc_node_eval(
                 if (err != OK)
                         return err;
         }
-
-        err = xl_schedule_push(s, node);
-        if (err != OK)
-                return err;
 
         return OK;
 }

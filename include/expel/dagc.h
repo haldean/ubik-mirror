@@ -187,7 +187,6 @@ xl_dagc_get_parents(
 /* Evaluates a node and marks it as complete. */
 no_ignore xl_error
 xl_dagc_node_eval(
-        struct xl_scheduler *s,
         struct xl_env *env,
         struct xl_dagc_node *node);
 

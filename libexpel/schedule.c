@@ -30,13 +30,13 @@
 struct xl_node_schedule
 {
         struct xl_node_schedule *prev;
+        struct xl_dagc *graph;
         struct xl_dagc_node *node;
 };
 
 struct xl_scheduler
 {
         struct xl_node_schedule *ready;
-        struct xl_dagc *graph;
 };
 
 /* Initializes the flags of a given set of nodes.
@@ -93,7 +93,10 @@ _set_initial_ready(struct xl_dagc_node **nodes, size_t n_nodes)
 }
 
 no_ignore static xl_error
-_schedule(struct xl_scheduler *schedule, struct xl_dagc_node *node)
+_schedule(
+        struct xl_scheduler *schedule,
+        struct xl_dagc_node *node,
+        struct xl_dagc *graph)
 {
         struct xl_node_schedule *sched;
         xl_assert(!(node->flags & XL_DAGC_WAIT_MASK));
@@ -101,19 +104,21 @@ _schedule(struct xl_scheduler *schedule, struct xl_dagc_node *node)
         sched = calloc(1, sizeof(struct xl_node_schedule));
         sched->prev = schedule->ready;
         sched->node = node;
+        sched->graph = graph;
         schedule->ready = sched;
 
         return OK;
 }
 
 no_ignore static xl_error
-_notify_parents(struct xl_scheduler *s, struct xl_dagc_node *n)
+_notify_parents(struct xl_scheduler *s, struct xl_node_schedule *n)
 {
         struct xl_dagc_node **parents, *d1, *d2, *d3, *p;
+        struct xl_node_schedule ps;
         size_t i, n_parents;
         xl_error err;
 
-        err = xl_dagc_get_parents(&parents, &n_parents, s->graph, n);
+        err = xl_dagc_get_parents(&parents, &n_parents, n->graph, n->node);
         if (err != OK)
                 return err;
 
@@ -125,20 +130,22 @@ _notify_parents(struct xl_scheduler *s, struct xl_dagc_node *n)
                 if (err != OK)
                         return err;
 
-                if (n == d1)
+                if (n->node == d1)
                         p->flags &= ~XL_DAGC_FLAG_WAIT_D1;
-                if (n == d2)
+                if (n->node == d2)
                         p->flags &= ~XL_DAGC_FLAG_WAIT_D2;
-                if (n == d3)
+                if (n->node == d3)
                         p->flags &= ~XL_DAGC_FLAG_WAIT_D3;
 
                 if (!(p->flags & XL_DAGC_WAIT_MASK))
                 {
                         #ifdef XL_SCHEDULE_DEBUG
                         fprintf(stderr, "scheduling %s for %s\n",
-                                xl_explain_node(p), xl_explain_node(n));
+                                xl_explain_node(p), xl_explain_node(n->node));
                         #endif
-                        err = xl_schedule_push(s, p);
+                        ps.node = p;
+                        ps.graph = n->graph;
+                        err = xl_schedule_push(s, &ps);
                         if (err != OK)
                                 return err;
                 }
@@ -147,47 +154,54 @@ _notify_parents(struct xl_scheduler *s, struct xl_dagc_node *n)
 }
 
 no_ignore xl_error
-xl_schedule_push(struct xl_scheduler *s, struct xl_dagc_node *n)
+xl_schedule_push(struct xl_scheduler *s, struct xl_node_schedule *n)
 {
         struct xl_dagc_node *d1, *d2, *d3;
+        struct xl_node_schedule ds;
         xl_error err;
 
-        if (n->flags & XL_DAGC_FLAG_COMPLETE)
+        if (n->node->flags & XL_DAGC_FLAG_COMPLETE)
         {
                 #ifdef XL_SCHEDULE_DEBUG
-                fprintf(stderr, "%s complete\n", xl_explain_node(n));
+                fprintf(stderr, "%s complete\n", xl_explain_node(n->node));
                 #endif
                 return _notify_parents(s, n);
         }
-        if (n->flags & XL_DAGC_WAIT_MASK)
+        if (n->node->flags & XL_DAGC_WAIT_MASK)
         {
                 #ifdef XL_SCHEDULE_DEBUG
                 fprintf(stderr, "%s waiting, queueing children\n",
-                        xl_explain_node(n));
+                        xl_explain_node(n->node));
                 #endif
 
-                err = xl_dagc_get_deps(&d1, &d2, &d3, n);
+                err = xl_dagc_get_deps(&d1, &d2, &d3, n->node);
                 if (err != OK)
                         return err;
 
-                if (n->flags & XL_DAGC_FLAG_WAIT_D1)
+                if (n->node->flags & XL_DAGC_FLAG_WAIT_D1)
                 {
                         xl_assert(d1 != NULL);
-                        err = xl_schedule_push(s, d1);
+                        ds.node = d1;
+                        ds.graph = n->graph;
+                        err = xl_schedule_push(s, &ds);
                         if (err != OK)
                                 return err;
                 }
-                if (n->flags & XL_DAGC_FLAG_WAIT_D2)
+                if (n->node->flags & XL_DAGC_FLAG_WAIT_D2)
                 {
                         xl_assert(d2 != NULL);
-                        err = xl_schedule_push(s, d2);
+                        ds.node = d2;
+                        ds.graph = n->graph;
+                        err = xl_schedule_push(s, &ds);
                         if (err != OK)
                                 return err;
                 }
-                if (n->flags & XL_DAGC_FLAG_WAIT_D3)
+                if (n->node->flags & XL_DAGC_FLAG_WAIT_D3)
                 {
                         xl_assert(d3 != NULL);
-                        err = xl_schedule_push(s, d3);
+                        ds.node = d3;
+                        ds.graph = n->graph;
+                        err = xl_schedule_push(s, &ds);
                         if (err != OK)
                                 return err;
                 }
@@ -197,9 +211,9 @@ xl_schedule_push(struct xl_scheduler *s, struct xl_dagc_node *n)
 
         #ifdef XL_SCHEDULE_DEBUG
         fprintf(stderr, "%s ready, queueing\n",
-                xl_explain_node(n));
+                xl_explain_node(n->node));
         #endif
-        return _schedule(s, n);
+        return _schedule(s, n->node, n->graph);
 }
 
 no_ignore static xl_error
@@ -221,6 +235,7 @@ no_ignore xl_error
 xl_dagc_eval(struct xl_env *env, struct xl_dagc *graph)
 {
         struct xl_scheduler s;
+        struct xl_node_schedule ts;
         struct xl_node_schedule *to_exec;
         xl_error err;
         size_t i;
@@ -230,7 +245,6 @@ xl_dagc_eval(struct xl_env *env, struct xl_dagc *graph)
                 return _eval_native_dagc(env, (struct xl_dagc_native *) graph);
 
         s.ready = NULL;
-        s.graph = graph;
 
         err = _set_initial_ready(graph->nodes, graph->n);
         if (err != OK)
@@ -238,7 +252,9 @@ xl_dagc_eval(struct xl_env *env, struct xl_dagc *graph)
 
         for (i = 0; i < graph->out_arity; i++)
         {
-                err = xl_schedule_push(&s, graph->terminals[i]);
+                ts.node = graph->terminals[i];
+                ts.graph = graph;
+                err = xl_schedule_push(&s, &ts);
                 if (err != OK)
                         return err;
         }
@@ -254,9 +270,14 @@ xl_dagc_eval(struct xl_env *env, struct xl_dagc *graph)
                         continue;
                 }
 
-                err = xl_dagc_node_eval(&s, env, to_exec->node);
+                err = xl_dagc_node_eval(env, to_exec->node);
                 if (err != OK)
                         return err;
+
+                err = xl_schedule_push(&s, to_exec);
+                if (err != OK)
+                        return err;
+
                 free(to_exec);
         }
         return OK;
