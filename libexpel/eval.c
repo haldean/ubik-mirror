@@ -17,7 +17,6 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include "expel/apply.h"
 #include "expel/assert.h"
 #include "expel/dagc.h"
 #include "expel/env.h"

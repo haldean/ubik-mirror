@@ -17,16 +17,63 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#pragma once
+
 #include "expel/expel.h"
 
 struct xl_scheduler;
-struct xl_node_schedule;
 
-/* Push a node back into the scheduler.
- *
- * This checks the status of the node and performs the appropriate action; if
- * the node is marked as completed, the nodes waiting on this node are
- * scheduled. If the node is marked as waiting, the nodes that the node is
- * waiting on will be scheduled. */
+typedef xl_error (*xl_exec_notify_func)(
+        void *arg,
+        struct xl_dagc *graph,
+        struct xl_env *env);
+
+struct xl_exec_notify
+{
+        /* The function called when a unit of execution has completed */
+        xl_exec_notify_func notify;
+
+        /* The first argument provided to the function when called */
+        void *arg;
+};
+
+struct xl_exec_unit
+{
+        /* The node to be evaluated */
+        struct xl_dagc_node *node;
+
+        /* The graph in which the node exists */
+        struct xl_dagc *graph;
+
+        /* The environment in which to execute the node */
+        struct xl_env *env;
+
+        /* The function to call once execution is complete */
+        struct xl_exec_notify *notify;
+
+        /* The next execution unit in the stack; callers to xl_schedule_push
+         * need not set this field, as the result will be overwritten anyawy. */
+        struct xl_exec_unit *next;
+};
+
+/* Creates a scheduler. */
 no_ignore xl_error
-xl_schedule_push(struct xl_scheduler *s, struct xl_node_schedule *n);
+xl_schedule_new(struct xl_scheduler **s);
+
+/* Destroys a scheduler. */
+no_ignore xl_error
+xl_schedule_free(struct xl_scheduler *s);
+
+/* Pushes a graph into the scheduler for execution. */
+no_ignore xl_error
+xl_schedule_push(
+        struct xl_scheduler *s,
+        struct xl_exec_unit *exec);
+
+/* Marks an execution unit complete. */
+no_ignore xl_error
+xl_schedule_complete(struct xl_scheduler *s, struct xl_exec_unit *e);
+
+/* Runs all queued jobs on the scheduler. */
+no_ignore xl_error
+xl_schedule_run(struct xl_scheduler *s);
