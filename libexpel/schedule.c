@@ -144,6 +144,13 @@ xl_schedule_push(
         xl_error err;
         size_t i;
 
+        for (i = 0; i < graph->n; i++)
+        {
+                err = _set_initial_ready(graph->nodes[i]);
+                if (err != OK)
+                        return err;
+        }
+
         /* TODO: only exec reachable nodes */
         for (i = 0; i < graph->n; i++)
         {
@@ -161,10 +168,34 @@ xl_schedule_complete(
         struct xl_scheduler *s,
         struct xl_exec_unit *e)
 {
-        unused(s);
-        unused(e);
+        struct xl_dagc_node **parents;
+        struct xl_dagc_node *d1, *d2, *d3;
+        size_t n_parents;
+        size_t i;
+        xl_error err;
 
-        return xl_raise(ERR_NOT_IMPLEMENTED, "xl_schedule_complete");
+        unused(s);
+
+        err = xl_dagc_get_parents(&parents, &n_parents, e->graph, e->node);
+        if (err != OK)
+                return err;
+
+        for (i = 0; i < n_parents; i++)
+        {
+                err = xl_dagc_get_deps(&d1, &d2, &d3, parents[i]);
+                if (err != OK)
+                        return err;
+
+                if (d1 == e->node)
+                        parents[i]->flags &= ~XL_DAGC_FLAG_WAIT_D1;
+                if (d2 == e->node)
+                        parents[i]->flags &= ~XL_DAGC_FLAG_WAIT_D2;
+                if (d3 == e->node)
+                        parents[i]->flags &= ~XL_DAGC_FLAG_WAIT_D3;
+        }
+
+        free(e);
+        return OK;
 }
 
 no_ignore static xl_error
@@ -188,7 +219,7 @@ _is_ready(struct xl_exec_unit *e)
 no_ignore static xl_error
 _run_single_pass(struct xl_scheduler *s)
 {
-        struct xl_exec_unit *u;
+        struct xl_exec_unit *u, *t;
         struct xl_exec_unit *prev;
         xl_error err;
 
@@ -199,19 +230,28 @@ _run_single_pass(struct xl_scheduler *s)
         prev = NULL;
         while (u != NULL)
         {
+                t = u->next;
+
                 if (_is_ready(u))
                 {
                         u->next = s->ready;
                         s->ready = u;
                         if (prev != NULL)
-                                prev->next = s->ready;
+                                prev->next = t;
+                        else
+                                s->wait = t;
                 }
-                prev = u;
-                u = u->next;
+                else
+                {
+                        prev = u;
+                }
+
+                u = t;
         }
 
         /* If the ready pile is still empty, then we're deadlocked. */
-        return xl_raise(ERR_DEADLOCK, "all jobs are waiting");
+        if (s->ready == NULL)
+                return xl_raise(ERR_DEADLOCK, "all jobs are waiting");
 
         /* Now all of the ready jobs are in the ready pile, so we just have to
          * execute them. */
@@ -252,6 +292,8 @@ _run_single_pass(struct xl_scheduler *s)
 
                 u = s->ready;
         }
+
+        return OK;
 }
 
 /* Runs all queued jobs on the scheduler. */
