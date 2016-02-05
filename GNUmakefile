@@ -38,7 +38,9 @@ dist/include/expel/const.h: res/const.txt res/compile-const.awk
 
 build/%.c: libexpel/%.c dist/include/expel/const.h res/buildtree/buildtree.py
 	@mkdir -p `dirname $@`
+	rm -f $@
 	python res/buildtree/buildtree.py $< $@
+	chmod a-w $@
 
 # -MD builds makefiles with dependencies in-line with the object files. We
 # include them in the -include directive below
