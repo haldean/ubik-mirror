@@ -261,6 +261,11 @@ _notify_node(struct xl_dagc_node *n, struct xl_exec_unit *e)
         void *old_type;
         xl_error err;
 
+#ifdef XL_SCHEDULE_DEBUG
+        printf("notifying %s on completion of %s\n",
+               xl_explain_node(n), xl_explain_node(e->node));
+#endif
+
         /* We save these off here because we need to free them, but freeing them
          * will free the result values as well. We read the result values into
          * our node and then free these when we're done instead. */
@@ -347,6 +352,10 @@ _run_single_pass(struct xl_scheduler *s)
 
                 if (_is_ready(u))
                 {
+#ifdef XL_SCHEDULE_DEBUG
+                        printf("moving %s from waiting to ready\n",
+                               xl_explain_node(u->node));
+#endif
                         u->next = s->ready;
                         s->ready = u;
                         if (prev != NULL)
@@ -380,6 +389,10 @@ _run_single_pass(struct xl_scheduler *s)
                 if (*u->node->known.tag & TAG_GRAPH &&
                         u->node->known.graph->in_arity == 0)
                 {
+#ifdef XL_SCHEDULE_DEBUG
+                        printf("collapsing %s\n",
+                               xl_explain_node(u->node));
+#endif
                         /* Here, we collapse the graph and don't mark the things
                          * depending on the node as ready; when we finish
                          * collapsing the graph we'll notify the dependent
@@ -390,12 +403,20 @@ _run_single_pass(struct xl_scheduler *s)
                 }
                 else if (u->node->flags & XL_DAGC_FLAG_COMPLETE)
                 {
+#ifdef XL_SCHEDULE_DEBUG
+                        printf("marking %s complete\n",
+                               xl_explain_node(u->node));
+#endif
                         err = xl_schedule_complete(s, u);
                         if (err != OK)
                                 return err;
                 }
                 else if (u->node->flags & XL_DAGC_WAIT_MASK)
                 {
+#ifdef XL_SCHEDULE_DEBUG
+                        printf("moving %s back to waiting\n",
+                               xl_explain_node(u->node));
+#endif
                         u->next = s->wait;
                         s->wait = u;
                 }
