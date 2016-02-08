@@ -200,7 +200,10 @@ xl_schedule_push(
         /* TODO: only exec reachable nodes */
         for (i = 0; i < graph->n; i++)
         {
-                err = _enqueue(s, graph, env, notify, graph->nodes[i]);
+                err = _enqueue(
+                        s, graph, env,
+                        graph->nodes[i] == graph->result ? notify : NULL,
+                        graph->nodes[i]);
                 if (err != OK)
                         return err;
         }
@@ -240,7 +243,52 @@ xl_schedule_complete(
                         parents[i]->flags &= ~XL_DAGC_FLAG_WAIT_D3;
         }
 
+        if (e->notify != NULL)
+        {
+                err = e->notify->notify(e->notify->arg, e);
+                if (err != OK)
+                        return err;
+                free(e->notify);
+        }
         free(e);
+        return OK;
+}
+
+xl_error
+_notify_node(struct xl_dagc_node *n, struct xl_exec_unit *e)
+{
+        void *old;
+        void *old_type;
+        xl_error err;
+
+        /* We save these off here because we need to free them, but freeing them
+         * will free the result values as well. We read the result values into
+         * our node and then free these when we're done instead. */
+        old = n->known.any;
+        old_type = n->known_type;
+
+        n->known.any = e->node->known.any;
+        err = xl_take(n->known.any);
+        if (err != OK)
+                return err;
+
+        n->known_type = e->node->known_type;
+        err = xl_take(n->known_type);
+        if (err != OK)
+                return err;
+
+        err = xl_env_free(e->env);
+        if (err != OK)
+                return err;
+
+        err = xl_release(old);
+        if (err != OK)
+                return err;
+
+        err = xl_release(old_type);
+        if (err != OK)
+                return err;
+
         return OK;
 }
 
@@ -249,10 +297,29 @@ _collapse_graph(
         struct xl_scheduler *s,
         struct xl_exec_unit *e)
 {
-        unused(s);
-        unused(e);
+        struct xl_exec_notify *notify;
+        struct xl_env *child_env;
+        xl_error err;
 
-        return xl_raise(ERR_NOT_IMPLEMENTED, "collapse_graph");
+        notify = calloc(1, sizeof(struct xl_exec_notify));
+        if (notify == NULL)
+                return xl_raise(ERR_NO_MEMORY, "exec notify");
+        notify->notify = (xl_exec_notify_func) _notify_node;
+        notify->arg = e->node;
+
+        e->node->flags = XL_DAGC_FLAG_WAIT_EVAL;
+
+        /* Create a child environment to execute the function in. */
+        child_env = calloc(1, sizeof(struct xl_env));
+        err = xl_env_make_child(child_env, e->env);
+        if (err != OK)
+                return err;
+
+        err = xl_schedule_push(s, e->node->known.graph, child_env, notify);
+        if (err != OK)
+                return err;
+
+        return OK;
 }
 
 no_ignore static bool
