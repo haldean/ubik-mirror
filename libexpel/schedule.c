@@ -333,6 +333,59 @@ _is_ready(struct xl_exec_unit *e)
         return !(e->node->flags & XL_DAGC_WAIT_MASK);
 }
 
+no_ignore xl_error
+xl_schedule_dump(struct xl_scheduler *s)
+{
+        struct xl_dagc_node *d1, *d2, *d3;
+        struct xl_exec_unit *u;
+        char *buf;
+        xl_error err;
+
+        printf("scheduler dump\nwaiting jobs:\n");
+        u = s->wait;
+        while (u != NULL)
+        {
+                buf = xl_explain_node(u->node);
+                printf("\t%s\n", buf);
+                free(buf);
+
+                printf("\t\twait on d1 %d d2 %d d3 %d eval %d\n",
+                        !!(u->node->flags & XL_DAGC_FLAG_WAIT_D1),
+                        !!(u->node->flags & XL_DAGC_FLAG_WAIT_D2),
+                        !!(u->node->flags & XL_DAGC_FLAG_WAIT_D3),
+                        !!(u->node->flags & XL_DAGC_FLAG_WAIT_EVAL));
+
+                err = xl_dagc_get_deps(&d1, &d2, &d3, u->node);
+                if (err != OK)
+                        return err;
+
+                if (d1 != NULL)
+                {
+                        buf = xl_explain_node(d1);
+                        printf("\t\td1: %s\n", buf);
+                        free(buf);
+                }
+
+                if (d2 != NULL)
+                {
+                        buf = xl_explain_node(d2);
+                        printf("\t\td2: %s\n", buf);
+                        free(buf);
+                }
+
+                if (d3 != NULL)
+                {
+                        buf = xl_explain_node(d3);
+                        printf("\t\td3: %s\n", buf);
+                        free(buf);
+                }
+
+                u = u->next;
+        }
+
+        return OK;
+}
+
 /* Runs a single pass of the scheduler. */
 no_ignore static xl_error
 _run_single_pass(struct xl_scheduler *s)
@@ -373,7 +426,14 @@ _run_single_pass(struct xl_scheduler *s)
 
         /* If the ready pile is still empty, then we're deadlocked. */
         if (s->ready == NULL)
+        {
+#ifdef XL_SCHEDULE_DEBUG
+                err = xl_schedule_dump(s);
+                if (err != OK)
+                        return err;
+#endif
                 return xl_raise(ERR_DEADLOCK, "all jobs are waiting");
+        }
 
         /* Now all of the ready jobs are in the ready pile, so we just have to
          * execute them. */
