@@ -24,6 +24,7 @@ struct xl_exec_unit;
 
 typedef xl_error (*xl_exec_notify_func)(
         void *arg,
+        struct xl_scheduler *s,
         struct xl_exec_unit *e);
 
 struct xl_exec_notify
@@ -77,3 +78,7 @@ xl_schedule_complete(struct xl_scheduler *s, struct xl_exec_unit *e);
 /* Runs all queued jobs on the scheduler. */
 no_ignore xl_error
 xl_schedule_run(struct xl_scheduler *s);
+
+/* Dumps information about what's scheduled to stdout. */
+no_ignore xl_error
+xl_schedule_dump(struct xl_scheduler *s);

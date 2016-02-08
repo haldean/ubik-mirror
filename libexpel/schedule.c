@@ -143,6 +143,7 @@ _enqueue(
 
 no_ignore static xl_error
 _eval_native_dagc(
+        struct xl_scheduler *s,
         struct xl_dagc_native *ngraph,
         struct xl_env *env,
         struct xl_exec_notify *notify)
@@ -167,7 +168,7 @@ _eval_native_dagc(
         unit.notify = NULL;
         unit.next = NULL;
 
-        err = notify->notify(notify->arg, &unit);
+        err = notify->notify(notify->arg, s, &unit);
         if (err != OK)
                 return err;
 
@@ -188,7 +189,7 @@ xl_schedule_push(
         /* Native graphs get to cheat and skip all this biz. */
         if (graph->tag & TAG_GRAPH_NATIVE)
                 return _eval_native_dagc(
-                        (struct xl_dagc_native *) graph, env, notify);
+                        s, (struct xl_dagc_native *) graph, env, notify);
 
         for (i = 0; i < graph->n; i++)
         {
@@ -245,7 +246,7 @@ xl_schedule_complete(
 
         if (e->notify != NULL)
         {
-                err = e->notify->notify(e->notify->arg, e);
+                err = e->notify->notify(e->notify->arg, s, e);
                 if (err != OK)
                         return err;
                 free(e->notify);
@@ -255,7 +256,10 @@ xl_schedule_complete(
 }
 
 xl_error
-_notify_node(struct xl_dagc_node *n, struct xl_exec_unit *e)
+_notify_node(
+        struct xl_exec_unit *waiting,
+        struct xl_scheduler *s,
+        struct xl_exec_unit *complete)
 {
         void *old;
         void *old_type;
@@ -263,26 +267,26 @@ _notify_node(struct xl_dagc_node *n, struct xl_exec_unit *e)
 
 #ifdef XL_SCHEDULE_DEBUG
         printf("notifying %s on completion of %s\n",
-               xl_explain_node(n), xl_explain_node(e->node));
+               xl_explain_node(waiting->node), xl_explain_node(complete->node));
 #endif
 
         /* We save these off here because we need to free them, but freeing them
          * will free the result values as well. We read the result values into
          * our node and then free these when we're done instead. */
-        old = n->known.any;
-        old_type = n->known_type;
+        old = waiting->node->known.any;
+        old_type = waiting->node->known_type;
 
-        n->known.any = e->node->known.any;
-        err = xl_take(n->known.any);
+        waiting->node->known.any = complete->node->known.any;
+        err = xl_take(waiting->node->known.any);
         if (err != OK)
                 return err;
 
-        n->known_type = e->node->known_type;
-        err = xl_take(n->known_type);
+        waiting->node->known_type = complete->node->known_type;
+        err = xl_take(waiting->node->known_type);
         if (err != OK)
                 return err;
 
-        err = xl_env_free(e->env);
+        err = xl_env_free(complete->env);
         if (err != OK)
                 return err;
 
@@ -291,6 +295,11 @@ _notify_node(struct xl_dagc_node *n, struct xl_exec_unit *e)
                 return err;
 
         err = xl_release(old_type);
+        if (err != OK)
+                return err;
+
+        waiting->node->flags = XL_DAGC_FLAG_COMPLETE;
+        err = xl_schedule_complete(s, waiting);
         if (err != OK)
                 return err;
 
@@ -310,7 +319,7 @@ _collapse_graph(
         if (notify == NULL)
                 return xl_raise(ERR_NO_MEMORY, "exec notify");
         notify->notify = (xl_exec_notify_func) _notify_node;
-        notify->arg = e->node;
+        notify->arg = e;
 
         e->node->flags = XL_DAGC_FLAG_WAIT_EVAL;
 
