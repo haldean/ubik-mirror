@@ -20,11 +20,11 @@
 #include "expel/expel.h"
 
 struct xl_scheduler;
+struct xl_exec_unit;
 
 typedef xl_error (*xl_exec_notify_func)(
         void *arg,
-        struct xl_dagc *graph,
-        struct xl_env *env);
+        struct xl_exec_unit *e);
 
 struct xl_exec_notify
 {
