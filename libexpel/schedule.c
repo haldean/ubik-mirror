@@ -18,9 +18,12 @@
  */
 
 #include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 #include "expel/dagc.h"
+#include "expel/env.h"
+#include "expel/explain.h"
 #include "expel/schedule.h"
 #include "expel/util.h"
 
@@ -130,6 +133,44 @@ _enqueue(
 
         u->next = s->wait;
         s->wait = u;
+
+        err = xl_take(graph);
+        if (err != OK)
+                return err;
+
+        return OK;
+}
+
+no_ignore static xl_error
+_eval_native_dagc(
+        struct xl_dagc_native *ngraph,
+        struct xl_env *env,
+        struct xl_exec_notify *notify)
+{
+        xl_error err;
+        struct xl_dagc *graph;
+        struct xl_exec_unit unit;
+
+        graph = (struct xl_dagc *) ngraph;
+        err = ngraph->evaluator(env, graph);
+        if (err != OK)
+                return err;
+
+        graph->result->flags |= XL_DAGC_FLAG_COMPLETE;
+
+        if (notify == NULL)
+                return OK;
+
+        unit.node = graph->result;
+        unit.graph = graph;
+        unit.env = env;
+        unit.notify = NULL;
+        unit.next = NULL;
+
+        err = notify->notify(notify->arg, &unit);
+        if (err != OK)
+                return err;
+
         return OK;
 }
 
@@ -143,6 +184,11 @@ xl_schedule_push(
 {
         xl_error err;
         size_t i;
+
+        /* Native graphs get to cheat and skip all this biz. */
+        if (graph->tag & TAG_GRAPH_NATIVE)
+                return _eval_native_dagc(
+                        (struct xl_dagc_native *) graph, env, notify);
 
         for (i = 0; i < graph->n; i++)
         {
