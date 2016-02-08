@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "expel/assert.h"
 #include "expel/dagc.h"
 #include "expel/env.h"
 #include "expel/explain.h"
@@ -418,6 +419,8 @@ _run_single_pass(struct xl_scheduler *s)
                         printf("moving %s from waiting to ready\n",
                                xl_explain_node(u->node));
 #endif
+                        xl_assert(u->node->known.any != NULL);
+
                         u->next = s->ready;
                         s->ready = u;
                         if (prev != NULL)
