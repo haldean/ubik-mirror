@@ -292,8 +292,6 @@ xl_schedule_complete(
         size_t i;
         xl_error err;
 
-        unused(s);
-
         err = xl_dagc_get_parents(&parents, &n_parents, e->graph, e->node);
         if (err != OK)
                 return err;
