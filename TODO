@@ -1,8 +1,6 @@
 reference tracking for graphs
 runtime instrumentation
 where did a graph come from
-callback-based scheduler
 tuples
 lambda types
 circular reference finder
-built source should be read-only
