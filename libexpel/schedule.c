@@ -176,21 +176,24 @@ _eval_native_dagc(
         return OK;
 }
 
-/* Enqueues a node and all applicable dependencies. */
 no_ignore static xl_error
 _push_dep_tree(
         struct xl_scheduler *s,
         struct xl_dagc *graph,
         struct xl_dagc_node *node,
         struct xl_env *env,
-        struct xl_exec_notify *notify)
+        struct xl_exec_notify *notify);
+
+/* Enqueues the nodes on which the provided node is waiting. */
+no_ignore static xl_error
+_push_deps(
+        struct xl_scheduler *s,
+        struct xl_dagc *graph,
+        struct xl_dagc_node *node,
+        struct xl_env *env)
 {
         struct xl_dagc_node *d1, *d2, *d3;
         xl_error err;
-
-        err = _enqueue(s, graph, env, notify, node);
-        if (err != OK)
-                return err;
 
         err = xl_dagc_get_deps(&d1, &d2, &d3, node);
         if (err != OK)
@@ -215,6 +218,28 @@ _push_dep_tree(
                 if (err != OK)
                         return err;
         }
+
+        return OK;
+}
+
+/* Enqueues a node and all applicable dependencies. */
+no_ignore static xl_error
+_push_dep_tree(
+        struct xl_scheduler *s,
+        struct xl_dagc *graph,
+        struct xl_dagc_node *node,
+        struct xl_env *env,
+        struct xl_exec_notify *notify)
+{
+        xl_error err;
+
+        err = _enqueue(s, graph, env, notify, node);
+        if (err != OK)
+                return err;
+
+        err = _push_deps(s, graph, node, env);
+        if (err != OK)
+                return err;
 
         return OK;
 }
@@ -479,11 +504,9 @@ _run_single_pass(struct xl_scheduler *s)
         /* If the ready pile is still empty, then we're deadlocked. */
         if (s->ready == NULL)
         {
-#ifdef XL_SCHEDULE_DEBUG
                 err = xl_schedule_dump(s);
                 if (err != OK)
                         return err;
-#endif
                 return xl_raise(ERR_DEADLOCK, "all jobs are waiting");
         }
 
@@ -532,6 +555,10 @@ _run_single_pass(struct xl_scheduler *s)
 #endif
                         u->next = s->wait;
                         s->wait = u;
+
+                        err = _push_deps(s, u->graph, u->node, u->env);
+                        if (err != OK)
+                                return err;
                 }
                 else return xl_raise(
                         ERR_BAD_HEADER,
