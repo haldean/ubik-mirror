@@ -4,3 +4,4 @@ where did a graph come from
 tuples
 lambda types
 circular reference finder
+low-level debugger with graph step-through
