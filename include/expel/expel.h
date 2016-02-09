@@ -78,7 +78,7 @@ typedef struct xl_error * xl_error;
 
 #define no_ignore __attribute__((__warn_unused_result__))
 
-union _xl_atom
+union xl_atom
 {
         struct xl_value *t;
         struct xl_dagc *g;
@@ -95,8 +95,8 @@ struct xl_value
          * the TAG_VALUE bit. */
         xl_tag tag;
 
-        union _xl_atom left;
-        union _xl_atom right;
+        union xl_atom left;
+        union xl_atom right;
 
         /* The page in which the value was allocated, used by the
          * garbage collector. */
