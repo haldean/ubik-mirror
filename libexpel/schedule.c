@@ -176,6 +176,49 @@ _eval_native_dagc(
         return OK;
 }
 
+/* Enqueues a node and all applicable dependencies. */
+no_ignore static xl_error
+_push_dep_tree(
+        struct xl_scheduler *s,
+        struct xl_dagc *graph,
+        struct xl_dagc_node *node,
+        struct xl_env *env,
+        struct xl_exec_notify *notify)
+{
+        struct xl_dagc_node *d1, *d2, *d3;
+        xl_error err;
+
+        err = _enqueue(s, graph, env, notify, node);
+        if (err != OK)
+                return err;
+
+        err = xl_dagc_get_deps(&d1, &d2, &d3, node);
+        if (err != OK)
+                return err;
+
+        if (d1 != NULL && (node->flags & XL_DAGC_FLAG_WAIT_D1))
+        {
+                /* only the root gets notified; everything below it doesn't */
+                err = _push_dep_tree(s, graph, d1, env, NULL);
+                if (err != OK)
+                        return err;
+        }
+        if (d2 != NULL && (node->flags & XL_DAGC_FLAG_WAIT_D2))
+        {
+                err = _push_dep_tree(s, graph, d2, env, NULL);
+                if (err != OK)
+                        return err;
+        }
+        if (d3 != NULL && (node->flags & XL_DAGC_FLAG_WAIT_D3))
+        {
+                err = _push_dep_tree(s, graph, d3, env, NULL);
+                if (err != OK)
+                        return err;
+        }
+
+        return OK;
+}
+
 /* Pushes a graph into the scheduler for execution. */
 no_ignore xl_error
 xl_schedule_push(
@@ -185,6 +228,7 @@ xl_schedule_push(
         struct xl_exec_notify *notify)
 {
         xl_error err;
+        struct xl_dagc_node *n;
         size_t i;
 
         /* Native graphs get to cheat and skip all this biz. */
@@ -199,13 +243,11 @@ xl_schedule_push(
                         return err;
         }
 
-        /* TODO: only exec reachable nodes */
-        for (i = 0; i < graph->n; i++)
+        for (i = 0; i < graph->out_arity; i++)
         {
-                err = _enqueue(
-                        s, graph, env,
-                        graph->nodes[i] == graph->result ? notify : NULL,
-                        graph->nodes[i]);
+                n = graph->terminals[i];
+                err = _push_dep_tree(
+                        s, graph, n, env, n == graph->result ? notify : NULL); 
                 if (err != OK)
                         return err;
         }
@@ -419,8 +461,6 @@ _run_single_pass(struct xl_scheduler *s)
                         printf("moving %s from waiting to ready\n",
                                xl_explain_node(u->node));
 #endif
-                        xl_assert(u->node->known.any != NULL);
-
                         u->next = s->ready;
                         s->ready = u;
                         if (prev != NULL)
@@ -458,7 +498,8 @@ _run_single_pass(struct xl_scheduler *s)
 
                 s->ready = s->ready->next;
 
-                if (*u->node->known.tag & TAG_GRAPH &&
+                if (u->node->flags & XL_DAGC_FLAG_COMPLETE &&
+                        *u->node->known.tag & TAG_GRAPH &&
                         u->node->known.graph->in_arity == 0)
                 {
 #ifdef XL_SCHEDULE_DEBUG
