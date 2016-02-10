@@ -17,8 +17,10 @@
 
 -include res/build-config.mk
 
-objects := $(patsubst libexpel/%.c,build/%.o,$(wildcard libexpel/*.c))
+objects := $(patsubst libexpel/%.c,build/%.o,$(wildcard libexpel/*.c)) build/token.o
 postproc := $(patsubst libexpel/%.c,build/%.c,$(wildcard libexpel/*.c))
+
+$(info $(objects))
 
 executable := $(DIST_DIR)/runexpel
 testexe := $(BUILD_DIR)/test-expel
@@ -41,6 +43,10 @@ build/%.c: libexpel/%.c dist/include/expel/const.h res/buildtree/buildtree.py
 	rm -f $@
 	python res/buildtree/buildtree.py $< $@
 	chmod a-w $@
+
+build/token.c: libexpel/token.l
+	@mkdir -p `dirname $@`
+	flex -o $@ $<
 
 # -MD builds makefiles with dependencies in-line with the object files. We
 # include them in the -include directive below
@@ -88,6 +94,10 @@ test: unit_test pyasm_test
 
 clean:
 	rm -rf build dist
+
+build/tokenizer: test/lex/emit-tokens.c $(SHARED_LIB)
+	@mkdir -p `dirname $(@)`
+	$(CC) $(COPTS) $(LDOPTS) $(testldopts) $< -lexpel -o $@
 
 fuzz: CC = afl-gcc
 fuzz: $(SHARED_LIB) $(executable) $(asms)
