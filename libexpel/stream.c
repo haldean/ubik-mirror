@@ -168,3 +168,20 @@ xl_stream_close(struct xl_stream *sp)
                 return;
         }
 }
+
+FILE *
+xl_stream_fp(struct xl_stream *sp)
+{
+        switch (sp->stream_type)
+        {
+        case STREAM_TYPE_FILE_R:
+        case STREAM_TYPE_FILE_W:
+                return sp->file;
+        case STREAM_TYPE_BUFFER:
+                return fmemopen(
+                        sp->buffer->start,
+                        sp->buffer->end - sp->buffer->start,
+                        "r");
+        }
+        return NULL;
+}

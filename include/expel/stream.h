@@ -74,6 +74,14 @@ xl_stream_write(struct xl_stream *dst, void *src, size_t len);
 no_ignore size_t
 xl_stream_drop(struct xl_stream *src, size_t len);
 
+/* Gets a file pointer representing the contents of the stream.
+ *
+ * If the stream has been read from or written to, you should not make
+ * assumptions about the location of the read/write heads in this stream;
+ * instead, you should seek it to wherever you need the stream head to be. */
+FILE *
+xl_stream_fp(struct xl_stream *sp);
+
 /* Closes a stream. */
 void
 xl_stream_close(struct xl_stream *sp);
