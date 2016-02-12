@@ -21,6 +21,7 @@
 
 #include "expel/expel.h"
 #include "expel/ast.h"
+#include "expel/stream.h"
 #include "expel/util.h"
 
 #include <stdio.h>
@@ -60,6 +61,13 @@ yyerror(void *scanner, const char *err)
 
 %param { void *scanner }
 
+%{
+extern int yylex_init(void *);
+extern void yylex_destroy(void *);
+extern void yyset_in(FILE *, void *);
+extern int yylex(YYSTYPE *, void *);
+%}
+
 %%
 
 prog:
@@ -78,7 +86,8 @@ xl_parse(struct xl_stream *stream)
         int status;
         yypstate *ps;
         void *scanner;
-        xl_error err;
+        YYSTYPE val;
+        int token;
 
         status = yylex_init(&scanner);
         if (status != 0)
@@ -89,7 +98,8 @@ xl_parse(struct xl_stream *stream)
         ps = yypstate_new();
         do
         {
-          status = yypush_parse(ps, yylex(), NULL, scanner);
+                token = yylex(&val, scanner);
+                status = yypush_parse(ps, token, &val, scanner);
         } while (status == YYPUSH_MORE);
 
         yypstate_delete(ps);
