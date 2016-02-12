@@ -34,7 +34,7 @@
 static xl_error
 token_callback(struct xl_token t)
 {
-        printf("%d: %s (%d)\n", t.token_code, t.text, t.line_no);
+        printf("token %d: '%s' (line %d)\n", t.token_code, t.text, t.line_no);
         return OK;
 }
 

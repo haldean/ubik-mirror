@@ -46,7 +46,7 @@ build/%.c: libexpel/%.c dist/include/expel/const.h res/buildtree/buildtree.py
 
 build/token.c: libexpel/token.l
 	@mkdir -p `dirname $@`
-	flex -o $@ $<
+	flex --debug -o $@ $<
 
 # -MD builds makefiles with dependencies in-line with the object files. We
 # include them in the -include directive below

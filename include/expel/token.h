@@ -20,12 +20,23 @@
 #include "expel/expel.h"
 #include "expel/stream.h"
 
-#define TOKEN_NUMBER    1
-#define TOKEN_NAME      2
+enum xl_token_type
+{
+        BIND = 1,
+        TYPE,
+        IMPLIES,
+        GOES_TO,
+        LAMBDA,
+        IS,
+        LPAREN,
+        RPAREN,
+        NUMBER,
+        NAME
+};
 
 struct xl_token
 {
-        int token_code;
+        enum xl_token_type token_code;
         char *text;
         size_t text_len;
         int line_no;
