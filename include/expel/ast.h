@@ -1,5 +1,5 @@
 /*
- * token.h: expel language tokenizer
+ * ast.h: in-memory ast representation
  * Copyright (C) 2016, Haldean Brown
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,18 +17,30 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include "expel/expel.h"
-#include "expel/stream.h"
 
-struct xl_token
+#include "expel/expel.h"
+
+struct xl_ast_binding
 {
-        int token_code;
-        char *text;
-        size_t text_len;
-        int line_no;
+        wchar_t *name;
+        union xl_atom value;
 };
 
-typedef xl_error (*xl_token_cb)(struct xl_token t);
+struct xl_ast
+{
+        struct xl_ast_binding *bindings;
+        size_t n_bindings;
+};
+
+/* Allocates a new AST. */
+no_ignore xl_error
+xl_ast_new(struct xl_ast **ast);
 
 no_ignore xl_error
-xl_tokenize(xl_token_cb callback, struct xl_stream *stream);
+xl_ast_free(struct xl_ast *ast);
+
+no_ignore xl_error
+xl_ast_bind(struct xl_ast *ast, struct xl_ast_binding *bind);
+
+no_ignore xl_error
+xl_ast_binding_new(struct xl_ast_binding **binding, wchar_t *name);

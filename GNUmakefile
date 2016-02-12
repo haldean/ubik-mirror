@@ -17,7 +17,7 @@
 
 -include res/build-config.mk
 
-objects := $(patsubst libexpel/%.c,build/%.o,$(wildcard libexpel/*.c)) build/token.o
+objects := $(patsubst libexpel/%.c,build/%.o,$(wildcard libexpel/*.c)) build/token.o build/parse.o
 postproc := $(patsubst libexpel/%.c,build/%.c,$(wildcard libexpel/*.c))
 
 $(info $(objects))
@@ -44,9 +44,14 @@ build/%.c: libexpel/%.c dist/include/expel/const.h res/buildtree/buildtree.py
 	python res/buildtree/buildtree.py $< $@
 	chmod a-w $@
 
-build/token.c: libexpel/token.l
+build/token.c: libexpel/token.l dist/include/parse.tab.h
 	@mkdir -p `dirname $@`
-	flex --debug -o $@ $<
+	flex -o $@ $<
+
+build/%arse.c dist/include/%arse.tab.h: libexpel/parse.y
+	@mkdir -p dist/include
+	@mkdir -p build
+	bison --defines=dist/include/parse.tab.h -o build/parse.c $<
 
 # -MD builds makefiles with dependencies in-line with the object files. We
 # include them in the -include directive below
