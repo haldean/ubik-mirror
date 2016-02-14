@@ -18,7 +18,8 @@
  */
 
 #include "expel/expel.h"
+#include "expel/ast.h"
 #include "expel/stream.h"
 
 no_ignore xl_error
-xl_parse(struct xl_stream *stream);
+xl_parse(struct xl_ast *ast, struct xl_stream *stream);

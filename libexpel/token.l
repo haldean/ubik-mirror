@@ -35,7 +35,7 @@
         size_t len = mbsrtowcs(NULL, (const char ** restrict) &tmp, 0, NULL); \
         yylval->string = calloc(len + 1, sizeof(wchar_t)); \
         tmp = yytext; \
-        mbsrtowcs(yylval->string, &tmp, len - 1, NULL); \
+        mbsrtowcs(yylval->string, &tmp, len, NULL); \
         return token; \
 }
 

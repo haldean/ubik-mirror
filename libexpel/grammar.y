@@ -26,8 +26,9 @@
 #include <stdio.h>
 
 void
-yyerror(void *scanner, const char *err)
+yyerror(struct xl_ast *ast, void *scanner, const char *err)
 {
+        unused(ast);
         unused(scanner);
         fprintf(stderr, "%s\n", err);
 }
@@ -58,12 +59,14 @@ yyerror(void *scanner, const char *err)
 %define api.push-pull push
 %define parse.error verbose
 
-%param { void *scanner }
+%parse-param { struct xl_ast *ast }
+%parse-param { void *scanner }
+%lex-param { void *scanner }
 
 %%
 
 prog:
-%empty          { wrap_err(xl_ast_new(&$$)); }
+%empty          { $$ = ast; }
 | prog binding  { wrap_err(xl_ast_bind($1, $2)); $$ = $1; }
 ;
 

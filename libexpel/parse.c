@@ -23,7 +23,7 @@
 
 
 no_ignore xl_error
-xl_parse(struct xl_stream *stream)
+xl_parse(struct xl_ast *ast, struct xl_stream *stream)
 {
         int status;
         yypstate *ps;
@@ -41,7 +41,7 @@ xl_parse(struct xl_stream *stream)
         do
         {
                 token = yylex(&val, scanner);
-                status = yypush_parse(ps, token, &val, scanner);
+                status = yypush_parse(ps, token, &val, ast, scanner);
         } while (status == YYPUSH_MORE);
 
         yypstate_delete(ps);

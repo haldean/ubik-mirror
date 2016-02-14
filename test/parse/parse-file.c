@@ -20,6 +20,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <wchar.h>
+
+#include "expel/ast.h"
 #include "expel/parse.h"
 
 #define CHECK_ERR(msg) \
@@ -35,13 +38,26 @@ int
 main()
 {
         struct xl_stream s;
+        struct xl_ast *ast;
+        size_t i;
         xl_error err;
 
         err = xl_stream_rfilep(&s, stdin);
         CHECK_ERR("create file stream");
 
-        err = xl_parse(&s);
+        err = xl_ast_new(&ast);
+        CHECK_ERR("create ast");
+
+        err = xl_parse(ast, &s);
         CHECK_ERR("parse");
+
+        for (i = 0; i < ast->n_bindings; i++)
+        {
+                wprintf(L"bind %S\n", ast->bindings[i]->name);
+        }
+
+        err = xl_ast_free(ast);
+        CHECK_ERR("free ast");
 
 teardown:
         return EXIT_SUCCESS;
