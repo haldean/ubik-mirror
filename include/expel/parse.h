@@ -1,5 +1,5 @@
 /*
- * ast.h: in-memory ast representation
+ * parse.h: expel language parser
  * Copyright (C) 2016, Haldean Brown
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,31 +17,8 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#pragma once
 #include "expel/expel.h"
-
-struct xl_ast_binding
-{
-        wchar_t *name;
-        union xl_atom value;
-};
-
-struct xl_ast
-{
-        struct xl_ast_binding **bindings;
-        size_t n_bindings;
-        size_t cap_bindings;
-};
-
-/* Allocates a new AST. */
-no_ignore xl_error
-xl_ast_new(struct xl_ast **ast);
+#include "expel/stream.h"
 
 no_ignore xl_error
-xl_ast_free(struct xl_ast *ast);
-
-no_ignore xl_error
-xl_ast_bind(struct xl_ast *ast, struct xl_ast_binding *bind);
-
-no_ignore xl_error
-xl_ast_binding_new(struct xl_ast_binding **binding, wchar_t *name);
+xl_parse(struct xl_stream *stream);

@@ -1,5 +1,5 @@
 /*
- * ast.h: in-memory ast representation
+ * emit-tokens.c: tokenizer test
  * Copyright (C) 2016, Haldean Brown
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,31 +17,33 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#pragma once
-#include "expel/expel.h"
 
-struct xl_ast_binding
+#include <stdio.h>
+#include <stdlib.h>
+#include "expel/parse.h"
+
+#define CHECK_ERR(msg) \
+        do { if (err != OK) \
+        { \
+                char *expl = xl_error_explain(err); \
+                printf(msg ": %s\n", expl); \
+                free(err); free(expl); \
+                goto teardown; \
+        } } while(0)
+
+int
+main()
 {
-        wchar_t *name;
-        union xl_atom value;
-};
+        struct xl_stream s;
+        xl_error err;
 
-struct xl_ast
-{
-        struct xl_ast_binding **bindings;
-        size_t n_bindings;
-        size_t cap_bindings;
-};
+        err = xl_stream_rfilep(&s, stdin);
+        CHECK_ERR("create file stream");
 
-/* Allocates a new AST. */
-no_ignore xl_error
-xl_ast_new(struct xl_ast **ast);
+        err = xl_parse(&s);
+        CHECK_ERR("parse");
 
-no_ignore xl_error
-xl_ast_free(struct xl_ast *ast);
+teardown:
+        return EXIT_SUCCESS;
+}
 
-no_ignore xl_error
-xl_ast_bind(struct xl_ast *ast, struct xl_ast_binding *bind);
-
-no_ignore xl_error
-xl_ast_binding_new(struct xl_ast_binding **binding, wchar_t *name);

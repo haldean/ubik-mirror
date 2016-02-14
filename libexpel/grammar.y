@@ -1,5 +1,5 @@
 /*
- * parse.y: expel language parser
+ * grammar.y: expel language grammar
  * Copyright (C) 2016, Haldean Brown
  *
  * This program is free software; you can redistribute it and/or modify
@@ -21,7 +21,6 @@
 
 #include "expel/expel.h"
 #include "expel/ast.h"
-#include "expel/stream.h"
 #include "expel/util.h"
 
 #include <stdio.h>
@@ -61,13 +60,6 @@ yyerror(void *scanner, const char *err)
 
 %param { void *scanner }
 
-%{
-extern int yylex_init(void *);
-extern void yylex_destroy(void *);
-extern void yyset_in(FILE *, void *);
-extern int yylex(YYSTYPE *, void *);
-%}
-
 %%
 
 prog:
@@ -79,31 +71,3 @@ binding:
 BIND NAME       { wrap_err(xl_ast_binding_new(&$$, $2)); }
 
 %%
-
-no_ignore xl_error
-xl_parse(struct xl_stream *stream)
-{
-        int status;
-        yypstate *ps;
-        void *scanner;
-        YYSTYPE val;
-        int token;
-
-        status = yylex_init(&scanner);
-        if (status != 0)
-                return xl_raise(ERR_UNEXPECTED_FAILURE, "yylex_init failed");
-
-        yyset_in(xl_stream_fp(stream), scanner);
-
-        ps = yypstate_new();
-        do
-        {
-                token = yylex(&val, scanner);
-                status = yypush_parse(ps, token, &val, scanner);
-        } while (status == YYPUSH_MORE);
-
-        yypstate_delete(ps);
-        yylex_destroy(scanner);
-
-        return OK;
-}

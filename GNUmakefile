@@ -17,10 +17,8 @@
 
 -include res/build-config.mk
 
-objects := $(patsubst libexpel/%.c,build/%.o,$(wildcard libexpel/*.c)) build/token.o build/parse.o
+objects := $(patsubst libexpel/%.c,build/%.o,$(wildcard libexpel/*.c)) build/token.o build/grammar.o
 postproc := $(patsubst libexpel/%.c,build/%.c,$(wildcard libexpel/*.c))
-
-$(info $(objects))
 
 executable := $(DIST_DIR)/runexpel
 testexe := $(BUILD_DIR)/test-expel
@@ -38,20 +36,19 @@ dist/include/expel/const.h: res/const.txt res/compile-const.awk
 	@test -d dist/include/expel || mkdir dist/include/expel
 	awk -f res/compile-const.awk $< > $@
 
-build/%.c: libexpel/%.c dist/include/expel/const.h res/buildtree/buildtree.py
+build/%.c: libexpel/%.c res/buildtree/buildtree.py build/include/token.tab.h build/include/grammar.tab.h dist/include/expel/const.h
 	@mkdir -p `dirname $@`
 	rm -f $@
 	python res/buildtree/buildtree.py $< $@
 	chmod a-w $@
 
-build/token.c: libexpel/token.l dist/include/parse.tab.h
-	@mkdir -p `dirname $@`
-	flex -o $@ $<
+build/token.c build/include/token.tab.h: libexpel/token.l build/include/grammar.tab.h
+	@mkdir -p build/include
+	flex --header-file=build/include/token.tab.h -o build/token.c $<
 
-build/%arse.c dist/include/%arse.tab.h: libexpel/parse.y
-	@mkdir -p dist/include
-	@mkdir -p build
-	bison --defines=dist/include/parse.tab.h -o build/parse.c $<
+build/grammar.c build/include/grammar.tab.h: libexpel/grammar.y
+	@mkdir -p build/include
+	bison --defines=build/include/grammar.tab.h -o build/grammar.c $<
 
 # -MD builds makefiles with dependencies in-line with the object files. We
 # include them in the -include directive below
@@ -101,6 +98,10 @@ clean:
 	rm -rf build dist
 
 build/tokenizer: test/lex/emit-tokens.c $(SHARED_LIB)
+	@mkdir -p `dirname $(@)`
+	$(CC) $(COPTS) $(LDOPTS) $(testldopts) $< -lexpel -o $@
+
+build/parser: test/parse/parse-file.c $(SHARED_LIB)
 	@mkdir -p `dirname $(@)`
 	$(CC) $(COPTS) $(LDOPTS) $(testldopts) $< -lexpel -o $@
 

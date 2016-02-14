@@ -1,5 +1,5 @@
 /*
- * ast.h: in-memory ast representation
+ * parse.c: expel language parser
  * Copyright (C) 2016, Haldean Brown
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,31 +17,35 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#pragma once
-#include "expel/expel.h"
+#include "expel/parse.h"
+#include "grammar.tab.h"
+#include "token.tab.h"
 
-struct xl_ast_binding
+
+no_ignore xl_error
+xl_parse(struct xl_stream *stream)
 {
-        wchar_t *name;
-        union xl_atom value;
-};
+        int status;
+        yypstate *ps;
+        void *scanner;
+        YYSTYPE val;
+        int token;
 
-struct xl_ast
-{
-        struct xl_ast_binding **bindings;
-        size_t n_bindings;
-        size_t cap_bindings;
-};
+        status = yylex_init(&scanner);
+        if (status != 0)
+                return xl_raise(ERR_UNEXPECTED_FAILURE, "yylex_init failed");
 
-/* Allocates a new AST. */
-no_ignore xl_error
-xl_ast_new(struct xl_ast **ast);
+        yyset_in(xl_stream_fp(stream), scanner);
 
-no_ignore xl_error
-xl_ast_free(struct xl_ast *ast);
+        ps = yypstate_new();
+        do
+        {
+                token = yylex(&val, scanner);
+                status = yypush_parse(ps, token, &val, scanner);
+        } while (status == YYPUSH_MORE);
 
-no_ignore xl_error
-xl_ast_bind(struct xl_ast *ast, struct xl_ast_binding *bind);
+        yypstate_delete(ps);
+        yylex_destroy(scanner);
 
-no_ignore xl_error
-xl_ast_binding_new(struct xl_ast_binding **binding, wchar_t *name);
+        return OK;
+}
