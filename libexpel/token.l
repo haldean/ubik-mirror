@@ -62,7 +62,8 @@
 ")"                             TOKEN(CLOSE_PAR)
 [0-9]+                          { yylval->integer = atoi(yytext); return INTEGER; }
 [0-9]+\.[0-9]+                  { yylval->floating = atof(yytext); return NUMBER; }
-[a-zA-Z_][a-zA-Z0-9/_\-]*       STRING(NAME)
+[a-z_][a-zA-Z0-9/_\-']*         STRING(NAME)
+[A-Z][a-zA-Z0-9/']*             STRING(TYPE_NAME)
 
 .                               return ERROR;
 

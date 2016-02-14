@@ -45,15 +45,21 @@ yyerror(struct xl_ast *ast, void *scanner, const char *err)
 
         struct xl_ast *ast;
         struct xl_ast_binding *binding;
+        struct xl_ast_expr *expr;
+        struct xl_ast_atom *atom;
+        struct xl_ast_type_expr *type_expr;
 }
 
 %token <token> BIND TYPE IMPLIES GOES_TO LAMBDA IS OPEN_PAR CLOSE_PAR
 %token <integer> INTEGER
 %token <floating> NUMBER
-%token <string> NAME
+%token <string> NAME TYPE_NAME
 
 %type <ast> prog
 %type <binding> binding
+%type <expr> expr
+%type <type_expr> type_expr
+%type <atom> atom
 
 %define api.pure full
 %define api.push-pull push
@@ -66,11 +72,39 @@ yyerror(struct xl_ast *ast, void *scanner, const char *err)
 %%
 
 prog:
-%empty          { $$ = ast; }
-| prog binding  { wrap_err(xl_ast_bind($1, $2)); $$ = $1; }
+  %empty
+        { $$ = ast; }
+| prog binding
+        { wrap_err(xl_ast_bind($1, $2)); $$ = $1; }
 ;
 
 binding:
-BIND NAME       { wrap_err(xl_ast_binding_new(&$$, $2)); }
+  BIND NAME IS expr
+        { wrap_err(xl_ast_binding_new(&$$, $2, $4, NULL)); }
+| BIND NAME TYPE type_expr IS expr
+        { wrap_err(xl_ast_binding_new(&$$, $2, $6, $4)); }
+;
+
+expr:
+  atom expr
+        { wrap_err(xl_ast_expr_new_apply(&$$, $1, $2)); }
+| atom
+        { wrap_err(xl_ast_expr_new_atom(&$$, $1)); }
+;
+
+atom:
+  NAME
+        { wrap_err(xl_ast_atom_new_name(&$$, $1)); }
+| TYPE_NAME
+        { wrap_err(xl_ast_atom_new_type_name(&$$, $1)); }
+| INTEGER
+        { wrap_err(xl_ast_atom_new_integer(&$$, $1)); }
+| NUMBER
+        { wrap_err(xl_ast_atom_new_number(&$$, $1)); }
+
+type_expr:
+  TYPE_NAME
+        { wrap_err(xl_ast_type_expr_new(&$$, $1)); }
+;
 
 %%

@@ -65,18 +65,18 @@ xl_ast_bind(struct xl_ast *ast, struct xl_ast_binding *bind)
 }
 
 no_ignore xl_error
-xl_ast_binding_new(struct xl_ast_binding **binding, wchar_t *name)
+xl_ast_binding_new(
+        struct xl_ast_binding **binding,
+        wchar_t *name,
+        struct xl_ast_expr *expr,
+        struct xl_ast_type_expr *type_expr)
 {
         *binding = calloc(1, sizeof(struct xl_ast_binding));
         if (*binding == NULL)
                 return xl_raise(ERR_NO_MEMORY, "binding alloc");
 
-        (*binding)->name = wcsdup(name);
-        if ((ssize_t) (*binding)->name == -1)
-        {
-                (*binding)->name = NULL;
-                return xl_raise(ERR_NO_MEMORY, "binding name copy");
-        }
-
+        (*binding)->name = name;
+        (*binding)->expr = expr;
+        (*binding)->type_expr = type_expr;
         return OK;
 }

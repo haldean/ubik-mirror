@@ -48,7 +48,8 @@ build/token.c build/include/token.tab.h: libexpel/token.l build/include/grammar.
 
 build/grammar.c build/include/grammar.tab.h: libexpel/grammar.y
 	@mkdir -p build/include
-	bison --defines=build/include/grammar.tab.h -o build/grammar.c $<
+	bison --defines=build/include/grammar.tab.h -o build/grammar.c \
+		--report=state -Wall -Werror $<
 
 # -MD builds makefiles with dependencies in-line with the object files. We
 # include them in the -include directive below

@@ -20,10 +20,27 @@
 #pragma once
 #include "expel/expel.h"
 
+struct xl_ast_expr
+{
+        void *x;
+};
+
+struct xl_ast_type_expr
+{
+        void *x;
+};
+
+struct xl_ast_atom
+{
+        union xl_atom atom;
+        xl_word atom_type;
+};
+
 struct xl_ast_binding
 {
         wchar_t *name;
-        union xl_atom value;
+        struct xl_ast_expr *expr;
+        struct xl_ast_type_expr *type_expr;
 };
 
 struct xl_ast
@@ -41,7 +58,51 @@ no_ignore xl_error
 xl_ast_free(struct xl_ast *ast);
 
 no_ignore xl_error
-xl_ast_bind(struct xl_ast *ast, struct xl_ast_binding *bind);
+xl_ast_bind(
+        struct xl_ast *ast,
+        struct xl_ast_binding *bind);
 
 no_ignore xl_error
-xl_ast_binding_new(struct xl_ast_binding **binding, wchar_t *name);
+xl_ast_binding_new(
+        struct xl_ast_binding **binding,
+        wchar_t *name,
+        struct xl_ast_expr *expr,
+        struct xl_ast_type_expr *type_expr);
+
+/* Expression builders */
+no_ignore xl_error
+xl_ast_expr_new_apply(
+        struct xl_ast_expr **expr,
+        struct xl_ast_atom *head,
+        struct xl_ast_expr *tail);
+
+no_ignore xl_error
+xl_ast_expr_new_atom(
+        struct xl_ast_expr **expr,
+        struct xl_ast_atom *value);
+
+no_ignore xl_error
+xl_ast_atom_new_name(
+        struct xl_ast_atom **atom,
+        wchar_t *name);
+
+no_ignore xl_error
+xl_ast_atom_new_type_name(
+        struct xl_ast_atom **atom,
+        wchar_t *type_name);
+
+no_ignore xl_error
+xl_ast_atom_new_integer(
+        struct xl_ast_atom **atom,
+        xl_word integer);
+
+no_ignore xl_error
+xl_ast_atom_new_number(
+        struct xl_ast_atom **atom,
+        xl_float number);
+
+/* Type expression builders */
+no_ignore xl_error
+xl_ast_type_expr_new(
+        struct xl_ast_type_expr **expr,
+        wchar_t *type_name);
