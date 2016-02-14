@@ -20,20 +20,48 @@
 #pragma once
 #include "expel/expel.h"
 
-struct xl_ast_expr
+enum expr_type
 {
-        void *x;
+        EXPR_APPLY,
+        EXPR_ATOM
 };
 
-struct xl_ast_type_expr
+enum atom_type
 {
-        void *x;
+        ATOM_INT,
+        ATOM_NUM,
+        ATOM_NAME,
+        ATOM_TYPE_NAME
 };
 
 struct xl_ast_atom
 {
-        union xl_atom atom;
-        xl_word atom_type;
+        union
+        {
+                wchar_t str;
+                xl_word integer;
+                xl_float number;
+        };
+        enum atom_type atom_type;
+};
+
+struct xl_ast_expr
+{
+        union
+        {
+                struct xl_ast_atom *atom;
+                struct
+                {
+                        struct xl_ast_expr *head;
+                        struct xl_ast_expr *tail;
+                } apply;
+        };
+        enum expr_type expr_type;
+};
+
+struct xl_ast_type_expr
+{
+        wchar_t *name;
 };
 
 struct xl_ast_binding

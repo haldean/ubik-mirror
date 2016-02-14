@@ -21,13 +21,15 @@
 #include <stdlib.h>
 #include <wchar.h>
 
+#define check_alloc(x, nelem, contents) { \
+        (x) = calloc(nelem, sizeof(contents)); \
+        if ((x) == NULL) return xl_raise(ERR_NO_MEMORY, ""); }
+
 /* Allocates a new AST. */
 no_ignore xl_error
 xl_ast_new(struct xl_ast **ast)
 {
-        *ast = calloc(1, sizeof(struct xl_ast));
-        if (*ast == NULL)
-                return xl_raise(ERR_NO_MEMORY, "ast alloc");
+        check_alloc(*ast, 1, struct xl_ast);
         return OK;
 }
 
@@ -80,3 +82,55 @@ xl_ast_binding_new(
         (*binding)->type_expr = type_expr;
         return OK;
 }
+
+no_ignore xl_error
+xl_ast_expr_new_apply(
+        struct xl_ast_expr **expr,
+        struct xl_ast_atom *head,
+        struct xl_ast_expr *tail)
+{
+        struct xl_ast_expr *e;
+        xl_error err;
+
+        check_alloc(e, 1, struct xl_ast_expr);
+        *expr = e;
+
+        e->expr_type = EXPR_APPLY;
+        err = xl_ast_expr_new_atom(&e->apply.head, head);
+        if (err != OK)
+                return err;
+        e->apply.tail = tail;
+
+        return OK;
+}
+
+no_ignore xl_error
+xl_ast_expr_new_atom(
+        struct xl_ast_expr **expr,
+        struct xl_ast_atom *value);
+
+no_ignore xl_error
+xl_ast_atom_new_name(
+        struct xl_ast_atom **atom,
+        wchar_t *name);
+
+no_ignore xl_error
+xl_ast_atom_new_type_name(
+        struct xl_ast_atom **atom,
+        wchar_t *type_name);
+
+no_ignore xl_error
+xl_ast_atom_new_integer(
+        struct xl_ast_atom **atom,
+        xl_word integer);
+
+no_ignore xl_error
+xl_ast_atom_new_number(
+        struct xl_ast_atom **atom,
+        xl_float number);
+
+/* Type expression builders */
+no_ignore xl_error
+xl_ast_type_expr_new(
+        struct xl_ast_type_expr **expr,
+        wchar_t *type_name);
