@@ -1,2 +1,6 @@
 : hello-world
+    ^ Integer
+    = 8
 
+: one-more
+    = hello-world
