@@ -39,7 +39,7 @@ xl_ast_free(struct xl_ast *ast)
         if (ast->bindings != NULL)
                 free(ast->bindings);
         free(ast);
-        return OK;
+        return xl_raise(ERR_NOT_IMPLEMENTED, "free ast");
 }
 
 no_ignore xl_error
@@ -73,9 +73,7 @@ xl_ast_binding_new(
         struct xl_ast_expr *expr,
         struct xl_ast_type_expr *type_expr)
 {
-        *binding = calloc(1, sizeof(struct xl_ast_binding));
-        if (*binding == NULL)
-                return xl_raise(ERR_NO_MEMORY, "binding alloc");
+        check_alloc(*binding, 1, struct xl_ast_binding);
 
         (*binding)->name = name;
         (*binding)->expr = expr;
@@ -89,17 +87,15 @@ xl_ast_expr_new_apply(
         struct xl_ast_atom *head,
         struct xl_ast_expr *tail)
 {
-        struct xl_ast_expr *e;
         xl_error err;
 
-        check_alloc(e, 1, struct xl_ast_expr);
-        *expr = e;
+        check_alloc(*expr, 1, struct xl_ast_expr);
 
-        e->expr_type = EXPR_APPLY;
-        err = xl_ast_expr_new_atom(&e->apply.head, head);
+        (*expr)->expr_type = EXPR_APPLY;
+        err = xl_ast_expr_new_atom(&(*expr)->apply.head, head);
         if (err != OK)
                 return err;
-        e->apply.tail = tail;
+        (*expr)->apply.tail = tail;
 
         return OK;
 }
@@ -107,7 +103,12 @@ xl_ast_expr_new_apply(
 no_ignore xl_error
 xl_ast_expr_new_atom(
         struct xl_ast_expr **expr,
-        struct xl_ast_atom *value);
+        struct xl_ast_atom *value)
+{
+        check_alloc(*expr, 1, struct xl_ast_expr);
+        (*expr)->atom = value;
+        return OK;
+}
 
 no_ignore xl_error
 xl_ast_atom_new_name(
