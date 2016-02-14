@@ -113,25 +113,54 @@ xl_ast_expr_new_atom(
 no_ignore xl_error
 xl_ast_atom_new_name(
         struct xl_ast_atom **atom,
-        wchar_t *name);
+        wchar_t *name)
+{
+        check_alloc(*atom, 1, struct xl_ast_atom);
+        (*atom)->atom_type = ATOM_NAME;
+        (*atom)->str = name;
+        return OK;
+}
 
 no_ignore xl_error
 xl_ast_atom_new_type_name(
         struct xl_ast_atom **atom,
-        wchar_t *type_name);
+        wchar_t *type_name)
+{
+        check_alloc(*atom, 1, struct xl_ast_atom);
+        (*atom)->atom_type = ATOM_TYPE_NAME;
+        (*atom)->str = type_name;
+        return OK;
+}
 
 no_ignore xl_error
 xl_ast_atom_new_integer(
         struct xl_ast_atom **atom,
-        xl_word integer);
+        xl_word integer)
+{
+        check_alloc(*atom, 1, struct xl_ast_atom);
+        (*atom)->atom_type = ATOM_INT;
+        (*atom)->integer = integer;
+        return OK;
+}
 
 no_ignore xl_error
 xl_ast_atom_new_number(
         struct xl_ast_atom **atom,
-        xl_float number);
+        xl_float number)
+{
+        check_alloc(*atom, 1, struct xl_ast_atom);
+        (*atom)->atom_type = ATOM_NUM;
+        (*atom)->number = number;
+        return OK;
+}
 
 /* Type expression builders */
 no_ignore xl_error
 xl_ast_type_expr_new(
         struct xl_ast_type_expr **expr,
-        wchar_t *type_name);
+        wchar_t *type_name)
+{
+        check_alloc(*expr, 1, struct xl_ast_type_expr);
+        (*expr)->name = type_name;
+        return OK;
+}

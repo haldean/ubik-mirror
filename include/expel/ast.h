@@ -38,7 +38,7 @@ struct xl_ast_atom
 {
         union
         {
-                wchar_t str;
+                wchar_t *str;
                 xl_word integer;
                 xl_float number;
         };
