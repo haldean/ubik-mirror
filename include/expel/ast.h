@@ -57,6 +57,7 @@ struct xl_ast_expr
                 } apply;
         };
         enum expr_type expr_type;
+        struct xl_dagc_node *gen;
 };
 
 struct xl_ast_type_expr

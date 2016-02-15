@@ -23,13 +23,20 @@
 #include <wchar.h>
 
 #include "expel/ast.h"
+#include "expel/env.h"
+#include "expel/expel.h"
+#include "expel/gen.h"
 #include "expel/parse.h"
+#include "expel/schedule.h"
+#include "expel/value.h"
 
-#define CHECK_ERR(msg) \
-        do { if (err != OK) \
+#define c(x) \
+        do { \
+        err = x; \
+        if (err != OK) \
         { \
                 char *expl = xl_error_explain(err); \
-                printf(msg ": %s\n", expl); \
+                printf(#x ": %s\n", expl); \
                 free(err); free(expl); \
                 goto teardown; \
         } } while(0)
@@ -37,24 +44,40 @@
 int
 main()
 {
-        struct xl_stream s;
         struct xl_ast *ast;
+        struct xl_dagc **graphs;
+        struct xl_stream sstdin;
+        struct xl_stream sstdout;
+        struct xl_env env;
+        struct xl_scheduler *s;
+        struct xl_value *actual;
+        size_t n_graphs;
         xl_error err;
 
-        err = xl_stream_rfilep(&s, stdin);
-        CHECK_ERR("create file stream");
+        c(xl_stream_rfilep(&sstdin, stdin));
+        c(xl_stream_wfilep(&sstdout, stdout));
 
-        err = xl_ast_new(&ast);
-        CHECK_ERR("create ast");
+        c(xl_ast_new(&ast));
 
-        err = xl_parse(ast, &s);
-        CHECK_ERR("parse");
+        c(xl_parse(ast, &sstdin));
+        c(xl_ast_print(ast));
 
-        err = xl_ast_print(ast);
-        CHECK_ERR("print ast");
+        c(xl_compile(&graphs, &n_graphs, ast));
 
-        err = xl_ast_free(ast);
-        CHECK_ERR("free ast");
+        c(xl_env_init(&env));
+
+        c(xl_schedule_new(&s));
+        c(xl_schedule_push(s, graphs[0], &env, NULL));
+        c(xl_schedule_run(s));
+
+        actual = graphs[0]->result->known.tree;
+        if (actual != NULL)
+                c(xl_value_print(&sstdout, actual));
+        else
+                wprintf(L"no result calculated\n");
+
+        c(xl_ast_free(ast));
+        c(xl_env_free(&env));
 
 teardown:
         return EXIT_SUCCESS;
