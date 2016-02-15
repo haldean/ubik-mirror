@@ -92,6 +92,8 @@ expr:
           wrap_err(xl_ast_expr_new_apply(&$$, head, $2)); }
 | atom
         { wrap_err(xl_ast_expr_new_atom(&$$, $1)); }
+| OPEN_PAR expr CLOSE_PAR
+        { $$ = $2; }
 ;
 
 atom:

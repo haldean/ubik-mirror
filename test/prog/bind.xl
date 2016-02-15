@@ -6,4 +6,4 @@
     = hello-world
 
 : call-a-func
-    = hello world 42.
+    = ((hello world) 42.)
