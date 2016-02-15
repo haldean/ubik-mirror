@@ -6,4 +6,7 @@
     = hello-world
 
 : call-a-func
-    = ((hello world) 42.)
+    = hello world 42.
+
+:a-different-kind_of/bind
+    = one (two 3) (4. five)

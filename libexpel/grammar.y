@@ -86,10 +86,12 @@ binding:
 ;
 
 expr:
-  atom expr
-        { struct xl_ast_expr *head;
-          wrap_err(xl_ast_expr_new_atom(&head, $1));
-          wrap_err(xl_ast_expr_new_apply(&$$, head, $2)); }
+  expr atom
+        { struct xl_ast_expr *tail;
+          wrap_err(xl_ast_expr_new_atom(&tail, $2));
+          wrap_err(xl_ast_expr_new_apply(&$$, $1, tail)); }
+| expr OPEN_PAR expr CLOSE_PAR
+        { wrap_err(xl_ast_expr_new_apply(&$$, $1, $3)); }
 | atom
         { wrap_err(xl_ast_expr_new_atom(&$$, $1)); }
 | OPEN_PAR expr CLOSE_PAR

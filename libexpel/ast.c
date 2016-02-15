@@ -76,10 +76,11 @@ _print_expr(struct xl_ast_expr *expr)
                 return _print_atom(expr->atom);
 
         case EXPR_APPLY:
+                wprintf(L"(");
                 err = _print_expr(expr->apply.head);
                 if (err != OK)
                         return err;
-                wprintf(L" (");
+                wprintf(L" ");
                 err = _print_expr(expr->apply.tail);
                 if (err != OK)
                         return err;
