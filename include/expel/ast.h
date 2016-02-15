@@ -22,13 +22,13 @@
 
 enum expr_type
 {
-        EXPR_APPLY,
+        EXPR_APPLY = 1,
         EXPR_ATOM
 };
 
 enum atom_type
 {
-        ATOM_INT,
+        ATOM_INT = 1,
         ATOM_NUM,
         ATOM_NAME,
         ATOM_TYPE_NAME
@@ -85,6 +85,10 @@ xl_ast_new(struct xl_ast **ast);
 no_ignore xl_error
 xl_ast_free(struct xl_ast *ast);
 
+/* Prints the AST to stdout. */
+no_ignore xl_error
+xl_ast_print(struct xl_ast *ast);
+
 no_ignore xl_error
 xl_ast_bind(
         struct xl_ast *ast,
@@ -101,7 +105,7 @@ xl_ast_binding_new(
 no_ignore xl_error
 xl_ast_expr_new_apply(
         struct xl_ast_expr **expr,
-        struct xl_ast_atom *head,
+        struct xl_ast_expr *head,
         struct xl_ast_expr *tail);
 
 no_ignore xl_error

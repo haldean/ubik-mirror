@@ -87,7 +87,9 @@ binding:
 
 expr:
   atom expr
-        { wrap_err(xl_ast_expr_new_apply(&$$, $1, $2)); }
+        { struct xl_ast_expr *head;
+          wrap_err(xl_ast_expr_new_atom(&head, $1));
+          wrap_err(xl_ast_expr_new_apply(&$$, head, $2)); }
 | atom
         { wrap_err(xl_ast_expr_new_atom(&$$, $1)); }
 ;

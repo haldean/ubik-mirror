@@ -39,7 +39,6 @@ main()
 {
         struct xl_stream s;
         struct xl_ast *ast;
-        size_t i;
         xl_error err;
 
         err = xl_stream_rfilep(&s, stdin);
@@ -51,10 +50,8 @@ main()
         err = xl_parse(ast, &s);
         CHECK_ERR("parse");
 
-        for (i = 0; i < ast->n_bindings; i++)
-        {
-                wprintf(L"bind %S\n", ast->bindings[i]->name);
-        }
+        err = xl_ast_print(ast);
+        CHECK_ERR("print ast");
 
         err = xl_ast_free(ast);
         CHECK_ERR("free ast");

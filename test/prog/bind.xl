@@ -4,3 +4,6 @@
 
 : one-more
     = hello-world
+
+: call-a-func
+    = hello world 42.

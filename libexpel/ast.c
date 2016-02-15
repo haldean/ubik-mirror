@@ -18,6 +18,7 @@
  */
 
 #include "expel/ast.h"
+#include <stdio.h>
 #include <stdlib.h>
 #include <wchar.h>
 
@@ -40,6 +41,77 @@ xl_ast_free(struct xl_ast *ast)
                 free(ast->bindings);
         free(ast);
         return xl_raise(ERR_NOT_IMPLEMENTED, "free ast");
+}
+
+no_ignore static xl_error
+_print_atom(struct xl_ast_atom *atom)
+{
+        switch (atom->atom_type)
+        {
+        case ATOM_INT:
+                wprintf(L"%ld:i", (int64_t) atom->integer);
+                return OK;
+        case ATOM_NUM:
+                wprintf(L"%f:f", atom->number);
+                return OK;
+        case ATOM_NAME:
+                wprintf(L"%S:n", atom->str);
+                return OK;
+        case ATOM_TYPE_NAME:
+                wprintf(L"%S:t", atom->str);
+                return OK;
+        }
+
+        return xl_raise(ERR_UNKNOWN_TYPE, "unknown atom type");
+}
+
+no_ignore static xl_error
+_print_expr(struct xl_ast_expr *expr)
+{
+        xl_error err;
+
+        switch (expr->expr_type)
+        {
+        case EXPR_ATOM:
+                return _print_atom(expr->atom);
+
+        case EXPR_APPLY:
+                err = _print_expr(expr->apply.head);
+                if (err != OK)
+                        return err;
+                wprintf(L" (");
+                err = _print_expr(expr->apply.tail);
+                if (err != OK)
+                        return err;
+                wprintf(L")");
+                return OK;
+        }
+
+        return xl_raise(ERR_UNKNOWN_TYPE, "unknown expr type");
+}
+
+no_ignore xl_error
+xl_ast_print(struct xl_ast *ast)
+{
+        size_t i;
+        xl_error err;
+        struct xl_ast_binding *b;
+
+        wprintf(L"%lu bindings:\n", ast->n_bindings);
+        for (i = 0; i < ast->n_bindings; i++)
+        {
+                b = ast->bindings[i];
+                wprintf(L"\tbind %S", b->name);
+                if (b->type_expr != NULL)
+                        wprintf(L" ^ %S", b->type_expr->name);
+                wprintf(L" = ");
+                err = _print_expr(b->expr);
+                if (err != OK)
+                        return err;
+                wprintf(L"\n");
+        }
+
+        return OK;
 }
 
 no_ignore xl_error
@@ -84,17 +156,13 @@ xl_ast_binding_new(
 no_ignore xl_error
 xl_ast_expr_new_apply(
         struct xl_ast_expr **expr,
-        struct xl_ast_atom *head,
+        struct xl_ast_expr *head,
         struct xl_ast_expr *tail)
 {
-        xl_error err;
-
         check_alloc(*expr, 1, struct xl_ast_expr);
 
         (*expr)->expr_type = EXPR_APPLY;
-        err = xl_ast_expr_new_atom(&(*expr)->apply.head, head);
-        if (err != OK)
-                return err;
+        (*expr)->apply.head = head;
         (*expr)->apply.tail = tail;
 
         return OK;
@@ -106,6 +174,7 @@ xl_ast_expr_new_atom(
         struct xl_ast_atom *value)
 {
         check_alloc(*expr, 1, struct xl_ast_expr);
+        (*expr)->expr_type = EXPR_ATOM;
         (*expr)->atom = value;
         return OK;
 }
