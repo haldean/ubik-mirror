@@ -288,7 +288,7 @@ _native_emit_word(struct xl_env *env, struct xl_dagc *graph)
         unused(env);
 
         res = graph->nodes[0]->known.tree;
-        printf("0x%lx\n", res->left.w);
+        printf("0x%02lX\n", res->left.w);
 
         graph->result->known.tree = res;
         graph->result->known_type = graph->nodes[0]->known_type;
