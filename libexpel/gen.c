@@ -19,9 +19,11 @@
 
 #include "expel/bdagc.h"
 #include "expel/dagc.h"
+#include "expel/env.h"
 #include "expel/expel.h"
 #include "expel/gen.h"
 #include "expel/types.h"
+#include "expel/uri.h"
 
 #include <stdlib.h>
 
@@ -72,10 +74,40 @@ _assign_atom_node(
                 return OK;
 
         case ATOM_NAME:
+                n->node.node_type = DAGC_NODE_LOAD;
+                n->node.id = 0;
+
+                n->as_load.dependent_store = NULL;
+                n->as_load.loc = calloc(1, sizeof(struct xl_uri));
+
+                err = xl_uri_unknown(n->as_load.loc, expr->atom->str);
+                if (err != OK)
+                        return err;
+
+                err = xl_take(n->as_load.loc);
+                if (err != OK)
+                        return err;
+                return OK;
+
         case ATOM_TYPE_NAME:
-                return xl_raise(ERR_NOT_IMPLEMENTED, "expr name");
+                return xl_raise(ERR_NOT_IMPLEMENTED, "expr type constructor");
         }
         return xl_raise(ERR_UNKNOWN_TYPE, "compile atom type");
+}
+
+no_ignore static xl_error
+_assign_apply_node(
+        union xl_dagc_any_node *n,
+        struct xl_ast_expr *expr)
+{
+        n->node.node_type = DAGC_NODE_APPLY;
+        /* TODO */
+        n->node.id = 0;
+
+        n->as_apply.func = expr->apply.head->gen;
+        n->as_apply.arg = expr->apply.tail->gen;
+
+        return OK;
 }
 
 no_ignore static xl_error
@@ -96,6 +128,20 @@ _assign_nodes(
                         return err;
                 break;
 
+        case EXPR_APPLY:
+                err = _assign_nodes(builder, expr->apply.head);
+                if (err != OK)
+                        return err;
+
+                err = _assign_nodes(builder, expr->apply.tail);
+                if (err != OK)
+                        return err;
+
+                err = _assign_apply_node(n, expr);
+                if (err != OK)
+                        return err;
+                break;
+
         default:
                 return xl_raise(ERR_UNKNOWN_TYPE, "compile assign node");
         }
@@ -112,9 +158,14 @@ no_ignore static xl_error
 xl_compile_binding(
         struct xl_dagc **graphs,
         size_t n_graphs, 
-        struct xl_ast_binding *binding)
+        struct xl_ast_binding *binding,
+        struct xl_env *local_env)
 {
+        struct xl_uri *uri;
         struct xl_graph_builder builder;
+        struct xl_value *type;
+        union xl_value_or_graph ins_value;
+
         xl_error err;
 
         err = xl_bdagc_init(&builder);
@@ -132,6 +183,105 @@ xl_compile_binding(
         if (err != OK)
                 return err;
 
+        uri = calloc(1, sizeof(struct xl_uri));
+        if (uri == NULL)
+                return xl_raise(ERR_NO_MEMORY, "uri alloc");
+        err = xl_uri_user(uri, binding->name);
+        if (err != OK)
+                return err;
+        err = xl_take(uri);
+        if (err != OK)
+                return err;
+
+        /* TODO: add binding type here */
+        err = xl_value_new(&type);
+        if (err != OK)
+                return err;
+        type->tag |= TAG_LEFT_WORD | TAG_RIGHT_WORD;
+        type->left.w = 0;
+        type->right.w = 0;
+
+        ins_value.graph = graphs[n_graphs];
+
+        err = xl_env_set(
+                local_env, uri, ins_value, type);
+        if (err != OK)
+                return err;
+
+        err = xl_release(type);
+        if (err != OK)
+                return err;
+
+        err = xl_release(uri);
+        if (err != OK)
+                return err;
+
+        return OK;
+}
+
+no_ignore static xl_error
+xl_resolve_uri(
+        struct xl_uri **resolved,
+        struct xl_uri *uri,
+        struct xl_env *env)
+{
+        struct xl_uri *r;
+        bool is_present;
+        xl_error err;
+
+        r = calloc(1, sizeof(struct xl_uri));
+
+        /* prefer user-defined to native, so that users can shadow. */
+        err = xl_uri_user(r, uri->name);
+        if (err != OK)
+                return err;
+
+        err = xl_env_present(&is_present, env, r);
+        if (err != OK)
+                return err;
+        if (is_present)
+        {
+                *resolved = r;
+                return OK;
+        }
+
+        err = xl_uri_native(r, uri->name);
+        if (err != OK)
+                return err;
+
+        err = xl_env_present(&is_present, env, r);
+        if (err != OK)
+                return err;
+        if (is_present)
+        {
+                *resolved = r;
+                return OK;
+        }
+
+        return xl_raise(ERR_ABSENT, "couldn't resolve uri");
+}
+
+no_ignore static xl_error
+xl_resolve_uris(
+        struct xl_dagc *graph,
+        struct xl_env *local_env)
+{
+        size_t i;
+        xl_error err;
+        struct xl_dagc_load *load;
+        struct xl_uri *new_uri;
+
+        for (i = 0; i < graph->n; i++)
+        {
+                if (graph->nodes[i]->node_type != DAGC_NODE_LOAD)
+                        continue;
+                load = (struct xl_dagc_load *) graph->nodes[i];
+                err = xl_resolve_uri(&new_uri, load->loc, local_env);
+                if (err != OK)
+                        return err;
+                load->loc = new_uri;
+        }
+
         return OK;
 }
 
@@ -143,6 +293,11 @@ xl_compile(
 {
         size_t i;
         xl_error err;
+        struct xl_env local_env;
+
+        err = xl_env_init(&local_env);
+        if (err != OK)
+                return err;
 
         *graphs = calloc(ast->n_bindings, sizeof(struct xl_dagc *));
         if (*graphs == NULL)
@@ -152,7 +307,14 @@ xl_compile(
         for (i = 0; i < ast->n_bindings; i++)
         {
                 err = xl_compile_binding(
-                        *graphs, (*n_graphs)++, ast->bindings[i]);
+                        *graphs, (*n_graphs)++, ast->bindings[i], &local_env);
+                if (err != OK)
+                        return err;
+        }
+
+        for (i = 0; i < *n_graphs; i++)
+        {
+                err = xl_resolve_uris((*graphs)[i], &local_env);
                 if (err != OK)
                         return err;
         }

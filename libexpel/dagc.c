@@ -417,8 +417,8 @@ _replace_ref(
         return xl_raise(ERR_ABSENT, "replace ref");
 }
 
-no_ignore static xl_error
-_replace_node_refs(
+no_ignore xl_error
+xl_dagc_replace_node_refs(
         struct xl_dagc_node *node,
         struct xl_dagc_node **proto,
         struct xl_dagc_node **copied,
@@ -547,7 +547,7 @@ xl_dagc_copy(
 
         for (i = 0; i < result->n; i++)
         {
-                err = _replace_node_refs(
+                err = xl_dagc_replace_node_refs(
                         result->nodes[i], proto->nodes, result->nodes,
                         result->n);
                 if (err != OK)

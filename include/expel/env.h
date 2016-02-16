@@ -112,4 +112,11 @@ xl_env_set(
         union xl_value_or_graph value,
         struct xl_value *type);
 
+/* Returns true if the provided URI is present in the environment. */
+no_ignore xl_error
+xl_env_present(
+        bool *is_present,
+        struct xl_env *env,
+        struct xl_uri *uri);
+
 #endif

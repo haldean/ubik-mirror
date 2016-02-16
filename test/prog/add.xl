@@ -1,0 +1,3 @@
+: the-two-numbers
+  = emit (uadd 4 8)
+

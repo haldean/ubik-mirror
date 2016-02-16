@@ -38,6 +38,20 @@ _set_hash(struct xl_uri *uri)
 }
 
 no_ignore xl_error
+xl_uri_unknown(
+        struct xl_uri *uri,
+        char *name)
+{
+        uri->name = name;
+        uri->version = 0;
+        uri->scope = SCOPE_UNKNOWN;
+        uri->name_len = strlen(name);
+        uri->refcount = 0;
+        uri->tag = TAG_URI;
+        return _set_hash(uri);
+}
+
+no_ignore xl_error
 xl_uri_user(
         struct xl_uri *uri,
         char *name)

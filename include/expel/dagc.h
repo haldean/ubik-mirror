@@ -165,6 +165,19 @@ xl_dagc_get_deps(
         struct xl_dagc_node **d3,
         struct xl_dagc_node *n);
 
+/* Modifies any references from the given node into the proto list
+ * of nodes to point at the corresponding node in the list of new
+ * nodes.
+ *
+ * This is useful when copying graphs or inserting nodes into
+ * graphs. */
+no_ignore xl_error
+xl_dagc_replace_node_refs(
+        struct xl_dagc_node *node,
+        struct xl_dagc_node **proto,
+        struct xl_dagc_node **new,
+        size_t n);
+
 /* Retrieve the parents of the given node.
  *
  * Returns OK on success or a nonzero error code on error.

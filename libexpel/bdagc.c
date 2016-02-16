@@ -45,7 +45,8 @@ xl_bdagc_push_node(
         if (b->n_nodes == b->cap_nodes)
         {
                 new_cap = b->cap_nodes == 0 ? 8 : b->cap_nodes * 2;
-                temp = realloc(b->nodes, new_cap);
+                temp = realloc(
+                        b->nodes, new_cap * sizeof(struct xl_dagc_node *));
                 if (temp == NULL)
                         return xl_raise(ERR_NO_MEMORY, "bdagc push node");
                 b->nodes = temp;
@@ -59,16 +60,17 @@ xl_bdagc_push_node(
 /* Builds the graph. */
 no_ignore xl_error
 xl_bdagc_build(
-        struct xl_dagc **graph,
+        struct xl_dagc **outgraph,
         struct xl_graph_builder *b)
 {
         xl_error err;
         size_t i;
         size_t node_size;
+        struct xl_dagc *graph;
 
         xl_assert(b->result != NULL);
 
-        err = xl_dagc_alloc(graph, b->n_nodes, sizeof(struct xl_dagc), NULL);
+        err = xl_dagc_alloc(&graph, b->n_nodes, sizeof(struct xl_dagc), NULL);
         if (err != OK)
                 return err;
 
@@ -77,14 +79,21 @@ xl_bdagc_build(
                 err = xl_dagc_node_sizeof(&node_size, b->nodes[i]);
                 if (err != OK)
                         return err;
-                memcpy((*graph)->nodes[i], b->nodes[i], node_size);
+                memcpy(graph->nodes[i], b->nodes[i], node_size);
+
+                err = xl_dagc_replace_node_refs(
+                        graph->nodes[i], b->nodes, graph->nodes, b->n_nodes);
+                if (err != OK)
+                        return err;
+
                 if (b->nodes[i] == b->result)
-                        (*graph)->result = (*graph)->nodes[i];
+                        graph->result = graph->nodes[i];
         }
 
-        err = xl_dagc_init(*graph);
+        err = xl_dagc_init(graph);
         if (err != OK)
                 return err;
 
+        *outgraph = graph;
         return OK;
 }

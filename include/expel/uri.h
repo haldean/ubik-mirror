@@ -17,6 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#pragma once
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -34,6 +35,12 @@ struct xl_uri {
 
         uint64_t  refcount;
 };
+
+/* Creates a URI for a resource of unknown scope. */
+no_ignore xl_error
+xl_uri_unknown(
+        struct xl_uri *uri,
+        char *name);
 
 /* Creates a URI for a local resource. */
 no_ignore xl_error

@@ -115,8 +115,11 @@ xl_env_get(
                                 continue;
                         if (xl_uri_eq(uri, env->bindings[i].uri))
                         {
-                                value->any = env->bindings[i].value.any;
-                                *type = env->bindings[i].type;
+                                if (value != NULL)
+                                {
+                                        value->any = env->bindings[i].value.any;
+                                        *type = env->bindings[i].type;
+                                }
                                 found = true;
                                 break;
                         }
@@ -131,6 +134,24 @@ xl_env_get(
         if (env->parent == NULL)
                 return xl_raise(ERR_ABSENT, "xl_get");
         return xl_env_get(value, type, env->parent, uri);
+}
+
+no_ignore xl_error
+xl_env_present(
+        bool *is_present,
+        struct xl_env *env,
+        struct xl_uri *uri)
+{
+        xl_error err;
+
+        err = xl_env_get(NULL, NULL, env, uri);
+        if (err == OK)
+                *is_present = true;
+        else if (err->error_code == ERR_ABSENT)
+                *is_present = false;
+        else
+                return err;
+        return OK;
 }
 
 /* Inserts the given URI-value pair into the given binding array.
