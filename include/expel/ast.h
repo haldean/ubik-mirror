@@ -77,6 +77,8 @@ struct xl_ast
         struct xl_ast_binding **bindings;
         size_t n_bindings;
         size_t cap_bindings;
+
+        struct xl_ast_expr *immediate;
 };
 
 /* Allocates a new AST. */
@@ -94,6 +96,11 @@ no_ignore xl_error
 xl_ast_bind(
         struct xl_ast *ast,
         struct xl_ast_binding *bind);
+
+no_ignore xl_error
+xl_ast_set_immediate(
+        struct xl_ast *ast,
+        struct xl_ast_expr *expr);
 
 no_ignore xl_error
 xl_ast_binding_new(

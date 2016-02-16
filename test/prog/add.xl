@@ -1,3 +1,4 @@
-: the-two-numbers
-  = emit (uadd 4090 6)
+: add-two-numbers
+  = uadd 4090 6
 
+!= emit add-two-numbers

@@ -346,6 +346,7 @@ _add_setter(
 no_ignore static xl_error
 xl_create_modinit(
         struct xl_dagc **modinit,
+        struct xl_ast *ast,
         struct xl_env *local_env)
 {
         struct xl_graph_builder builder;
@@ -358,6 +359,15 @@ xl_create_modinit(
         err = xl_env_iterate(_add_setter, local_env, &builder);
         if (err != OK)
                 return err;
+
+        if (ast->immediate != NULL)
+        {
+                err = _assign_nodes(&builder, ast->immediate);
+                if (err != OK)
+                        return err;
+                ast->immediate->gen->is_terminal = true;
+                builder.result = ast->immediate->gen;
+        }
 
         err = xl_bdagc_build(modinit, &builder);
         if (err != OK)
@@ -396,16 +406,16 @@ xl_compile(
                         return err;
         }
 
-        for (i = 1; i < *n_graphs; i++)
+        err = xl_create_modinit(&(*graphs)[0], ast, &local_env);
+        if (err != OK)
+                return err;
+
+        for (i = 0; i < *n_graphs; i++)
         {
                 err = xl_resolve_uris((*graphs)[i], &local_env);
                 if (err != OK)
                         return err;
         }
-
-        err = xl_create_modinit(&(*graphs)[0], &local_env);
-        if (err != OK)
-                return err;
 
         err = xl_env_free(&local_env);
         if (err != OK)

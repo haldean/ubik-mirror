@@ -50,14 +50,14 @@ yyerror(struct xl_ast *ast, void *scanner, const char *err)
         struct xl_ast_type_expr *type_expr;
 }
 
-%token <token> BIND TYPE IMPLIES GOES_TO LAMBDA IS OPEN_PAR CLOSE_PAR
+%token <token> BIND TYPE IMPLIES GOES_TO LAMBDA IS OPEN_PAR CLOSE_PAR IMMEDIATE
 %token <integer> INTEGER
 %token <floating> NUMBER
 %token <string> NAME TYPE_NAME
 
-%type <ast> prog
+%type <ast> prog bind_list
 %type <binding> binding
-%type <expr> expr
+%type <expr> expr immediate
 %type <type_expr> type_expr
 %type <atom> atom
 
@@ -72,9 +72,17 @@ yyerror(struct xl_ast *ast, void *scanner, const char *err)
 %%
 
 prog:
+  bind_list
+        { $$ = $1; }
+| bind_list immediate
+        { $$ = $1;
+          wrap_err(xl_ast_set_immediate($$, $2)); }
+;
+
+bind_list:
   %empty
         { $$ = ast; }
-| prog binding
+| bind_list binding
         { wrap_err(xl_ast_bind($1, $2)); $$ = $1; }
 ;
 
@@ -84,6 +92,10 @@ binding:
 | BIND NAME TYPE type_expr IS expr
         { wrap_err(xl_ast_binding_new(&$$, $2, $6, $4)); }
 ;
+
+immediate:
+  IMMEDIATE IS expr
+        { $$ = $3; }
 
 expr:
   expr atom

@@ -139,6 +139,15 @@ xl_ast_bind(struct xl_ast *ast, struct xl_ast_binding *bind)
 }
 
 no_ignore xl_error
+xl_ast_set_immediate(struct xl_ast *ast, struct xl_ast_expr *expr)
+{
+        if (ast->immediate != NULL)
+                return xl_raise(ERR_PRESENT, "immediate already set");
+        ast->immediate = expr;
+        return OK;
+}
+
+no_ignore xl_error
 xl_ast_binding_new(
         struct xl_ast_binding **binding,
         char *name,

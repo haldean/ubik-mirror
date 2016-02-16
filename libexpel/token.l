@@ -47,6 +47,7 @@
 
 \n
 [ ]
+"!"                             TOKEN(IMMEDIATE);
 ":"                             TOKEN(BIND)
 "^"                             TOKEN(TYPE)
 "=>"                            TOKEN(IMPLIES)
