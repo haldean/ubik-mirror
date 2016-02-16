@@ -99,35 +99,12 @@ xl_packed_read(uint8_t **dest, size_t *n, struct xl_value *src)
 }
 
 no_ignore xl_error
-xl_string_read(wchar_t **dest, size_t *n, struct xl_value *src)
+xl_string_read(char **dest, size_t *n, struct xl_value *src)
 {
         xl_error err;
-        size_t str_size, buf_size;
-        char *buf, *orig_buf;
-
-        err = xl_packed_read((uint8_t **) &buf, &buf_size, src);
+        err = xl_packed_read((uint8_t **) dest, n, src);
         if (err != OK)
                 return err;
-
-        /* The hilariously-named mbsrtowcs (who the hell abbreviates multi-byte
-         * string as mbsr?) has the hilarious behavior of modifying the input
-         * string you give it because it hates you. We make a copy of it here so
-         * that we can free it when it's done.
-         *
-         * Seriously, couldn't you just take a size_t * and increment that? */
-        orig_buf = buf;
-
-        *dest = calloc(buf_size, sizeof(wchar_t));
-        str_size = mbsrtowcs(*dest, (const char **) &buf, buf_size, NULL);
-        free(orig_buf);
-
-        *dest = realloc(*dest, (str_size + 1) * sizeof(wchar_t));
-        if (*dest == NULL && str_size > 0)
-        {
-                free(*dest);
-                return xl_raise(ERR_NO_MEMORY, "read string");
-        }
-        *n = str_size;
         return OK;
 }
 

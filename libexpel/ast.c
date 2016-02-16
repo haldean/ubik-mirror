@@ -20,7 +20,6 @@
 #include "expel/ast.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <wchar.h>
 
 #define check_alloc(x, nelem, contents) { \
         (x) = calloc(nelem, sizeof(contents)); \
@@ -49,16 +48,16 @@ _print_atom(struct xl_ast_atom *atom)
         switch (atom->atom_type)
         {
         case ATOM_INT:
-                wprintf(L"%ld:i", (int64_t) atom->integer);
+                printf("%ld:i", (int64_t) atom->integer);
                 return OK;
         case ATOM_NUM:
-                wprintf(L"%f:f", atom->number);
+                printf("%f:f", atom->number);
                 return OK;
         case ATOM_NAME:
-                wprintf(L"%S:n", atom->str);
+                printf("%s:n", atom->str);
                 return OK;
         case ATOM_TYPE_NAME:
-                wprintf(L"%S:t", atom->str);
+                printf("%s:t", atom->str);
                 return OK;
         }
 
@@ -76,15 +75,15 @@ _print_expr(struct xl_ast_expr *expr)
                 return _print_atom(expr->atom);
 
         case EXPR_APPLY:
-                wprintf(L"(");
+                printf("(");
                 err = _print_expr(expr->apply.head);
                 if (err != OK)
                         return err;
-                wprintf(L" ");
+                printf(" ");
                 err = _print_expr(expr->apply.tail);
                 if (err != OK)
                         return err;
-                wprintf(L")");
+                printf(")");
                 return OK;
         }
 
@@ -98,18 +97,18 @@ xl_ast_print(struct xl_ast *ast)
         xl_error err;
         struct xl_ast_binding *b;
 
-        wprintf(L"%lu bindings:\n", ast->n_bindings);
+        printf("%lu bindings:\n", ast->n_bindings);
         for (i = 0; i < ast->n_bindings; i++)
         {
                 b = ast->bindings[i];
-                wprintf(L"\tbind %S", b->name);
+                printf("\tbind %s", b->name);
                 if (b->type_expr != NULL)
-                        wprintf(L" ^ %S", b->type_expr->name);
-                wprintf(L" = ");
+                        printf(" ^ %s", b->type_expr->name);
+                printf(" = ");
                 err = _print_expr(b->expr);
                 if (err != OK)
                         return err;
-                wprintf(L"\n");
+                printf("\n");
         }
 
         return OK;
@@ -142,7 +141,7 @@ xl_ast_bind(struct xl_ast *ast, struct xl_ast_binding *bind)
 no_ignore xl_error
 xl_ast_binding_new(
         struct xl_ast_binding **binding,
-        wchar_t *name,
+        char *name,
         struct xl_ast_expr *expr,
         struct xl_ast_type_expr *type_expr)
 {
@@ -183,7 +182,7 @@ xl_ast_expr_new_atom(
 no_ignore xl_error
 xl_ast_atom_new_name(
         struct xl_ast_atom **atom,
-        wchar_t *name)
+        char *name)
 {
         check_alloc(*atom, 1, struct xl_ast_atom);
         (*atom)->atom_type = ATOM_NAME;
@@ -194,7 +193,7 @@ xl_ast_atom_new_name(
 no_ignore xl_error
 xl_ast_atom_new_type_name(
         struct xl_ast_atom **atom,
-        wchar_t *type_name)
+        char *type_name)
 {
         check_alloc(*atom, 1, struct xl_ast_atom);
         (*atom)->atom_type = ATOM_TYPE_NAME;
@@ -228,7 +227,7 @@ xl_ast_atom_new_number(
 no_ignore xl_error
 xl_ast_type_expr_new(
         struct xl_ast_type_expr **expr,
-        wchar_t *type_name)
+        char *type_name)
 {
         check_alloc(*expr, 1, struct xl_ast_type_expr);
         (*expr)->name = type_name;

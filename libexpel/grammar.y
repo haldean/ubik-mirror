@@ -41,7 +41,7 @@ yyerror(struct xl_ast *ast, void *scanner, const char *err)
         int token;
         xl_word integer;
         xl_float floating;
-        wchar_t *string;
+        char *string;
 
         struct xl_ast *ast;
         struct xl_ast_binding *binding;

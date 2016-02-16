@@ -19,7 +19,6 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-#include <wchar.h>
 
 #include "expel/expel.h"
 
@@ -28,7 +27,7 @@ struct xl_uri {
         xl_tag    tag;
         xl_word   hash;
 
-        wchar_t   *name;
+        char      *name;
         size_t    name_len;
         xl_word   version;
         xl_word   scope;
@@ -40,13 +39,13 @@ struct xl_uri {
 no_ignore xl_error
 xl_uri_user(
         struct xl_uri *uri,
-        wchar_t *name);
+        char *name);
 
 /* Creates a URI for a local resource. */
 no_ignore xl_error
 xl_uri_native(
         struct xl_uri *uri,
-        wchar_t *name);
+        char *name);
 
 /* Creates a URI struct from a value-encoded URI. */
 no_ignore xl_error

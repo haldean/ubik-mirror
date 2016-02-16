@@ -36,7 +36,7 @@
         if (err != OK) \
         { \
                 char *expl = xl_error_explain(err); \
-                wprintf(L"%s\n", expl); \
+                printf("%s\n", expl); \
                 free(err); free(expl); \
                 goto teardown; \
         } } while(0)
@@ -74,9 +74,13 @@ main()
 
         actual = graphs[0]->result->known.tree;
         if (actual != NULL)
+        {
+                printf("calculated value: ");
                 c(xl_value_print(&sstdout, actual));
+                printf("\n");
+        }
         else
-                wprintf(L"no result calculated\n");
+                printf("no result calculated\n");
 
         c(xl_ast_free(ast));
         c(xl_env_free(&env));
@@ -84,7 +88,7 @@ main()
 teardown:
         err = xl_teardown();
         if (err != OK)
-                wprintf(L"error when tearing down runtime\n");
+                printf("error when tearing down runtime\n");
 
         return err == OK ? EXIT_SUCCESS : EXIT_FAILURE;
 }

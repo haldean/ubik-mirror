@@ -38,7 +38,7 @@ struct xl_ast_atom
 {
         union
         {
-                wchar_t *str;
+                char *str;
                 xl_word integer;
                 xl_float number;
         };
@@ -62,12 +62,12 @@ struct xl_ast_expr
 
 struct xl_ast_type_expr
 {
-        wchar_t *name;
+        char *name;
 };
 
 struct xl_ast_binding
 {
-        wchar_t *name;
+        char *name;
         struct xl_ast_expr *expr;
         struct xl_ast_type_expr *type_expr;
 };
@@ -98,7 +98,7 @@ xl_ast_bind(
 no_ignore xl_error
 xl_ast_binding_new(
         struct xl_ast_binding **binding,
-        wchar_t *name,
+        char *name,
         struct xl_ast_expr *expr,
         struct xl_ast_type_expr *type_expr);
 
@@ -117,12 +117,12 @@ xl_ast_expr_new_atom(
 no_ignore xl_error
 xl_ast_atom_new_name(
         struct xl_ast_atom **atom,
-        wchar_t *name);
+        char *name);
 
 no_ignore xl_error
 xl_ast_atom_new_type_name(
         struct xl_ast_atom **atom,
-        wchar_t *type_name);
+        char *type_name);
 
 no_ignore xl_error
 xl_ast_atom_new_integer(
@@ -138,4 +138,4 @@ xl_ast_atom_new_number(
 no_ignore xl_error
 xl_ast_type_expr_new(
         struct xl_ast_type_expr **expr,
-        wchar_t *type_name);
+        char *type_name);

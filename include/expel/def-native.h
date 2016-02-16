@@ -26,7 +26,7 @@
 #endif
 
 #ifndef DEF_OP_URI
-#error "no DEF_OP_URI specified, should be const wchar_t of method name"
+#error "no DEF_OP_URI specified, should be const char* of method name"
 #endif
 
 #ifndef concat

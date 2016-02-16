@@ -27,28 +27,27 @@
 #include "expel/value.h"
 
 #include <string.h>
-#include <wchar.h>
 
 no_ignore static xl_error
-_native_uri(struct xl_uri **uri, wchar_t *name)
+_native_uri(struct xl_uri **uri, char *name)
 {
         xl_error err;
-        wchar_t *heap_name;
+        char *heap_name;
         size_t name_len;
 
         *uri = calloc(1, sizeof(struct xl_uri));
         if (*uri == NULL)
                 return xl_raise(ERR_NO_MEMORY, "create native uri");
 
-        name_len = wcslen(name);
+        name_len = strlen(name);
         if (unlikely(name_len < 1))
                 return xl_raise(ERR_BAD_VALUE, "native uri must have name");
 
         /* URI memory management assumes that the name lives on the heap; we
          * copy these names onto the heap here to minimize the complexity of the
          * memory manager. */
-        heap_name = calloc(name_len + 1, sizeof(wchar_t));
-        wcscpy(heap_name, name);
+        heap_name = strdup(name);
+        xl_assert(heap_name != NULL);
         err = xl_uri_native(*uri, heap_name);
         return err;
 }
@@ -143,7 +142,7 @@ _native_unsigned_add(struct xl_env *env, struct xl_dagc *graph)
 #define DEF_BINARY_WORD
 #define DEF_OP uadd
 #define DEF_OP_EVAL _native_unsigned_add
-#define DEF_OP_URI L"uadd"
+#define DEF_OP_URI "uadd"
 #include "expel/def-native.h"
 
 static xl_error
@@ -180,7 +179,7 @@ _native_unsigned_subtract(struct xl_env *env, struct xl_dagc *graph)
 #define DEF_BINARY_WORD
 #define DEF_OP usub
 #define DEF_OP_EVAL _native_unsigned_subtract
-#define DEF_OP_URI L"usub"
+#define DEF_OP_URI "usub"
 #include "expel/def-native.h"
 
 static xl_error
@@ -253,7 +252,7 @@ _native_eq(struct xl_env *env, struct xl_dagc *graph)
 #define DEF_BINARY_WORD_PROP
 #define DEF_OP eq
 #define DEF_OP_EVAL _native_eq
-#define DEF_OP_URI L"eq"
+#define DEF_OP_URI "eq"
 #include "expel/def-native.h"
 
 no_ignore static xl_error
@@ -343,7 +342,7 @@ _register_emit(struct xl_env *env)
                 } \
         }; root: polyfunc; on error: return err;
 
-        err = _native_uri(&uri, L"emit");
+        err = _native_uri(&uri, "emit");
         if (err != OK)
                 return err;
         err = xl_take(uri);

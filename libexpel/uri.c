@@ -40,12 +40,12 @@ _set_hash(struct xl_uri *uri)
 no_ignore xl_error
 xl_uri_user(
         struct xl_uri *uri,
-        wchar_t *name)
+        char *name)
 {
         uri->name = name;
         uri->version = 0;
         uri->scope = SCOPE_USER_DEFINED;
-        uri->name_len = wcslen(name);
+        uri->name_len = strlen(name);
         uri->refcount = 0;
         uri->tag = TAG_URI;
         return _set_hash(uri);
@@ -54,12 +54,12 @@ xl_uri_user(
 no_ignore xl_error
 xl_uri_native(
         struct xl_uri *uri,
-        wchar_t *name)
+        char *name)
 {
         uri->name = name;
         uri->version = 0;
         uri->scope = SCOPE_NATIVE;
-        uri->name_len = wcslen(name);
+        uri->name_len = strlen(name);
         uri->refcount = 0;
         uri->tag = TAG_URI;
         return _set_hash(uri);
@@ -76,7 +76,7 @@ xl_uri_eq(struct xl_uri *u0, struct xl_uri *u1)
                 return false;
         if (u0->name_len != u1->name_len)
                 return false;
-        if (wcsncmp(u0->name, u1->name, u0->name_len) != 0)
+        if (strncmp(u0->name, u1->name, u0->name_len) != 0)
                 return false;
         return true;
 }

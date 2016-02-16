@@ -166,7 +166,7 @@ env()
         struct xl_value *t, *rt;
         struct xl_uri u;
         int i;
-        wchar_t *key;
+        char *key;
         struct xl_uri uris[N_TEST_URIS];
 
         assert(xl_value_new(&v.tree) == OK);
@@ -180,8 +180,8 @@ env()
         t->right.w = 0;
 
         u.hash = 0;
-        key = calloc(64, sizeof(wchar_t));
-        swprintf(key, 64, L"test_var_0");
+        key = calloc(64, sizeof(char));
+        snprintf(key, 64, "test_var_0");
         assert(xl_uri_user(&u, key) == OK);
         assert(xl_take(&u) == OK);
         assert(u.hash != 0);
@@ -200,8 +200,8 @@ env()
 
         for (i = 0; i < N_TEST_URIS; i++)
         {
-                key = calloc(64, sizeof(wchar_t));
-                swprintf(key, 64, L"test_var_%d", i);
+                key = calloc(64, sizeof(char));
+                snprintf(key, 64, "test_var_%d", i);
                 assert(xl_uri_user(&uris[i], key) == OK);
                 assert(xl_take(&uris[i]) == OK);
         }

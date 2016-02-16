@@ -18,7 +18,6 @@
  */
 
 %{
-#include <wchar.h>
 
 #include "expel/token.h"
 #include "grammar.tab.h"
@@ -31,11 +30,7 @@
 
 #define TOKEN(x) { yylval->token = x; return x; }
 #define STRING(token) { \
-        const char *tmp = yytext; \
-        size_t len = mbsrtowcs(NULL, (const char ** restrict) &tmp, 0, NULL); \
-        yylval->string = calloc(len + 1, sizeof(wchar_t)); \
-        tmp = yytext; \
-        mbsrtowcs(yylval->string, &tmp, len, NULL); \
+        yylval->string = strdup(yytext); \
         return token; \
 }
 

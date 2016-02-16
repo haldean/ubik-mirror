@@ -18,7 +18,6 @@
  */
 
 #include <stdbool.h>
-#include <wchar.h>
 
 #include "expel/expel.h"
 
@@ -32,7 +31,7 @@ no_ignore xl_error
 xl_packed_read(uint8_t **dest, size_t *n, struct xl_value *src);
 
 no_ignore xl_error
-xl_string_read(wchar_t **dest, size_t *n, struct xl_value *src);
+xl_string_read(char **dest, size_t *n, struct xl_value *src);
 
 no_ignore xl_error
 xl_value_as_bool(bool *res, struct xl_value *v);

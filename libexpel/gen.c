@@ -49,6 +49,7 @@ _assign_atom_node(
                 err = xl_value_new(&n->as_const.value.tree);
                 if (err != OK)
                         return err;
+                n->as_const.value.tree->tag |= TAG_LEFT_WORD | TAG_RIGHT_WORD;
                 n->as_const.value.tree->left.w = expr->atom->integer;
                 return OK;
 
@@ -66,6 +67,7 @@ _assign_atom_node(
                 err = xl_value_new(&n->as_const.value.tree);
                 if (err != OK)
                         return err;
+                n->as_const.value.tree->tag |= TAG_LEFT_WORD | TAG_RIGHT_WORD;
                 n->as_const.value.tree->left.f = expr->atom->number;
                 return OK;
 
