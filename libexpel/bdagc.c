@@ -68,8 +68,6 @@ xl_bdagc_build(
         size_t node_size;
         struct xl_dagc *graph;
 
-        xl_assert(b->result != NULL);
-
         err = xl_dagc_alloc(&graph, b->n_nodes, sizeof(struct xl_dagc), NULL);
         if (err != OK)
                 return err;

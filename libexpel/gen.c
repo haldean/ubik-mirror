@@ -383,19 +383,20 @@ xl_compile(
         *graphs = calloc(ast->n_bindings + 1, sizeof(struct xl_dagc *));
         if (*graphs == NULL)
                 return xl_raise(ERR_NO_MEMORY, "compile graph alloc");
-        *n_graphs = 0;
+
+        /* We start writing at the first graph, not the zeroth, so
+         * that the zeroth graph can be the modinit. */
+        *n_graphs = 1;
 
         for (i = 0; i < ast->n_bindings; i++)
         {
-                /* We start writing at the first graph, not the zeroth, here, so
-                 * that the zeroth graph can be the modinit. */
                 err = xl_compile_binding(
-                        *graphs, ++(*n_graphs), ast->bindings[i], &local_env);
+                        *graphs, (*n_graphs)++, ast->bindings[i], &local_env);
                 if (err != OK)
                         return err;
         }
 
-        for (i = 0; i < *n_graphs; i++)
+        for (i = 1; i < *n_graphs; i++)
         {
                 err = xl_resolve_uris((*graphs)[i], &local_env);
                 if (err != OK)
