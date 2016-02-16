@@ -47,17 +47,14 @@ main()
         struct xl_ast *ast;
         struct xl_dagc **graphs;
         struct xl_stream sstdin;
-        struct xl_stream sstdout;
         struct xl_env env;
         struct xl_scheduler *s;
-        struct xl_value *actual;
         size_t n_graphs;
         xl_error err;
 
         c(xl_start());
 
         c(xl_stream_rfilep(&sstdin, stdin));
-        c(xl_stream_wfilep(&sstdout, stdout));
 
         c(xl_ast_new(&ast));
 
@@ -71,16 +68,6 @@ main()
         c(xl_schedule_new(&s));
         c(xl_schedule_push(s, graphs[0], &env, NULL));
         c(xl_schedule_run(s));
-
-        actual = graphs[0]->result->known.tree;
-        if (actual != NULL)
-        {
-                printf("calculated value: ");
-                c(xl_value_print(&sstdout, actual));
-                printf("\n");
-        }
-        else
-                printf("no result calculated\n");
 
         c(xl_ast_free(ast));
         c(xl_env_free(&env));
