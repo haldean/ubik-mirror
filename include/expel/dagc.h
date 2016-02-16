@@ -191,6 +191,12 @@ xl_dagc_node_eval(
         struct xl_env *env,
         struct xl_dagc_node *node);
 
+/* Returns the size of the node structure in bytes. */
+no_ignore xl_error
+xl_dagc_node_sizeof(
+        size_t *size,
+        struct xl_dagc_node *node);
+
 /* Performs a copy from proto to result.
  *
  * This is a deep copy of the nodes but not the values within

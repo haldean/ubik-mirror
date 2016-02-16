@@ -85,6 +85,11 @@ xl_value_new(struct xl_value **v)
         size_t i;
         bool pages_full;
 
+#ifndef XL_RECKLESS
+        if (unlikely(gc_stats == NULL))
+                return xl_raise(ERR_NOT_STARTED, "gc not started");
+#endif
+
         pages_full = true;
         p = page_tail;
         while (p != NULL)

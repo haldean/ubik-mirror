@@ -363,6 +363,38 @@ xl_dagc_get_parents(
         return OK;
 }
 
+no_ignore xl_error
+xl_dagc_node_sizeof(
+        size_t *size,
+        struct xl_dagc_node *node)
+{
+        switch (node->node_type)
+        {
+        case DAGC_NODE_APPLY:
+                *size = sizeof(struct xl_dagc_apply);
+                return OK;
+        case DAGC_NODE_COND:
+                *size = sizeof(struct xl_dagc_cond);
+                return OK;
+        case DAGC_NODE_CONST:
+                *size = sizeof(struct xl_dagc_const);
+                return OK;
+        case DAGC_NODE_INPUT:
+                *size = sizeof(struct xl_dagc_input);
+                return OK;
+        case DAGC_NODE_LOAD:
+                *size = sizeof(struct xl_dagc_load);
+                return OK;
+        case DAGC_NODE_NATIVE:
+                *size = sizeof(struct xl_dagc_native);
+                return OK;
+        case DAGC_NODE_STORE:
+                *size = sizeof(struct xl_dagc_store);
+                return OK;
+        }
+        return xl_raise(ERR_UNKNOWN_TYPE, "unknown node type in size");
+}
+
 no_ignore static xl_error
 _replace_ref(
         struct xl_dagc_node **ref,

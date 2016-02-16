@@ -1,0 +1,4 @@
+: eight
+    ^ Number
+    = 8
+

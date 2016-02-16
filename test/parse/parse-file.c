@@ -36,7 +36,7 @@
         if (err != OK) \
         { \
                 char *expl = xl_error_explain(err); \
-                printf(#x ": %s\n", expl); \
+                wprintf(L"%s\n", expl); \
                 free(err); free(expl); \
                 goto teardown; \
         } } while(0)
@@ -53,6 +53,8 @@ main()
         struct xl_value *actual;
         size_t n_graphs;
         xl_error err;
+
+        c(xl_start());
 
         c(xl_stream_rfilep(&sstdin, stdin));
         c(xl_stream_wfilep(&sstdout, stdout));
@@ -80,6 +82,10 @@ main()
         c(xl_env_free(&env));
 
 teardown:
-        return EXIT_SUCCESS;
+        err = xl_teardown();
+        if (err != OK)
+                wprintf(L"error when tearing down runtime\n");
+
+        return err == OK ? EXIT_SUCCESS : EXIT_FAILURE;
 }
 

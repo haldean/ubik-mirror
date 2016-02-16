@@ -123,6 +123,9 @@ xl_compile_binding(
         if (err != OK)
                 return err;
 
+        builder.result = binding->expr->gen;
+        builder.result->is_terminal = true;
+
         err = xl_bdagc_build(&graphs[n_graphs], &builder);
         if (err != OK)
                 return err;

@@ -17,6 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#pragma once
 #include "expel/dagc.h"
 #include "expel/expel.h"
 
@@ -25,6 +26,8 @@ struct xl_graph_builder
         struct xl_dagc_node **nodes;
         size_t n_nodes;
         size_t cap_nodes;
+
+        struct xl_dagc_node *result;
 };
 
 no_ignore xl_error
