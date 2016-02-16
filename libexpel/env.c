@@ -92,6 +92,27 @@ xl_env_free(struct xl_env *env)
 }
 
 no_ignore xl_error
+xl_env_iterate(
+        xl_env_cb callback,
+        struct xl_env *env,
+        void *callback_arg)
+{
+        xl_error err;
+        size_t i;
+
+        for (i = 0; i < env->cap; i++)
+        {
+                if (env->bindings[i].uri == NULL)
+                        continue;
+                err = callback(callback_arg, env, env->bindings[i].uri);
+                if (err != OK)
+                        return err;
+        }
+
+        return OK;
+}
+
+no_ignore xl_error
 xl_env_get(
         union xl_value_or_graph *value,
         struct xl_value **type,

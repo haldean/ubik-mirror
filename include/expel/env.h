@@ -119,4 +119,16 @@ xl_env_present(
         struct xl_env *env,
         struct xl_uri *uri);
 
+typedef xl_error (*xl_env_cb)(
+        void *arg,
+        struct xl_env *env,
+        struct xl_uri *uri);
+
+/* Calls the provided callback function once for every item. */
+no_ignore xl_error
+xl_env_iterate(
+        xl_env_cb callback,
+        struct xl_env *env,
+        void *callback_arg);
+
 #endif
