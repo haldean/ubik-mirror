@@ -20,7 +20,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <wchar.h>
+#include <string.h>
 
 #include "expel/ast.h"
 #include "expel/env.h"
@@ -42,7 +42,7 @@
         } } while(0)
 
 int
-main()
+main(int argc, char *argv[])
 {
         struct xl_ast *ast;
         struct xl_dagc **graphs;
@@ -59,7 +59,9 @@ main()
         c(xl_ast_new(&ast));
 
         c(xl_parse(ast, &sstdin));
-        c(xl_ast_print(ast));
+
+        if (argc > 1 && strcmp(argv[1], "show-ast") == 0)
+                c(xl_ast_print(ast));
 
         c(xl_compile(&graphs, &n_graphs, ast));
 
