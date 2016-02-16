@@ -285,6 +285,87 @@ xl_resolve_uris(
         return OK;
 }
 
+no_ignore static xl_error
+_add_setter(
+        void *vbuilder,
+        struct xl_env *env,
+        struct xl_uri *uri)
+{
+        union xl_value_or_graph value;
+        struct xl_value *type;
+        struct xl_dagc_store *store_node;
+        struct xl_dagc_const *const_node;
+        struct xl_graph_builder *builder;
+        xl_error err;
+
+        builder = (struct xl_graph_builder *) vbuilder;
+
+        err = xl_env_get(&value, &type, env, uri);
+        if (err != OK)
+                return err;
+
+        err = xl_take(uri);
+        if (err != OK)
+                return err;
+        err = xl_take(value.any);
+        if (err != OK)
+                return err;
+        err = xl_take(type);
+        if (err != OK)
+                return err;
+
+        const_node = calloc(1, sizeof(struct xl_dagc_const));
+        if (const_node == NULL)
+                return xl_raise(ERR_NO_MEMORY, "modinit node alloc");
+
+        const_node->head.node_type = DAGC_NODE_CONST;
+        const_node->head.id = 0;
+        const_node->type = type;
+        const_node->value = value;
+
+        store_node = calloc(1, sizeof(struct xl_dagc_store));
+        if (store_node == NULL)
+                return xl_raise(ERR_NO_MEMORY, "modinit node alloc");
+
+        store_node->head.node_type = DAGC_NODE_STORE;
+        store_node->head.id = 0;
+        store_node->head.is_terminal = true;
+        store_node->loc = uri;
+        store_node->value = &const_node->head;
+
+        err = xl_bdagc_push_node(builder, &const_node->head);
+        if (err != OK)
+                return err;
+        err = xl_bdagc_push_node(builder, &store_node->head);
+        if (err != OK)
+                return err;
+
+        return OK;
+}
+
+no_ignore static xl_error
+xl_create_modinit(
+        struct xl_dagc **modinit,
+        struct xl_env *local_env)
+{
+        struct xl_graph_builder builder;
+        xl_error err;
+
+        err = xl_bdagc_init(&builder);
+        if (err != OK)
+                return err;
+
+        err = xl_env_iterate(_add_setter, local_env, &builder);
+        if (err != OK)
+                return err;
+
+        err = xl_bdagc_build(modinit, &builder);
+        if (err != OK)
+                return err;
+
+        return OK;
+}
+
 no_ignore xl_error
 xl_compile(
         struct xl_dagc ***graphs,
@@ -299,15 +380,17 @@ xl_compile(
         if (err != OK)
                 return err;
 
-        *graphs = calloc(ast->n_bindings, sizeof(struct xl_dagc *));
+        *graphs = calloc(ast->n_bindings + 1, sizeof(struct xl_dagc *));
         if (*graphs == NULL)
                 return xl_raise(ERR_NO_MEMORY, "compile graph alloc");
         *n_graphs = 0;
 
         for (i = 0; i < ast->n_bindings; i++)
         {
+                /* We start writing at the first graph, not the zeroth, here, so
+                 * that the zeroth graph can be the modinit. */
                 err = xl_compile_binding(
-                        *graphs, (*n_graphs)++, ast->bindings[i], &local_env);
+                        *graphs, ++(*n_graphs), ast->bindings[i], &local_env);
                 if (err != OK)
                         return err;
         }
@@ -318,6 +401,14 @@ xl_compile(
                 if (err != OK)
                         return err;
         }
+
+        err = xl_create_modinit(&(*graphs)[0], &local_env);
+        if (err != OK)
+                return err;
+
+        err = xl_env_free(&local_env);
+        if (err != OK)
+                return err;
 
         return OK;
 }
