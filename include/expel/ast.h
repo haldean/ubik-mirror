@@ -63,7 +63,16 @@ struct xl_ast_expr
 
 struct xl_ast_type_expr
 {
-        char *name;
+        union
+        {
+                char *name;
+                struct
+                {
+                        struct xl_ast_type_expr *head;
+                        struct xl_ast_type_expr *tail;
+                } apply;
+        };
+        enum expr_type expr_type;
 };
 
 struct xl_ast_binding
@@ -149,6 +158,12 @@ xl_ast_atom_new_string(
 
 /* Type expression builders */
 no_ignore xl_error
-xl_ast_type_expr_new(
+xl_ast_type_expr_new_atom(
         struct xl_ast_type_expr **expr,
         char *type_name);
+
+no_ignore xl_error
+xl_ast_type_expr_new_apply(
+        struct xl_ast_type_expr **expr,
+        struct xl_ast_type_expr *head,
+        struct xl_ast_type_expr *tail);

@@ -85,7 +85,24 @@ _free_expr(struct xl_ast_expr *expr)
 no_ignore static xl_error
 _free_type_expr(struct xl_ast_type_expr *type_expr)
 {
-        free(type_expr->name);
+        xl_error err;
+
+        switch (type_expr->expr_type)
+        {
+        case EXPR_ATOM:
+                free(type_expr->name);
+                break;
+
+        case EXPR_APPLY:
+                err = _free_type_expr(type_expr->apply.head);
+                if (err != OK)
+                        return err;
+                err = _free_type_expr(type_expr->apply.tail);
+                if (err != OK)
+                        return err;
+                break;
+        }
+
         free(type_expr);
         return OK;
 }
@@ -343,11 +360,25 @@ xl_ast_atom_new_string(
 
 /* Type expression builders */
 no_ignore xl_error
-xl_ast_type_expr_new(
+xl_ast_type_expr_new_atom(
         struct xl_ast_type_expr **expr,
         char *type_name)
 {
         check_alloc(*expr, 1, struct xl_ast_type_expr);
         (*expr)->name = type_name;
+        (*expr)->expr_type = EXPR_ATOM;
+        return OK;
+}
+
+no_ignore xl_error
+xl_ast_type_expr_new_apply(
+        struct xl_ast_type_expr **expr,
+        struct xl_ast_type_expr *head,
+        struct xl_ast_type_expr *tail)
+{
+        check_alloc(*expr, 1, struct xl_ast_type_expr);
+        (*expr)->expr_type = EXPR_APPLY;
+        (*expr)->apply.head = head;
+        (*expr)->apply.tail = tail;
         return OK;
 }

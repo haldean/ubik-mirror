@@ -51,6 +51,8 @@ char *read_string_literal(yyscan_t scanner);
 \n
 [ ]
 
+#.*                       /* swallow comments */
+
 "!"                       TOKEN(IMMEDIATE);
 ":"                       TOKEN(BIND)
 "^"                       TOKEN(TYPE)
@@ -67,7 +69,7 @@ char *read_string_literal(yyscan_t scanner);
 "\""                      { yylval->string = read_string_literal(yyscanner);
                             return STRING; }
 
-.                               return ERROR;
+.                         return ERROR;
 
 %%
 

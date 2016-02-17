@@ -6,3 +6,6 @@ lambda types
 circular reference finder
 low-level debugger with graph step-through
 value_or_graph and atom should be merged
+compiler error handling with line/char #
+dagc source maps
+cascading polymorphic functions for typeclasses

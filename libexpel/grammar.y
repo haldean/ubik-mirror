@@ -60,7 +60,7 @@ yyerror(struct xl_ast *ast, void *scanner, const char *err)
 %type <ast> prog bind_list
 %type <binding> binding
 %type <expr> expr immediate
-%type <type_expr> type_expr
+%type <type_expr> type_expr type_atom
 %type <atom> atom
 
 %define api.pure full
@@ -125,8 +125,15 @@ atom:
         { wrap_err(xl_ast_atom_new_string(&$$, $1)); }
 
 type_expr:
+  type_atom
+        { $$ = $1; }
+| type_atom GOES_TO type_expr
+        { wrap_err(xl_ast_type_expr_new_apply(&$$, $1, $3)); }
+;
+
+type_atom:
   TYPE_NAME
-        { wrap_err(xl_ast_type_expr_new(&$$, $1)); }
+        { wrap_err(xl_ast_type_expr_new_atom(&$$, $1)); }
 ;
 
 %%

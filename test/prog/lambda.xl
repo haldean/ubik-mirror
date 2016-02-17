@@ -1,0 +1,13 @@
+# test for point-free and point-full function definitions
+# expected output is "171717"
+
+: add-7
+        ^ Integer -> Integer
+        = uadd 7
+
+: three-string-concat
+        ^ String -> String -> String -> String
+        = \ s1 s2 s3 -> concat s1 (concat s2 s3)
+
+: x = humanize (add-7 10)
+!= emit (three-string-concat x x x)
