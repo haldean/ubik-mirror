@@ -4,7 +4,7 @@ from pyasm import *
 muri = uri(name="super cool lambda biz", scope=pack("userdef"))
 
 g_ref = graph_ref(uint8(), 1)
-s = store(muri, g_ref)
+s = store(muri, g_ref, terminal=True)
 l = load(muri, terminal=True)
 g0 = graph([g_ref, s, l], -1)
 

@@ -17,8 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#ifndef EXPEL_ENV_H
-#define EXPEL_ENV_H
+#pragma once
 
 #include "expel/expel.h"
 #include "expel/uri.h"
@@ -28,19 +27,38 @@
 #include <stdlib.h>
 
 
+typedef xl_error (*xl_env_cb)(
+        void *arg,
+        struct xl_env *env,
+        struct xl_uri *uri);
+
 /* An association between a URI and a value */
-struct xl_binding {
+struct xl_binding
+{
         struct xl_uri           *uri;
         union xl_value_or_graph value;
         struct xl_value         *type;
 };
 
+struct xl_env_watch
+{
+        struct xl_uri *uri;
+        xl_env_cb cb;
+        void *arg;
+
+        struct xl_env_watch *prev;
+        struct xl_env_watch *next;
+};
+
 /* A hash mapping from URI to value. */
-struct xl_env {
+struct xl_env
+{
         struct xl_binding *bindings;
-        size_t            n;
-        size_t            cap;
-        struct xl_env     *parent;
+        size_t n;
+        size_t cap;
+        struct xl_env *parent;
+
+        struct xl_env_watch *watches;
 };
 
 /* Initializes a new environment struct. */
@@ -119,11 +137,6 @@ xl_env_present(
         struct xl_env *env,
         struct xl_uri *uri);
 
-typedef xl_error (*xl_env_cb)(
-        void *arg,
-        struct xl_env *env,
-        struct xl_uri *uri);
-
 /* Calls the provided callback function once for every item. */
 no_ignore xl_error
 xl_env_iterate(
@@ -131,4 +144,14 @@ xl_env_iterate(
         struct xl_env *env,
         void *callback_arg);
 
-#endif
+/* Calls the provided callback function when a URI is inserted or modified.
+ *
+ * Note that a watch is only ever triggered once; after being triggered it is
+ * removed from the list of watchers. */
+no_ignore xl_error
+xl_env_watch(
+        xl_env_cb callback,
+        struct xl_env *env,
+        struct xl_uri *uri,
+        void *callback_arg);
+

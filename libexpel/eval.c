@@ -130,6 +130,21 @@ _eval_const(struct xl_env *env, struct xl_dagc_const *node)
 }
 
 no_ignore static xl_error
+_mark_load_complete(
+        void *node_void,
+        struct xl_env *env,
+        struct xl_uri *uri)
+{
+        struct xl_dagc_node *node;
+        unused(env);
+        unused(uri);
+
+        node = (struct xl_dagc_node *) node_void;
+        node->flags &= ~XL_DAGC_FLAG_WAIT_DATA;
+        return OK;
+}
+
+no_ignore static xl_error
 _eval_load(struct xl_env *env, struct xl_dagc_load *node)
 {
         union xl_value_or_graph value;
@@ -138,7 +153,18 @@ _eval_load(struct xl_env *env, struct xl_dagc_load *node)
 
         err = xl_env_get(&value, &type, env, node->loc);
         if (err != OK)
+        {
+                if (err->error_code == ERR_ABSENT)
+                {
+                        node->head.flags |= XL_DAGC_FLAG_WAIT_DATA;
+                        err = xl_env_watch(
+                                _mark_load_complete, env, node->loc, node);
+                        if (err != OK)
+                                return err;
+                        return OK;
+                }
                 return err;
+        }
 
         err = xl_take(value.any);
         if (err != OK)

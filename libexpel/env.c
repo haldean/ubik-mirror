@@ -44,6 +44,7 @@ xl_env_init(struct xl_env *env)
         env->n = 0;
         env->cap = 0;
         env->parent = xl_env_get_root();
+        env->watches = NULL;
         return OK;
 }
 
@@ -280,6 +281,7 @@ _set(
         bool overwrite)
 {
         struct xl_binding new_binding;
+        struct xl_env_watch *watch, *to_free;
         xl_error err, ignore;
 
         err = OK;
@@ -310,9 +312,7 @@ _set(
                 return err;
 
         err = _insert(env->bindings, env->cap, &new_binding, overwrite);
-        if (err == OK)
-                env->n++;
-        else
+        if (err != OK)
         {
                 /* We're on the clean-up codepath, and we want the returned
                  * error to be the actual error, not whatever went wrong during
@@ -326,9 +326,31 @@ _set(
                 unused(ignore);
                 ignore = xl_release(uri);
                 unused(ignore);
+
+                return err;
+        }
+        env->n++;
+
+        watch = env->watches;
+        while (watch != NULL)
+        {
+                if (!xl_uri_eq(watch->uri, uri))
+                        continue;
+
+                err = watch->cb(watch->arg, env, watch->uri);
+                if (err != OK)
+                        return err;
+
+                to_free = watch;
+                if (watch->prev != NULL)
+                        watch->prev->next = watch->next;
+                if (watch->next != NULL)
+                        watch->next->prev = watch->prev;
+                watch = watch->prev;
+                free(to_free);
         }
 
-        return err;
+        return OK;
 }
 
 no_ignore xl_error
@@ -349,4 +371,27 @@ xl_env_overwrite(
         struct xl_value *type)
 {
         return _set(env, uri, value, type, true);
+}
+
+no_ignore xl_error
+xl_env_watch(
+        xl_env_cb callback,
+        struct xl_env *env,
+        struct xl_uri *uri,
+        void *callback_arg)
+{
+        struct xl_env_watch *watcher;
+
+        watcher = calloc(1, sizeof(struct xl_env_watch));
+        if (watcher == NULL)
+                return xl_raise(ERR_NO_MEMORY, "env watch alloc");
+
+        watcher->uri = uri;
+        watcher->cb = callback;
+        watcher->arg = callback_arg;
+        watcher->prev = env->watches;
+        watcher->next = NULL;
+        env->watches = watcher;
+
+        return OK;
 }
