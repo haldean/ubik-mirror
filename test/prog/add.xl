@@ -1,4 +1,4 @@
 : add-two-numbers
-  = uadd 4090 6
+  = uadd 2 64
 
-!= emit (concat (humanize add-two-numbers) "\n")
+!= emit (concat (humanize add-two-numbers) "\nhello world!\n")
