@@ -102,7 +102,7 @@ build/tokenizer: test/lex/emit-tokens.c $(SHARED_LIB)
 	@mkdir -p `dirname $(@)`
 	$(CC) $(COPTS) $(LDOPTS) $(testldopts) $< -lexpel -o $@
 
-build/parser: test/parse/parse-file.c $(SHARED_LIB)
+build/interpreter: test/parse/parse-file.c $(SHARED_LIB)
 	@mkdir -p `dirname $(@)`
 	$(CC) $(COPTS) $(LDOPTS) $(testldopts) $< -lexpel -o $@
 
