@@ -249,12 +249,7 @@ _load_load(
 {
         xl_error err;
         xl_word value_index;
-        xl_word node_index;
         struct xl_value *uri_val;
-
-        READ_INTO(node_index, sp);
-        node_index = ntohw(node_index);
-        node->dependent_store = (struct xl_dagc_node *) node_index;
 
         READ_INTO(value_index, sp);
         value_index = ntohw(value_index);
@@ -448,24 +443,13 @@ _set_node_pointers(
                         all_nodes[(uintptr_t) n->as_cond.if_false];
                 break;
 
-        case DAGC_NODE_LOAD:
-                if ((uintptr_t) n->as_load.dependent_store == UINTPTR_MAX)
-                {
-                        n->as_load.dependent_store = NULL;
-                        break;
-                }
-                if ((uintptr_t) n->as_load.dependent_store >= n_nodes)
-                        return xl_raise(ERR_OUT_OF_BOUNDS, "load depstore idx");
-                n->as_load.dependent_store =
-                        all_nodes[(uintptr_t) n->as_load.dependent_store];
-                break;
-
         case DAGC_NODE_STORE:
                 if ((uintptr_t) n->as_store.value >= n_nodes)
                         return xl_raise(ERR_OUT_OF_BOUNDS, "store value idx");
                 n->as_store.value = all_nodes[(uintptr_t) n->as_store.value];
                 break;
 
+        case DAGC_NODE_LOAD:
         case DAGC_NODE_CONST:
         case DAGC_NODE_INPUT:
                 break;

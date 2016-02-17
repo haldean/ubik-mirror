@@ -77,7 +77,6 @@ _assign_atom_node(
                 n->node.node_type = DAGC_NODE_LOAD;
                 n->node.id = 0;
 
-                n->as_load.dependent_store = NULL;
                 n->as_load.loc = calloc(1, sizeof(struct xl_uri));
 
                 err = xl_uri_unknown(n->as_load.loc, expr->atom->str);

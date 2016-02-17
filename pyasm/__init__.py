@@ -41,12 +41,11 @@ def graph_ref(typ, graph_num, terminal=False, nid=None):
         is_term=terminal,
     )
 
-def load(uri, dep=None, terminal=False, nid=None):
+def load(uri, terminal=False, nid=None):
     return dict(
         type="load",
         id=nid,
         uri=uri,
-        dep=dep,
         is_term=terminal,
     )
 
@@ -199,10 +198,6 @@ def encode(graphs, expect=None):
                     else:
                         f.write(struct.pack(">Q", val_to_idx[node["cvalue"]]))
                 elif node_type == "load":
-                    if node["dep"] is None:
-                        f.write(struct.pack(">Q", 0xFFFFFFFFFFFFFFFF))
-                    else:
-                        f.write(struct.pack(">Q", node["dep"]["idx"]))
                     f.write(struct.pack(">Q", val_to_idx[node["uri"]]))
                 elif node_type == "store":
                     f.write(struct.pack(">Q", node["value"]["idx"]))

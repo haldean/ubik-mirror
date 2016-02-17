@@ -32,8 +32,10 @@
 #define XL_DAGC_FLAG_WAIT_D3    0x08
 /* waiting on evaluation */
 #define XL_DAGC_FLAG_WAIT_EVAL  0x10
+/* waiting on data to exist */
+#define XL_DAGC_FLAG_WAIT_DATA  0x20
 /* wait_d1 | wait_d2 | wait_d3 | wait_eval */
-#define XL_DAGC_WAIT_MASK       0x1E
+#define XL_DAGC_WAIT_MASK       0x2E
 
 struct xl_dagc_adjacency
 {
@@ -63,8 +65,6 @@ struct xl_dagc_const
 struct xl_dagc_load
 {
         struct xl_dagc_node head;
-        /* The store this load depends on (can be NULL) */
-        struct xl_dagc_node *dependent_store;
         /* Where to load from */
         struct xl_uri *loc;
 };

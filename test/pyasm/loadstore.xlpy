@@ -5,7 +5,7 @@ muri = uri(name="super cool lambda biz", scope=pack("userdef"))
 
 g_ref = graph_ref(uint8(), 1)
 s = store(muri, g_ref)
-l = load(muri, dep=s, terminal=True)
+l = load(muri, terminal=True)
 g0 = graph([g_ref, s, l], -1)
 
 c0 = const(uint8(), t(7, 10), terminal=True)

@@ -103,7 +103,7 @@ xl_dagc_get_deps(
                 return OK;
 
         case DAGC_NODE_LOAD:
-                *d1 = ((struct xl_dagc_load *) n)->dependent_store;
+                *d1 = NULL;
                 *d2 = NULL;
                 *d3 = NULL;
                 return OK;
@@ -425,7 +425,6 @@ xl_dagc_replace_node_refs(
         size_t n)
 {
         struct xl_dagc_apply *a;
-        struct xl_dagc_load *l;
         struct xl_dagc_store *s;
         struct xl_dagc_cond *c;
         xl_error err;
@@ -438,11 +437,6 @@ xl_dagc_replace_node_refs(
                 if (err != OK)
                         return err;
                 err = _replace_ref(&a->arg, proto, copied, n);
-                return err;
-
-        case DAGC_NODE_LOAD:
-                l = (struct xl_dagc_load *) node;
-                err = _replace_ref(&l->dependent_store, proto, copied, n);
                 return err;
 
         case DAGC_NODE_STORE:
@@ -461,6 +455,7 @@ xl_dagc_replace_node_refs(
                 err = _replace_ref(&c->if_false, proto, copied, n);
                 return err;
 
+        case DAGC_NODE_LOAD:
         case DAGC_NODE_CONST:
         case DAGC_NODE_INPUT:
         case DAGC_NODE_NATIVE:

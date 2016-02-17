@@ -168,10 +168,8 @@ are four kinds of nodes in a DAGC:
                     input function.
         `const`     A constant type and value; the value can be either a
                     tree or a graph.
-        `load`      A load operation. Has a required URI and an optional
-                    dependent store; the URI references where the value
-                    should come from and the dependent store adds a
-                    dependency from the load to that store.
+        `load`      A load operation. Has a URI that references where the
+                    value should come from.
         `store`     A store operation. Has a URI and a reference to a node
                     with a value, and stores the given value at that URI.
         `input`     The input to a DAGC.
@@ -291,10 +289,7 @@ Nodes with node type `   apply` have the following body:
 Nodes with node type `    load` have the following body:
 
         Byte index   Field
-               0-7   Node index of dependent store
-              8-15   Value index of the URI value
-
-If the load has no dependent store, bytes 0-7 should all be set to 0xFF.
+               0-7   Value index of the URI value
 
 Nodes with node type `   store` have the following body:
 
