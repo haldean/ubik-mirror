@@ -31,7 +31,8 @@ enum atom_type
         ATOM_INT = 1,
         ATOM_NUM,
         ATOM_NAME,
-        ATOM_TYPE_NAME
+        ATOM_TYPE_NAME,
+        ATOM_STRING
 };
 
 struct xl_ast_atom
@@ -140,6 +141,11 @@ no_ignore xl_error
 xl_ast_atom_new_number(
         struct xl_ast_atom **atom,
         xl_float number);
+
+no_ignore xl_error
+xl_ast_atom_new_string(
+        struct xl_ast_atom **atom,
+        char *string);
 
 /* Type expression builders */
 no_ignore xl_error

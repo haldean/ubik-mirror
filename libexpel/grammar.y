@@ -24,6 +24,8 @@
 #include "expel/util.h"
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 void
 yyerror(struct xl_ast *ast, void *scanner, const char *err)
@@ -53,7 +55,7 @@ yyerror(struct xl_ast *ast, void *scanner, const char *err)
 %token <token> BIND TYPE IMPLIES GOES_TO LAMBDA IS OPEN_PAR CLOSE_PAR IMMEDIATE
 %token <integer> INTEGER
 %token <floating> NUMBER
-%token <string> NAME TYPE_NAME
+%token <string> NAME TYPE_NAME STRING
 
 %type <ast> prog bind_list
 %type <binding> binding
@@ -119,6 +121,8 @@ atom:
         { wrap_err(xl_ast_atom_new_integer(&$$, $1)); }
 | NUMBER
         { wrap_err(xl_ast_atom_new_number(&$$, $1)); }
+| STRING
+        { wrap_err(xl_ast_atom_new_string(&$$, $1)); }
 
 type_expr:
   TYPE_NAME

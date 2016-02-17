@@ -24,8 +24,10 @@
 #include "expel/gen.h"
 #include "expel/types.h"
 #include "expel/uri.h"
+#include "expel/value.h"
 
 #include <stdlib.h>
+#include <string.h>
 
 no_ignore static xl_error
 _assign_atom_node(
@@ -90,6 +92,25 @@ _assign_atom_node(
 
         case ATOM_TYPE_NAME:
                 return xl_raise(ERR_NOT_IMPLEMENTED, "expr type constructor");
+
+        case ATOM_STRING:
+                n->node.node_type = DAGC_NODE_CONST;
+                n->node.id = 0;
+
+                err = xl_value_new(&n->as_const.type);
+                if (err != OK)
+                        return err;
+                err = xl_type_string(n->as_const.type);
+                if (err != OK)
+                        return err;
+
+                err = xl_value_new(&n->as_const.value.tree);
+                if (err != OK)
+                        return err;
+                err = xl_value_pack_string(
+                        n->as_const.value.tree, expr->atom->str,
+                        strlen(expr->atom->str));
+                return OK;
         }
         return xl_raise(ERR_UNKNOWN_TYPE, "compile atom type");
 }

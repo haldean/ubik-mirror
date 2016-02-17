@@ -1,4 +1,4 @@
 : add-two-numbers
   = uadd 4090 6
 
-!= emit (humanize add-two-numbers)
+!= emit (concat (humanize add-two-numbers) "\n")

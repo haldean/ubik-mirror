@@ -40,6 +40,7 @@ _free_atom(struct xl_ast_atom *atom)
         {
         case ATOM_NAME:
         case ATOM_TYPE_NAME:
+        case ATOM_STRING:
                 free(atom->str);
                 break;
 
@@ -152,6 +153,9 @@ _print_atom(struct xl_ast_atom *atom)
                 return OK;
         case ATOM_TYPE_NAME:
                 printf("%s:t", atom->str);
+                return OK;
+        case ATOM_STRING:
+                printf("%s:s", atom->str);
                 return OK;
         }
 
@@ -323,6 +327,17 @@ xl_ast_atom_new_number(
         check_alloc(*atom, 1, struct xl_ast_atom);
         (*atom)->atom_type = ATOM_NUM;
         (*atom)->number = number;
+        return OK;
+}
+
+no_ignore xl_error
+xl_ast_atom_new_string(
+        struct xl_ast_atom **atom,
+        char *string)
+{
+        check_alloc(*atom, 1, struct xl_ast_atom);
+        (*atom)->atom_type = ATOM_STRING;
+        (*atom)->str = string;
         return OK;
 }
 

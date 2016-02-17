@@ -34,36 +34,111 @@
         return token; \
 }
 
+char *read_string_literal(yyscan_t scanner);
+
 %}
 
 %option reentrant
 %option noyywrap
 %option yylineno
 %option nounput
-%option noinput
 %option bison-bridge
+
+%x STRING_LITERAL
 
 %%
 
 \n
 [ ]
-"!"                             TOKEN(IMMEDIATE);
-":"                             TOKEN(BIND)
-"^"                             TOKEN(TYPE)
-"=>"                            TOKEN(IMPLIES)
-"->"                            TOKEN(GOES_TO)
-"\\"                            TOKEN(LAMBDA)
-"="                             TOKEN(IS)
-"("                             TOKEN(OPEN_PAR)
-")"                             TOKEN(CLOSE_PAR)
-[0-9]+                          { yylval->integer = atoi(yytext); return INTEGER; }
-([0-9]+\.[0-9]*|\.[0-9]+)       { yylval->floating = atof(yytext); return NUMBER; }
-[a-z_][a-zA-Z0-9/_\-']*         STRING(NAME)
-[A-Z][a-zA-Z0-9/']*             STRING(TYPE_NAME)
+
+"!"                       TOKEN(IMMEDIATE);
+":"                       TOKEN(BIND)
+"^"                       TOKEN(TYPE)
+"=>"                      TOKEN(IMPLIES)
+"->"                      TOKEN(GOES_TO)
+"\\"                      TOKEN(LAMBDA)
+"="                       TOKEN(IS)
+"("                       TOKEN(OPEN_PAR)
+")"                       TOKEN(CLOSE_PAR)
+[0-9]+                    { yylval->integer = atoi(yytext); return INTEGER; }
+([0-9]+\.[0-9]*|\.[0-9]+) { yylval->floating = atof(yytext); return NUMBER; }
+[a-z_][a-zA-Z0-9/_\-']*   STRING(NAME)
+[A-Z][a-zA-Z0-9/']*       STRING(TYPE_NAME)
+"\""                      { yylval->string = read_string_literal(yyscanner);
+                            return STRING; }
 
 .                               return ERROR;
 
 %%
+
+char *
+read_string_literal(yyscan_t scanner)
+{
+        char *res;
+        char *temp;
+        char last;
+        char this;
+        size_t n;
+        size_t cap;
+
+        n = 0;
+        cap = 32;
+        res = calloc(cap, sizeof(char));
+        last = '\0';
+        this = '\0';
+
+        for (;;)
+        {
+                this = input(scanner);
+                if (this == '"' && last != '\\')
+                        break;
+
+                if (last == '\\')
+                {
+                        if (this == 'n')
+                        {
+                                res[n - 1] = '\n';
+                                last = this;
+                                continue;
+                        }
+                        if (this == 'r')
+                        {
+                                res[n - 1] = '\r';
+                                last = this;
+                                continue;
+                        }
+                        if (this == 't')
+                        {
+                                res[n - 1] = '\t';
+                                last = this;
+                                continue;
+                        }
+                }
+
+                if (n == cap)
+                {
+                        cap *= 2;
+                        temp = realloc(res, cap);
+                        if (temp == NULL)
+                        {
+                                free(res);
+                                return NULL;
+                        }
+                        bzero(&temp[n], cap - n);
+                        res = temp;
+                }
+                res[n++] = this;
+                last = this;
+        }
+
+        temp = realloc(res, n + 1);
+        if (temp == NULL)
+        {
+                free(res);
+                return NULL;
+        }
+        return temp;
+}
 
 no_ignore xl_error
 xl_tokenize(xl_token_cb callback, struct xl_stream *stream)
