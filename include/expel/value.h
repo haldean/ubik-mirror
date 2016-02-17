@@ -35,3 +35,6 @@ xl_string_read(char **dest, size_t *n, struct xl_value *src);
 
 no_ignore xl_error
 xl_value_as_bool(bool *res, struct xl_value *v);
+
+no_ignore xl_error
+xl_value_pack_string(struct xl_value *dest, char *src, size_t n);

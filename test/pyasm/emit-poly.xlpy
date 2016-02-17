@@ -1,12 +1,12 @@
 # vi: ft=python
 from pyasm import *
 
-emit = load(nid="emit", uri=uri(name="emit", scope=pack("native")))
+humanize = load(nid="humanize", uri=uri(name="humanize", scope=pack("native")))
 f = const(flt(), t(-1.1252e-6, 0))
 w = const(word(), t(351, 0))
-apf = apply(func=emit, arg=f, nid="apply-f", terminal=True)
-apw = apply(func=emit, arg=w, nid="apply-w", terminal=True)
+apf = apply(func=humanize, arg=f, nid="apply-f", terminal=True)
+apw = apply(func=humanize, arg=w, nid="apply-w", terminal=True)
 
 encode([
-    graph([emit, f, w, apw, apf], -1),
-], expect=t(-1.1252e-6, 0))
+    graph([humanize, f, w, apw, apf], -1),
+])

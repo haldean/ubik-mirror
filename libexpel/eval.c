@@ -154,6 +154,10 @@ _eval_load(struct xl_env *env, struct xl_dagc_load *node)
         err = xl_env_get(&value, &type, env, node->loc);
         if (err != OK)
         {
+                /* native funcs never reappear; they're gone forever. */
+                if (node->loc->scope == SCOPE_NATIVE)
+                        return err;
+
                 if (err->error_code == ERR_ABSENT)
                 {
                         node->head.flags |= XL_DAGC_FLAG_WAIT_DATA;

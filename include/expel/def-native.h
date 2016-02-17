@@ -29,6 +29,10 @@
 #error "no DEF_OP_URI specified, should be const char* of method name"
 #endif
 
+#ifndef DEF_ARG_TYPE
+#error "no DEF_ARG_TYPE specified, should be name of type constructor for arguments"
+#endif
+
 #ifndef concat
 #define concat(a, ...) concatr(a, __VA_ARGS__)
 #define concatr(a, ...) a ## __VA_ARGS__
@@ -36,7 +40,7 @@
 
 #define _op_name concat(_register_, DEF_OP)
 
-#ifdef DEF_BINARY_WORD
+#ifdef DEF_BINARY
 
 no_ignore static xl_error
 _op_name(struct xl_env *env)
@@ -52,11 +56,11 @@ _op_name(struct xl_env *env)
         err = _create_op(&ngraph, 2, DEF_OP_EVAL);
         if (err != OK)
                 return err;
-        err = xl_type_word(
+        err = DEF_ARG_TYPE(
                 ((struct xl_dagc_input *) ngraph->inputs[0])->required_type);
         if (err != OK)
                 return err;
-        err = xl_type_word(
+        err = DEF_ARG_TYPE(
                 ((struct xl_dagc_input *) ngraph->inputs[1])->required_type);
         if (err != OK)
                 return err;
@@ -91,9 +95,7 @@ _op_name(struct xl_env *env)
         return OK;
 }
 
-#else
-
-#ifdef DEF_BINARY_WORD_PROP
+#elif defined(DEF_UNARY)
 
 no_ignore static xl_error
 _op_name(struct xl_env *env)
@@ -106,15 +108,11 @@ _op_name(struct xl_env *env)
         union xl_value_or_graph ins;
 
         ngraph = NULL;
-        err = _create_op(&ngraph, 2, DEF_OP_EVAL);
+        err = _create_op(&ngraph, 1, DEF_OP_EVAL);
         if (err != OK)
                 return err;
-        err = xl_type_word(
+        err = DEF_ARG_TYPE(
                 ((struct xl_dagc_input *) ngraph->inputs[0])->required_type);
-        if (err != OK)
-                return err;
-        err = xl_type_word(
-                ((struct xl_dagc_input *) ngraph->inputs[1])->required_type);
         if (err != OK)
                 return err;
 
@@ -149,12 +147,13 @@ _op_name(struct xl_env *env)
 }
 
 #else
-#error operation was not one of [DEF_BINARY_WORD, DEF_BINARY_WORD_PROP]
-#endif
+#error operation was not one of [DEF_BINARY, DEF_UNARY]
 #endif
 
 #undef DEF_OP
 #undef DEF_OP_EVAL
 #undef DEF_OP_URI
-#undef DEF_BINARY_WORD
+#undef DEF_BINARY
+#undef DEF_UNARY
+#undef DEF_ARG_TYPE
 #undef _op_name

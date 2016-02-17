@@ -122,15 +122,17 @@ xl_env_get(
 {
         size_t i;
         size_t probed;
+        size_t h;
         bool found;
 
         found = false;
 
         if (env->cap != 0)
         {
-                i = uri->hash % env->cap;
+                h = uri->hash % env->cap;
                 for (probed = 0; probed < env->cap; probed++)
                 {
+                        i = (h + probed) % env->cap;
                         if (env->bindings[i].uri == NULL)
                                 break;
                         if (env->bindings[i].uri->hash != uri->hash)
@@ -145,7 +147,6 @@ xl_env_get(
                                 found = true;
                                 break;
                         }
-                        i = (i + 1) % env->cap;
                 }
         }
 

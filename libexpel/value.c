@@ -109,6 +109,41 @@ xl_string_read(char **dest, size_t *n, struct xl_value *src)
 }
 
 no_ignore xl_error
+xl_value_pack_string(struct xl_value *dest, char *src, size_t n)
+{
+        size_t i, t;
+        struct xl_value *v;
+        xl_error err;
+        char buf[8];
+
+        dest->tag |= TAG_LEFT_WORD | TAG_RIGHT_NODE;
+        dest->left.w = n;
+
+        v = dest;
+        for (i = 0; i < n; i += 8)
+        {
+                err = xl_value_new(&v->right.t);
+                if (err != OK)
+                        return err;
+                v = v->right.t;
+                v->tag |= TAG_LEFT_WORD | TAG_RIGHT_NODE;
+
+                t = size_min(n - i, 8);
+                if (t < 8)
+                        bzero(buf, 8);
+                memcpy(buf, &src[i], t);
+
+                v->left.w = htonw(*((xl_word *) buf));
+        }
+
+        v->tag &= ~TAG_RIGHT_NODE;
+        v->tag |= TAG_RIGHT_WORD;
+        v->right.w = 0;
+
+        return OK;
+}
+
+no_ignore xl_error
 xl_value_print(struct xl_stream *out, struct xl_value *v)
 {
         size_t written;

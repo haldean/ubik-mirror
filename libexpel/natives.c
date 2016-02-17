@@ -139,7 +139,8 @@ _native_unsigned_add(struct xl_env *env, struct xl_dagc *graph)
         return OK;
 }
 
-#define DEF_BINARY_WORD
+#define DEF_BINARY
+#define DEF_ARG_TYPE xl_type_word
 #define DEF_OP uadd
 #define DEF_OP_EVAL _native_unsigned_add
 #define DEF_OP_URI "uadd"
@@ -176,10 +177,45 @@ _native_unsigned_subtract(struct xl_env *env, struct xl_dagc *graph)
         return OK;
 }
 
-#define DEF_BINARY_WORD
+#define DEF_BINARY
 #define DEF_OP usub
+#define DEF_ARG_TYPE xl_type_word
 #define DEF_OP_EVAL _native_unsigned_subtract
 #define DEF_OP_URI "usub"
+#include "expel/def-native.h"
+
+static xl_error
+_native_emit(struct xl_env *env, struct xl_dagc *graph)
+{
+        xl_error err;
+        char *str;
+        size_t n;
+
+        unused(env);
+
+        err = xl_string_read(&str, &n, graph->nodes[0]->known.tree);
+        if (err != OK)
+                return err;
+        printf("%s", str);
+
+        graph->result->known.tree = graph->nodes[0]->known.tree;
+        graph->result->known_type = graph->nodes[0]->known_type;
+
+        err = xl_take(graph->result->known.tree);
+        if (err != OK)
+                return err;
+        err = xl_take(graph->result->known_type);
+        if (err != OK)
+                return err;
+
+        return OK;
+}
+
+#define DEF_UNARY
+#define DEF_OP emit
+#define DEF_ARG_TYPE xl_type_string
+#define DEF_OP_EVAL _native_emit
+#define DEF_OP_URI "emit"
 #include "expel/def-native.h"
 
 static xl_error
@@ -249,62 +285,89 @@ _native_eq(struct xl_env *env, struct xl_dagc *graph)
         return OK;
 }
 
-#define DEF_BINARY_WORD_PROP
+#define DEF_BINARY
 #define DEF_OP eq
+#define DEF_ARG_TYPE xl_type_word
 #define DEF_OP_EVAL _native_eq
 #define DEF_OP_URI "eq"
 #include "expel/def-native.h"
 
 no_ignore static xl_error
-_native_emit_float(struct xl_env *env, struct xl_dagc *graph)
+_native_humanize_float(struct xl_env *env, struct xl_dagc *graph)
 {
         struct xl_value *res;
+        struct xl_value *type;
         xl_error err;
+        char *str;
+        int str_size;
 
         unused(env);
 
-        res = graph->nodes[0]->known.tree;
-        printf("%f\n", res->left.f);
+        err = xl_value_new(&res);
+        if (err != OK)
+                return err;
+
+        err = xl_value_new(&type);
+        if (err != OK)
+                return err;
+
+        str_size = asprintf(&str, "%f", res->left.f);
+        if (str_size < 0)
+                return xl_raise(ERR_UNEXPECTED_FAILURE, "asprintf failed");
+        err = xl_value_pack_string(res, str, str_size);
+        if (err != OK)
+                return err;
+        free(str);
+
+        err = xl_type_string(type);
+        if (err != OK)
+                return err;
 
         graph->result->known.tree = res;
-        graph->result->known_type = graph->nodes[0]->known_type;
-
-        err = xl_take(graph->result->known.any);
-        if (err != OK)
-                return err;
-        err = xl_take(graph->result->known_type);
-        if (err != OK)
-                return err;
+        graph->result->known_type = type;
 
         return OK;
 }
 
 no_ignore static xl_error
-_native_emit_word(struct xl_env *env, struct xl_dagc *graph)
+_native_humanize_word(struct xl_env *env, struct xl_dagc *graph)
 {
         struct xl_value *res;
+        struct xl_value *type;
         xl_error err;
+        char *str;
+        int str_size;
 
         unused(env);
 
-        res = graph->nodes[0]->known.tree;
-        printf("0x%02lX\n", res->left.w);
+        err = xl_value_new(&res);
+        if (err != OK)
+                return err;
+
+        err = xl_value_new(&type);
+        if (err != OK)
+                return err;
+
+        str_size = asprintf(&str, "0x%02lX", graph->nodes[0]->known.tree->left.w);
+        if (str_size < 0)
+                return xl_raise(ERR_UNEXPECTED_FAILURE, "asprintf failed");
+        err = xl_value_pack_string(res, str, str_size);
+        if (err != OK)
+                return err;
+        free(str);
+
+        err = xl_type_string(type);
+        if (err != OK)
+                return err;
 
         graph->result->known.tree = res;
-        graph->result->known_type = graph->nodes[0]->known_type;
-
-        err = xl_take(graph->result->known.any);
-        if (err != OK)
-                return err;
-        err = xl_take(graph->result->known_type);
-        if (err != OK)
-                return err;
+        graph->result->known_type = type;
 
         return OK;
 }
 
 no_ignore static xl_error
-_register_emit(struct xl_env *env)
+_register_humanize(struct xl_env *env)
 {
         struct xl_dagc *wgraph;
         struct xl_dagc *fgraph;
@@ -317,7 +380,7 @@ _register_emit(struct xl_env *env)
         xl_error err;
 
         wgraph = NULL;
-        err = _create_op(&wgraph, 1, _native_emit_word);
+        err = _create_op(&wgraph, 1, _native_humanize_word);
         if (err != OK)
                 return err;
         err = xl_type_word(
@@ -326,7 +389,7 @@ _register_emit(struct xl_env *env)
                 return err;
 
         fgraph = NULL;
-        err = _create_op(&fgraph, 1, _native_emit_float);
+        err = _create_op(&fgraph, 1, _native_humanize_float);
         if (err != OK)
                 return err;
         err = xl_type_float(
@@ -342,7 +405,7 @@ _register_emit(struct xl_env *env)
                 } \
         }; root: polyfunc; on error: return err;
 
-        err = _native_uri(&uri, "emit");
+        err = _native_uri(&uri, "humanize");
         if (err != OK)
                 return err;
         err = xl_take(uri);
@@ -390,6 +453,10 @@ xl_natives_register(struct xl_env *env)
                 return err;
 
         err = _register_emit(env);
+        if (err != OK)
+                return err;
+
+        err = _register_humanize(env);
         if (err != OK)
                 return err;
 
