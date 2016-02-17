@@ -33,13 +33,107 @@ xl_ast_new(struct xl_ast **ast)
         return OK;
 }
 
+no_ignore static xl_error
+_free_atom(struct xl_ast_atom *atom)
+{
+        switch (atom->atom_type)
+        {
+        case ATOM_NAME:
+        case ATOM_TYPE_NAME:
+                free(atom->str);
+                break;
+
+        case ATOM_NUM:
+        case ATOM_INT:
+                break;
+
+        default:
+                return xl_raise(ERR_BAD_TYPE, "unknown atom type in free");
+        }
+
+        free(atom);
+        return OK;
+}
+
+no_ignore static xl_error
+_free_expr(struct xl_ast_expr *expr)
+{
+        xl_error err;
+
+        switch (expr->expr_type)
+        {
+        case EXPR_ATOM:
+                err = _free_atom(expr->atom);
+                break;
+        case EXPR_APPLY:
+                err = _free_expr(expr->apply.head);
+                if (err != OK)
+                        return err;
+                err = _free_expr(expr->apply.tail);
+                break;
+        default:
+                return xl_raise(ERR_BAD_TYPE, "unknown expr type in free");
+        }
+
+        if (err != OK)
+                return err;
+        free(expr);
+        return OK;
+}
+
+no_ignore static xl_error
+_free_type_expr(struct xl_ast_type_expr *type_expr)
+{
+        free(type_expr->name);
+        free(type_expr);
+        return OK;
+}
+
+no_ignore static xl_error
+_free_binding(struct xl_ast_binding *binding)
+{
+        xl_error err;
+
+        free(binding->name);
+
+        err = _free_expr(binding->expr);
+        if (err != OK)
+                return err;
+
+        if (binding->type_expr != NULL)
+        {
+                err = _free_type_expr(binding->type_expr);
+                if (err != OK)
+                        return err;
+        }
+
+        free(binding);
+        return OK;
+}
+
 no_ignore xl_error
 xl_ast_free(struct xl_ast *ast)
 {
-        if (ast->bindings != NULL)
-                free(ast->bindings);
+        size_t i;
+        xl_error err;
+
+        for (i = 0; i < ast->n_bindings; i++)
+        {
+                err = _free_binding(ast->bindings[i]);
+                if (err != OK)
+                        return err;
+        }
+        free(ast->bindings);
+
+        if (ast->immediate != NULL)
+        {
+                err = _free_expr(ast->immediate);
+                if (err != OK)
+                        return err;
+        }
+
         free(ast);
-        return xl_raise(ERR_NOT_IMPLEMENTED, "free ast");
+        return OK;
 }
 
 no_ignore static xl_error
