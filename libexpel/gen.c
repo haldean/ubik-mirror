@@ -177,7 +177,7 @@ _assign_nodes(
 no_ignore static xl_error
 xl_compile_binding(
         struct xl_dagc **graphs,
-        size_t n_graphs, 
+        size_t n_graphs,
         struct xl_ast_binding *binding,
         struct xl_env *local_env)
 {

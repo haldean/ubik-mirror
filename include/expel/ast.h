@@ -23,7 +23,14 @@
 enum expr_type
 {
         EXPR_APPLY = 1,
-        EXPR_ATOM
+        EXPR_ATOM,
+        EXPR_LAMBDA
+};
+
+enum type_expr_type
+{
+        TYPE_EXPR_APPLY = 1,
+        TYPE_EXPR_ATOM
 };
 
 enum atom_type
@@ -46,6 +53,12 @@ struct xl_ast_atom
         enum atom_type atom_type;
 };
 
+struct xl_ast_arg_list
+{
+        char *name;
+        struct xl_ast_arg_list *next;
+};
+
 struct xl_ast_expr
 {
         union
@@ -56,6 +69,11 @@ struct xl_ast_expr
                         struct xl_ast_expr *head;
                         struct xl_ast_expr *tail;
                 } apply;
+                struct
+                {
+                        struct xl_ast_arg_list *args;
+                        struct xl_ast_expr *body;
+                } lambda;
         };
         enum expr_type expr_type;
         struct xl_dagc_node *gen;
@@ -72,7 +90,7 @@ struct xl_ast_type_expr
                         struct xl_ast_type_expr *tail;
                 } apply;
         };
-        enum expr_type expr_type;
+        enum type_expr_type type_expr_type;
 };
 
 struct xl_ast_binding
@@ -132,6 +150,12 @@ xl_ast_expr_new_atom(
         struct xl_ast_atom *value);
 
 no_ignore xl_error
+xl_ast_expr_new_lambda(
+        struct xl_ast_expr **expr,
+        struct xl_ast_arg_list *args,
+        struct xl_ast_expr *body);
+
+no_ignore xl_error
 xl_ast_atom_new_name(
         struct xl_ast_atom **atom,
         char *name);
@@ -167,3 +191,14 @@ xl_ast_type_expr_new_apply(
         struct xl_ast_type_expr **expr,
         struct xl_ast_type_expr *head,
         struct xl_ast_type_expr *tail);
+
+/* Argument list builders */
+no_ignore xl_error
+xl_ast_arg_list_new_empty(
+        struct xl_ast_arg_list **arg_list);
+
+no_ignore xl_error
+xl_ast_arg_list_new_pushl(
+        struct xl_ast_arg_list **arg_list,
+        char *head,
+        struct xl_ast_arg_list *tail);

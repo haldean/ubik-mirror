@@ -87,13 +87,13 @@ _free_type_expr(struct xl_ast_type_expr *type_expr)
 {
         xl_error err;
 
-        switch (type_expr->expr_type)
+        switch (type_expr->type_expr_type)
         {
-        case EXPR_ATOM:
+        case TYPE_EXPR_ATOM:
                 free(type_expr->name);
                 break;
 
-        case EXPR_APPLY:
+        case TYPE_EXPR_APPLY:
                 err = _free_type_expr(type_expr->apply.head);
                 if (err != OK)
                         return err;
@@ -200,6 +200,9 @@ _print_expr(struct xl_ast_expr *expr)
                         return err;
                 printf(")");
                 return OK;
+
+        case EXPR_LAMBDA:
+                return xl_raise(ERR_NOT_IMPLEMENTED, "lambda print");
         }
 
         return xl_raise(ERR_UNKNOWN_TYPE, "unknown expr type");
@@ -293,6 +296,21 @@ xl_ast_expr_new_apply(
 }
 
 no_ignore xl_error
+xl_ast_expr_new_lambda(
+        struct xl_ast_expr **expr,
+        struct xl_ast_arg_list *args,
+        struct xl_ast_expr *body)
+{
+        check_alloc(*expr, 1, struct xl_ast_expr);
+
+        (*expr)->expr_type = EXPR_LAMBDA;
+        (*expr)->lambda.args = args;
+        (*expr)->lambda.body = body;
+
+        return OK;
+}
+
+no_ignore xl_error
 xl_ast_expr_new_atom(
         struct xl_ast_expr **expr,
         struct xl_ast_atom *value)
@@ -366,7 +384,7 @@ xl_ast_type_expr_new_atom(
 {
         check_alloc(*expr, 1, struct xl_ast_type_expr);
         (*expr)->name = type_name;
-        (*expr)->expr_type = EXPR_ATOM;
+        (*expr)->type_expr_type = TYPE_EXPR_ATOM;
         return OK;
 }
 
@@ -377,8 +395,30 @@ xl_ast_type_expr_new_apply(
         struct xl_ast_type_expr *tail)
 {
         check_alloc(*expr, 1, struct xl_ast_type_expr);
-        (*expr)->expr_type = EXPR_APPLY;
+        (*expr)->type_expr_type = TYPE_EXPR_APPLY;
         (*expr)->apply.head = head;
         (*expr)->apply.tail = tail;
+        return OK;
+}
+
+no_ignore xl_error
+xl_ast_arg_list_new_empty(
+        struct xl_ast_arg_list **arg_list)
+{
+        check_alloc(*arg_list, 1, struct xl_ast_arg_list);
+        (*arg_list)->name = NULL;
+        (*arg_list)->next = NULL;
+        return OK;
+}
+
+no_ignore xl_error
+xl_ast_arg_list_new_pushl(
+        struct xl_ast_arg_list **arg_list,
+        char *head,
+        struct xl_ast_arg_list *tail)
+{
+        check_alloc(*arg_list, 1, struct xl_ast_arg_list);
+        (*arg_list)->name = head;
+        (*arg_list)->next = tail;
         return OK;
 }

@@ -50,18 +50,21 @@ yyerror(struct xl_ast *ast, void *scanner, const char *err)
         struct xl_ast_expr *expr;
         struct xl_ast_atom *atom;
         struct xl_ast_type_expr *type_expr;
+        struct xl_ast_arg_list *arg_list;
 }
 
 %token <token> BIND TYPE IMPLIES GOES_TO LAMBDA IS OPEN_PAR CLOSE_PAR IMMEDIATE
+%token <token> END
 %token <integer> INTEGER
 %token <floating> NUMBER
 %token <string> NAME TYPE_NAME STRING
 
 %type <ast> prog bind_list
 %type <binding> binding
-%type <expr> expr immediate
+%type <expr> expr immediate top_expr
 %type <type_expr> type_expr type_atom
 %type <atom> atom
+%type <arg_list> arg_list
 
 %define api.pure full
 %define api.push-pull push
@@ -89,27 +92,45 @@ bind_list:
 ;
 
 binding:
-  BIND NAME IS expr
+  BIND NAME IS top_expr
         { wrap_err(xl_ast_binding_new(&$$, $2, $4, NULL)); }
-| BIND NAME TYPE type_expr IS expr
+| BIND NAME TYPE type_expr IS top_expr
         { wrap_err(xl_ast_binding_new(&$$, $2, $6, $4)); }
 ;
 
 immediate:
-  IMMEDIATE IS expr
+  IMMEDIATE IS top_expr
         { $$ = $3; }
+
+/* top_expr is a "top expression" in the parse tree; these are things that can't
+ * be subexpressions without first being wrapped in parentheses. Without the
+ * parentheses around a top expression inside another expression, the grammar is
+ * ambiguous. */
+top_expr:
+  expr
+        { $$ = $1; }
+| LAMBDA arg_list GOES_TO top_expr
+        { wrap_err(xl_ast_expr_new_lambda(&$$, $2, $4)); }
+
 
 expr:
   expr atom
         { struct xl_ast_expr *tail;
           wrap_err(xl_ast_expr_new_atom(&tail, $2));
           wrap_err(xl_ast_expr_new_apply(&$$, $1, tail)); }
-| expr OPEN_PAR expr CLOSE_PAR
+| expr OPEN_PAR top_expr CLOSE_PAR
         { wrap_err(xl_ast_expr_new_apply(&$$, $1, $3)); }
 | atom
         { wrap_err(xl_ast_expr_new_atom(&$$, $1)); }
-| OPEN_PAR expr CLOSE_PAR
+| OPEN_PAR top_expr CLOSE_PAR
         { $$ = $2; }
+;
+
+arg_list:
+  %empty
+        { wrap_err(xl_ast_arg_list_new_empty(&$$)); }
+| NAME arg_list
+        { wrap_err(xl_ast_arg_list_new_pushl(&$$, $1, $2)); }
 ;
 
 atom:
@@ -123,6 +144,7 @@ atom:
         { wrap_err(xl_ast_atom_new_number(&$$, $1)); }
 | STRING
         { wrap_err(xl_ast_atom_new_string(&$$, $1)); }
+;
 
 type_expr:
   type_atom
