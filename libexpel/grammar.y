@@ -54,7 +54,6 @@ yyerror(struct xl_ast *ast, void *scanner, const char *err)
 }
 
 %token <token> BIND TYPE IMPLIES GOES_TO LAMBDA IS OPEN_PAR CLOSE_PAR IMMEDIATE
-%token <token> END
 %token <integer> INTEGER
 %token <floating> NUMBER
 %token <string> NAME TYPE_NAME STRING
