@@ -523,7 +523,6 @@ _run_single_pass(struct xl_scheduler *s)
         err = xl_schedule_dump(s);
         if (err != OK)
                 return err;
-        getchar();
 #endif
 
         /* Now all of the ready jobs are in the ready pile, so we just have to
