@@ -424,11 +424,12 @@ xl_schedule_dump(struct xl_scheduler *s)
                 printf("\t%s\n", buf);
                 free(buf);
 
-                printf("\t\twait on d1 %d d2 %d d3 %d eval %d\n",
+                printf("\t\twait on d1 %d d2 %d d3 %d eval %d data %d\n",
                         !!(u->node->flags & XL_DAGC_FLAG_WAIT_D1),
                         !!(u->node->flags & XL_DAGC_FLAG_WAIT_D2),
                         !!(u->node->flags & XL_DAGC_FLAG_WAIT_D3),
-                        !!(u->node->flags & XL_DAGC_FLAG_WAIT_EVAL));
+                        !!(u->node->flags & XL_DAGC_FLAG_WAIT_EVAL),
+                        !!(u->node->flags & XL_DAGC_FLAG_WAIT_DATA));
 
                 err = xl_dagc_get_deps(&d1, &d2, &d3, u->node);
                 if (err != OK)
@@ -465,6 +466,7 @@ xl_schedule_dump(struct xl_scheduler *s)
                 buf = xl_explain_node(u->node);
                 printf("\t%s\n", buf);
                 free(buf);
+                u = u->next;
         }
 
         return OK;

@@ -143,6 +143,9 @@ _assign_lambda(
 {
         struct xl_graph_builder builder;
         struct xl_dagc *subgraph;
+        struct xl_ast_arg_list *t;
+        struct xl_dagc_input *input_node;
+        size_t i;
         xl_error err;
 
         err = xl_bdagc_init(&builder);
@@ -150,7 +153,34 @@ _assign_lambda(
                 return err;
 
         xl_assert(expr->lambda.args != NULL);
-        xl_assert(expr->lambda.args->name == NULL);
+        t = expr->lambda.args;
+        i = 0;
+        while (t->name != NULL)
+        {
+                t->arg_num = i++;
+
+                input_node = calloc(1, sizeof(struct xl_dagc_input));
+                if (input_node == NULL)
+                        return xl_raise(ERR_NO_MEMORY, "input node alloc");
+                input_node->head.node_type = DAGC_NODE_INPUT;
+                /* TODO */
+                input_node->head.id = 0;
+                input_node->arg_num = t->arg_num;
+
+                err = xl_value_new(&input_node->required_type);
+                if (err != OK)
+                        return err;
+                err = xl_type_word(input_node->required_type);
+                if (err != OK)
+                        return err;
+
+                err = xl_bdagc_push_node(
+                        &builder, (struct xl_dagc_node *) input_node);
+                if (err != OK)
+                        return err;
+
+                t = t->next;
+        }
 
         err = _assign_nodes(&builder, expr->lambda.body);
         if (err != OK)
@@ -162,6 +192,9 @@ _assign_lambda(
         err = xl_bdagc_build(&subgraph, &builder);
         if (err != OK)
                 return err;
+
+        /* we let the node take the reference that we get by default. */
+        xl_assert(subgraph->refcount == 1);
 
         n->node.node_type = DAGC_NODE_CONST;
         n->node.id = 0;

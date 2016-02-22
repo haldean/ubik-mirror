@@ -56,6 +56,7 @@ struct xl_ast_atom
 struct xl_ast_arg_list
 {
         char *name;
+        xl_word arg_num;
         struct xl_ast_arg_list *next;
 };
 
