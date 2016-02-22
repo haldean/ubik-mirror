@@ -1,4 +1,5 @@
 : l
-    = \ x -> "hello"
+    ^ Word -> String
+    = \ x -> "hello\n"
 
 != emit (l 10)
