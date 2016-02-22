@@ -222,11 +222,11 @@ xl_release(void *v);
 no_ignore xl_error
 xl_load(struct xl_dagc ***out, size_t *n_graphs, struct xl_stream *sp);
 
-/* Saves a graph to a stream.
+/* Saves a list of graphs and all accessible subgraphs to a stream.
  *
  * Returns OK on success, or a nonzero error word. */
 no_ignore xl_error
-xl_save(struct xl_stream *sp, struct xl_dagc *in);
+xl_save(struct xl_stream *sp, struct xl_dagc **graphs, size_t n);
 
 /* Loads a tree from a stream.
  *
