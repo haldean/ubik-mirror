@@ -306,7 +306,7 @@ xl_resolve_uris(
 }
 
 no_ignore static xl_error
-_add_setter(
+_add_modinit_setter(
         void *vbuilder,
         struct xl_env *env,
         struct xl_uri *uri)
@@ -376,7 +376,7 @@ xl_create_modinit(
         if (err != OK)
                 return err;
 
-        err = xl_env_iterate(_add_setter, local_env, &builder);
+        err = xl_env_iterate(_add_modinit_setter, local_env, &builder);
         if (err != OK)
                 return err;
 
