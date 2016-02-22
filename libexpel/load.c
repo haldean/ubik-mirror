@@ -1,5 +1,5 @@
 /*
- * persist.c: save and load expel trees
+ * load.c: load expel data from streams
  * Copyright (C) 2015, Haldean Brown
  *
  * This program is free software; you can redistribute it and/or modify
@@ -28,37 +28,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define CURRENT_ENCODING_VERSION 1
-
 /* Reads sizeof(x) bytes into x from sp. */
 #define READ_INTO(x, sp) \
         if (xl_stream_read(&x, sp, sizeof(x)) != sizeof(x)) \
                 return xl_raise(ERR_NO_DATA, #x);
-
-/*
- * Trees have a single binary storage format that is used for network
- * operations and for on-disk storage. The format begins with a header, and
- * then contains a single encoded tree.
- *
- * The header has the following fields:
- *
- *         Byte index   Field
- *                0-4   The constant bytes 0x65 0x78 0x70 0x6C ("expl")
- *                5-8   The version number of the encoding format, as a
- *                      little-endian 4-byte unsigned integer.
- *
- * The tree encoding then proceeds as follows: Begin with the root of the
- * tree to be encoded. The node's 8-bit tag is written to the stream,
- * followed by the encoding of its left child, then its right child. If a
- * child is a value, the value is written to the stream in little-endian
- * format as an 8-byte integer. If a child is a node, recurse and apply
- * this same operation.
- *
- * Tree decoding proceeds in much the same way: Take a byte off of the head
- * of the stream. If the byte indicates the left is a node, recurse. If it
- * indicates the left is a value, read the value as a little-endian 8-byte
- * integer. Repeat the same operation for the right node.
- */
 
 no_ignore xl_error
 xl_value_load(struct xl_value *out, struct xl_stream *sp)
@@ -133,46 +106,6 @@ xl_value_load(struct xl_value *out, struct xl_stream *sp)
          * won't try to free children that were never populated when we exit
          * early on an error condition. */
         out->tag = tag;
-        return OK;
-}
-
-no_ignore xl_error
-xl_value_save(struct xl_stream *sp, struct xl_value *in)
-{
-        xl_tag tag;
-        xl_word val;
-        xl_error err;
-
-        tag = htons(in->tag);
-        if (xl_stream_write(sp, &tag, sizeof(xl_tag)) != sizeof(xl_tag))
-                return xl_raise(ERR_WRITE_FAILED, "value tag");
-
-        if (in->tag & TAG_LEFT_WORD)
-        {
-                val = htonw(in->left.w);
-                if (xl_stream_write(sp, &val, sizeof(xl_word)) != sizeof(xl_word))
-                        return xl_raise(ERR_WRITE_FAILED, "left value");
-        }
-        else
-        {
-                err = xl_value_save(sp, in->left.t);
-                if (err)
-                        return err;
-        }
-
-        if (in->tag & TAG_RIGHT_WORD)
-        {
-                val = htonw(in->right.w);
-                if (xl_stream_write(sp, &val, sizeof(xl_word)) != sizeof(xl_word))
-                        return xl_raise(ERR_WRITE_FAILED, "right word");
-        }
-        else
-        {
-                err = xl_value_save(sp, in->right.t);
-                if (err)
-                        return err;
-        }
-
         return OK;
 }
 

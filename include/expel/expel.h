@@ -57,6 +57,9 @@ typedef long double xl_float;
  * a specific resource yet. */
 #define TAG_GRAPH_UNRESOLVED  0x0010
 
+/* The maximum Expel bytecode version that this library supports. */
+#define CURRENT_ENCODING_VERSION 1
+
 /* Private data structures referenced by public data structures. */
 struct xl_alloc_page;
 struct xl_env;
