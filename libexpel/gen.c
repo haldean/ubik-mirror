@@ -30,11 +30,16 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* Note that the known_type argument on here is a total hack, and is a
+ * workaround for the lack of type propagation available in the current
+ * compiler. It is used specifically for generating lambda type signatures so we
+ * can assign required types to input nodes. */
 no_ignore static xl_error
 _assign_nodes(
         struct xl_graph_builder *builder,
         struct xl_ast_expr *expr,
-        struct xl_ast_arg_list *args_in_scope);
+        struct xl_ast_arg_list *args_in_scope,
+        struct xl_ast_type_expr *known_type);
 
 /* Returns true if the given name is in the arg list, and sets input_node to the
  * input node corresponding to the argument in the list. */
@@ -171,7 +176,8 @@ _assign_apply_node(
 no_ignore static xl_error
 _assign_lambda(
         union xl_dagc_any_node *n,
-        struct xl_ast_expr *expr)
+        struct xl_ast_expr *expr,
+        struct xl_ast_type_expr *known_type)
 {
         struct xl_graph_builder builder;
         struct xl_dagc *subgraph;
@@ -189,6 +195,8 @@ _assign_lambda(
         i = 0;
         while (t->name != NULL)
         {
+                xl_assert(known_type != NULL);
+
                 input_node = calloc(1, sizeof(struct xl_dagc_input));
                 if (input_node == NULL)
                         return xl_raise(ERR_NO_MEMORY, "input node alloc");
@@ -200,9 +208,18 @@ _assign_lambda(
                 err = xl_value_new(&input_node->required_type);
                 if (err != OK)
                         return err;
-                err = xl_type_word(input_node->required_type);
+                err = xl_type_builtin_from_name(
+                        input_node->required_type,
+                        known_type->type_expr_type == TYPE_EXPR_APPLY
+                                ? known_type->apply.head->name
+                                : known_type->name);
                 if (err != OK)
                         return err;
+
+                if (known_type->type_expr_type == TYPE_EXPR_APPLY)
+                        known_type = known_type->apply.tail;
+                else
+                        known_type = NULL;
 
                 err = xl_bdagc_push_node(
                         &builder, (struct xl_dagc_node *) input_node);
@@ -213,7 +230,8 @@ _assign_lambda(
                 t = t->next;
         }
 
-        err = _assign_nodes(&builder, expr->lambda.body, expr->lambda.args);
+        err = _assign_nodes(
+                &builder, expr->lambda.body, expr->lambda.args, NULL);
         if (err != OK)
                 return err;
 
@@ -241,7 +259,8 @@ no_ignore static xl_error
 _assign_nodes(
         struct xl_graph_builder *builder,
         struct xl_ast_expr *expr,
-        struct xl_ast_arg_list *args_in_scope)
+        struct xl_ast_arg_list *args_in_scope,
+        struct xl_ast_type_expr *known_type)
 {
         union xl_dagc_any_node *n;
         xl_error err;
@@ -257,11 +276,13 @@ _assign_nodes(
                 break;
 
         case EXPR_APPLY:
-                err = _assign_nodes(builder, expr->apply.head, args_in_scope);
+                err = _assign_nodes(
+                        builder, expr->apply.head, args_in_scope, NULL);
                 if (err != OK)
                         return err;
 
-                err = _assign_nodes(builder, expr->apply.tail, args_in_scope);
+                err = _assign_nodes(
+                        builder, expr->apply.tail, args_in_scope, NULL);
                 if (err != OK)
                         return err;
 
@@ -271,7 +292,7 @@ _assign_nodes(
                 break;
 
         case EXPR_LAMBDA:
-                err = _assign_lambda(n, expr);
+                err = _assign_lambda(n, expr, known_type);
                 if (err != OK)
                         return err;
                 break;
@@ -306,7 +327,7 @@ xl_compile_binding(
         if (err != OK)
                 return err;
 
-        err = _assign_nodes(&builder, binding->expr, NULL);
+        err = _assign_nodes(&builder, binding->expr, NULL, binding->type_expr);
         if (err != OK)
                 return err;
 
@@ -496,7 +517,7 @@ xl_create_modinit(
 
         if (ast->immediate != NULL)
         {
-                err = _assign_nodes(&builder, ast->immediate, NULL);
+                err = _assign_nodes(&builder, ast->immediate, NULL, NULL);
                 if (err != OK)
                         return err;
                 ast->immediate->gen->is_terminal = true;
