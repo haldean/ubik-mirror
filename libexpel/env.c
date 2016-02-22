@@ -350,6 +350,8 @@ _set(
                         watch->prev->next = watch->next;
                 if (watch->next != NULL)
                         watch->next->prev = watch->prev;
+                if (env->watches == watch)
+                        env->watches = watch->prev;
                 watch = watch->prev;
                 free(to_free);
         }
