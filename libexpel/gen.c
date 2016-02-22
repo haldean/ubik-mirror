@@ -33,13 +33,36 @@
 no_ignore static xl_error
 _assign_nodes(
         struct xl_graph_builder *builder,
-        struct xl_ast_expr *expr);
+        struct xl_ast_expr *expr,
+        struct xl_ast_arg_list *args_in_scope);
+
+/* Returns true if the given name is in the arg list, and sets input_node to the
+ * input node corresponding to the argument in the list. */
+bool
+_name_in_arg_list(
+        struct xl_dagc_node **input_node,
+        char *name,
+        struct xl_ast_arg_list *arg_list)
+{
+        while (arg_list != NULL && arg_list->name != NULL)
+        {
+                if (strcmp(arg_list->name, name) == 0)
+                {
+                        *input_node = arg_list->gen;
+                        return true;
+                }
+                arg_list = arg_list->next;
+        }
+        return false;
+}
 
 no_ignore static xl_error
 _assign_atom_node(
         union xl_dagc_any_node *n,
-        struct xl_ast_expr *expr)
+        struct xl_ast_expr *expr,
+        struct xl_ast_arg_list *args_in_scope)
 {
+        struct xl_dagc_node *referrent;
         xl_error err;
 
         switch (expr->atom->atom_type)
@@ -82,6 +105,15 @@ _assign_atom_node(
                 return OK;
 
         case ATOM_NAME:
+                if (_name_in_arg_list(
+                        &referrent, expr->atom->str, args_in_scope))
+                {
+                        n->node.node_type = DAGC_NODE_REF;
+                        n->node.id = 0;
+                        n->as_ref.referrent = referrent;
+                        return OK;
+                }
+
                 n->node.node_type = DAGC_NODE_LOAD;
                 n->node.id = 0;
 
@@ -157,15 +189,13 @@ _assign_lambda(
         i = 0;
         while (t->name != NULL)
         {
-                t->arg_num = i++;
-
                 input_node = calloc(1, sizeof(struct xl_dagc_input));
                 if (input_node == NULL)
                         return xl_raise(ERR_NO_MEMORY, "input node alloc");
                 input_node->head.node_type = DAGC_NODE_INPUT;
                 /* TODO */
                 input_node->head.id = 0;
-                input_node->arg_num = t->arg_num;
+                input_node->arg_num = i++;
 
                 err = xl_value_new(&input_node->required_type);
                 if (err != OK)
@@ -178,11 +208,12 @@ _assign_lambda(
                         &builder, (struct xl_dagc_node *) input_node);
                 if (err != OK)
                         return err;
+                t->gen = (struct xl_dagc_node *) input_node;
 
                 t = t->next;
         }
 
-        err = _assign_nodes(&builder, expr->lambda.body);
+        err = _assign_nodes(&builder, expr->lambda.body, expr->lambda.args);
         if (err != OK)
                 return err;
 
@@ -209,7 +240,8 @@ _assign_lambda(
 no_ignore static xl_error
 _assign_nodes(
         struct xl_graph_builder *builder,
-        struct xl_ast_expr *expr)
+        struct xl_ast_expr *expr,
+        struct xl_ast_arg_list *args_in_scope)
 {
         union xl_dagc_any_node *n;
         xl_error err;
@@ -219,17 +251,17 @@ _assign_nodes(
         switch (expr->expr_type)
         {
         case EXPR_ATOM:
-                err = _assign_atom_node(n, expr);
+                err = _assign_atom_node(n, expr, args_in_scope);
                 if (err != OK)
                         return err;
                 break;
 
         case EXPR_APPLY:
-                err = _assign_nodes(builder, expr->apply.head);
+                err = _assign_nodes(builder, expr->apply.head, args_in_scope);
                 if (err != OK)
                         return err;
 
-                err = _assign_nodes(builder, expr->apply.tail);
+                err = _assign_nodes(builder, expr->apply.tail, args_in_scope);
                 if (err != OK)
                         return err;
 
@@ -274,7 +306,7 @@ xl_compile_binding(
         if (err != OK)
                 return err;
 
-        err = _assign_nodes(&builder, binding->expr);
+        err = _assign_nodes(&builder, binding->expr, NULL);
         if (err != OK)
                 return err;
 
@@ -464,7 +496,7 @@ xl_create_modinit(
 
         if (ast->immediate != NULL)
         {
-                err = _assign_nodes(&builder, ast->immediate);
+                err = _assign_nodes(&builder, ast->immediate, NULL);
                 if (err != OK)
                         return err;
                 ast->immediate->gen->is_terminal = true;
