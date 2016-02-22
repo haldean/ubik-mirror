@@ -408,56 +408,66 @@ _is_ready(struct xl_exec_unit *e)
         return !(e->node->flags & XL_DAGC_WAIT_MASK);
 }
 
+no_ignore static xl_error
+_dump_exec_unit(struct xl_exec_unit *u)
+{
+        struct xl_dagc_node *d1, *d2, *d3;
+        char *buf;
+        xl_error err;
+
+        buf = xl_explain_node(u->node);
+        printf("\t%s\n", buf);
+        free(buf);
+        printf("\t\tenv @%hx ", (short)((uintptr_t) u->env));
+        printf("parent @%hx\n", (short)((uintptr_t) u->env->parent));
+
+        printf("\t\twait on d1 %d d2 %d d3 %d eval %d data %d\n",
+                !!(u->node->flags & XL_DAGC_FLAG_WAIT_D1),
+                !!(u->node->flags & XL_DAGC_FLAG_WAIT_D2),
+                !!(u->node->flags & XL_DAGC_FLAG_WAIT_D3),
+                !!(u->node->flags & XL_DAGC_FLAG_WAIT_EVAL),
+                !!(u->node->flags & XL_DAGC_FLAG_WAIT_DATA));
+
+        err = xl_dagc_get_deps(&d1, &d2, &d3, u->node);
+        if (err != OK)
+                return err;
+
+        if (d1 != NULL)
+        {
+                buf = xl_explain_node(d1);
+                printf("\t\td1: %s\n", buf);
+                free(buf);
+        }
+
+        if (d2 != NULL)
+        {
+                buf = xl_explain_node(d2);
+                printf("\t\td2: %s\n", buf);
+                free(buf);
+        }
+
+        if (d3 != NULL)
+        {
+                buf = xl_explain_node(d3);
+                printf("\t\td3: %s\n", buf);
+                free(buf);
+        }
+        return OK;
+}
+
 no_ignore xl_error
 xl_schedule_dump(struct xl_scheduler *s)
 {
-        struct xl_dagc_node *d1, *d2, *d3;
         struct xl_exec_unit *u;
-        char *buf;
         xl_error err;
 
         printf("scheduler dump\nwaiting jobs:\n");
         u = s->wait;
         while (u != NULL)
         {
-                buf = xl_explain_node(u->node);
-                printf("\t%s\n", buf);
-                free(buf);
-                printf("\t\tenv @%hx ", (short)((uintptr_t) u->env));
-                printf("parent @%hx\n", (short)((uintptr_t) u->env->parent));
-
-                printf("\t\twait on d1 %d d2 %d d3 %d eval %d data %d\n",
-                        !!(u->node->flags & XL_DAGC_FLAG_WAIT_D1),
-                        !!(u->node->flags & XL_DAGC_FLAG_WAIT_D2),
-                        !!(u->node->flags & XL_DAGC_FLAG_WAIT_D3),
-                        !!(u->node->flags & XL_DAGC_FLAG_WAIT_EVAL),
-                        !!(u->node->flags & XL_DAGC_FLAG_WAIT_DATA));
-
-                err = xl_dagc_get_deps(&d1, &d2, &d3, u->node);
+                err = _dump_exec_unit(u);
                 if (err != OK)
                         return err;
-
-                if (d1 != NULL)
-                {
-                        buf = xl_explain_node(d1);
-                        printf("\t\td1: %s\n", buf);
-                        free(buf);
-                }
-
-                if (d2 != NULL)
-                {
-                        buf = xl_explain_node(d2);
-                        printf("\t\td2: %s\n", buf);
-                        free(buf);
-                }
-
-                if (d3 != NULL)
-                {
-                        buf = xl_explain_node(d3);
-                        printf("\t\td3: %s\n", buf);
-                        free(buf);
-                }
-
                 u = u->next;
         }
 
@@ -465,11 +475,9 @@ xl_schedule_dump(struct xl_scheduler *s)
         u = s->ready;
         while (u != NULL)
         {
-                buf = xl_explain_node(u->node);
-                printf("\t%s\n", buf);
-                free(buf);
-                printf("\t\tenv @%hx ", (short)((uintptr_t) u->env));
-                printf("parent @%hx\n", (short)((uintptr_t) u->env->parent));
+                err = _dump_exec_unit(u);
+                if (err != OK)
+                        return err;
                 u = u->next;
         }
 
