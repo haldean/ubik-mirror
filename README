@@ -337,3 +337,62 @@ Expel bytecode blobs may have arbitrary data following the data encoded
 by the standard; conforming parsers will ignore the data that follows
 the encoded graphs. This is provided as a means for tools to attach
 metadata onto the end of the bytecode if so desired.
+
+Code generation --------------------------------------------------------
+
+The parser and code generator for Expel is distributed as part of the
+Expel library; a sample interpreter can be built and executed using:
+
+        $ make build/interpreter
+        $ build/interpreter path/to/file.xl
+
+A compiler that saves bytecode for execution by the runexpel tool is
+forthcoming (pending the implementation of DAGC-to-bytecode conversion).
+
+Code generation begins by lexing and parsing the provided source code,
+using the lexer and parser given in token.l and grammar.y. At the end of
+parsing, an in-memory representation of the AST is available. That AST
+is walked and DAGC nodes are attached to each AST element. Graphs are
+then built from these elements and a DAGC structure is emitted.
+
+In addition, each compiled file contains a "modinit", which is a DAGC
+to be executed upon the loading of the file. This modinit contains
+everything required to add the contents of the module to an environment,
+as well as any code the user has specified should be run upon module
+load using the immediate operator. Special care must be taken when
+calling the modinit to ensure that it is not called with an ephemeral
+child environment, which will cause the modue's contents to be
+discarded. The convention held by the compiler is that the modinit is
+always the first graph returned by the compilation phase.
+
+When assigning nodes to AST elements, the first applicable rule applies:
+
+1. Constant AST atoms (strings, integers, floats) are assigned a CONST
+   node with the given value.
+     a. At the moment, no common subexpression elimination is in place
+        to allow constant nodes with the same value to point at the same
+        value in-memory.
+2. AST atoms that are names, where the name is in the argument list that
+   is relevant in that point in the source, are assigned REF nodes whose
+   referrent is the input node corresponding to that name.
+3. AST atoms that are names are assigned LOAD nodes whose URI has the
+   given name and the UNKNOWN scope.
+4. AST expressions that represent application are assigned an APPLY node
+   with the func and args of the appropriate AST substructures.
+5. Bindings in the AST are assigned a STORE node with the location given
+   by the name of the binding and the LOCAL scope, and the value given
+   by the appropriate AST substructure.
+6. Lambda statements in the AST are assigned a CONST node that points at
+   the graph represented by the lambda's body (the "lambda subgraph").
+   The lambda subgraph contains one input node for each item in the
+   lambda statement's argument list.
+
+After nodes have been assigned to all AST elements, all URIs present
+within the combined AST are resolved. At the end of this process, there
+do not exist any URIs in the graph structures with an UNKNOWN scope.
+When resolving URIs, the first applicable rule applies:
+
+1. URIs whose name occurs as a binding in the module that is currently
+   being compiled are assigned the LOCAL scope.
+2. URIs whose name occurs as a binding in the native library are
+   assigned NATIVE scope.

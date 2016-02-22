@@ -17,6 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include "expel/assert.h"
 #include "expel/bdagc.h"
 #include "expel/dagc.h"
 #include "expel/env.h"
@@ -28,6 +29,11 @@
 
 #include <stdlib.h>
 #include <string.h>
+
+no_ignore static xl_error
+_assign_nodes(
+        struct xl_graph_builder *builder,
+        struct xl_ast_expr *expr);
 
 no_ignore static xl_error
 _assign_atom_node(
@@ -131,6 +137,43 @@ _assign_apply_node(
 }
 
 no_ignore static xl_error
+_assign_lambda(
+        union xl_dagc_any_node *n,
+        struct xl_ast_expr *expr)
+{
+        struct xl_graph_builder builder;
+        struct xl_dagc *subgraph;
+        xl_error err;
+
+        err = xl_bdagc_init(&builder);
+        if (err != OK)
+                return err;
+
+        xl_assert(expr->lambda.args != NULL);
+        xl_assert(expr->lambda.args->name == NULL);
+
+        err = _assign_nodes(&builder, expr->lambda.body);
+        if (err != OK)
+                return err;
+
+        builder.result = expr->lambda.body->gen;
+        builder.result->is_terminal = true;
+
+        err = xl_bdagc_build(&subgraph, &builder);
+        if (err != OK)
+                return err;
+
+        n->node.node_type = DAGC_NODE_CONST;
+        n->node.id = 0;
+        n->as_const.value.graph = subgraph;
+        err = xl_value_new(&n->as_const.type);
+        if (err != OK)
+                return err;
+        /* TODO: lambda type here. */
+        return OK;
+}
+
+no_ignore static xl_error
 _assign_nodes(
         struct xl_graph_builder *builder,
         struct xl_ast_expr *expr)
@@ -158,6 +201,12 @@ _assign_nodes(
                         return err;
 
                 err = _assign_apply_node(n, expr);
+                if (err != OK)
+                        return err;
+                break;
+
+        case EXPR_LAMBDA:
+                err = _assign_lambda(n, expr);
                 if (err != OK)
                         return err;
                 break;
@@ -399,7 +448,7 @@ xl_create_modinit(
 no_ignore xl_error
 xl_compile(
         struct xl_dagc ***graphs,
-        size_t *n_graphs, 
+        size_t *n_graphs,
         struct xl_ast *ast)
 {
         size_t i;

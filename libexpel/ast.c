@@ -57,6 +57,22 @@ _free_atom(struct xl_ast_atom *atom)
 }
 
 no_ignore static xl_error
+_free_arg_list(struct xl_ast_arg_list *arg_list)
+{
+        struct xl_ast_arg_list *next;
+
+        while (arg_list != NULL)
+        {
+                next = arg_list->next;
+                if (arg_list->name != NULL)
+                        free(arg_list->name);
+                free(arg_list);
+                arg_list = next;
+        }
+        return OK;
+}
+
+no_ignore static xl_error
 _free_expr(struct xl_ast_expr *expr)
 {
         xl_error err;
@@ -71,6 +87,12 @@ _free_expr(struct xl_ast_expr *expr)
                 if (err != OK)
                         return err;
                 err = _free_expr(expr->apply.tail);
+                break;
+        case EXPR_LAMBDA:
+                err = _free_expr(expr->lambda.body);
+                if (err != OK)
+                        return err;
+                err = _free_arg_list(expr->lambda.args);
                 break;
         default:
                 return xl_raise(ERR_BAD_TYPE, "unknown expr type in free");
