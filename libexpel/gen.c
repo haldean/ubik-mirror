@@ -241,6 +241,7 @@ _assign_lambda(
         err = xl_bdagc_build(&subgraph, &builder);
         if (err != OK)
                 return err;
+        subgraph->tag |= TAG_GRAPH_UNRESOLVED;
 
         /* we let the node take the reference that we get by default. */
         xl_assert(subgraph->refcount == 1);
@@ -337,6 +338,7 @@ xl_compile_binding(
         err = xl_bdagc_build(&graphs[n_graphs], &builder);
         if (err != OK)
                 return err;
+        graphs[n_graphs]->tag |= TAG_GRAPH_UNRESOLVED;
 
         uri = calloc(1, sizeof(struct xl_uri));
         if (uri == NULL)
@@ -427,12 +429,17 @@ xl_resolve_uris(
         struct xl_dagc_const *cons;
         struct xl_uri *new_uri;
 
+        /* Mark the graph resolved here, so that self-references do not cause us
+         * to go into an infinite loop. */
+        graph->tag &= ~TAG_GRAPH_UNRESOLVED;
+
         for (i = 0; i < graph->n; i++)
         {
                 if (graph->nodes[i]->node_type == DAGC_NODE_CONST)
                 {
                         cons = (struct xl_dagc_const *) graph->nodes[i];
-                        if (*cons->value.tag & TAG_GRAPH)
+                        if (*cons->value.tag
+                                & (TAG_GRAPH | TAG_GRAPH_UNRESOLVED))
                         {
                                 err = xl_resolve_uris(
                                         cons->value.graph, local_env);
@@ -540,6 +547,7 @@ xl_create_modinit(
         err = xl_bdagc_build(modinit, &builder);
         if (err != OK)
                 return err;
+        (*modinit)->tag |= TAG_GRAPH_UNRESOLVED;
 
         return OK;
 }

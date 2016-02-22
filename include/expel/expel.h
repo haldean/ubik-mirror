@@ -38,21 +38,24 @@ typedef long double xl_float;
 #error "word size and float size do not match"
 #endif
 
-#define TAG_TYPE_MASK     0xF000
-#define TAG_VALUE         0x1000
-#define TAG_GRAPH         0x2000
-#define TAG_URI           0x3000
+#define TAG_TYPE_MASK         0xF000
+#define TAG_VALUE             0x1000
+#define TAG_GRAPH             0x2000
+#define TAG_URI               0x3000
 
 /* Tree tags */
-#define TAG_LEFT_NODE     0x0010
-#define TAG_LEFT_WORD     0x0020
-#define TAG_LEFT_GRAPH    0x0040
-#define TAG_RIGHT_NODE    0x0001
-#define TAG_RIGHT_WORD    0x0002
-#define TAG_RIGHT_GRAPH   0x0004
+#define TAG_LEFT_NODE         0x0010
+#define TAG_LEFT_WORD         0x0020
+#define TAG_LEFT_GRAPH        0x0040
+#define TAG_RIGHT_NODE        0x0001
+#define TAG_RIGHT_WORD        0x0002
+#define TAG_RIGHT_GRAPH       0x0004
 
 /* Graph tags */
-#define TAG_GRAPH_NATIVE  0x0001
+#define TAG_GRAPH_NATIVE      0x0001
+/* an unresolved graph is one that contains URIs that have not been resolved to
+ * a specific resource yet. */
+#define TAG_GRAPH_UNRESOLVED  0x0010
 
 /* Private data structures referenced by public data structures. */
 struct xl_alloc_page;
