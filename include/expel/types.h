@@ -67,3 +67,8 @@ xl_type_tuple(
         struct xl_value *product,
         struct xl_value **field_types,
         size_t n_field_types);
+
+no_ignore xl_error
+xl_type_builtin_from_name(
+        struct xl_value *value,
+        char *name);

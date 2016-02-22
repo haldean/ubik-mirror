@@ -23,6 +23,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 bool
 xl_type_satisfied(
@@ -178,4 +179,25 @@ xl_type_tuple(
         product->right.w = 0;
 
         return OK;
+}
+
+no_ignore xl_error
+xl_type_builtin_from_name(
+        struct xl_value *value,
+        char *name)
+{
+        xl_error err;
+
+        if (strcmp(name, "Word") == 0)
+        {
+                err = xl_type_word(value);
+                return err;
+        }
+        if (strcmp(name, "String") == 0)
+        {
+                err = xl_type_string(value);
+                return err;
+        }
+
+        return xl_raise(ERR_ABSENT, "type name not builtin");
 }
