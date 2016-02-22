@@ -336,7 +336,10 @@ _set(
         while (watch != NULL)
         {
                 if (!xl_uri_eq(watch->uri, uri))
+                {
+                        watch = watch->prev;
                         continue;
+                }
 
                 err = watch->cb(watch->arg, env, watch->uri);
                 if (err != OK)
@@ -392,6 +395,8 @@ xl_env_watch(
         watcher->arg = callback_arg;
         watcher->prev = env->watches;
         watcher->next = NULL;
+        if (env->watches != NULL)
+                env->watches->next = watcher;
         env->watches = watcher;
 
         return OK;
