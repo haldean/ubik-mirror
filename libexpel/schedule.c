@@ -423,6 +423,8 @@ xl_schedule_dump(struct xl_scheduler *s)
                 buf = xl_explain_node(u->node);
                 printf("\t%s\n", buf);
                 free(buf);
+                printf("\t\tenv @%hx ", (short)((uintptr_t) u->env));
+                printf("parent @%hx\n", (short)((uintptr_t) u->env->parent));
 
                 printf("\t\twait on d1 %d d2 %d d3 %d eval %d data %d\n",
                         !!(u->node->flags & XL_DAGC_FLAG_WAIT_D1),
@@ -466,6 +468,8 @@ xl_schedule_dump(struct xl_scheduler *s)
                 buf = xl_explain_node(u->node);
                 printf("\t%s\n", buf);
                 free(buf);
+                printf("\t\tenv @%hx ", (short)((uintptr_t) u->env));
+                printf("parent @%hx\n", (short)((uintptr_t) u->env->parent));
                 u = u->next;
         }
 
