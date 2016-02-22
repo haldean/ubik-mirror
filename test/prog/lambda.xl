@@ -1,5 +1,5 @@
 # test for point-free and point-full function definitions
-# expected output is "171717"
+# expected output is "0x110x110x11"
 
 : add-7
         ^ Integer -> Integer
@@ -10,4 +10,4 @@
         = \ s1 s2 s3 -> concat s1 (concat s2 s3)
 
 : x = humanize (add-7 10)
-!= emit (three-string-concat x x x)
+!= emit (concat (three-string-concat x x x) "\n")
