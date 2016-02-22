@@ -458,6 +458,15 @@ xl_schedule_dump(struct xl_scheduler *s)
                 u = u->next;
         }
 
+        printf("ready jobs:\n");
+        u = s->ready;
+        while (u != NULL)
+        {
+                buf = xl_explain_node(u->node);
+                printf("\t%s\n", buf);
+                free(buf);
+        }
+
         return OK;
 }
 
@@ -507,6 +516,13 @@ _run_single_pass(struct xl_scheduler *s)
                         return err;
                 return xl_raise(ERR_DEADLOCK, "all jobs are waiting");
         }
+
+#ifdef XL_SCHEDULE_STEP
+        err = xl_schedule_dump(s);
+        if (err != OK)
+                return err;
+        getchar();
+#endif
 
         /* Now all of the ready jobs are in the ready pile, so we just have to
          * execute them. */

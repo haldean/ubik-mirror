@@ -35,9 +35,13 @@ LDOPTS := $(LDOPTS) -L$(DIST_DIR) -Wl,-z,relro,-z,now -pie
 
 asan := yes
 debug_schedule := no
+debug_step := no
 
 ifeq ($(debug_schedule),yes)
 COPTS += -DXL_SCHEDULE_DEBUG
+endif
+ifeq ($(debug_step),yes)
+COPTS += -DXL_SCHEDULE_STEP
 endif
 
 ifeq ($(type),release)
