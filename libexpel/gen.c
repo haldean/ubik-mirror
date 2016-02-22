@@ -424,10 +424,23 @@ xl_resolve_uris(
         size_t i;
         xl_error err;
         struct xl_dagc_load *load;
+        struct xl_dagc_const *cons;
         struct xl_uri *new_uri;
 
         for (i = 0; i < graph->n; i++)
         {
+                if (graph->nodes[i]->node_type == DAGC_NODE_CONST)
+                {
+                        cons = (struct xl_dagc_const *) graph->nodes[i];
+                        if (*cons->value.tag & TAG_GRAPH)
+                        {
+                                err = xl_resolve_uris(
+                                        cons->value.graph, local_env);
+                                if (err != OK)
+                                        return err;
+                        }
+                        continue;
+                }
                 if (graph->nodes[i]->node_type != DAGC_NODE_LOAD)
                         continue;
                 load = (struct xl_dagc_load *) graph->nodes[i];
