@@ -10,3 +10,4 @@ compiler error handling with line/char #
 dagc source maps
 cascading polymorphic functions for typeclasses
 proper compiler (i.e., save bytecode)
+input nodes shouldn't have required_type, it should be taken from graph type
