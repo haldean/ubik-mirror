@@ -187,6 +187,10 @@ are four kinds of nodes in a DAGC:
                     Reading native nodes in from expel bytecode is not
                     supported; this is only a construct used internally
                     in the runtime.
+        `ref`       This node has the value of another node in the
+                    graph, and is used primarily as a simplification in
+                    the code generation phase before it is optimized
+                    away.
 
 Each individual DAGC represents a function; each DAGC contains an input
 node for each of the function's arguments, and a single result node that
@@ -323,6 +327,11 @@ Nodes with node type `    cond` have the following body:
                0-7   Node index of the condition
               8-15   Node index of the true value
              16-23   Node index of the false value
+
+Nodes with node type `     ref` have the following body:
+
+        Byte index   Field
+               0-7   Node index of referrent node
 
 Expel bytecode blobs may have arbitrary data following the data encoded
 by the standard; conforming parsers will ignore the data that follows

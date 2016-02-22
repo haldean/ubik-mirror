@@ -274,6 +274,7 @@ _release_node(struct xl_dagc_node *node)
         case DAGC_NODE_APPLY:
         case DAGC_NODE_COND:
         case DAGC_NODE_NATIVE:
+        case DAGC_NODE_REF:
                 break;
 
         case DAGC_NODE_CONST:

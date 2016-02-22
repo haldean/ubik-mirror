@@ -87,6 +87,13 @@ struct xl_dagc_input
         struct xl_value *required_type;
 };
 
+struct xl_dagc_ref
+{
+        struct xl_dagc_node head;
+        /* The node to copy the value from */
+        struct xl_dagc_node *referrent;
+};
+
 /* The native_out node is a piece of magic that is enabled
  * by the graph evaluator; if a graph has the native tag,
  * then the evaluator evalutes the value of the graph using
@@ -139,6 +146,7 @@ union xl_dagc_any_node
         struct xl_dagc_const as_const;
         struct xl_dagc_input as_input;
         struct xl_dagc_load as_load;
+        struct xl_dagc_ref as_ref;
         struct xl_dagc_store as_store;
 };
 

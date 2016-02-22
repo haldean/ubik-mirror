@@ -108,6 +108,12 @@ xl_dagc_get_deps(
                 *d3 = NULL;
                 return OK;
 
+        case DAGC_NODE_REF:
+                *d1 = ((struct xl_dagc_ref *) n)->referrent;
+                *d2 = NULL;
+                *d3 = NULL;
+                return OK;
+
         case DAGC_NODE_STORE:
                 *d1 = ((struct xl_dagc_store *) n)->value;
                 *d2 = NULL;
@@ -388,6 +394,9 @@ xl_dagc_node_sizeof(
         case DAGC_NODE_NATIVE:
                 *size = sizeof(struct xl_dagc_native);
                 return OK;
+        case DAGC_NODE_REF:
+                *size = sizeof(struct xl_dagc_ref);
+                return OK;
         case DAGC_NODE_STORE:
                 *size = sizeof(struct xl_dagc_store);
                 return OK;
@@ -422,37 +431,38 @@ xl_dagc_replace_node_refs(
         struct xl_dagc_node *node,
         struct xl_dagc_node **proto,
         struct xl_dagc_node **copied,
-        size_t n)
+        size_t n_nodes)
 {
-        struct xl_dagc_apply *a;
-        struct xl_dagc_store *s;
-        struct xl_dagc_cond *c;
+        union xl_dagc_any_node *n;
         xl_error err;
+
+        n = (union xl_dagc_any_node *) node;
 
         switch (node->node_type)
         {
         case DAGC_NODE_APPLY:
-                a = (struct xl_dagc_apply *) node;
-                err = _replace_ref(&a->func, proto, copied, n);
+                err = _replace_ref(&n->as_apply.func, proto, copied, n_nodes);
                 if (err != OK)
                         return err;
-                err = _replace_ref(&a->arg, proto, copied, n);
+                err = _replace_ref(&n->as_apply.arg, proto, copied, n_nodes);
+                return err;
+
+        case DAGC_NODE_REF:
+                err = _replace_ref(&n->as_ref.referrent, proto, copied, n_nodes);
                 return err;
 
         case DAGC_NODE_STORE:
-                s = (struct xl_dagc_store *) node;
-                err = _replace_ref(&s->value, proto, copied, n);
+                err = _replace_ref(&n->as_store.value, proto, copied, n_nodes);
                 return err;
 
         case DAGC_NODE_COND:
-                c = (struct xl_dagc_cond *) node;
-                err = _replace_ref(&c->condition, proto, copied, n);
+                err = _replace_ref(&n->as_cond.condition, proto, copied, n_nodes);
                 if (err != OK)
                         return err;
-                err = _replace_ref(&c->if_true, proto, copied, n);
+                err = _replace_ref(&n->as_cond.if_true, proto, copied, n_nodes);
                 if (err != OK)
                         return err;
-                err = _replace_ref(&c->if_false, proto, copied, n);
+                err = _replace_ref(&n->as_cond.if_false, proto, copied, n_nodes);
                 return err;
 
         case DAGC_NODE_LOAD:
@@ -491,6 +501,7 @@ _increment_value_refs(struct xl_dagc_node *node)
         case DAGC_NODE_APPLY:
         case DAGC_NODE_NATIVE:
         case DAGC_NODE_COND:
+        case DAGC_NODE_REF:
                 return OK;
 
         case DAGC_NODE_INPUT:

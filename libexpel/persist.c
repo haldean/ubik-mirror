@@ -347,6 +347,18 @@ _load_cond(struct xl_dagc_cond *node, struct xl_stream *sp)
 }
 
 no_ignore static xl_error
+_load_ref(struct xl_dagc_ref *node, struct xl_stream *sp)
+{
+        uint64_t node_index;
+
+        READ_INTO(node_index, sp);
+        node_index = ntohw(node_index);
+        node->referrent = (struct xl_dagc_node *) node_index;
+
+        return OK;
+}
+
+no_ignore static xl_error
 _load_node(
         struct xl_dagc_node *node,
         struct xl_stream *sp,
@@ -391,6 +403,9 @@ _load_node(
                 break;
         case DAGC_NODE_COND:
                 err = _load_cond(&n->as_cond, sp);
+                break;
+        case DAGC_NODE_REF:
+                err = _load_ref(&n->as_ref, sp);
                 break;
         default:
                 return xl_raise(ERR_UNKNOWN_TYPE, "load node");
@@ -447,6 +462,13 @@ _set_node_pointers(
                 if ((uintptr_t) n->as_store.value >= n_nodes)
                         return xl_raise(ERR_OUT_OF_BOUNDS, "store value idx");
                 n->as_store.value = all_nodes[(uintptr_t) n->as_store.value];
+                break;
+
+        case DAGC_NODE_REF:
+                if ((uintptr_t) n->as_ref.referrent >= n_nodes)
+                        return xl_raise(ERR_OUT_OF_BOUNDS, "ref idx");
+                n->as_ref.referrent =
+                        all_nodes[(uintptr_t) n->as_ref.referrent];
                 break;
 
         case DAGC_NODE_LOAD:

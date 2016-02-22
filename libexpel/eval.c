@@ -130,6 +130,26 @@ _eval_const(struct xl_env *env, struct xl_dagc_const *node)
 }
 
 no_ignore static xl_error
+_eval_ref(struct xl_env *env, struct xl_dagc_ref *node)
+{
+        xl_error err;
+        unused(env);
+
+        node->head.known_type = node->referrent->known_type;
+        err = xl_take(node->head.known_type);
+        if (err != OK)
+                return err;
+
+        node->head.known.any = node->referrent->known.any;
+        err = xl_take(node->head.known.any);
+        if (err != OK)
+                return err;
+
+        node->head.flags |= XL_DAGC_FLAG_COMPLETE;
+        return OK;
+}
+
+no_ignore static xl_error
 _mark_load_complete(
         void *node_void,
         struct xl_env *env,
@@ -285,6 +305,9 @@ xl_dagc_node_eval(
                 break;
         case DAGC_NODE_COND:
                 err = _eval_cond(env, (struct xl_dagc_cond *) node);
+                break;
+        case DAGC_NODE_REF:
+                err = _eval_ref(env, (struct xl_dagc_ref *) node);
                 break;
         case DAGC_NODE_NATIVE:
                 return xl_raise(ERR_BAD_TYPE, "node_eval: can't eval native");

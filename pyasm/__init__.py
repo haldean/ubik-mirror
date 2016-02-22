@@ -41,6 +41,14 @@ def graph_ref(typ, graph_num, terminal=False, nid=None):
         is_term=terminal,
     )
 
+def ref(referrent, terminal=False, nid=None):
+    return dict(
+        type="ref",
+        id=nid,
+        referrent=referrent,
+        is_term=terminal,
+    )
+
 def load(uri, terminal=False, nid=None):
     return dict(
         type="load",
@@ -212,6 +220,8 @@ def encode(graphs, expect=None):
                     f.write(struct.pack(">Q", node["condition"]["idx"]))
                     f.write(struct.pack(">Q", node["true"]["idx"]))
                     f.write(struct.pack(">Q", node["false"]["idx"]))
+                elif node_type == "ref":
+                    f.write(struct.pack(">Q", node["referrent"]["idx"]))
                 else:
                     raise NotImplementedError(
                         "node type %s not supported" % node_type)
