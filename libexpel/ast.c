@@ -202,6 +202,19 @@ _print_atom(struct xl_ast_atom *atom)
 }
 
 no_ignore static xl_error
+_print_arg_list(struct xl_ast_arg_list *arg_list)
+{
+        printf("( ");
+        while (arg_list->name != NULL)
+        {
+                printf("%s ", arg_list->name);
+                arg_list = arg_list->next;
+        }
+        printf(")");
+        return OK;
+}
+
+no_ignore static xl_error
 _print_expr(struct xl_ast_expr *expr)
 {
         xl_error err;
@@ -224,10 +237,42 @@ _print_expr(struct xl_ast_expr *expr)
                 return OK;
 
         case EXPR_LAMBDA:
-                return xl_raise(ERR_NOT_IMPLEMENTED, "lambda print");
+                printf("\\ ");
+                err = _print_arg_list(expr->lambda.args);
+                if (err != OK)
+                        return err;
+                printf(" -> ");
+                err = _print_expr(expr->lambda.body);
+                if (err != OK)
+                        return err;
+                return OK;
         }
 
         return xl_raise(ERR_UNKNOWN_TYPE, "unknown expr type");
+}
+
+no_ignore static xl_error
+_print_type(struct xl_ast_type_expr *type_expr)
+{
+        xl_error err;
+
+        switch (type_expr->type_expr_type)
+        {
+        case TYPE_EXPR_ATOM:
+                printf("%s", type_expr->name);
+                return OK;
+        case TYPE_EXPR_APPLY:
+                err = _print_type(type_expr->apply.head);
+                if (err != OK)
+                        return err;
+                printf(" -> (");
+                err = _print_type(type_expr->apply.tail);
+                if (err != OK)
+                        return err;
+                printf(")");
+                return OK;
+        }
+        return xl_raise(ERR_UNKNOWN_TYPE, "unknown type expr type");
 }
 
 no_ignore xl_error
@@ -243,7 +288,12 @@ xl_ast_print(struct xl_ast *ast)
                 b = ast->bindings[i];
                 printf("\tbind %s", b->name);
                 if (b->type_expr != NULL)
-                        printf(" ^ %s", b->type_expr->name);
+                {
+                        printf(" ^ ");
+                        err = _print_type(b->type_expr);
+                        if (err != OK)
+                                return err;
+                }
                 printf(" = ");
                 err = _print_expr(b->expr);
                 if (err != OK)
