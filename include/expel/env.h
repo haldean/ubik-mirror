@@ -43,11 +43,24 @@ struct xl_binding
 struct xl_env_watch
 {
         struct xl_uri *uri;
+        struct xl_env *target_env;
         xl_env_cb cb;
         void *arg;
 
-        struct xl_env_watch *prev;
-        struct xl_env_watch *next;
+        /* Fired is set to true once the watcher has fired once; if this is
+         * true, it means means that the watcher is dead. */
+        bool fired;
+
+        /* The number of environments on which this watch was placed. */
+        xl_word refcount;
+};
+
+struct xl_env_watch_list
+{
+        struct xl_env_watch *watch;
+
+        struct xl_env_watch_list *prev;
+        struct xl_env_watch_list *next;
 };
 
 /* A hash mapping from URI to value. */
@@ -58,7 +71,7 @@ struct xl_env
         size_t cap;
         struct xl_env *parent;
 
-        struct xl_env_watch *watches;
+        struct xl_env_watch_list *watches;
 };
 
 /* Initializes a new environment struct. */

@@ -282,7 +282,7 @@ _set(
         bool overwrite)
 {
         struct xl_binding new_binding;
-        struct xl_env_watch *watch, *to_free;
+        struct xl_env_watch_list *watch, *to_free;
         xl_error err, ignore;
 
         err = OK;
@@ -335,25 +335,36 @@ _set(
         watch = env->watches;
         while (watch != NULL)
         {
-                if (!xl_uri_eq(watch->uri, uri))
+                if (xl_uri_eq(watch->watch->uri, uri))
                 {
-                        watch = watch->prev;
-                        continue;
+                        err = watch->watch->cb(
+                                watch->watch->arg,
+                                watch->watch->target_env,
+                                watch->watch->uri);
+                        if (err != OK)
+                                return err;
+
+                        watch->watch->fired = true;
                 }
 
-                err = watch->cb(watch->arg, env, watch->uri);
-                if (err != OK)
-                        return err;
+                to_free = NULL;
+                if (watch->watch->fired)
+                {
+                        watch->watch->refcount--;
 
-                to_free = watch;
-                if (watch->prev != NULL)
-                        watch->prev->next = watch->next;
-                if (watch->next != NULL)
-                        watch->next->prev = watch->prev;
-                if (env->watches == watch)
-                        env->watches = watch->prev;
+                        to_free = watch;
+                        if (watch->prev != NULL)
+                                watch->prev->next = watch->next;
+                        if (watch->next != NULL)
+                                watch->next->prev = watch->prev;
+                        if (env->watches == watch)
+                                env->watches = watch->prev;
+                }
+
                 watch = watch->prev;
-                free(to_free);
+
+                if (to_free != NULL && to_free->watch->refcount == 0)
+                        free(to_free);
         }
 
         return OK;
@@ -387,6 +398,7 @@ xl_env_watch(
         void *callback_arg)
 {
         struct xl_env_watch *watcher;
+        struct xl_env_watch_list *watchlist;
 
         watcher = calloc(1, sizeof(struct xl_env_watch));
         if (watcher == NULL)
@@ -395,11 +407,25 @@ xl_env_watch(
         watcher->uri = uri;
         watcher->cb = callback;
         watcher->arg = callback_arg;
-        watcher->prev = env->watches;
-        watcher->next = NULL;
-        if (env->watches != NULL)
-                env->watches->next = watcher;
-        env->watches = watcher;
+        watcher->target_env = env;
+        watcher->fired = false;
+
+        while (env != NULL)
+        {
+                watchlist = calloc(1, sizeof(struct xl_env_watch_list));
+                if (watchlist == NULL)
+                        return xl_raise(ERR_NO_MEMORY, "env watchlist alloc");
+
+                watchlist->watch = watcher;
+                watchlist->prev = env->watches;
+                watchlist->next = NULL;
+                if (env->watches != NULL)
+                        env->watches->next = watchlist;
+                env->watches = watchlist;
+
+                watcher->refcount++;
+                env = env->parent;
+        }
 
         return OK;
 }
