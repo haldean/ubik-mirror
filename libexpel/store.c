@@ -17,9 +17,11 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include "expel/dagc.h"
 #include "expel/expel.h"
 #include "expel/pointerset.h"
 #include "expel/stream.h"
+#include "expel/uri.h"
 #include "expel/util.h"
 
 #include <arpa/inet.h>
@@ -65,11 +67,116 @@ xl_value_save(struct xl_stream *sp, struct xl_value *in)
 }
 
 no_ignore static xl_error
+_collect(
+        struct xl_pointer_set *graph_indeces,
+        struct xl_pointer_set *value_indeces,
+        struct xl_dagc *graph)
+{
+        bool added;
+        xl_error err;
+        size_t i;
+
+        union xl_dagc_any_node *n;
+
+        /* We don't save out native graphs; they're internal to the runtime. */
+        if (graph->tag & TAG_GRAPH_NATIVE)
+                return OK;
+
+        err = xl_pointer_set_add(&added, graph_indeces, graph);
+        if (err != OK)
+                return err;
+
+        /* If this already existed in the pointer set, we don't have to do
+         * anything since everything reachable from it was already added. */
+        if (!added)
+                return OK;
+
+        for (i = 0; i < graph->n; i++)
+        {
+                n = (union xl_dagc_any_node *) graph->nodes[i];
+
+                switch (n->node.node_type)
+                {
+                case DAGC_NODE_APPLY:
+                case DAGC_NODE_COND:
+                case DAGC_NODE_REF:
+                        break;
+
+                case DAGC_NODE_CONST:
+                        err = xl_pointer_set_add(
+                                NULL, value_indeces, n->as_const.type);
+                        if (err != OK)
+                                return err;
+
+                        if (*n->as_const.value.tag & TAG_GRAPH)
+                        {
+                                err = _collect(
+                                        graph_indeces,
+                                        value_indeces,
+                                        n->as_const.value.graph);
+                                if (err != OK)
+                                        return err;
+                                break;
+                        }
+                        err = xl_pointer_set_add(
+                                NULL, value_indeces, n->as_const.value.tree);
+                        if (err != OK)
+                                return err;
+                        break;
+
+                case DAGC_NODE_INPUT:
+                        err = xl_pointer_set_add(
+                                NULL, value_indeces, n->as_input.required_type);
+                        if (err != OK)
+                                return err;
+                        break;
+
+                case DAGC_NODE_LOAD:
+                        err = xl_uri_attach_value(n->as_load.loc);
+                        if (err != OK)
+                                return err;
+                        err = xl_pointer_set_add(
+                                NULL, value_indeces, n->as_load.loc->as_value);
+                        if (err != OK)
+                                return err;
+                        break;
+
+                case DAGC_NODE_NATIVE:
+                        return xl_raise(ERR_BAD_TYPE, "can't save native node");
+
+                case DAGC_NODE_STORE:
+                        err = xl_uri_attach_value(n->as_store.loc);
+                        if (err != OK)
+                                return err;
+                        err = xl_pointer_set_add(
+                                NULL, value_indeces, n->as_store.loc->as_value);
+                        if (err != OK)
+                                return err;
+                        break;
+                }
+        }
+
+        return OK;
+}
+
+no_ignore static xl_error
 _collect_graphs_and_values(
         struct xl_pointer_set *graph_indeces,
         struct xl_pointer_set *value_indeces,
         struct xl_dagc **start_graphs,
-        size_t n_start_graphs);
+        size_t n_start_graphs)
+{
+        size_t i;
+        xl_error err;
+
+        for (i = 0; i < n_start_graphs; i++)
+        {
+                err = _collect(graph_indeces, value_indeces, start_graphs[i]);
+                if (err != OK)
+                        return err;
+        }
+        return OK;
+}
 
 no_ignore xl_error
 xl_save(struct xl_stream *sp, struct xl_dagc **in_graphs, size_t n_in_graphs)

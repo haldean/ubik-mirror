@@ -34,6 +34,10 @@ struct xl_uri {
         xl_word   scope;
 
         uint64_t  refcount;
+
+        /* The value representation of the URI. Generated and cached by
+         * xl_uri_attach_value. */
+        struct xl_value *as_value;
 };
 
 /* Creates a URI for a resource of unknown scope. */
@@ -61,3 +65,9 @@ xl_uri_from_value(struct xl_uri *uri, struct xl_value *uri_val);
 /* Returns true if the provided URIs are equal. */
 bool
 xl_uri_eq(struct xl_uri *u0, struct xl_uri *u1);
+
+/* Generates a value representation for the URI and stores it in the URI's
+ * as_value field. If the field is already initialized, this function is a
+ * no-op. */
+no_ignore xl_error
+xl_uri_attach_value(struct xl_uri *uri);

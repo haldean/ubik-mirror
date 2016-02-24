@@ -18,7 +18,16 @@
  */
 
 
-/* Pointer sets are designed to be fast to perform a membership check, fast
+#include <stdbool.h>
+#include <stdint.h>
+
+/* Pointer sets represent sets of objects where the identity of an object is the
+ * address at which it is stored.
+ *
+ * To create a pointer set, it is sufficient to zero the struct entirely. This
+ * can be done with calloc or with a static '= {0}' initializer.
+ *
+ * Pointer sets are designed to be fast to perform a membership check, fast
  * to iterate and indexable, while being slow to insert is okay. They
  * have the property that every item in them is assigned an integer index, and
  * the set of indeces in the set at any time is guaranteed to be sequential and
@@ -34,25 +43,18 @@
  * is O(1). Insertion is expensive, as it requires a full rebuild in general,
  * and thus is O(n).
  */
-
-#include <stdbool.h>
-#include <stdint.h>
-
 struct xl_pointer_set
 {
         void **elems;
         size_t n_elems;
 };
 
+/* Adds item to the given pointer set. If added is not NULL, sets bool to true
+ * only if the item was not already present in the set. If the item is already
+ * present in the set, no mutation occurs on the pointer set and bool is set to
+ * false. */
 xl_error
-xl_pointer_set_init(struct xl_pointer_set *);
-
-/* Adds item to the given pointer set. If index is not NULL, sets index to the
- * index of the inserted item. If the item is already present in the set, no
- * mutation occurs on the pointer set and index is updated to the index of the
- * existing item. */
-xl_error
-xl_pointer_set_add(size_t *index, struct xl_pointer_set *, void *item);
+xl_pointer_set_add(bool *added, struct xl_pointer_set *, void *item);
 
 /* Sets present to true or false if the item is or is not in the set. */
 xl_error
