@@ -43,6 +43,7 @@ _pointer_set_grow(struct xl_pointer_set *set)
         new_elems = realloc(set->elems, new_cap * sizeof(void *));
         if (new_elems == NULL)
                 return xl_raise(ERR_NO_MEMORY, "pointer set alloc");
+        set->elems = new_elems;
 
         /* Zero out the new elements (if only there were a crealloc */
         bzero(&set->elems[set->cap], new_cap - set->cap);
@@ -98,9 +99,10 @@ xl_pointer_set_add(bool *added, struct xl_pointer_set *set, void *item)
         err = _pointer_set_index(&insert_at, set, item);
         if (err != OK)
                 return err;
-        if (set->elems[insert_at] == item)
+        if (set->elems != NULL && set->elems[insert_at] == item)
         {
-                *added = false;
+                if (added != NULL)
+                        *added = false;
                 return OK;
         }
 
@@ -117,7 +119,9 @@ xl_pointer_set_add(bool *added, struct xl_pointer_set *set, void *item)
                 set->n - insert_at);
 
         set->elems[insert_at] = item;
-        *added = true;
+        if (added != NULL)
+                *added = true;
+        set->n += 1;
         return OK;
 }
 
