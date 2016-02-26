@@ -21,6 +21,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "expel/expel.h"
+
 /* Pointer sets represent sets of objects where the identity of an object is the
  * address at which it is stored.
  *
@@ -46,7 +48,8 @@
 struct xl_pointer_set
 {
         void **elems;
-        size_t n_elems;
+        size_t n;
+        size_t cap;
 };
 
 /* Adds item to the given pointer set. If added is not NULL, sets bool to true
