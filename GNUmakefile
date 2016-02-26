@@ -20,11 +20,12 @@
 objects := $(patsubst libexpel/%.c,build/%.o,$(wildcard libexpel/*.c)) build/token.o build/grammar.o
 postproc := $(patsubst libexpel/%.c,build/%.c,$(wildcard libexpel/*.c))
 
-executable := $(DIST_DIR)/runexpel
+rtexe := $(DIST_DIR)/runexpel
+cexe := $(DIST_DIR)/expelc
 testexe := $(BUILD_DIR)/test-expel
 testldopts := $(LDOPTS) -lm -lpthread -lrt
 
-all: lib $(executable) test
+all: lib $(cexe) $(rtexe) test
 
 
 ################################################################################
@@ -69,8 +70,16 @@ lib: $(SHARED_LIB)
 ################################################################################
 # Build expelrt executable
 
-$(executable): expelrt/expelrt.c $(SHARED_LIB)
-	@mkdir -p `dirname $(executable)`
+$(rtexe): expelrt/expelrt.c $(SHARED_LIB)
+	@mkdir -p `dirname $(rtexe)`
+	$(CC) $(COPTS) $(LDOPTS) $< -lexpel -o $@
+
+
+################################################################################
+# Build expelc executable
+
+$(cexe): expelc/expelc.c $(SHARED_LIB)
+	@mkdir -p `dirname $(cexe)`
 	$(CC) $(COPTS) $(LDOPTS) $< -lexpel -o $@
 
 
@@ -90,8 +99,8 @@ build/xlb/%.xlb: test/pyasm/%.xlpy pyasm/*.py
 	@mkdir -p $(dir $@)
 	PYTHONPATH=. python $< $@
 
-pyasm_test: $(asms) $(executable)
-	$(executable) $(asms)
+pyasm_test: $(asms) $(rtexe)
+	$(rtexe) $(asms)
 
 test: unit_test pyasm_test
 
@@ -107,7 +116,7 @@ build/interpreter: test/parse/parse-file.c $(SHARED_LIB)
 	$(CC) $(COPTS) $(LDOPTS) $(testldopts) $< -lexpel -o $@
 
 fuzz: CC = afl-gcc
-fuzz: $(SHARED_LIB) $(executable) $(asms)
-	afl-fuzz -i build/xlb -o test/afl-out $(executable) @@
+fuzz: $(SHARED_LIB) $(rtexe) $(asms)
+	afl-fuzz -i build/xlb -o test/afl-out $(rtexe) @@
 
 .PHONY: clean test all unit_test pyasm_test lib fuzz
