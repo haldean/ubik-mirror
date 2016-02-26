@@ -276,8 +276,34 @@ gc()
 }
 
 test_t
-natives()
+uri()
 {
+        struct xl_uri user, native, unknown, u;
+
+        assert(xl_uri_unknown(&unknown, "unknown-uri") == OK);
+        assert(xl_uri_user(&user, "user-uri") == OK);
+        assert(xl_uri_native(&native, "native-uri") == OK);
+
+        assert(!xl_uri_eq(&unknown, &native));
+        assert(!xl_uri_eq(&unknown, &user));
+        assert(!xl_uri_eq(&native, &user));
+
+        assert(xl_uri_eq(&unknown, &unknown));
+        assert(xl_uri_eq(&user, &user));
+        assert(xl_uri_eq(&native, &native));
+
+        assert(xl_uri_attach_value(&user) == OK);
+        assert(xl_uri_attach_value(&native) == OK);
+        assert(xl_uri_attach_value(&unknown) == OK);
+
+        assert(xl_uri_from_value(&u, user.as_value) == OK);
+        assert(xl_uri_eq(&u, &user));
+
+        assert(xl_uri_from_value(&u, native.as_value) == OK);
+        assert(xl_uri_eq(&u, &native));
+
+        assert(xl_uri_from_value(&u, unknown.as_value) == OK);
+        assert(xl_uri_eq(&u, &unknown));
         return ok;
 }
 
@@ -297,6 +323,6 @@ main()
         run(host_to_net);
         run(env);
         run(gc);
-        run(natives);
+        run(uri);
         finish();
 }

@@ -48,6 +48,7 @@ xl_uri_unknown(
         uri->name_len = strlen(name);
         uri->refcount = 0;
         uri->tag = TAG_URI;
+        uri->as_value = NULL;
         return _set_hash(uri);
 }
 
@@ -62,6 +63,7 @@ xl_uri_user(
         uri->name_len = strlen(name);
         uri->refcount = 0;
         uri->tag = TAG_URI;
+        uri->as_value = NULL;
         return _set_hash(uri);
 }
 
@@ -76,6 +78,7 @@ xl_uri_native(
         uri->name_len = strlen(name);
         uri->refcount = 0;
         uri->tag = TAG_URI;
+        uri->as_value = NULL;
         return _set_hash(uri);
 }
 
@@ -121,6 +124,35 @@ xl_uri_from_value(struct xl_uri *uri, struct xl_value *uri_val)
         uri->tag = TAG_URI;
         uri->refcount = 0;
 
+        uri->as_value = uri_val;
+        err = xl_take(uri->as_value);
+        if (err != OK)
+                return err;
+
         err = _set_hash(uri);
         return err;
+}
+
+no_ignore xl_error
+xl_uri_attach_value(struct xl_uri *uri)
+{
+        xl_error err;
+        struct xl_value *name;
+
+        if (uri->as_value != NULL)
+                return OK;
+
+        err = xl_value_new(&name);
+        if (err != OK)
+                return err;
+        err = xl_value_pack_string(name, uri->name, uri->name_len);
+        if (err != OK)
+                return err;
+
+        #pragma buildtree { \
+                w:uri->version, \
+                { w:uri->scope, t:name } \
+        }; root: uri->as_value; on_error: return err;
+
+        return OK;
 }
