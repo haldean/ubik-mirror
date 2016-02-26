@@ -24,8 +24,8 @@
 
 #include "expel/pointerset.h"
 
-xl_error
-_grow_pointer_set(struct xl_pointer_set *set)
+no_ignore static xl_error
+_pointer_set_grow(struct xl_pointer_set *set)
 {
         size_t new_cap;
         void **new_elems;
@@ -51,15 +51,17 @@ _grow_pointer_set(struct xl_pointer_set *set)
         return OK;
 }
 
-xl_error
-xl_pointer_set_add(bool *added, struct xl_pointer_set *set, void *item)
+/* Finds the logical index of the given item, even if the item is not itself
+ * present. If the item is not present, the returned index is the index at which
+ * the item should be inserted. */
+no_ignore static xl_error
+_pointer_set_index(size_t *index, struct xl_pointer_set *set, void *item)
 {
         size_t start;
         size_t end;
         size_t check;
         uintptr_t t;
         uintptr_t ins;
-        xl_error err;
 
         ins = (uintptr_t) item;
         start = 0;
@@ -74,7 +76,7 @@ xl_pointer_set_add(bool *added, struct xl_pointer_set *set, void *item)
                 t = (uintptr_t) set->elems[check];
                 if (t == ins)
                 {
-                        *added = false;
+                        *index = check;
                         return OK;
                 }
                 if (t < ins)
@@ -83,23 +85,66 @@ xl_pointer_set_add(bool *added, struct xl_pointer_set *set, void *item)
                         end = check;
         }
 
+        *index = start;
+        return OK;
+}
+
+no_ignore xl_error
+xl_pointer_set_add(bool *added, struct xl_pointer_set *set, void *item)
+{
+        size_t insert_at;
+        xl_error err;
+
+        err = _pointer_set_index(&insert_at, set, item);
+        if (err != OK)
+                return err;
+        if (set->elems[insert_at] == item)
+        {
+                *added = false;
+                return OK;
+        }
+
         if (set->n == set->cap)
         {
-                err = _grow_pointer_set(set);
+                err = _pointer_set_grow(set);
                 if (err != OK)
                         return err;
         }
 
         /* Shift everything over by one to insert the new item. */
-        memmove(&set->elems[start+1], &set->elems[start], set->n - start);
+        memmove(&set->elems[insert_at+1],
+                &set->elems[insert_at],
+                set->n - insert_at);
 
-        set->elems[start] = item;
+        set->elems[insert_at] = item;
         *added = true;
         return OK;
 }
 
-xl_error
-xl_pointer_set_present(bool *present, struct xl_pointer_set *, void *item);
+no_ignore xl_error
+xl_pointer_set_present(bool *present, struct xl_pointer_set *set, void *item)
+{
+        size_t index;
+        xl_error err;
 
-xl_error
-xl_pointer_set_find(size_t *index, struct xl_pointer_set *, void *item);
+        err = _pointer_set_index(&index, set, item);
+        if (err != OK)
+                return err;
+        *present = set->elems[index] == item;
+        return OK;
+}
+
+no_ignore xl_error
+xl_pointer_set_find(size_t *ret_index, struct xl_pointer_set *set, void *item)
+{
+        size_t index;
+        xl_error err;
+
+        err = _pointer_set_index(&index, set, item);
+        if (err != OK)
+                return err;
+        if (set->elems[index] != item)
+                return xl_raise(ERR_ABSENT, "pointer set find");
+        *ret_index = index;
+        return OK;
+}

@@ -56,14 +56,14 @@ struct xl_pointer_set
  * only if the item was not already present in the set. If the item is already
  * present in the set, no mutation occurs on the pointer set and bool is set to
  * false. */
-xl_error
+no_ignore xl_error
 xl_pointer_set_add(bool *added, struct xl_pointer_set *, void *item);
 
 /* Sets present to true or false if the item is or is not in the set. */
-xl_error
+no_ignore xl_error
 xl_pointer_set_present(bool *present, struct xl_pointer_set *, void *item);
 
 /* Sets index to the index of the given item. If the item does not exist in the
  * set, raises ERR_ABSENT. */
-xl_error
+no_ignore xl_error
 xl_pointer_set_find(size_t *index, struct xl_pointer_set *, void *item);
