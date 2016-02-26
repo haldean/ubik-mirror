@@ -1,5 +1,5 @@
 /*
- * emit-tokens.c: tokenizer test
+ * expeli.c: expel interpreter
  * Copyright (C) 2016, Haldean Brown
  *
  * This program is free software; you can redistribute it and/or modify

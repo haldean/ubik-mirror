@@ -22,10 +22,11 @@ postproc := $(patsubst libexpel/%.c,build/%.c,$(wildcard libexpel/*.c))
 
 rtexe := $(DIST_DIR)/runexpel
 cexe := $(DIST_DIR)/expelc
+iexe := $(DIST_DIR)/expeli
 testexe := $(BUILD_DIR)/test-expel
 testldopts := $(LDOPTS) -lm -lpthread -lrt
 
-all: lib $(cexe) $(rtexe) test
+all: lib $(cexe) $(rtexe) $(iexe) test
 
 
 ################################################################################
@@ -84,6 +85,14 @@ $(cexe): expelc/expelc.c $(SHARED_LIB)
 
 
 ################################################################################
+# Build expeli executable
+#
+$(iexe): expelc/expeli.c $(SHARED_LIB)
+	@mkdir -p $(dir $@)
+	$(CC) $(COPTS) $(LDOPTS) $(testldopts) $< -lexpel -o $@
+
+
+################################################################################
 # Build tests
 
 asms := $(patsubst test/pyasm/%.xlpy,build/xlb/%.xlb,$(wildcard test/pyasm/*.xlpy))
@@ -108,10 +117,6 @@ clean:
 	rm -rf build dist
 
 build/tokenizer: test/lex/emit-tokens.c $(SHARED_LIB)
-	@mkdir -p `dirname $(@)`
-	$(CC) $(COPTS) $(LDOPTS) $(testldopts) $< -lexpel -o $@
-
-build/interpreter: test/parse/parse-file.c $(SHARED_LIB)
 	@mkdir -p `dirname $(@)`
 	$(CC) $(COPTS) $(LDOPTS) $(testldopts) $< -lexpel -o $@
 
