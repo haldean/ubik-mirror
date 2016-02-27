@@ -19,6 +19,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "expel/dagc.h"
 #include "expel/env.h"
@@ -39,7 +40,7 @@
         } } while(0)
 
 xl_error
-test_file(char *fname)
+test_file(char *fname, bool debug)
 {
         struct xl_stream stream;
         struct xl_stream sstdout;
@@ -56,13 +57,15 @@ test_file(char *fname)
         n_graphs = 0;
         graphs = NULL;
 
-        printf("%s\n", fname);
+        if (debug)
+        {
+                printf("%s\n", fname);
 
-        err = xl_timer_new(&timer);
-        CHECK_ERR("couldn't create timer");
-
-        err = xl_timer_start(timer);
-        CHECK_ERR("couldn't start timer");
+                err = xl_timer_new(&timer);
+                CHECK_ERR("couldn't create timer");
+                err = xl_timer_start(timer);
+                CHECK_ERR("couldn't start timer");
+        }
 
         err = xl_start();
         CHECK_ERR("couldn't start expel");
@@ -86,24 +89,27 @@ test_file(char *fname)
                 }
         }
 
-        err = xl_timer_elapsed(&elapsed, timer);
-        CHECK_ERR("couldn't read timer");
-        printf("\ttime from start to loaded:    %ld usec\n", elapsed);
-
-        err = xl_value_new(&expected);
-        CHECK_ERR("couldn't create expected value");
-
-        err = xl_value_load(expected, &stream);
-        if (err != OK && err->error_code == ERR_NO_DATA)
+        if (debug)
         {
-                /* No expected result for this run, we'll just run it and make
-                 * sure we don't crash. */
-                err = xl_release(expected);
-                CHECK_ERR("couldn't release expected");
-                expected = NULL;
+                err = xl_timer_elapsed(&elapsed, timer);
+                CHECK_ERR("couldn't read timer");
+                printf("\ttime from start to loaded:    %ld usec\n", elapsed);
+
+                err = xl_value_new(&expected);
+                CHECK_ERR("couldn't create expected value");
+
+                err = xl_value_load(expected, &stream);
+                if (err != OK && err->error_code == ERR_NO_DATA)
+                {
+                        /* No expected result for this run, we'll just run it and make
+                         * sure we don't crash. */
+                        err = xl_release(expected);
+                        CHECK_ERR("couldn't release expected");
+                        expected = NULL;
+                }
+                else
+                        CHECK_ERR("couldn't load expected");
         }
-        else
-                CHECK_ERR("couldn't load expected");
 
         err = xl_env_init(&env);
         CHECK_ERR("couldn't create environment");
@@ -117,14 +123,17 @@ test_file(char *fname)
         err = xl_schedule_run(s);
         CHECK_ERR("couldn't run scheduler");
 
-        err = xl_timer_elapsed(&elapsed, timer);
-        CHECK_ERR("couldn't read timer");
-        printf("\ttime from start to evaluated: %ld usec\n", elapsed);
-
         err = xl_env_free(&env);
         CHECK_ERR("couldn't free environment");
 
-        if (expected != NULL)
+        if (debug)
+        {
+                err = xl_timer_elapsed(&elapsed, timer);
+                CHECK_ERR("couldn't read timer");
+                printf("\ttime from start to evaluated: %ld usec\n", elapsed);
+        }
+
+        if (debug && expected != NULL)
         {
                 actual = graphs[modinit_i]->result->known.tree;
                 printf("\texpected:  ");
@@ -152,7 +161,8 @@ test_file(char *fname)
         }
 
 teardown:
-        free(timer);
+        if (debug)
+                free(timer);
 
         if (graphs != NULL)
         {
@@ -184,9 +194,11 @@ teardown:
 
         xl_stream_close(&stream);
 
-        if (err == OK)
+        if (debug && err == OK)
+        {
                 printf("OK\n");
-        printf("\n");
+                printf("\n");
+        }
 
         return err;
 }
@@ -196,17 +208,22 @@ main(int argc, char *argv[])
 {
         uint32_t n_failures;
         int i;
+        char *debug_opt;
+        bool debug;
+
+        debug_opt = getenv("EXPEL_DEBUG");
+        debug = debug_opt != NULL && strlen(debug_opt) > 0;
 
         n_failures = 0;
         for (i = 1; i < argc; i++)
         {
-                if (test_file(argv[i]) != OK)
+                if (test_file(argv[i], debug) != OK)
                         n_failures++;
         }
 
-        if (n_failures)
+        if (debug && n_failures)
                 printf("%d of %d failed\n", n_failures, argc - 1);
-        else
+        else if (debug)
                 printf("all %d succeeded\n", argc - 1);
         return n_failures;
 }

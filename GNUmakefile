@@ -109,7 +109,7 @@ build/xlb/%.xlb: test/pyasm/%.xlpy pyasm/*.py
 	PYTHONPATH=. python $< $@
 
 pyasm_test: $(asms) $(rtexe)
-	$(rtexe) $(asms)
+	EXPEL_DEBUG=yes $(rtexe) $(asms)
 
 test: unit_test pyasm_test
 
