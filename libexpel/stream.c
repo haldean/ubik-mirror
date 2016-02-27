@@ -162,7 +162,8 @@ xl_stream_close(struct xl_stream *sp)
         {
         case STREAM_TYPE_FILE_R:
         case STREAM_TYPE_FILE_W:
-                fclose(sp->file);
+                if (sp->file != NULL)
+                        fclose(sp->file);
                 return;
         case STREAM_TYPE_BUFFER:
                 return;
