@@ -99,7 +99,9 @@ xl_pointer_set_add(bool *added, struct xl_pointer_set *set, void *item)
         err = _pointer_set_index(&insert_at, set, item);
         if (err != OK)
                 return err;
-        if (set->elems != NULL && set->elems[insert_at] == item)
+        if (set->elems != NULL
+                && insert_at < set->n
+                && set->elems[insert_at] == item)
         {
                 if (added != NULL)
                         *added = false;
@@ -131,10 +133,16 @@ xl_pointer_set_present(bool *present, struct xl_pointer_set *set, void *item)
         size_t index;
         xl_error err;
 
+        if (set->cap == 0)
+        {
+                *present = false;
+                return OK;
+        }
+
         err = _pointer_set_index(&index, set, item);
         if (err != OK)
                 return err;
-        *present = set->elems[index] == item;
+        *present = set->elems[index] == item && index < set->n;
         return OK;
 }
 
@@ -144,10 +152,13 @@ xl_pointer_set_find(size_t *ret_index, struct xl_pointer_set *set, void *item)
         size_t index;
         xl_error err;
 
+        if (set->cap == 0)
+                return xl_raise(ERR_ABSENT, "pointer set find");
+
         err = _pointer_set_index(&index, set, item);
         if (err != OK)
                 return err;
-        if (set->elems[index] != item)
+        if (index >= set->n || set->elems[index] != item)
                 return xl_raise(ERR_ABSENT, "pointer set find");
         *ret_index = index;
         return OK;
