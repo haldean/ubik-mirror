@@ -52,8 +52,14 @@ tag tells you how to interpret the left and right values.
 
 Tags
 
-Tags are stored in a 16-bit integer which is the bitwise union of the
-relevant masks:
+Tags are 16-bit integers which contain types and subtypes for a given
+binary blob. The available tag types are:
+
+                           0x1000: object is a tree
+                           0x2000: object is a graph
+                           0x3000: object is a URI
+
+Values that are trees have the following lower bytes:
 
                 0b00000001 (0x01): right child is a node
                 0b00000010 (0x02): right child is a word
@@ -63,16 +69,15 @@ relevant masks:
                 0b01000000 (0x40): left child is a graph
 
 Thus, a node whose left value is a node and whose right value is a word
-would have the tag `0b00001001`, or `0x0009`.
+would have the lower byte `0b00001001`, and its tag would be `0x1009`.
 
-Additionally, the relevant tag type is bitwise-ORed into the tag:
+Graphs have the following lower bytes:
 
-                           0x1000: object is a tree
-                           0x2000: object is a graph
-                           0x3000: object is a URI
+                0b00000001 (0x01): graph is native
+                0b00000010 (0x02): graph is unresolved
+                0b00000100 (0x04): graph is a modinit graph
 
-So a graph has tag `0x2000` and a URI has tag `0x3000`, and a tree whose
-left is a node and whose right is a word has tag `0x1012`.
+TODO: what do those mean.
 
 Types
 
@@ -263,8 +268,9 @@ The graph block has a header of its own, that is given once for each
 graph:
 
         Byte index   Field
-               0-7   The number of nodes in the graph
-              8-15   The index of the result node in the graph
+               0-3   The tag of the graph
+              8-15   The number of nodes in the graph
+             16-23   The index of the result node in the graph
 
 Following the graph header, the specified number of node encodings
 follows. The order of encoding matters; each node is identified by other
