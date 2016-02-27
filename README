@@ -249,7 +249,8 @@ a child is a value, the value is written to the stream in
 little-endian format as an 8-byte integer. If a child is another
 value, recurse and apply this same operation. If a child is a
 reference to a graph, the word-encoded index of the graph in the blob
-is written.
+is written. The tag of the value is used to disambiguate the types of
+the children of the node.
 
 Tree decoding proceeds in much the same way: Take a byte off of the head
 of the stream. If the byte indicates the left is a node, recurse. If it
@@ -310,9 +311,9 @@ Nodes with node type `   const` have the following subheader:
               8-15   Value index of the tree-encoded type of the constant
 
 Then, depending on the associated subtype, this header is either
-followed by a tree-encoded value (if the subtype is `cvalue`) or
-contains a word-encoded index of another graph in the encoding (if the
-subtype is `cgraph`).
+followed by a word-encoded index of a value (if the subtype is `cvalue`)
+or contains a word-encoded index of another graph in the encoding (if
+the subtype is `cgraph`).
 
 Nodes with node type `   input` have the following body:
 

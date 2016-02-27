@@ -230,12 +230,21 @@ xl_save(struct xl_stream *sp, struct xl_dagc **graphs, size_t n);
 
 /* Loads a tree from a stream.
  *
+ * Note that any contained graph references are initialized to the index
+ * of the graph in some other structure; if you're loading values with
+ * graph references you probably want to load the whole thing in one go
+ * with xl_load.
+ *
  * The returned tree is not taken; it is up to the caller to take the
  * tree. Returns OK on success, or a nonzero error word. */
 no_ignore xl_error
 xl_value_load(struct xl_value *out, struct xl_stream *sp);
 
 /* Saves a tree to a stream.
+ *
+ * Note that this cannot save any values that contain any graph
+ * references; for that you'll need to serialize the entire structure
+ * with xl_save.
  *
  * Returns OK on success, or a nonzero error word. */
 no_ignore xl_error
