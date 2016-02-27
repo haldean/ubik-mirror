@@ -42,13 +42,13 @@ _store_value(
         xl_error err;
 
         tag = in->tag;
+        xl_assert((tag & TAG_TYPE_MASK) == TAG_VALUE);
         xl_assert(((tag & TAG_LEFT_WORD) ? 1 : 0)
                 + ((tag & TAG_LEFT_NODE) ? 1 : 0)
                 + ((tag & TAG_LEFT_GRAPH) ? 1 : 0) == 1);
         xl_assert(((tag & TAG_RIGHT_WORD) ? 1 : 0)
                 + ((tag & TAG_RIGHT_NODE) ? 1 : 0)
                 + ((tag & TAG_RIGHT_GRAPH) ? 1 : 0) == 1);
-        xl_assert((tag & TAG_TYPE_MASK) == TAG_VALUE);
 
         tag = htons(in->tag);
         WRITE_INTO(sp, tag);
