@@ -252,6 +252,7 @@ _assign_lambda(
         err = xl_value_new(&n->as_const.type);
         if (err != OK)
                 return err;
+        n->as_const.type->tag |= TAG_LEFT_WORD | TAG_RIGHT_WORD;
         /* TODO: lambda type here. */
         return OK;
 }
