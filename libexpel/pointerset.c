@@ -118,7 +118,7 @@ xl_pointer_set_add(bool *added, struct xl_pointer_set *set, void *item)
         /* Shift everything over by one to insert the new item. */
         memmove(&set->elems[insert_at+1],
                 &set->elems[insert_at],
-                set->n - insert_at);
+                sizeof(void *) * (set->n - insert_at));
 
         set->elems[insert_at] = item;
         if (added != NULL)
