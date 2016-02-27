@@ -428,6 +428,7 @@ xl_resolve_uris(
         struct xl_dagc_load *load;
         struct xl_dagc_const *cons;
         struct xl_uri *new_uri;
+        xl_tag t;
 
         /* Mark the graph resolved here, so that self-references do not cause us
          * to go into an infinite loop. */
@@ -438,16 +439,17 @@ xl_resolve_uris(
                 if (graph->nodes[i]->node_type == DAGC_NODE_CONST)
                 {
                         cons = (struct xl_dagc_const *) graph->nodes[i];
-                        if (*cons->value.tag
-                                & (TAG_GRAPH | TAG_GRAPH_UNRESOLVED))
-                        {
-                                err = xl_resolve_uris(
-                                        cons->value.graph, local_env);
-                                if (err != OK)
-                                        return err;
-                        }
+                        t = *cons->value.tag;
+                        if ((t & TAG_TYPE_MASK) != TAG_GRAPH)
+                                continue;
+                        if (!(t & TAG_GRAPH_UNRESOLVED))
+                                continue;
+                        err = xl_resolve_uris(cons->value.graph, local_env);
+                        if (err != OK)
+                                return err;
                         continue;
                 }
+
                 if (graph->nodes[i]->node_type != DAGC_NODE_LOAD)
                         continue;
                 load = (struct xl_dagc_load *) graph->nodes[i];
