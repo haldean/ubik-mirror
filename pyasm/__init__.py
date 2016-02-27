@@ -178,6 +178,11 @@ def encode(graphs, expect=None):
             f.write(pack_tree(value))
 
         for graph in graphs:
+            if "modinit" in graph and graph["modinit"]:
+                f.write(struct.pack(">H", 0x2004))
+            else:
+                f.write(struct.pack(">H", 0x2000))
+
             nodes = graph["nodes"]
             result_idx = graph["result_idx"]
             if result_idx < 0:

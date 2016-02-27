@@ -494,6 +494,10 @@ _load_graph(
         xl_word result_idx;
         size_t i;
         xl_error err;
+        xl_tag tag;
+
+        READ_INTO(tag, sp);
+        tag = ntohs(tag);
 
         READ_INTO(n_nodes, sp);
         n_nodes = ntohw(n_nodes);
@@ -550,7 +554,12 @@ _load_graph(
                         return err;
         }
 
-        return xl_dagc_init(*graph);
+        err = xl_dagc_init(*graph);
+        if (err != OK)
+                return err;
+
+        (*graph)->tag = tag;
+        return OK;
 }
 
 no_ignore xl_error

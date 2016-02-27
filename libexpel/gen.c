@@ -554,7 +554,7 @@ xl_create_modinit(
         err = xl_bdagc_build(modinit, &builder);
         if (err != OK)
                 return err;
-        (*modinit)->tag |= TAG_GRAPH_UNRESOLVED;
+        (*modinit)->tag |= TAG_GRAPH_UNRESOLVED | TAG_GRAPH_MODINIT;
 
         return OK;
 }

@@ -409,9 +409,13 @@ _store_graph(
         size_t i;
         uint8_t b;
         xl_word t;
+        xl_tag tag;
         union xl_dagc_any_node *n;
         xl_error err;
-        struct xl_pointer_set nodes;
+        struct xl_pointer_set nodes = {0};
+
+        tag = htons(graph->tag);
+        WRITE_INTO(sp, tag);
 
         for (i = 0; i < graph->n; i++)
         {

@@ -47,7 +47,7 @@ test_file(char *fname)
         struct xl_env env;
         struct xl_scheduler *s;
         struct xl_value *expected, *actual;
-        size_t n_graphs, i;
+        size_t n_graphs, i, modinit_i;
         xl_error err, teardown_err;
         struct xl_timer *timer;
         int64_t elapsed;
@@ -76,6 +76,16 @@ test_file(char *fname)
         err = xl_load(&graphs, &n_graphs, &stream);
         CHECK_ERR("couldn't load file");
 
+        modinit_i = 0;
+        for (i = 0; i < n_graphs; i++)
+        {
+                if (graphs[i]->tag & TAG_GRAPH_MODINIT)
+                {
+                        modinit_i = i;
+                        break;
+                }
+        }
+
         err = xl_timer_elapsed(&elapsed, timer);
         CHECK_ERR("couldn't read timer");
         printf("\ttime from start to loaded:    %ld usec\n", elapsed);
@@ -101,7 +111,7 @@ test_file(char *fname)
         err = xl_schedule_new(&s);
         CHECK_ERR("couldn't create scheduler");
 
-        err = xl_schedule_push(s, graphs[0], &env, NULL);
+        err = xl_schedule_push(s, graphs[modinit_i], &env, NULL);
         CHECK_ERR("couldn't push graph into scheduler");
 
         err = xl_schedule_run(s);
@@ -116,7 +126,7 @@ test_file(char *fname)
 
         if (expected != NULL)
         {
-                actual = graphs[0]->result->known.tree;
+                actual = graphs[modinit_i]->result->known.tree;
                 printf("\texpected:  ");
                 err = xl_value_print(&sstdout, expected);
                 CHECK_ERR("couldn't print expected");
