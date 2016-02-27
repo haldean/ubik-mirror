@@ -72,6 +72,8 @@ xl_bdagc_build(
         if (err != OK)
                 return err;
 
+        xl_assert(b->result != NULL);
+
         for (i = 0; i < b->n_nodes; i++)
         {
                 err = xl_dagc_node_sizeof(&node_size, b->nodes[i]);
