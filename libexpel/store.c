@@ -41,6 +41,15 @@ _store_value(
         xl_word val;
         xl_error err;
 
+        tag = in->tag;
+        xl_assert(((tag & TAG_LEFT_WORD) ? 1 : 0)
+                + ((tag & TAG_LEFT_NODE) ? 1 : 0)
+                + ((tag & TAG_LEFT_GRAPH) ? 1 : 0) == 1);
+        xl_assert(((tag & TAG_RIGHT_WORD) ? 1 : 0)
+                + ((tag & TAG_RIGHT_NODE) ? 1 : 0)
+                + ((tag & TAG_RIGHT_GRAPH) ? 1 : 0) == 1);
+        xl_assert((tag & TAG_TYPE_MASK) == TAG_VALUE);
+
         tag = htons(in->tag);
         WRITE_INTO(sp, tag);
 
@@ -518,19 +527,19 @@ xl_save(struct xl_stream *sp, struct xl_dagc **in_graphs, size_t n_in_graphs)
         t = htonw(values.n);
         WRITE_INTO(sp, t);
 
+        for (i = 0; i < values.n; i++)
+        {
+                err = _store_value(
+                        sp, (struct xl_value *) values.elems[i], &graphs);
+                if (err != OK)
+                        return err;
+        }
+
         for (i = 0; i < graphs.n; i++)
         {
                 err = _store_graph(
                         sp, (struct xl_dagc *) graphs.elems[i],
                         &graphs, &values);
-                if (err != OK)
-                        return err;
-        }
-
-        for (i = 0; i < values.n; i++)
-        {
-                err = _store_value(
-                        sp, (struct xl_value *) values.elems[i], &graphs);
                 if (err != OK)
                         return err;
         }
