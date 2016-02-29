@@ -51,19 +51,22 @@ yyerror(struct xl_ast *ast, void *scanner, const char *err)
         struct xl_ast_atom *atom;
         struct xl_ast_type_expr *type_expr;
         struct xl_ast_arg_list *arg_list;
+        struct xl_ast_import_list *imports;
 }
 
 %token <token> BIND TYPE IMPLIES GOES_TO LAMBDA IS OPEN_PAR CLOSE_PAR IMMEDIATE
+%token <token> USES
 %token <integer> INTEGER
 %token <floating> NUMBER
 %token <string> NAME TYPE_NAME STRING
 
-%type <ast> prog bind_list
+%type <ast> prog blocks
 %type <binding> binding
 %type <expr> expr immediate top_expr
 %type <type_expr> type_expr type_atom
 %type <atom> atom
 %type <arg_list> arg_list
+%type <imports> imports
 
 %define api.pure full
 %define api.push-pull push
@@ -76,18 +79,20 @@ yyerror(struct xl_ast *ast, void *scanner, const char *err)
 %%
 
 prog:
-  bind_list
+  blocks
         { $$ = $1; }
-| bind_list immediate
+| blocks immediate
         { $$ = $1;
           wrap_err(xl_ast_set_immediate($$, $2)); }
 ;
 
-bind_list:
+blocks:
   %empty
         { $$ = ast; }
-| bind_list binding
+| blocks binding
         { wrap_err(xl_ast_bind($1, $2)); $$ = $1; }
+| blocks imports
+        { wrap_err(xl_ast_import($1, $2)); $$= $1; }
 ;
 
 binding:
@@ -100,6 +105,11 @@ binding:
 immediate:
   IMMEDIATE IS top_expr
         { $$ = $3; }
+;
+
+imports:
+  USES NAME
+        { wrap_err(xl_ast_import_list_new(&$$, $2)); }
 
 /* top_expr is a "top expression" in the parse tree; these are things that can't
  * be subexpressions without first being wrapped in parentheses. Without the

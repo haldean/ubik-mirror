@@ -494,3 +494,23 @@ xl_ast_arg_list_new_pushl(
         (*arg_list)->next = tail;
         return OK;
 }
+
+no_ignore xl_error
+xl_ast_import(
+        struct xl_ast *ast,
+        struct xl_ast_import_list *import_list)
+{
+        import_list->next = ast->imports;
+        ast->imports = import_list;
+        return OK;
+}
+
+no_ignore xl_error
+xl_ast_import_list_new(
+        struct xl_ast_import_list **import_list,
+        char *head)
+{
+        check_alloc(*import_list, 1, struct xl_ast_import_list);
+        (*import_list)->name = head;
+        return OK;
+}

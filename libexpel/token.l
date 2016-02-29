@@ -62,6 +62,7 @@ char *read_string_literal(yyscan_t scanner);
 "="                       TOKEN(IS)
 "("                       TOKEN(OPEN_PAR)
 ")"                       TOKEN(CLOSE_PAR)
+"+"                       TOKEN(USES)
 [0-9]+                    { yylval->integer = atoi(yytext); return INTEGER; }
 ([0-9]+\.[0-9]*|\.[0-9]+) { yylval->floating = atof(yytext); return NUMBER; }
 [a-z_][a-zA-Z0-9/_\-']*   STRING(NAME)

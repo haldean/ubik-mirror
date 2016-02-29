@@ -101,6 +101,12 @@ struct xl_ast_binding
         struct xl_ast_type_expr *type_expr;
 };
 
+struct xl_ast_import_list
+{
+        char *name;
+        struct xl_ast_import_list *next;
+};
+
 struct xl_ast
 {
         struct xl_ast_binding **bindings;
@@ -108,6 +114,8 @@ struct xl_ast
         size_t cap_bindings;
 
         struct xl_ast_expr *immediate;
+
+        struct xl_ast_import_list *imports;
 };
 
 /* Allocates a new AST. */
@@ -203,3 +211,14 @@ xl_ast_arg_list_new_pushl(
         struct xl_ast_arg_list **arg_list,
         char *head,
         struct xl_ast_arg_list *tail);
+
+/* Import list builders */
+no_ignore xl_error
+xl_ast_import(
+        struct xl_ast *ast,
+        struct xl_ast_import_list *import_list);
+
+no_ignore xl_error
+xl_ast_import_list_new(
+        struct xl_ast_import_list **import_list,
+        char *head);
