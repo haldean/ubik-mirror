@@ -1,0 +1,6 @@
+# skip-run
+
+: number
+    ^ Integer -> Unit
+    = \x -> emit (humanize x)
+
