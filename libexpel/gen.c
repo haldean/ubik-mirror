@@ -546,12 +546,16 @@ xl_create_modinit(
                 ast->immediate->gen->is_terminal = true;
                 builder.result = ast->immediate->gen;
         }
-        else
+        else if (builder.n_nodes > 0)
         {
                 /* All graphs have to have a result, so we just pick one here.
                  * We'll end up executing all of them anyway, and nothing reads
                  * the modinit's result. */
                 builder.result = builder.nodes[builder.n_nodes - 1];
+        }
+        else
+        {
+                return xl_raise(ERR_NO_DATA, "nothing to bind in modinit");
         }
 
         err = xl_bdagc_build(modinit, &builder);
@@ -594,7 +598,11 @@ xl_compile(
 
         err = xl_create_modinit(&(*graphs)[0], ast, &local_env);
         if (err != OK)
+        {
+                if (err->error_code == ERR_NO_DATA)
+                        printf("source has no data in it\n");
                 return err;
+        }
 
         for (i = 0; i < *n_graphs; i++)
         {

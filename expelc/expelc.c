@@ -88,8 +88,7 @@ teardown:
         xl_stream_close(&in);
         xl_stream_close(&out);
 
-        err = xl_teardown();
-        if (err != OK)
+        if (xl_teardown() != OK)
                 printf("error when tearing down runtime\n");
 
         return err == OK ? EXIT_SUCCESS : EXIT_FAILURE;
