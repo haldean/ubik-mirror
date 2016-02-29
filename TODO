@@ -2,6 +2,7 @@ reference tracking for graphs
 runtime instrumentation
 where did a graph come from
 tuples
+records
 lambda types
 circular reference finder
 low-level debugger with graph step-through
@@ -9,5 +10,4 @@ value_or_graph and atom should be merged
 compiler error handling with line/char #
 dagc source maps
 cascading polymorphic functions for typeclasses
-proper compiler (i.e., save bytecode)
 input nodes shouldn't have required_type, it should be taken from graph type
