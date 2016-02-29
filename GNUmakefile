@@ -111,7 +111,10 @@ build/xlb/%.xlb: test/pyasm/%.xlpy pyasm/*.py
 pyasm_test: $(asms) $(rtexe)
 	EXPEL_DEBUG=yes $(rtexe) $(asms)
 
-test: unit_test pyasm_test
+compile_test: test/prog/* $(cexe) $(rtexe)
+	sh test/prog/run_all.sh
+
+test: unit_test pyasm_test compile_test
 
 clean:
 	rm -rf build dist
@@ -124,4 +127,4 @@ fuzz: CC = afl-gcc
 fuzz: $(SHARED_LIB) $(rtexe) $(asms)
 	afl-fuzz -i build/xlb -o test/afl-out $(rtexe) @@
 
-.PHONY: clean test all unit_test pyasm_test lib fuzz
+.PHONY: clean test all unit_test pyasm_test lib fuzz compile_test
