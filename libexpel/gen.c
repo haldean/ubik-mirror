@@ -525,7 +525,8 @@ no_ignore static xl_error
 xl_create_modinit(
         struct xl_dagc **modinit,
         struct xl_ast *ast,
-        struct xl_env *local_env)
+        struct xl_env *local_env,
+        enum xl_load_reason load_reason)
 {
         struct xl_graph_builder builder;
         xl_error err;
@@ -538,7 +539,7 @@ xl_create_modinit(
         if (err != OK)
                 return err;
 
-        if (ast->immediate != NULL)
+        if (ast->immediate != NULL && load_reason == LOAD_MAIN)
         {
                 err = _assign_nodes(&builder, ast->immediate, NULL, NULL);
                 if (err != OK)
@@ -567,10 +568,12 @@ xl_create_modinit(
 }
 
 no_ignore xl_error
-xl_compile(
+xl_compile_unit(
         struct xl_dagc ***graphs,
-        size_t *n_graphs,
-        struct xl_ast *ast)
+        size_t *n_graphs, 
+        struct xl_gen_requires **requires,
+        struct xl_ast *ast,
+        enum xl_load_reason load_reason)
 {
         size_t i;
         xl_error err;
@@ -596,7 +599,7 @@ xl_compile(
                         return err;
         }
 
-        err = xl_create_modinit(&(*graphs)[0], ast, &local_env);
+        err = xl_create_modinit(&(*graphs)[0], ast, &local_env, load_reason);
         if (err != OK)
         {
                 if (err->error_code == ERR_NO_DATA)
@@ -614,6 +617,8 @@ xl_compile(
         err = xl_env_free(&local_env);
         if (err != OK)
                 return err;
+
+        *requires = NULL;
 
         return OK;
 }

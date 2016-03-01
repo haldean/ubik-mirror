@@ -21,11 +21,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "expel/ast.h"
+#include "expel/compile.h"
 #include "expel/env.h"
 #include "expel/expel.h"
-#include "expel/gen.h"
 #include "expel/parse.h"
 #include "expel/schedule.h"
 #include "expel/value.h"
@@ -56,30 +57,38 @@ main(int argc, char *argv[])
         struct xl_stream in, out;
         size_t n_graphs;
         xl_error err;
+        char scratch_dir[512];
 
         if (argc != 3)
         {
                 usage();
-                return 1;
+                return EXIT_FAILURE;
         }
+
+        if (getcwd(scratch_dir, 500) == NULL)
+        {
+                perror("could not open current directory");
+                return EXIT_FAILURE;
+        }
+        strcat(scratch_dir, "/expel-build");
 
         c(xl_start());
 
         if (xl_stream_rfile(&in, argv[1]) != OK)
         {
                 printf("could not open %s for reading\n", argv[1]);
-                return 2;
+                return EXIT_FAILURE;
         }
         if (xl_stream_wfile(&out, argv[2]) != OK)
         {
                 printf("could not open %s for writing\n", argv[2]);
-                return 3;
+                return EXIT_FAILURE;
         }
 
         c(xl_ast_new(&ast));
 
         c(xl_parse(ast, &in));
-        c(xl_compile(&graphs, &n_graphs, ast));
+        c(xl_compile(&graphs, &n_graphs, ast, scratch_dir));
         c(xl_save(&out, graphs, n_graphs));
 
         c(xl_ast_free(ast));

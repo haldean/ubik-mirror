@@ -1,5 +1,5 @@
 /*
- * gen.h: expel bytecode generation
+ * compile.c: expel compilation
  * Copyright (C) 2016, Haldean Brown
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,28 +17,21 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#pragma once
-#include "expel/expel.h"
-#include "expel/ast.h"
-#include "expel/uri.h"
+#include "expel/compile.h"
+#include "expel/gen.h"
+#include "expel/util.h"
 
-struct xl_gen_requires
-{
-        struct xl_uri *unresolved;
-        struct xl_gen_requires *next;
-};
-
-enum xl_load_reason
-{
-        LOAD_MAIN = 1,
-        LOAD_IMPORTED,
-};
-
-/* Compiles a single compilation unit down to a series of graphs. */
 no_ignore xl_error
-xl_compile_unit(
+xl_compile(
         struct xl_dagc ***graphs,
         size_t *n_graphs, 
-        struct xl_gen_requires **requires,
         struct xl_ast *ast,
-        enum xl_load_reason load_reason);
+        char *scratch_dir)
+{
+        struct xl_gen_requires *requires;
+        unused(scratch_dir);
+
+        return xl_compile_unit(
+                graphs, n_graphs, &requires, ast, LOAD_MAIN);
+}
+

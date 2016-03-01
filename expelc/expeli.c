@@ -23,9 +23,9 @@
 #include <string.h>
 
 #include "expel/ast.h"
+#include "expel/compile.h"
 #include "expel/env.h"
 #include "expel/expel.h"
-#include "expel/gen.h"
 #include "expel/parse.h"
 #include "expel/schedule.h"
 #include "expel/value.h"
@@ -63,7 +63,7 @@ main(int argc, char *argv[])
         if (argc > 1 && strcmp(argv[1], "show-ast") == 0)
                 c(xl_ast_print(ast));
 
-        c(xl_compile(&graphs, &n_graphs, ast));
+        c(xl_compile(&graphs, &n_graphs, ast, NULL));
 
         c(xl_env_init(&env));
 
