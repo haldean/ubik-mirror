@@ -24,7 +24,7 @@
 no_ignore xl_error
 xl_compile(
         struct xl_dagc ***graphs,
-        size_t *n_graphs, 
+        size_t *n_graphs,
         struct xl_ast *ast,
         char *scratch_dir)
 {

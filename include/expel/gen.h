@@ -38,7 +38,7 @@ enum xl_load_reason
 no_ignore xl_error
 xl_compile_unit(
         struct xl_dagc ***graphs,
-        size_t *n_graphs, 
+        size_t *n_graphs,
         struct xl_gen_requires **requires,
         struct xl_ast *ast,
         enum xl_load_reason load_reason);
