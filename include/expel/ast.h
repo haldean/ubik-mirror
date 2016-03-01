@@ -20,6 +20,8 @@
 #pragma once
 #include "expel/expel.h"
 
+#include <stdbool.h>
+
 enum expr_type
 {
         EXPR_APPLY = 1,
@@ -38,6 +40,7 @@ enum atom_type
         ATOM_INT = 1,
         ATOM_NUM,
         ATOM_NAME,
+        ATOM_QUALIFIED,
         ATOM_TYPE_NAME,
         ATOM_STRING
 };
@@ -49,6 +52,11 @@ struct xl_ast_atom
                 char *str;
                 xl_word integer;
                 xl_float number;
+                struct
+                {
+                        char *head;
+                        char *tail;
+                } qualified;
         };
         enum atom_type atom_type;
 };
@@ -116,6 +124,8 @@ struct xl_ast
         struct xl_ast_expr *immediate;
 
         struct xl_ast_import_list *imports;
+
+        bool has_errors;
 };
 
 /* Allocates a new AST. */
@@ -166,6 +176,11 @@ xl_ast_expr_new_lambda(
 
 no_ignore xl_error
 xl_ast_atom_new_name(
+        struct xl_ast_atom **atom,
+        char *name);
+
+no_ignore xl_error
+xl_ast_atom_new_qualified(
         struct xl_ast_atom **atom,
         char *name);
 

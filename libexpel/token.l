@@ -26,8 +26,6 @@
  * suppress them. */
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
-#define ERROR 0x0FFFFFFF
-
 #define TOKEN(x) { yylval->token = x; return x; }
 #define STRING(token) { \
         yylval->string = strdup(yytext); \
@@ -44,7 +42,7 @@ char *read_string_literal(yyscan_t scanner);
 %option nounput
 %option bison-bridge
 
-%x STRING_LITERAL
+NAME [a-z_][a-zA-Z0-9/_\-']*
 
 %%
 
@@ -65,12 +63,16 @@ char *read_string_literal(yyscan_t scanner);
 "+"                       TOKEN(USES)
 [0-9]+                    { yylval->integer = atoi(yytext); return INTEGER; }
 ([0-9]+\.[0-9]*|\.[0-9]+) { yylval->floating = atof(yytext); return NUMBER; }
-[a-z_][a-zA-Z0-9/_\-':]*  STRING(NAME)
+{NAME}                    STRING(NAME)
+{NAME}:{NAME}             STRING(QUALIFIED_NAME)
 [A-Z][a-zA-Z0-9/']*       STRING(TYPE_NAME)
 "\""                      { yylval->string = read_string_literal(yyscanner);
                             return STRING; }
 
-.                         return ERROR;
+.                         { printf("%d: invalid character %s\n",
+                                   yylineno, yytext);
+                            return yytext[0]; }
+
 
 %%
 
@@ -150,7 +152,6 @@ xl_tokenize(xl_token_cb callback, struct xl_stream *stream)
         yyscan_t scanner;
         xl_error err;
         int ret;
-        char *err_msg;
         YYSTYPE token_info;
 
         err = OK;
@@ -166,16 +167,6 @@ xl_tokenize(xl_token_cb callback, struct xl_stream *stream)
                 token.text = yyget_text(scanner);
                 token.text_len = yyget_leng(scanner);
                 token.line_no = yyget_lineno(scanner);
-                if (token.token_code == ERROR)
-                {
-                        ret = asprintf(
-                                &err_msg,
-                                "unexpected character '%c' on line %d",
-                                token.text[0], token.line_no);
-                        if (ret < 0)
-                                err_msg = "unexpected character in parse";
-                        return xl_raise(ERR_BAD_VALUE, err_msg);
-                }
                 err = callback(token);
                 if (err != OK)
                         goto exit;

@@ -30,9 +30,9 @@
 void
 yyerror(struct xl_ast *ast, void *scanner, const char *err)
 {
-        unused(ast);
         unused(scanner);
         fprintf(stderr, "%s\n", err);
+        ast->has_errors = true;
 }
 
 #define wrap_err(x) do { xl_error _err = (x); if (_err != OK) YYABORT; } while (0);
@@ -58,7 +58,7 @@ yyerror(struct xl_ast *ast, void *scanner, const char *err)
 %token <token> USES
 %token <integer> INTEGER
 %token <floating> NUMBER
-%token <string> NAME TYPE_NAME STRING
+%token <string> NAME TYPE_NAME STRING QUALIFIED_NAME
 
 %type <ast> prog blocks
 %type <binding> binding
@@ -145,6 +145,8 @@ arg_list:
 atom:
   NAME
         { wrap_err(xl_ast_atom_new_name(&$$, $1)); }
+| QUALIFIED_NAME
+        { wrap_err(xl_ast_atom_new_qualified(&$$, $1)); }
 | TYPE_NAME
         { wrap_err(xl_ast_atom_new_type_name(&$$, $1)); }
 | INTEGER

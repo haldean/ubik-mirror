@@ -133,6 +133,24 @@ _assign_atom_node(
                         return err;
                 return OK;
 
+        case ATOM_QUALIFIED:
+                n->node.node_type = DAGC_NODE_LOAD;
+                n->node.id = 0;
+
+                n->as_load.loc = calloc(1, sizeof(struct xl_uri));
+
+                err = xl_uri_package(
+                        n->as_load.loc,
+                        expr->atom->qualified.head,
+                        expr->atom->qualified.tail);
+                if (err != OK)
+                        return err;
+
+                err = xl_take(n->as_load.loc);
+                if (err != OK)
+                        return err;
+                return OK;
+
         case ATOM_TYPE_NAME:
                 return xl_raise(ERR_NOT_IMPLEMENTED, "expr type constructor");
 

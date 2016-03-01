@@ -18,8 +18,10 @@
  */
 
 #include "expel/ast.h"
+
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define check_alloc(x, nelem, contents) { \
         (x) = calloc(nelem, sizeof(contents)); \
@@ -190,6 +192,9 @@ _print_atom(struct xl_ast_atom *atom)
         case ATOM_NAME:
                 printf("%s:n", atom->str);
                 return OK;
+        case ATOM_QUALIFIED:
+                printf("%s:%s:q", atom->qualified.head, atom->qualified.tail);
+                return OK;
         case ATOM_TYPE_NAME:
                 printf("%s:t", atom->str);
                 return OK;
@@ -301,6 +306,15 @@ xl_ast_print(struct xl_ast *ast)
                 printf("\n");
         }
 
+        if (ast->immediate != NULL)
+        {
+                printf("immediate = ");
+                err = _print_expr(ast->immediate);
+                if (err != OK)
+                        return err;
+                printf("\n");
+        }
+
         return OK;
 }
 
@@ -401,6 +415,43 @@ xl_ast_atom_new_name(
         check_alloc(*atom, 1, struct xl_ast_atom);
         (*atom)->atom_type = ATOM_NAME;
         (*atom)->str = name;
+        return OK;
+}
+
+no_ignore xl_error
+xl_ast_atom_new_qualified(
+        struct xl_ast_atom **atom,
+        char *name)
+{
+        size_t head_len;
+        size_t tail_len;
+        size_t name_len;
+        size_t i;
+
+        name_len = strlen(name);
+        for (i = 0; i < name_len; i++)
+        {
+                if (name[i] == ':')
+                {
+                        head_len = i;
+                        tail_len = name_len - i - 1;
+                        break;
+                }
+        }
+
+        check_alloc(*atom, 1, struct xl_ast_atom);
+        (*atom)->atom_type = ATOM_QUALIFIED;
+
+        (*atom)->qualified.head = calloc(head_len + 1, sizeof(char));
+        if ((*atom)->qualified.head == NULL)
+                return xl_raise(ERR_NO_MEMORY, "qualified alloc");
+        memcpy((*atom)->qualified.head, name, head_len);
+
+        (*atom)->qualified.tail = calloc(tail_len + 1, sizeof(char));
+        if ((*atom)->qualified.tail == NULL)
+                return xl_raise(ERR_NO_MEMORY, "qualified alloc");
+        memcpy((*atom)->qualified.tail, &name[head_len + 1], tail_len);
+
         return OK;
 }
 
