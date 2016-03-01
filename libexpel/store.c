@@ -226,7 +226,7 @@ _collect_graphs_and_values(
 
 no_ignore static xl_error
 _store_apply(
-        struct xl_stream *sp, 
+        struct xl_stream *sp,
         struct xl_dagc_apply *n,
         struct xl_pointer_set *nodes)
 {

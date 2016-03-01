@@ -272,7 +272,7 @@ xl_schedule_push(
         {
                 n = graph->terminals[i];
                 err = _push_dep_tree(
-                        s, graph, n, env, n == graph->result ? notify : NULL); 
+                        s, graph, n, env, n == graph->result ? notify : NULL);
                 if (err != OK)
                         return err;
         }
