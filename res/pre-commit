@@ -8,25 +8,37 @@ if [[ res/pre-commit -nt $0 ]]; then
         exit $?
 fi
 
-do_not_submits=$(grep -R "DO NOT SUBMIT" libexpel include test)
+source_dirs="libexpel include test expelrt expelc"
+
+do_not_submits=$(grep -nR "DO NOT SUBMIT" $source_dirs)
 dns_res="$?"
 
-old_comments=$(grep -R "^[ ]*//" libexpel include test)
+old_comments=$(grep -nR "^[ ]*//" $source_dirs)
 oc_res="$?"
 
-if [ "$dns_res" != 0 -a "$oc_res" != 0 ]; then
+trailing_ws=$(grep -nR " $" $source_dirs)
+tws_res="$?"
+
+if [ "$dns_res" != 0 -a "$oc_res" != 0  -a "$tws_res" != 0 ]; then
         exit 0
 fi
 
 echo "not committing, fix these issues first."
 echo
+
 echo "old-style comments:"
 cat <<EOF
 $old_comments
 EOF
-echo
+
 echo "do not submits:"
 cat <<EOF
 $do_not_submits
 EOF
+
+echo "trailing whitespace:"
+cat <<EOF
+$trailing_ws
+EOF
+
 exit 1
