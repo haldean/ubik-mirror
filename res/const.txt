@@ -72,6 +72,7 @@ eundrflw.ERR_UNDERFLOW
 cunknown.DAGC_TYPE_UNKNOWN
 
   native.SCOPE_NATIVE
+ package.SCOPE_PACKAGE
  userdef.SCOPE_USER_DEFINED
  unknown.SCOPE_UNKNOWN
 

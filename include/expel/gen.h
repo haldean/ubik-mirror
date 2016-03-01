@@ -24,7 +24,7 @@
 
 struct xl_gen_requires
 {
-        struct xl_uri *unresolved;
+        struct xl_uri *dependency;
         struct xl_gen_requires *next;
 };
 

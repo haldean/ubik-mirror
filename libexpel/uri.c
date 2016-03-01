@@ -77,15 +77,15 @@ xl_uri_user(
 no_ignore xl_error
 xl_uri_package(
         struct xl_uri *uri,
-        char *name,
-        char *package)
+        char *package,
+        char *name)
 {
         uri->name = name;
         uri->name_len = strlen(name);
         uri->source = package;
         uri->source_len = strlen(package);
         uri->version = 0;
-        uri->scope = SCOPE_NATIVE;
+        uri->scope = SCOPE_PACKAGE;
         uri->refcount = 0;
         uri->tag = TAG_URI;
         uri->as_value = NULL;

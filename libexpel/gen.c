@@ -399,11 +399,23 @@ no_ignore static xl_error
 xl_resolve_uri(
         struct xl_uri **resolved,
         struct xl_uri *uri,
-        struct xl_env *env)
+        struct xl_env *env,
+        struct xl_gen_requires **requires)
 {
         struct xl_uri *r;
+        struct xl_gen_requires *new_req;
         bool is_present;
         xl_error err;
+
+        if (uri->scope == SCOPE_PACKAGE)
+        {
+                new_req = calloc(1, sizeof(struct xl_gen_requires));
+                new_req->dependency = uri;
+                new_req->next = *requires;
+                *requires = new_req;
+                *resolved = uri;
+                return OK;
+        }
 
         r = calloc(1, sizeof(struct xl_uri));
 
@@ -440,7 +452,8 @@ xl_resolve_uri(
 no_ignore static xl_error
 xl_resolve_uris(
         struct xl_dagc *graph,
-        struct xl_env *local_env)
+        struct xl_env *local_env,
+        struct xl_gen_requires **requires)
 {
         size_t i;
         xl_error err;
@@ -463,7 +476,8 @@ xl_resolve_uris(
                                 continue;
                         if (!(t & TAG_GRAPH_UNRESOLVED))
                                 continue;
-                        err = xl_resolve_uris(cons->value.graph, local_env);
+                        err = xl_resolve_uris(
+                                cons->value.graph, local_env, requires);
                         if (err != OK)
                                 return err;
                         continue;
@@ -472,7 +486,7 @@ xl_resolve_uris(
                 if (graph->nodes[i]->node_type != DAGC_NODE_LOAD)
                         continue;
                 load = (struct xl_dagc_load *) graph->nodes[i];
-                err = xl_resolve_uri(&new_uri, load->loc, local_env);
+                err = xl_resolve_uri(&new_uri, load->loc, local_env, requires);
                 if (err != OK)
                         return err;
                 load->loc = new_uri;
@@ -627,7 +641,7 @@ xl_compile_unit(
 
         for (i = 0; i < *n_graphs; i++)
         {
-                err = xl_resolve_uris((*graphs)[i], &local_env);
+                err = xl_resolve_uris((*graphs)[i], &local_env, requires);
                 if (err != OK)
                         return err;
         }
@@ -635,8 +649,6 @@ xl_compile_unit(
         err = xl_env_free(&local_env);
         if (err != OK)
                 return err;
-
-        *requires = NULL;
 
         return OK;
 }

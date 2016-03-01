@@ -17,6 +17,8 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include <stdio.h>
+
 #include "expel/compile.h"
 #include "expel/gen.h"
 #include "expel/util.h"
@@ -29,9 +31,24 @@ xl_compile(
         char *scratch_dir)
 {
         struct xl_gen_requires *requires;
+        xl_error err;
+
         unused(scratch_dir);
 
-        return xl_compile_unit(
+        requires = NULL;
+        err = xl_compile_unit(
                 graphs, n_graphs, &requires, ast, LOAD_MAIN);
-}
+        if (err != OK)
+                return err;
 
+        if (requires != NULL)
+        {
+                while (requires != NULL)
+                {
+                        printf("requires %s\n", requires->dependency->source);
+                        requires = requires->next;
+                }
+                return xl_raise(ERR_NOT_IMPLEMENTED, "imports not implemented");
+        }
+        return OK;
+}

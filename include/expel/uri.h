@@ -58,8 +58,8 @@ xl_uri_user(
 no_ignore xl_error
 xl_uri_package(
         struct xl_uri *uri,
-        char *name,
-        char *package);
+        char *package,
+        char *name);
 
 /* Creates a URI for a global, runtime-provided resource. */
 no_ignore xl_error
