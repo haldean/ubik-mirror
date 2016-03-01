@@ -30,6 +30,8 @@ struct xl_uri {
 
         char      *name;
         size_t    name_len;
+        char      *source;
+        size_t    source_len;
         xl_word   version;
         xl_word   scope;
 
@@ -52,7 +54,14 @@ xl_uri_user(
         struct xl_uri *uri,
         char *name);
 
-/* Creates a URI for a local resource. */
+/* Creates a URI for a package-scoped resource. */
+no_ignore xl_error
+xl_uri_package(
+        struct xl_uri *uri,
+        char *name,
+        char *package);
+
+/* Creates a URI for a global, runtime-provided resource. */
 no_ignore xl_error
 xl_uri_native(
         struct xl_uri *uri,

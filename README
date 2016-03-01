@@ -345,16 +345,34 @@ by the standard; conforming parsers will ignore the data that follows
 the encoded graphs. This is provided as a means for tools to attach
 metadata onto the end of the bytecode if so desired.
 
+Compilation ------------------------------------------------------------
+
+The compiler for Expel is distributed as part of the Expel library; a
+compiler executable can be built using:
+
+        $ make dist/expelc
+        $ dist/expelc path/to/file.xl out.xlb
+
+The process of creating an executable is divided into two phases, not
+unlike compilation for C and other native languages: compilation and
+linking. However, unlike C, the user has less control over the build
+process; object files are always created for each compilation unit,
+"headers" (called "interface files") are automatically generated from
+the source, and all linking is static. The compiler abstracts most of
+the details away from the user, but they still get the advantage of
+fast, incremental builds.
+
+Compilation begins by loading the given Expel file and generating code
+for the module (see below). In general, at the end of this process there
+are still unresolved references; we collect all of the imports that
+provide those references, and find the files that provide the requisite
+units among the compiler's search path. If the file is found, we check
+to see if there already exists an interface file for it in the build
+cache directory with the correct content hash; if there is, definitions
+are loaded from the interface file, and if not, we compile the module
+from scratch.
+
 Code generation --------------------------------------------------------
-
-The parser and code generator for Expel is distributed as part of the
-Expel library; a sample interpreter can be built and executed using:
-
-        $ make build/interpreter
-        $ build/interpreter path/to/file.xl
-
-A compiler that saves bytecode for execution by the runexpel tool is
-forthcoming (pending the implementation of DAGC-to-bytecode conversion).
 
 Code generation begins by lexing and parsing the provided source code,
 using the lexer and parser given in token.l and grammar.y. At the end of

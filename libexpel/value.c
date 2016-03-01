@@ -69,6 +69,12 @@ xl_packed_read(uint8_t **dest, size_t *n, struct xl_value *src)
 
         n_bytes = src->left.w;
         *n = n_bytes;
+        if (n_bytes == 0)
+        {
+                *dest = NULL;
+                return OK;
+        }
+
         res = calloc(n_bytes + 1, sizeof(uint8_t));
         if (res == NULL)
                 return xl_raise(ERR_NO_MEMORY, "read packed");
@@ -118,6 +124,17 @@ xl_value_pack_string(struct xl_value *dest, char *src, size_t n)
 
         dest->tag |= TAG_LEFT_WORD | TAG_RIGHT_NODE;
         dest->left.w = n;
+
+        if (n == 0)
+        {
+                err = xl_value_new(&dest->right.t);
+                if (err != OK)
+                        return err;
+                dest->right.t->tag |= TAG_LEFT_WORD | TAG_RIGHT_WORD;
+                dest->right.t->left.w = 0;
+                dest->right.t->right.w = 0;
+                return OK;
+        }
 
         v = dest;
         for (i = 0; i < n; i += 8)

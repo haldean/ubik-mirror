@@ -101,8 +101,8 @@ def pack(s):
         s = s.rjust(8)
     return struct.pack("8s", s)
 
-def uri(name, version=0, scope=pack("userdef")):
-    return t(version, t(scope, pack_string(name)))
+def uri(name, source="", version=0, scope=pack("userdef")):
+    return t(t(version, scope), t(pack_string(name), pack_string(source)))
 
 def pack_string(s):
     bits = []
@@ -110,10 +110,13 @@ def pack_string(s):
     while s:
         bits.append(s[:8])
         s = s[8:]
-    tree = 0
-    while bits:
-        tree = t(bits[-1].ljust(8, '\x00'), tree)
-        bits = bits[:-1]
+    if bits:
+        tree = 0
+        while bits:
+            tree = t(bits[-1].ljust(8, '\x00'), tree)
+            bits = bits[:-1]
+    else:
+        tree = t(0, 0)
     return t(len(bytes), tree)
 
 def pack_tree(t):
