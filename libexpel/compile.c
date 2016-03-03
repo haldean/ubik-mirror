@@ -133,6 +133,69 @@ _open_stream_for_requirement(
         return xl_raise(ERR_ABSENT, package_name);
 }
 
+no_ignore static xl_error
+_add_requirement(
+        struct xl_dagc ***graphs,
+        size_t *n_graphs,
+        struct xl_gen_requires *requires,
+        struct xl_uri *dependency,
+        struct xl_compilation_env *cenv)
+{
+        struct xl_dagc **req_graphs;
+        size_t n_req_graphs;
+        struct xl_gen_requires *req_requires;
+        struct xl_stream package_stream;
+        struct xl_ast *ast;
+        struct xl_dagc **buf;
+        xl_error err;
+
+        unused(requires);
+
+        err = _open_stream_for_requirement(
+                &package_stream, dependency->source, cenv);
+        if (err != OK)
+                return err;
+
+        err = xl_ast_new(&ast);
+        if (err != OK)
+                return err;
+
+        err = xl_parse(ast, &package_stream);
+        if (err != OK)
+                return err;
+
+        req_requires = NULL;
+        err = xl_compile_unit(
+                &req_graphs, &n_req_graphs, &req_requires, ast, LOAD_IMPORTED);
+        if (err != OK)
+                return err;
+        if (req_requires != NULL)
+                return xl_raise(
+                        ERR_NOT_IMPLEMENTED,
+                        "only one level of imports allowed");
+
+        buf = realloc(
+                *graphs,
+                (*n_graphs + n_req_graphs) * sizeof(struct xl_dagc **));
+        if (buf == NULL)
+                return xl_raise(ERR_NO_MEMORY, "graph list realloc");
+        memcpy(
+                &buf[*n_graphs],
+                req_graphs,
+                n_req_graphs * sizeof(struct xl_dagc **));
+        *graphs = buf;
+        *n_graphs += n_req_graphs;
+
+        err = xl_ast_free(ast);
+        if (err != OK)
+                return err;
+
+        xl_stream_close(&package_stream);
+        free(req_graphs);
+
+        return OK;
+}
+
 no_ignore xl_error
 xl_compile_ast(
         struct xl_dagc ***graphs,
@@ -141,7 +204,6 @@ xl_compile_ast(
         struct xl_compilation_env *cenv)
 {
         struct xl_gen_requires *requires;
-        struct xl_stream package_stream;
         xl_error err;
 
         requires = NULL;
@@ -154,16 +216,13 @@ xl_compile_ast(
         {
                 while (requires != NULL)
                 {
-                        printf("requires %s\n", requires->dependency->source);
-                        err = _open_stream_for_requirement(
-                                &package_stream,
-                                requires->dependency->source,
-                                cenv);
+                        err = _add_requirement(
+                                graphs, n_graphs, requires,
+                                requires->dependency, cenv);
                         if (err != OK)
                                 return err;
                         requires = requires->next;
                 }
-                return xl_raise(ERR_NOT_IMPLEMENTED, "imports not implemented");
         }
         return OK;
 }
