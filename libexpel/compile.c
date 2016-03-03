@@ -97,12 +97,40 @@ xl_compile(
 
 no_ignore static xl_error
 _open_stream_for_requirement(
+        struct xl_stream *out,
         char *package_name,
         struct xl_compilation_env *cenv)
 {
-        unused(package_name);
-        unused(cenv);
-        return OK;
+        size_t i;
+        char *test_file;
+        char *test_basename;
+        xl_error err;
+
+        test_basename = calloc(strlen(package_name) + 4, sizeof(char));
+        strcpy(test_basename, package_name);
+        strcat(test_basename, ".xl");
+
+        for (i = 0; i < cenv->n_include_dirs; i++)
+        {
+                err = xl_string_path_concat(
+                        &test_file, cenv->include_dirs[i], test_basename);
+                if (err != OK)
+                        return err;
+                if (access(test_file, R_OK) == 0)
+                {
+                        err = xl_stream_rfile(out, test_file);
+                        if (err != OK)
+                                return err;
+                        printf("found %s for %s\n", test_file, package_name);
+                        free(test_file);
+                        free(test_basename);
+                        return OK;
+                }
+                free(test_file);
+        }
+
+        free(test_basename);
+        return xl_raise(ERR_ABSENT, package_name);
 }
 
 no_ignore xl_error
@@ -113,9 +141,8 @@ xl_compile_ast(
         struct xl_compilation_env *cenv)
 {
         struct xl_gen_requires *requires;
+        struct xl_stream package_stream;
         xl_error err;
-
-        unused(cenv);
 
         requires = NULL;
         err = xl_compile_unit(
@@ -129,7 +156,9 @@ xl_compile_ast(
                 {
                         printf("requires %s\n", requires->dependency->source);
                         err = _open_stream_for_requirement(
-                                requires->dependency->source, cenv);
+                                &package_stream,
+                                requires->dependency->source,
+                                cenv);
                         if (err != OK)
                                 return err;
                         requires = requires->next;
