@@ -406,6 +406,26 @@ split()
         return ok;
 }
 
+test_t
+path_concat()
+{
+        char *out;
+
+        assert(xl_string_path_concat(&out, "/", "test_file") == OK);
+        assert(strcmp(out, "/test_file") == 0);
+
+        assert(xl_string_path_concat(&out, "/hello/", "/test_file") == OK);
+        assert(strcmp(out, "/hello/test_file") == 0);
+
+        assert(xl_string_path_concat(&out, "", "test_file") == OK);
+        assert(strcmp(out, "test_file") == 0);
+
+        assert(xl_string_path_concat(&out, "./one/two/three", "four") == OK);
+        assert(strcmp(out, "./one/two/three/four") == 0);
+
+        return ok;
+}
+
 int
 main()
 {
@@ -425,5 +445,6 @@ main()
         run(uri);
         run(pointer_set);
         run(split);
+        run(path_concat);
         finish();
 }

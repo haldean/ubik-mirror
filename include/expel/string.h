@@ -30,3 +30,9 @@ xl_string_split(
         size_t n_in,
         char delim);
 
+/* Joins two NULL-terminated path segments into a single path. */
+no_ignore xl_error
+xl_string_path_concat(
+        char **out,
+        char *first,
+        char *second);

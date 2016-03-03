@@ -62,3 +62,58 @@ xl_string_split(
         return OK;
 }
 
+/* Joins two NULL-terminated path segments into a single path. */
+no_ignore xl_error
+xl_string_path_concat(
+        char **out_p,
+        char *first,
+        char *second)
+{
+        char *out;
+        char path_sep;
+        size_t first_len;
+        size_t second_len;
+        size_t path_sep_len;
+
+        path_sep = '/';
+
+        first_len = strlen(first);
+        second_len = strlen(second);
+
+        /* First handle the case where one of them is empty, because it's easy
+         * and it means we do less checking in all the other cases. */
+        if (first_len == 0 || second_len == 0)
+        {
+                path_sep_len = 0;
+        }
+        /* We only have to add a path separator if the first string doesn't end
+         * in one and the second string doesn't start with one. */
+        else if (first[first_len - 1] != path_sep && second[0] != path_sep)
+        {
+                path_sep_len = 1;
+        }
+        /* Additionally, we have to drop the path separator off of one of them
+         * if the first ends with one _and_ the second starts with one. */
+        else if (first[first_len - 1] == path_sep && second[0] == path_sep)
+        {
+                path_sep_len = 0;
+                second++;
+        }
+        /* Otherwise, exactly one of them has a path separator at the join
+         * point; there's no extra path separator and we can leave the input
+         * strings untouched. */
+        else
+        {
+                path_sep_len = 0;
+        }
+
+        out = calloc(first_len + second_len + path_sep_len + 1, sizeof(char));
+
+        strcpy(out, first);
+        if (path_sep_len)
+                out[first_len] = '/';
+        strcat(out, second);
+
+        *out_p = out;
+        return OK;
+}
