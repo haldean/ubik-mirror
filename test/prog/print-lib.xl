@@ -1,6 +1,6 @@
 # skip-run
 
 : number
-    ^ Integer -> Unit
+    ^ Word -> Word
     = \x -> emit (humanize x)
 
