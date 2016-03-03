@@ -40,7 +40,7 @@
         } } while(0)
 
 xl_error
-test_file(char *fname, bool debug)
+test_file(char *fname, bool debug, bool timing)
 {
         struct xl_stream stream;
         struct xl_stream sstdout;
@@ -57,10 +57,8 @@ test_file(char *fname, bool debug)
         n_graphs = 0;
         graphs = NULL;
 
-        if (debug)
+        if (timing)
         {
-                printf("%s\n", fname);
-
                 err = xl_timer_new(&timer);
                 CHECK_ERR("couldn't create timer");
                 err = xl_timer_start(timer);
@@ -89,12 +87,15 @@ test_file(char *fname, bool debug)
                 }
         }
 
-        if (debug)
+        if (timing)
         {
                 err = xl_timer_elapsed(&elapsed, timer);
                 CHECK_ERR("couldn't read timer");
                 printf("\ttime from start to loaded:    %ld usec\n", elapsed);
+        }
 
+        if (debug)
+        {
                 err = xl_value_new(&expected);
                 CHECK_ERR("couldn't create expected value");
 
@@ -126,7 +127,7 @@ test_file(char *fname, bool debug)
         err = xl_env_free(&env);
         CHECK_ERR("couldn't free environment");
 
-        if (debug)
+        if (timing)
         {
                 err = xl_timer_elapsed(&elapsed, timer);
                 CHECK_ERR("couldn't read timer");
@@ -136,32 +137,31 @@ test_file(char *fname, bool debug)
         if (debug && expected != NULL)
         {
                 actual = graphs[modinit_i]->result->known.tree;
-                printf("\texpected:  ");
-                err = xl_value_print(&sstdout, expected);
-                CHECK_ERR("couldn't print expected");
-
-                printf("\n\t  actual:  ");
-                if (actual != NULL)
-                {
-                        err = xl_value_print(&sstdout, actual);
-                        CHECK_ERR("couldn't print actual");
-                }
-                else
-                {
-                        printf("not evaluated");
-                }
-                printf("\n");
 
                 if (actual == NULL || !xl_value_eq(expected, actual))
                 {
-                        printf("FAIL\n");
+                        printf("fail: %s\n\texpected:  ", fname);
+                        err = xl_value_print(&sstdout, expected);
+                        CHECK_ERR("couldn't print expected");
+
+                        printf("\n\t  actual:  ");
+                        if (actual != NULL)
+                        {
+                                err = xl_value_print(&sstdout, actual);
+                                CHECK_ERR("couldn't print actual");
+                        }
+                        else
+                        {
+                                printf("not evaluated");
+                        }
+                        printf("\n");
                         err = xl_raise(ERR_TEST_FAILED, NULL);
                         goto teardown;
                 }
         }
 
 teardown:
-        if (debug)
+        if (timing)
                 free(timer);
 
         if (graphs != NULL)
@@ -194,11 +194,8 @@ teardown:
 
         xl_stream_close(&stream);
 
-        if (debug && err == OK)
-        {
-                printf("OK\n");
-                printf("\n");
-        }
+        if (err == OK)
+                printf("ok:   %s\n", fname);
 
         return err;
 }
@@ -210,20 +207,23 @@ main(int argc, char *argv[])
         int i;
         char *debug_opt;
         bool debug;
+        char *timing_opt;
+        bool timing;
 
         debug_opt = getenv("EXPEL_DEBUG");
         debug = debug_opt != NULL && strlen(debug_opt) > 0;
 
+        timing_opt = getenv("EXPEL_TIMING");
+        timing = timing_opt != NULL && strlen(timing_opt) > 0;
+
         n_failures = 0;
         for (i = 1; i < argc; i++)
         {
-                if (test_file(argv[i], debug) != OK)
+                if (test_file(argv[i], debug, timing) != OK)
                         n_failures++;
         }
 
         if (debug && n_failures)
                 printf("%d of %d failed\n", n_failures, argc - 1);
-        else if (debug)
-                printf("all %d succeeded\n", argc - 1);
         return n_failures;
 }
