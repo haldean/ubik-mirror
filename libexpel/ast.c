@@ -46,6 +46,10 @@ _free_atom(struct xl_ast_atom *atom)
                 free(atom->str);
                 break;
 
+        case ATOM_QUALIFIED:
+                free(atom->qualified.head);
+                free(atom->qualified.tail);
+
         case ATOM_NUM:
         case ATOM_INT:
                 break;
