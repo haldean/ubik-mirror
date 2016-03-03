@@ -45,8 +45,13 @@ xl_uri_unknown(
         struct xl_uri *uri,
         char *name)
 {
-        uri->name = name;
-        uri->name_len = strlen(name);
+        char *name_buf;
+
+        name_buf = strdup(name);
+        if (name_buf == NULL)
+                return xl_raise(ERR_NO_MEMORY, "uri name copy");
+        uri->name = name_buf;
+        uri->name_len = strlen(name_buf);
         uri->source = NULL;
         uri->source_len = 0;
         uri->version = 0;
@@ -62,8 +67,13 @@ xl_uri_user(
         struct xl_uri *uri,
         char *name)
 {
-        uri->name = name;
-        uri->name_len = strlen(name);
+        char *name_buf;
+
+        name_buf = strdup(name);
+        if (name_buf == NULL)
+                return xl_raise(ERR_NO_MEMORY, "uri name copy");
+        uri->name = name_buf;
+        uri->name_len = strlen(name_buf);
         uri->source = NULL;
         uri->source_len = 0;
         uri->version = 0;
@@ -80,10 +90,20 @@ xl_uri_package(
         char *package,
         char *name)
 {
-        uri->name = name;
-        uri->name_len = strlen(name);
-        uri->source = package;
-        uri->source_len = strlen(package);
+        char *package_buf;
+        char *name_buf;
+
+        name_buf = strdup(name);
+        if (name_buf == NULL)
+                return xl_raise(ERR_NO_MEMORY, "uri name copy");
+        package_buf = strdup(package);
+        if (package_buf == NULL)
+                return xl_raise(ERR_NO_MEMORY, "uri package copy");
+
+        uri->name = name_buf;
+        uri->name_len = strlen(name_buf);
+        uri->source = package_buf;
+        uri->source_len = strlen(package_buf);
         uri->version = 0;
         uri->scope = SCOPE_PACKAGE;
         uri->refcount = 0;
@@ -97,8 +117,13 @@ xl_uri_native(
         struct xl_uri *uri,
         char *name)
 {
-        uri->name = name;
-        uri->name_len = strlen(name);
+        char *name_buf;
+
+        name_buf = strdup(name);
+        if (name_buf == NULL)
+                return xl_raise(ERR_NO_MEMORY, "uri name copy");
+        uri->name = name_buf;
+        uri->name_len = strlen(name_buf);
         uri->source = NULL;
         uri->source_len = 0;
         uri->version = 0;
