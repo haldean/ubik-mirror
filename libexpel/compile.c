@@ -29,7 +29,7 @@ xl_compile(
         struct xl_dagc ***graphs,
         size_t *n_graphs,
         struct xl_stream *in_stream,
-        char *scratch_dir)
+        struct xl_compilation_env *cenv)
 {
         struct xl_ast *ast;
         xl_error err;
@@ -42,7 +42,7 @@ xl_compile(
         if (err != OK)
                 return err;
 
-        err = xl_compile_ast(graphs, n_graphs, ast, scratch_dir);
+        err = xl_compile_ast(graphs, n_graphs, ast, cenv);
         if (err != OK)
                 return err;
 
@@ -53,17 +53,27 @@ xl_compile(
         return OK;
 }
 
+no_ignore static xl_error
+_open_stream_for_requirement(
+        char *package_name,
+        struct xl_compilation_env *cenv)
+{
+        unused(package_name);
+        unused(cenv);
+        return OK;
+}
+
 no_ignore xl_error
 xl_compile_ast(
         struct xl_dagc ***graphs,
         size_t *n_graphs,
         struct xl_ast *ast,
-        char *scratch_dir)
+        struct xl_compilation_env *cenv)
 {
         struct xl_gen_requires *requires;
         xl_error err;
 
-        unused(scratch_dir);
+        unused(cenv);
 
         requires = NULL;
         err = xl_compile_unit(
@@ -76,6 +86,10 @@ xl_compile_ast(
                 while (requires != NULL)
                 {
                         printf("requires %s\n", requires->dependency->source);
+                        err = _open_stream_for_requirement(
+                                requires->dependency->source, cenv);
+                        if (err != OK)
+                                return err;
                         requires = requires->next;
                 }
                 return xl_raise(ERR_NOT_IMPLEMENTED, "imports not implemented");

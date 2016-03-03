@@ -22,17 +22,25 @@
 #include "expel/ast.h"
 
 
+struct xl_compilation_env
+{
+        char *scratch_dir;
+
+        char **include_dirs;
+        size_t n_include_dirs;
+};
+
 no_ignore xl_error
 xl_compile(
         struct xl_dagc ***graphs,
         size_t *n_graphs,
         struct xl_stream *in_stream,
-        char *scratch_dir);
+        struct xl_compilation_env *cenv);
 
 no_ignore xl_error
 xl_compile_ast(
         struct xl_dagc ***graphs,
         size_t *n_graphs,
         struct xl_ast *ast,
-        char *scratch_dir);
+        struct xl_compilation_env *cenv);
 

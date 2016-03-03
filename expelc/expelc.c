@@ -55,6 +55,7 @@ main(int argc, char *argv[])
         struct xl_stream in, out;
         size_t n_graphs;
         xl_error err;
+        struct xl_compilation_env env;
         char scratch_dir[512];
 
         if (argc != 3)
@@ -69,6 +70,7 @@ main(int argc, char *argv[])
                 return EXIT_FAILURE;
         }
         strcat(scratch_dir, "/expel-build");
+        env.scratch_dir = scratch_dir;
 
         c(xl_start());
 
@@ -83,7 +85,7 @@ main(int argc, char *argv[])
                 return EXIT_FAILURE;
         }
 
-        c(xl_compile(&graphs, &n_graphs, &in, scratch_dir));
+        c(xl_compile(&graphs, &n_graphs, &in, &env));
         c(xl_save(&out, graphs, n_graphs));
 
 teardown:
