@@ -18,11 +18,53 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #include "expel/compile.h"
 #include "expel/gen.h"
 #include "expel/parse.h"
+#include "expel/string.h"
 #include "expel/util.h"
+
+
+no_ignore xl_error
+xl_compile_default_env(struct xl_compilation_env *cenv)
+{
+        char *scratch_dir;
+        char *include_dirs;
+        xl_error err;
+
+        scratch_dir = calloc(512, sizeof(char));
+        if (getcwd(scratch_dir, 500) == NULL)
+        {
+                perror("could not open current directory");
+                return xl_raise(ERR_UNEXPECTED_FAILURE, "getcwd");
+        }
+        strcat(scratch_dir, "/expel-build");
+        cenv->scratch_dir = scratch_dir;
+
+        include_dirs = getenv("EXPEL_INCLUDE");
+        if (include_dirs == NULL)
+        {
+                cenv->include_dirs = NULL;
+                cenv->n_include_dirs = 0;
+        }
+        else
+        {
+                err = xl_string_split(
+                        &cenv->include_dirs,
+                        &cenv->n_include_dirs,
+                        include_dirs,
+                        strlen(include_dirs),
+                        ':');
+                if (err != OK)
+                        return err;
+        }
+
+        return OK;
+}
 
 no_ignore xl_error
 xl_compile(

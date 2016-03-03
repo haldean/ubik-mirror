@@ -31,6 +31,9 @@ struct xl_compilation_env
 };
 
 no_ignore xl_error
+xl_compile_default_env(struct xl_compilation_env *cenv);
+
+no_ignore xl_error
 xl_compile(
         struct xl_dagc ***graphs,
         size_t *n_graphs,

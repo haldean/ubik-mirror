@@ -21,7 +21,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 
 #include "expel/compile.h"
 #include "expel/env.h"
@@ -56,21 +55,12 @@ main(int argc, char *argv[])
         size_t n_graphs;
         xl_error err;
         struct xl_compilation_env env;
-        char scratch_dir[512];
 
         if (argc != 3)
         {
                 usage();
                 return EXIT_FAILURE;
         }
-
-        if (getcwd(scratch_dir, 500) == NULL)
-        {
-                perror("could not open current directory");
-                return EXIT_FAILURE;
-        }
-        strcat(scratch_dir, "/expel-build");
-        env.scratch_dir = scratch_dir;
 
         c(xl_start());
 
@@ -85,6 +75,7 @@ main(int argc, char *argv[])
                 return EXIT_FAILURE;
         }
 
+        c(xl_compile_default_env(&env));
         c(xl_compile(&graphs, &n_graphs, &in, &env));
         c(xl_save(&out, graphs, n_graphs));
 
