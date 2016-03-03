@@ -25,6 +25,7 @@
 #include "expel/gen.h"
 #include "expel/types.h"
 #include "expel/uri.h"
+#include "expel/util.h"
 #include "expel/value.h"
 
 #include <stdlib.h>
@@ -453,7 +454,8 @@ no_ignore static xl_error
 xl_resolve_uris(
         struct xl_dagc *graph,
         struct xl_env *local_env,
-        struct xl_gen_requires **requires)
+        struct xl_gen_requires **requires,
+        char *uri_source)
 {
         size_t i;
         xl_error err;
@@ -461,6 +463,8 @@ xl_resolve_uris(
         struct xl_dagc_const *cons;
         struct xl_uri *new_uri;
         xl_tag t;
+
+        unused(uri_source);
 
         /* Mark the graph resolved here, so that self-references do not cause us
          * to go into an infinite loop. */
@@ -477,7 +481,8 @@ xl_resolve_uris(
                         if (!(t & TAG_GRAPH_UNRESOLVED))
                                 continue;
                         err = xl_resolve_uris(
-                                cons->value.graph, local_env, requires);
+                                cons->value.graph, local_env, requires,
+                                uri_source);
                         if (err != OK)
                                 return err;
                         continue;
@@ -495,9 +500,15 @@ xl_resolve_uris(
         return OK;
 }
 
+struct modinit_iterator
+{
+        struct xl_graph_builder *builder;
+        char *uri_source;
+};
+
 no_ignore static xl_error
 _add_modinit_setter(
-        void *vbuilder,
+        void *viter,
         struct xl_env *env,
         struct xl_uri *uri)
 {
@@ -506,15 +517,32 @@ _add_modinit_setter(
         struct xl_dagc_store *store_node;
         struct xl_dagc_const *const_node;
         struct xl_graph_builder *builder;
+        struct modinit_iterator *iter;
+        struct xl_uri *store_uri;
         xl_error err;
 
-        builder = (struct xl_graph_builder *) vbuilder;
+        iter = (struct modinit_iterator *) viter;
+        builder = iter->builder;
 
         err = xl_env_get(&value, &type, env, uri);
         if (err != OK)
                 return err;
 
-        err = xl_take(uri);
+        if (iter->uri_source == NULL)
+        {
+                store_uri = uri;
+        }
+        else
+        {
+                store_uri = calloc(1, sizeof(struct xl_uri));
+                if (store_uri == NULL)
+                        return xl_raise(ERR_NO_MEMORY, "uri alloc");
+                err = xl_uri_package(store_uri, iter->uri_source, uri->name);
+                if (err != OK)
+                        return err;
+        }
+
+        err = xl_take(store_uri);
         if (err != OK)
                 return err;
         err = xl_take(value.any);
@@ -540,7 +568,7 @@ _add_modinit_setter(
         store_node->head.node_type = DAGC_NODE_STORE;
         store_node->head.id = 0;
         store_node->head.is_terminal = true;
-        store_node->loc = uri;
+        store_node->loc = store_uri;
         store_node->value = &const_node->head;
 
         err = xl_bdagc_push_node(builder, &const_node->head);
@@ -558,8 +586,10 @@ xl_create_modinit(
         struct xl_dagc **modinit,
         struct xl_ast *ast,
         struct xl_env *local_env,
-        enum xl_load_reason load_reason)
+        enum xl_load_reason load_reason,
+        char *uri_source)
 {
+        struct modinit_iterator iter;
         struct xl_graph_builder builder;
         xl_error err;
 
@@ -567,7 +597,9 @@ xl_create_modinit(
         if (err != OK)
                 return err;
 
-        err = xl_env_iterate(_add_modinit_setter, local_env, &builder);
+        iter.builder = &builder;
+        iter.uri_source = uri_source;
+        err = xl_env_iterate(_add_modinit_setter, local_env, &iter);
         if (err != OK)
                 return err;
 
@@ -605,7 +637,8 @@ xl_compile_unit(
         size_t *n_graphs,
         struct xl_gen_requires **requires,
         struct xl_ast *ast,
-        enum xl_load_reason load_reason)
+        enum xl_load_reason load_reason,
+        char *uri_source)
 {
         size_t i;
         xl_error err;
@@ -631,7 +664,8 @@ xl_compile_unit(
                         return err;
         }
 
-        err = xl_create_modinit(&(*graphs)[0], ast, &local_env, load_reason);
+        err = xl_create_modinit(
+                &(*graphs)[0], ast, &local_env, load_reason, uri_source);
         if (err != OK)
         {
                 if (err->error_code == ERR_NO_DATA)
@@ -641,7 +675,8 @@ xl_compile_unit(
 
         for (i = 0; i < *n_graphs; i++)
         {
-                err = xl_resolve_uris((*graphs)[i], &local_env, requires);
+                err = xl_resolve_uris(
+                        (*graphs)[i], &local_env, requires, uri_source);
                 if (err != OK)
                         return err;
         }

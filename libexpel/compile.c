@@ -166,7 +166,8 @@ _add_requirement(
 
         req_requires = NULL;
         err = xl_compile_unit(
-                &req_graphs, &n_req_graphs, &req_requires, ast, LOAD_IMPORTED);
+                &req_graphs, &n_req_graphs, &req_requires, ast, LOAD_IMPORTED,
+                dependency->source);
         if (err != OK)
                 return err;
         if (req_requires != NULL)
@@ -208,7 +209,7 @@ xl_compile_ast(
 
         requires = NULL;
         err = xl_compile_unit(
-                graphs, n_graphs, &requires, ast, LOAD_MAIN);
+                graphs, n_graphs, &requires, ast, LOAD_MAIN, NULL);
         if (err != OK)
                 return err;
 

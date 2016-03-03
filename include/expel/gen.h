@@ -34,11 +34,20 @@ enum xl_load_reason
         LOAD_IMPORTED,
 };
 
-/* Compiles a single compilation unit down to a series of graphs. */
+/* Compiles a single compilation unit down to a series of graphs.
+ *
+ * The graphs and n_graphs parameters are filled in with the result of
+ * compilation, as is the requires struct, which is created with a bunch of URIs
+ * that need to be satisfied for the compilation result to be valid. The ast
+ * parameter is the AST that's being compiled, the load_reason is the reason
+ * we're being compiled (some things behave differently if they're imported or
+ * they're the main event), and uri_source is the source prefix to put on all of
+ * the URIs for all the bindings in the AST. */
 no_ignore xl_error
 xl_compile_unit(
         struct xl_dagc ***graphs,
         size_t *n_graphs,
         struct xl_gen_requires **requires,
         struct xl_ast *ast,
-        enum xl_load_reason load_reason);
+        enum xl_load_reason load_reason,
+        char *uri_source);
