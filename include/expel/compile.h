@@ -21,8 +21,16 @@
 #include "expel/expel.h"
 #include "expel/ast.h"
 
+
 no_ignore xl_error
 xl_compile(
+        struct xl_dagc ***graphs,
+        size_t *n_graphs,
+        struct xl_stream *in_stream,
+        char *scratch_dir);
+
+no_ignore xl_error
+xl_compile_ast(
         struct xl_dagc ***graphs,
         size_t *n_graphs,
         struct xl_ast *ast,

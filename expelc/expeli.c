@@ -63,7 +63,7 @@ main(int argc, char *argv[])
         if (argc > 1 && strcmp(argv[1], "show-ast") == 0)
                 c(xl_ast_print(ast));
 
-        c(xl_compile(&graphs, &n_graphs, ast, NULL));
+        c(xl_compile_ast(&graphs, &n_graphs, ast, NULL));
 
         c(xl_env_init(&env));
 

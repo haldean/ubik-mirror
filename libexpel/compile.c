@@ -21,10 +21,40 @@
 
 #include "expel/compile.h"
 #include "expel/gen.h"
+#include "expel/parse.h"
 #include "expel/util.h"
 
 no_ignore xl_error
 xl_compile(
+        struct xl_dagc ***graphs,
+        size_t *n_graphs,
+        struct xl_stream *in_stream,
+        char *scratch_dir)
+{
+        struct xl_ast *ast;
+        xl_error err;
+
+        err = xl_ast_new(&ast);
+        if (err != OK)
+                return err;
+
+        err = xl_parse(ast, in_stream);
+        if (err != OK)
+                return err;
+
+        err = xl_compile_ast(graphs, n_graphs, ast, scratch_dir);
+        if (err != OK)
+                return err;
+
+        err = xl_ast_free(ast);
+        if (err != OK)
+                return err;
+
+        return OK;
+}
+
+no_ignore xl_error
+xl_compile_ast(
         struct xl_dagc ***graphs,
         size_t *n_graphs,
         struct xl_ast *ast,

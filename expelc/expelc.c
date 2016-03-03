@@ -23,7 +23,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "expel/ast.h"
 #include "expel/compile.h"
 #include "expel/env.h"
 #include "expel/expel.h"
@@ -52,7 +51,6 @@ usage()
 int
 main(int argc, char *argv[])
 {
-        struct xl_ast *ast;
         struct xl_dagc **graphs;
         struct xl_stream in, out;
         size_t n_graphs;
@@ -85,13 +83,8 @@ main(int argc, char *argv[])
                 return EXIT_FAILURE;
         }
 
-        c(xl_ast_new(&ast));
-
-        c(xl_parse(ast, &in));
-        c(xl_compile(&graphs, &n_graphs, ast, scratch_dir));
+        c(xl_compile(&graphs, &n_graphs, &in, scratch_dir));
         c(xl_save(&out, graphs, n_graphs));
-
-        c(xl_ast_free(ast));
 
 teardown:
         xl_stream_close(&in);
