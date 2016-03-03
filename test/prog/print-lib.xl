@@ -1,5 +1,3 @@
-# skip-run
-
 : number
     ^ Word -> Word
     = \x -> emit (humanize x)

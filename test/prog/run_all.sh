@@ -1,5 +1,6 @@
 #!/bin/sh
 
+export EXPEL_INCLUDE=test/prog
 failed=0
 
 for xl_file in test/prog/*.xl; do
