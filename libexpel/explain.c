@@ -60,16 +60,16 @@ xl_explain_node(struct xl_dagc_node *node)
         else if (node->node_type == DAGC_NODE_LOAD)
         {
                 aspr_res = asprintf(
-                        &res, "%s %s @%hx uri name = %s",
+                        &res, "%s %s @%hx uri name = %s:%s",
                         node_type, id, (short)((uintptr_t) n),
-                        n->as_load.loc->name);
+                        n->as_load.loc->source, n->as_load.loc->name);
         }
         else if (node->node_type == DAGC_NODE_STORE)
         {
                 aspr_res = asprintf(
-                        &res, "%s %s @%hx uri name = %s",
+                        &res, "%s %s @%hx uri name = %s:%s",
                         node_type, id, (short)((uintptr_t) n),
-                        n->as_store.loc->name);
+                        n->as_store.loc->source, n->as_store.loc->name);
         }
         else
         {
