@@ -1,4 +1,5 @@
 : number
     ^ Word -> Word
-    = \x -> emit (humanize x)
+    = \x -> emit (concat (humanize x) "\n")
 
+!= concat (number 4) "\n"
