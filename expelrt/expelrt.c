@@ -52,6 +52,7 @@ test_file(char *fname, bool debug, bool timing)
         xl_error err, teardown_err;
         struct xl_timer *timer;
         int64_t elapsed;
+        bool pushed_modinit;
 
         err = OK;
         n_graphs = 0;
@@ -76,16 +77,6 @@ test_file(char *fname, bool debug, bool timing)
 
         err = xl_load(&graphs, &n_graphs, &stream);
         CHECK_ERR("couldn't load file");
-
-        modinit_i = 0;
-        for (i = 0; i < n_graphs; i++)
-        {
-                if (graphs[i]->tag & TAG_GRAPH_MODINIT)
-                {
-                        modinit_i = i;
-                        break;
-                }
-        }
 
         if (timing)
         {
@@ -118,8 +109,23 @@ test_file(char *fname, bool debug, bool timing)
         err = xl_schedule_new(&s);
         CHECK_ERR("couldn't create scheduler");
 
-        err = xl_schedule_push(s, graphs[modinit_i], &env, NULL);
-        CHECK_ERR("couldn't push graph into scheduler");
+        modinit_i = 0;
+        for (i = 0; i < n_graphs; i++)
+        {
+                if (graphs[i]->tag & TAG_GRAPH_MODINIT)
+                {
+                        err = xl_schedule_push(s, graphs[i], &env, NULL);
+                        CHECK_ERR("couldn't push graph into scheduler");
+
+                        modinit_i = i;
+                        pushed_modinit = true;
+                }
+        }
+        if (!pushed_modinit)
+        {
+                err = xl_schedule_push(s, graphs[modinit_i], &env, NULL);
+                CHECK_ERR("couldn't push graph into scheduler");
+        }
 
         err = xl_schedule_run(s);
         CHECK_ERR("couldn't run scheduler");
