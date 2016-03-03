@@ -19,12 +19,14 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "expel/env.h"
 #include "expel/expel.h"
 #include "expel/gc.h"
 #include "expel/pointerset.h"
 #include "expel/stream.h"
+#include "expel/string.h"
 #include "expel/util.h"
 #include "unit.h"
 
@@ -382,6 +384,28 @@ pointer_set()
         return ok;
 }
 
+test_t
+split()
+{
+        char **out;
+        size_t out_size;
+        char *in;
+        size_t in_size;
+
+        in = "hello:world::this is your: new thing\n:   okay?";
+        in_size = strlen(in);
+        assert(xl_string_split(&out, &out_size, in, in_size, ':') == OK);
+        assert(out_size == 6);
+        assert(strcmp(out[0], "hello") == 0);
+        assert(strcmp(out[1], "world") == 0);
+        assert(strcmp(out[2], "") == 0);
+        assert(strcmp(out[3], "this is your") == 0);
+        assert(strcmp(out[4], " new thing\n") == 0);
+        assert(strcmp(out[5], "   okay?") == 0);
+
+        return ok;
+}
+
 int
 main()
 {
@@ -400,5 +424,6 @@ main()
         run(gc);
         run(uri);
         run(pointer_set);
+        run(split);
         finish();
 }
