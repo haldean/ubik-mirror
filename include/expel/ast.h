@@ -131,7 +131,7 @@ struct xl_ast_type
 {
         union
         {
-                struct xl_ast_member_list members;
+                struct xl_ast_member_list *members;
         };
         char *name;
         enum type_type type;
@@ -142,6 +142,10 @@ struct xl_ast
         struct xl_ast_binding **bindings;
         size_t n_bindings;
         size_t cap_bindings;
+
+        struct xl_ast_type **types;
+        size_t n_types;
+        size_t cap_types;
 
         struct xl_ast_expr *immediate;
 

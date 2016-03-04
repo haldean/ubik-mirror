@@ -157,6 +157,51 @@ _free_binding(struct xl_ast_binding *binding)
         return OK;
 }
 
+no_ignore static xl_error
+_free_member_list(struct xl_ast_member_list *member_list)
+{
+        xl_error err;
+
+        if (member_list->next)
+        {
+                err = _free_member_list(member_list->next);
+                if (err != OK)
+                        return err;
+        }
+
+        free(member_list->name);
+
+        err = _free_type_expr(member_list->type);
+        if (err != OK)
+                return err;
+
+        free(member_list);
+        return OK;
+}
+
+no_ignore static xl_error
+_free_type(struct xl_ast_type *type)
+{
+        xl_error err;
+
+        free(type->name);
+
+        switch (type->type)
+        {
+        case TYPE_RECORD:
+                err = _free_member_list(type->members);
+                if (err != OK)
+                        return err;
+                break;
+
+        default:
+                return xl_raise(ERR_BAD_TYPE, "unknown type type in free");
+        }
+
+        free(type);
+        return OK;
+}
+
 no_ignore xl_error
 xl_ast_free(struct xl_ast *ast)
 {
@@ -170,6 +215,14 @@ xl_ast_free(struct xl_ast *ast)
                         return err;
         }
         free(ast->bindings);
+
+        for (i = 0; i < ast->n_types; i++)
+        {
+                err = _free_type(ast->types[i]);
+                if (err != OK)
+                        return err;
+        }
+        free(ast->types);
 
         if (ast->immediate != NULL)
         {
@@ -343,6 +396,30 @@ xl_ast_bind(struct xl_ast *ast, struct xl_ast_binding *bind)
         ast->cap_bindings = new_cap;
         ast->bindings = temp;
         ast->bindings[ast->n_bindings++] = bind;
+        return OK;
+}
+
+no_ignore xl_error
+xl_ast_add_type(struct xl_ast *ast, struct xl_ast_type *type)
+{
+        struct xl_ast_type **temp;
+        size_t new_cap;
+
+        if (ast->n_types < ast->cap_types)
+        {
+                ast->types[ast->n_types++] = type;
+                return OK;
+        }
+
+        new_cap = ast->cap_types == 0 ? 8 : 2 * ast->cap_types;
+        temp = realloc(
+                ast->types,
+                new_cap * sizeof(struct xl_ast_type *));
+        if (temp == NULL)
+                return xl_raise(ERR_NO_MEMORY, "ast types realloc");
+        ast->cap_types = new_cap;
+        ast->types = temp;
+        ast->types[ast->n_types++] = type;
         return OK;
 }
 
@@ -567,5 +644,42 @@ xl_ast_import_list_new(
 {
         check_alloc(*import_list, 1, struct xl_ast_import_list);
         (*import_list)->name = head;
+        return OK;
+}
+
+no_ignore xl_error
+xl_ast_type_new_record(
+        struct xl_ast_type **type,
+        char *name,
+        struct xl_ast_member_list *members)
+{
+        check_alloc(*type, 1, struct xl_ast_type);
+        (*type)->name = name;
+        (*type)->type = TYPE_RECORD;
+        (*type)->members = members;
+        return OK;
+}
+
+no_ignore xl_error
+xl_ast_member_list_new(
+        struct xl_ast_member_list **member_list,
+        char *name,
+        struct xl_ast_type_expr *type)
+{
+        check_alloc(*member_list, 1, struct xl_ast_member_list);
+        (*member_list)->name = name;
+        (*member_list)->type = type;
+        (*member_list)->next = NULL;
+        return OK;
+}
+
+no_ignore xl_error
+xl_ast_member_list_append(
+        struct xl_ast_member_list *heads,
+        struct xl_ast_member_list *tail)
+{
+        while (heads->next != NULL)
+                heads = heads->next;
+        heads->next = tail;
         return OK;
 }
