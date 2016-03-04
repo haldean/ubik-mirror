@@ -5,6 +5,7 @@ if exists("b:current_syntax")
 endif
 
 syntax match expelBind ":"
+syntax match expelBind "\."
 highlight link expelBind Delimiter
 
 syntax match expelSubbind "\^"
@@ -20,5 +21,8 @@ highlight default link expelComment Comment
 syntax match expelNumber "\v<\d+>"
 syntax match expelNumber "\v<\d+\.\d+>"
 highlight default link expelNumber Number
+
+setlocal shiftwidth=4
+setlocal tabstop=4
 
 let b:current_syntax = "expel"
