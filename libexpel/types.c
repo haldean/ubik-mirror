@@ -198,6 +198,11 @@ xl_type_builtin_from_name(
                 err = xl_type_string(value);
                 return err;
         }
+        if (strcmp(name, "Float") == 0)
+        {
+                err = xl_type_float(value);
+                return err;
+        }
 
         return xl_raise(ERR_ABSENT, "type name not builtin");
 }
