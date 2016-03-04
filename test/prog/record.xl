@@ -1,0 +1,16 @@
+# skip-run
+
+^ Entity
+    . id ^ Word
+    . description ^ String
+    . transform ^ Entity -> Entity
+
+
+: transform-entity
+    ^ Entity -> Entity
+    = \x -> Entity (. id x) "transformed" transform-entity
+
+: test-entity
+    = Entity 4 "a test" transform-entity
+
+!= emit (. description ((. transform test-entity) test-entity))
