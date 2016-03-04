@@ -51,6 +51,7 @@ main(int argc, char *argv[])
         struct xl_scheduler *s;
         size_t n_graphs;
         xl_error err;
+        xl_error parse_err;
 
         c(xl_start());
 
@@ -58,10 +59,11 @@ main(int argc, char *argv[])
 
         c(xl_ast_new(&ast));
 
-        c(xl_parse(ast, &sstdin));
-
+        parse_err = xl_parse(ast, &sstdin);
         if (argc > 1 && strcmp(argv[1], "show-ast") == 0)
-                c(xl_ast_print(ast));
+                err = xl_ast_print(ast);
+        c(parse_err);
+        c(err);
 
         c(xl_compile_ast(&graphs, &n_graphs, ast, NULL));
 
