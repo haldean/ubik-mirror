@@ -314,7 +314,7 @@ _print_expr(struct xl_ast_expr *expr)
 }
 
 no_ignore static xl_error
-_print_type(struct xl_ast_type_expr *type_expr)
+_print_type_expr(struct xl_ast_type_expr *type_expr)
 {
         xl_error err;
 
@@ -324,17 +324,43 @@ _print_type(struct xl_ast_type_expr *type_expr)
                 printf("%s", type_expr->name);
                 return OK;
         case TYPE_EXPR_APPLY:
-                err = _print_type(type_expr->apply.head);
+                err = _print_type_expr(type_expr->apply.head);
                 if (err != OK)
                         return err;
                 printf(" -> (");
-                err = _print_type(type_expr->apply.tail);
+                err = _print_type_expr(type_expr->apply.tail);
                 if (err != OK)
                         return err;
                 printf(")");
                 return OK;
         }
         return xl_raise(ERR_UNKNOWN_TYPE, "unknown type expr type");
+}
+
+no_ignore static xl_error
+_print_type(struct xl_ast_type *type)
+{
+        struct xl_ast_member_list *m;
+        xl_error err;
+
+        printf("\ttype %s", type->name);
+
+        switch (type->type)
+        {
+        case TYPE_RECORD:
+                m = type->members;
+                while (m != NULL)
+                {
+                        printf("\n\t    . %s ^ ", m->name);
+                        err = _print_type_expr(m->type);
+                        if (err != OK)
+                                return err;
+                        m = m->next;
+                }
+                printf("\n");
+        }
+
+        return OK;
 }
 
 no_ignore xl_error
@@ -344,6 +370,14 @@ xl_ast_print(struct xl_ast *ast)
         xl_error err;
         struct xl_ast_binding *b;
 
+        printf("%lu types:\n", ast->n_types);
+        for (i = 0; i < ast->n_types; i++)
+        {
+                err = _print_type(ast->types[i]);
+                if (err != OK)
+                        return err;
+        }
+
         printf("%lu bindings:\n", ast->n_bindings);
         for (i = 0; i < ast->n_bindings; i++)
         {
@@ -352,7 +386,7 @@ xl_ast_print(struct xl_ast *ast)
                 if (b->type_expr != NULL)
                 {
                         printf(" ^ ");
-                        err = _print_type(b->type_expr);
+                        err = _print_type_expr(b->type_expr);
                         if (err != OK)
                                 return err;
                 }
