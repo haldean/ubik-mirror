@@ -45,6 +45,11 @@ enum atom_type
         ATOM_STRING
 };
 
+enum type_type
+{
+        TYPE_RECORD = 1,
+};
+
 struct xl_ast_atom
 {
         union
@@ -115,6 +120,23 @@ struct xl_ast_import_list
         struct xl_ast_import_list *next;
 };
 
+struct xl_ast_member_list
+{
+        char *name;
+        struct xl_ast_type_expr *type;
+        struct xl_ast_member_list *next;
+};
+
+struct xl_ast_type
+{
+        union
+        {
+                struct xl_ast_member_list members;
+        };
+        char *name;
+        enum type_type type;
+};
+
 struct xl_ast
 {
         struct xl_ast_binding **bindings;
@@ -148,6 +170,11 @@ no_ignore xl_error
 xl_ast_set_immediate(
         struct xl_ast *ast,
         struct xl_ast_expr *expr);
+
+no_ignore xl_error
+xl_ast_add_type(
+        struct xl_ast *ast,
+        struct xl_ast_type *type);
 
 no_ignore xl_error
 xl_ast_binding_new(
@@ -237,3 +264,22 @@ no_ignore xl_error
 xl_ast_import_list_new(
         struct xl_ast_import_list **import_list,
         char *head);
+
+/* Type builders */
+no_ignore xl_error
+xl_ast_type_new_record(
+        struct xl_ast_type **type,
+        char *name,
+        struct xl_ast_member_list *members);
+
+/* Member list builders */
+no_ignore xl_error
+xl_ast_member_list_new(
+        struct xl_ast_member_list **member_list,
+        char *name,
+        struct xl_ast_type_expr *type);
+
+no_ignore xl_error
+xl_ast_member_list_append(
+        struct xl_ast_member_list *heads,
+        struct xl_ast_member_list *tail);

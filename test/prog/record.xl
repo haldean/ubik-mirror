@@ -8,9 +8,11 @@
 
 : transform-entity
     ^ Entity -> Entity
-    = \x -> Entity (. id x) "transformed" transform-entity
+    = \x -> Entity id=(. id x)
+                   description="transformed"
+                   transform=transform-entity
 
 : test-entity
-    = Entity 4 "a test" transform-entity
+    = Entity id=4 description="a test" transform=transform-entity
 
 != emit (. description ((. transform test-entity) test-entity))

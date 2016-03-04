@@ -52,10 +52,13 @@ yyerror(struct xl_ast *ast, void *scanner, const char *err)
         struct xl_ast_type_expr *type_expr;
         struct xl_ast_arg_list *arg_list;
         struct xl_ast_import_list *imports;
+
+        struct xl_ast_type *type_def;
+        struct xl_ast_member_list *member_list;
 }
 
 %token <token> BIND TYPE IMPLIES GOES_TO LAMBDA IS OPEN_PAR CLOSE_PAR IMMEDIATE
-%token <token> USES
+%token <token> USES MEMBER
 %token <integer> INTEGER
 %token <floating> NUMBER
 %token <string> NAME TYPE_NAME STRING QUALIFIED_NAME
@@ -67,6 +70,8 @@ yyerror(struct xl_ast *ast, void *scanner, const char *err)
 %type <atom> atom
 %type <arg_list> arg_list
 %type <imports> imports
+%type <type_def> typedef
+%type <member_list> member members
 
 %define api.pure full
 %define api.push-pull push
@@ -93,6 +98,8 @@ blocks:
         { wrap_err(xl_ast_bind($1, $2)); $$ = $1; }
 | blocks imports
         { wrap_err(xl_ast_import($1, $2)); $$= $1; }
+| blocks typedef
+        { wrap_err(xl_ast_add_type($1, $2)); $$= $1; }
 ;
 
 binding:
@@ -110,6 +117,22 @@ immediate:
 imports:
   USES NAME
         { wrap_err(xl_ast_import_list_new(&$$, $2)); }
+
+typedef:
+  TYPE TYPE_NAME members
+        { wrap_err(xl_ast_type_new_record(&$$, $2, $3)); }
+;
+
+members:
+  members member
+        { wrap_err(xl_ast_member_list_append($1, $2)); $$ = $1; }
+| member
+;
+
+member:
+  MEMBER NAME TYPE type_expr
+        { wrap_err(xl_ast_member_list_new(&$$, $2, $4)); }
+;
 
 /* top_expr is a "top expression" in the parse tree; these are things that can't
  * be subexpressions without first being wrapped in parentheses. Without the
