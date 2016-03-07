@@ -44,7 +44,7 @@ xl_explain_node(struct xl_dagc_node *node)
                         (TAG_VALUE | TAG_LEFT_WORD | TAG_RIGHT_WORD))
                 {
                         aspr_res = asprintf(
-                                &res, "%s %s @%hx = (0x%02lX, 0x%02lX)",
+                                &res, "%s %s @%hx = (0x%02llX, 0x%02llX)",
                                 node_type, id, (short)((uintptr_t) n),
                                 n->as_const.value.tree->left.w,
                                 n->as_const.value.tree->right.w);

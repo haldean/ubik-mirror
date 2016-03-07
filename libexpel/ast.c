@@ -241,7 +241,7 @@ _print_atom(struct xl_ast_atom *atom)
         switch (atom->atom_type)
         {
         case ATOM_INT:
-                printf("%ld:i", (int64_t) atom->integer);
+                printf("%lld:i", (int64_t) atom->integer);
                 return OK;
         case ATOM_NUM:
                 printf("%f:f", atom->number);
