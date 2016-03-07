@@ -119,11 +119,11 @@ _load_apply(struct xl_dagc_apply *node, struct xl_stream *sp)
          * index into a pointer. */
         READ_INTO(node_index, sp);
         node_index = ntohw(node_index);
-        node->func = (struct xl_dagc_node *) node_index;
+        node->func = (struct xl_dagc_node *) ((uintptr_t) node_index);
 
         READ_INTO(node_index, sp);
         node_index = ntohw(node_index);
-        node->arg = (struct xl_dagc_node *) node_index;
+        node->arg = (struct xl_dagc_node *) ((uintptr_t) node_index);
 
         return OK;
 }
@@ -167,7 +167,7 @@ _load_const(
         {
                 READ_INTO(graph_index, sp);
                 graph_index = ntohw(graph_index);
-                node->value.graph = (struct xl_dagc *) graph_index;
+                node->value.graph = (struct xl_dagc *)((uintptr_t) graph_index);
                 return OK;
         }
         return xl_raise(ERR_BAD_HEADER, "const subtype");
@@ -216,7 +216,7 @@ _load_store(
 
         READ_INTO(node_index, sp);
         node_index = ntohw(node_index);
-        node->value = (struct xl_dagc_node *) node_index;
+        node->value = (struct xl_dagc_node *) ((uintptr_t) node_index);
 
         READ_INTO(value_index, sp);
         value_index = ntohw(value_index);
@@ -266,15 +266,15 @@ _load_cond(struct xl_dagc_cond *node, struct xl_stream *sp)
 
         READ_INTO(node_index, sp);
         node_index = ntohw(node_index);
-        node->condition = (struct xl_dagc_node *) node_index;
+        node->condition = (struct xl_dagc_node *) ((uintptr_t) node_index);
 
         READ_INTO(node_index, sp);
         node_index = ntohw(node_index);
-        node->if_true = (struct xl_dagc_node *) node_index;
+        node->if_true = (struct xl_dagc_node *) ((uintptr_t) node_index);
 
         READ_INTO(node_index, sp);
         node_index = ntohw(node_index);
-        node->if_false = (struct xl_dagc_node *) node_index;
+        node->if_false = (struct xl_dagc_node *) ((uintptr_t) node_index);
 
         return OK;
 }
@@ -286,7 +286,7 @@ _load_ref(struct xl_dagc_ref *node, struct xl_stream *sp)
 
         READ_INTO(node_index, sp);
         node_index = ntohw(node_index);
-        node->referrent = (struct xl_dagc_node *) node_index;
+        node->referrent = (struct xl_dagc_node *) ((uintptr_t) node_index);
 
         return OK;
 }
