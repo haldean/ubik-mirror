@@ -491,6 +491,7 @@ xl_resolve_uris(
                 if (graph->nodes[i]->node_type != DAGC_NODE_LOAD)
                         continue;
                 load = (struct xl_dagc_load *) graph->nodes[i];
+                new_uri = NULL;
                 err = xl_resolve_uri(&new_uri, load->loc, local_env, requires);
                 if (err != OK)
                         return err;
