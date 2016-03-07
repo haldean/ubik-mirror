@@ -19,6 +19,7 @@
 
 #include "expel/ast.h"
 
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -241,7 +242,7 @@ _print_atom(struct xl_ast_atom *atom)
         switch (atom->atom_type)
         {
         case ATOM_INT:
-                printf("%lld:i", (int64_t) atom->integer);
+                printf("%" PRId64 ":i", (int64_t) atom->integer);
                 return OK;
         case ATOM_NUM:
                 printf("%f:f", atom->number);

@@ -26,6 +26,7 @@
 #include "expel/util.h"
 #include "expel/value.h"
 
+#include <inttypes.h>
 #include <string.h>
 
 no_ignore static xl_error
