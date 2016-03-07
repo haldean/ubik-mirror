@@ -17,6 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include "expel/assert.h"
 #include "expel/ast.h"
 
 #include <inttypes.h>
@@ -544,6 +545,8 @@ xl_ast_atom_new_qualified(
         size_t name_len;
         size_t i;
 
+        head_len = 0;
+        tail_len = 0;
         name_len = strlen(name);
         for (i = 0; i < name_len; i++)
         {
@@ -554,6 +557,9 @@ xl_ast_atom_new_qualified(
                         break;
                 }
         }
+
+        xl_assert(head_len > 0);
+        xl_assert(tail_len > 0);
 
         check_alloc(*atom, 1, struct xl_ast_atom);
         (*atom)->atom_type = ATOM_QUALIFIED;
