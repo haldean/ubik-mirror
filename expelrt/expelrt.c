@@ -17,6 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -82,7 +83,7 @@ test_file(char *fname, bool debug, bool timing)
         {
                 err = xl_timer_elapsed(&elapsed, timer);
                 CHECK_ERR("couldn't read timer");
-                printf("\ttime from start to loaded:    %ld usec\n", elapsed);
+                printf("\ttime from start to loaded:    %" PRId64 " usec\n", elapsed);
         }
 
         if (debug)
@@ -137,7 +138,7 @@ test_file(char *fname, bool debug, bool timing)
         {
                 err = xl_timer_elapsed(&elapsed, timer);
                 CHECK_ERR("couldn't read timer");
-                printf("\ttime from start to evaluated: %ld usec\n", elapsed);
+                printf("\ttime from start to evaluated: %" PRId64 " usec\n", elapsed);
         }
 
         if (debug && expected != NULL)
