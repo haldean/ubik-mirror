@@ -40,6 +40,7 @@ _store_value(
         xl_tag tag;
         xl_word val;
         xl_error err;
+        size_t sindex;
 
         tag = in->tag;
         xl_assert((tag & TAG_TYPE_MASK) == TAG_VALUE);
@@ -70,9 +71,10 @@ _store_value(
                         return xl_raise(
                                 ERR_BAD_VALUE,
                                 "can't serialize graph refs, use xl_save");
-                err = xl_pointer_set_find(&val, graphs, in->left.g);
+                err = xl_pointer_set_find(&sindex, graphs, in->left.g);
                 if (err != OK)
                         return err;
+                val = sindex;
                 val = htonw(val);
                 WRITE_INTO(sp, val);
         }
@@ -95,9 +97,10 @@ _store_value(
                         return xl_raise(
                                 ERR_BAD_VALUE,
                                 "can't serialize graph refs, use xl_save");
-                err = xl_pointer_set_find(&val, graphs, in->right.g);
+                err = xl_pointer_set_find(&sindex, graphs, in->right.g);
                 if (err != OK)
                         return err;
+                val = sindex;
                 val = htonw(val);
                 WRITE_INTO(sp, val);
         }
@@ -232,16 +235,19 @@ _store_apply(
 {
         xl_word index;
         xl_error err;
+        size_t sindex;
 
-        err = xl_pointer_set_find(&index, nodes, n->func);
+        err = xl_pointer_set_find(&sindex, nodes, n->func);
         if (err != OK)
                 return err;
+        index = sindex;
         index = ntohw(index);
         WRITE_INTO(sp, index);
 
-        err = xl_pointer_set_find(&index, nodes, n->arg);
+        err = xl_pointer_set_find(&sindex, nodes, n->arg);
         if (err != OK)
                 return err;
+        index = sindex;
         index = ntohw(index);
         WRITE_INTO(sp, index);
 
@@ -256,22 +262,26 @@ _store_cond(
 {
         xl_word index;
         xl_error err;
+        size_t sindex;
 
-        err = xl_pointer_set_find(&index, nodes, n->condition);
+        err = xl_pointer_set_find(&sindex, nodes, n->condition);
         if (err != OK)
                 return err;
+        index = sindex;
         index = ntohw(index);
         WRITE_INTO(sp, index);
 
-        err = xl_pointer_set_find(&index, nodes, n->if_true);
+        err = xl_pointer_set_find(&sindex, nodes, n->if_true);
         if (err != OK)
                 return err;
+        index = sindex;
         index = ntohw(index);
         WRITE_INTO(sp, index);
 
-        err = xl_pointer_set_find(&index, nodes, n->if_false);
+        err = xl_pointer_set_find(&sindex, nodes, n->if_false);
         if (err != OK)
                 return err;
+        index = sindex;
         index = ntohw(index);
         WRITE_INTO(sp, index);
 
@@ -288,6 +298,7 @@ _store_const(
         xl_word index;
         xl_error err;
         xl_word t;
+        size_t sindex;
 
         if (*n->value.tag & TAG_GRAPH)
                 t = DAGC_TYPE_GRAPH;
@@ -298,18 +309,20 @@ _store_const(
         t = htonw(t);
         WRITE_INTO(sp, t);
 
-        err = xl_pointer_set_find(&index, values, n->type);
+        err = xl_pointer_set_find(&sindex, values, n->type);
         if (err != OK)
                 return err;
+        index = sindex;
         index = htonw(index);
         WRITE_INTO(sp, index);
 
         err = xl_pointer_set_find(
-                &index,
+                &sindex,
                 (*n->value.tag & TAG_GRAPH) ? graphs : values,
                 n->value.any);
         if (err != OK)
                 return err;
+        index = sindex;
         index = htonw(index);
         WRITE_INTO(sp, index);
 
@@ -325,13 +338,15 @@ _store_input(
         xl_error err;
         xl_word t;
         xl_word index;
+        size_t sindex;
 
         t = htonw(n->arg_num);
         WRITE_INTO(sp, t);
 
-        err = xl_pointer_set_find(&index, values, n->required_type);
+        err = xl_pointer_set_find(&sindex, values, n->required_type);
         if (err != OK)
                 return err;
+        index = sindex;
         index = htonw(index);
         WRITE_INTO(sp, index);
 
@@ -345,11 +360,13 @@ _store_load(
         struct xl_pointer_set *values)
 {
         xl_error err;
+        size_t sindex;
         xl_word index;
 
-        err = xl_pointer_set_find(&index, values, n->loc->as_value);
+        err = xl_pointer_set_find(&sindex, values, n->loc->as_value);
         if (err != OK)
                 return err;
+        index = sindex;
         index = htonw(index);
         WRITE_INTO(sp, index);
 
@@ -363,11 +380,13 @@ _store_ref(
         struct xl_pointer_set *nodes)
 {
         xl_error err;
+        size_t sindex;
         xl_word index;
 
-        err = xl_pointer_set_find(&index, nodes, n->referrent);
+        err = xl_pointer_set_find(&sindex, nodes, n->referrent);
         if (err != OK)
                 return err;
+        index = sindex;
         index = htonw(index);
         WRITE_INTO(sp, index);
 
@@ -383,16 +402,19 @@ _store_store(
 {
         xl_error err;
         xl_word index;
+        size_t sindex;
 
-        err = xl_pointer_set_find(&index, nodes, n->value);
+        err = xl_pointer_set_find(&sindex, nodes, n->value);
         if (err != OK)
                 return err;
+        index = sindex;
         index = htonw(index);
         WRITE_INTO(sp, index);
 
-        err = xl_pointer_set_find(&index, values, n->loc->as_value);
+        err = xl_pointer_set_find(&sindex, values, n->loc->as_value);
         if (err != OK)
                 return err;
+        index = sindex;
         index = htonw(index);
         WRITE_INTO(sp, index);
 
