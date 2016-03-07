@@ -24,7 +24,7 @@ rtexe := $(DIST_DIR)/runexpel
 cexe := $(DIST_DIR)/expelc
 iexe := $(DIST_DIR)/expeli
 testexe := $(BUILD_DIR)/test-expel
-testldopts := $(LDOPTS) -lm -lpthread -lrt
+testldopts := $(LDOPTS) -lm -lpthread
 
 all: lib $(cexe) $(rtexe) $(iexe) test
 
