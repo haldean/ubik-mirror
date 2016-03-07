@@ -400,7 +400,7 @@ _native_humanize_word(struct xl_env *env, struct xl_dagc *graph)
         if (err != OK)
                 return err;
 
-        str_size = asprintf(&str, "0x%02llX", graph->nodes[0]->known.tree->left.w);
+        str_size = asprintf(&str, "0x%02" PRIX64, graph->nodes[0]->known.tree->left.w);
         if (str_size < 0)
                 return xl_raise(ERR_UNEXPECTED_FAILURE, "asprintf failed");
         err = xl_value_pack_string(res, str, str_size);
