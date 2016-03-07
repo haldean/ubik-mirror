@@ -13,10 +13,13 @@ Structure of the project -----------------------------------------------
 The project itself is divided into a few software components. By far the
 most interesting is libexpel, which is the shared library that contains
 the entirety of the Expel runtime. There's runexpel, which is a simple
-thing that uses libexpel to load and run Expel bytecode. And then
-there's pyasm, which is a hilarious "assembler" written as a Python DSL;
-pyasm will be gone the moment there's a working Expel compiler, but for
-now, with my focus on the runtime, pyasm is here to stay.
+thing that uses libexpel to load and run Expel bytecode. There's expelc
+and expeli, which are a compiler and interpreter, respectively; both are
+thin wrappers around libexpel, which contains the actual compiler
+implementation. And then there's pyasm, which is a hilarious "assembler"
+written as a Python DSL; pyasm will be gone the moment there's a working
+Expel compiler, but for now, with my focus on the runtime, pyasm is here
+to stay.
 
 There are unit tests and "integration tests"; unit tests are haphazard
 but the integration tests (in the form of pyasm scripts in
@@ -33,7 +36,15 @@ the pre-commit hook in the `res` directory before you commit anything.
 It does some simple checks to make sure that you're not doing anything
 dumb.
 
-The rest of this document is more interesting, I promise.
+For completeness, building Expel requires:
+
+    - GCC 4.9 or later (it's possible that the build works with other
+      versions of GCC and with clang, but they're untested)
+    - Bison 3.0 or later
+    - Flex 2.6 or later
+
+Expel has no runtime dependencies outside of libc. The rest of this
+document is more interesting, I promise.
 
 
 Runtime representations ------------------------------------------------
