@@ -178,7 +178,7 @@ xl_value_print(struct xl_stream *out, struct xl_value *v)
 
         if (v->tag & TAG_LEFT_WORD)
         {
-                n = snprintf(buf, 64, "0x%lX", v->left.w);
+                n = snprintf(buf, 64, "0x%llX", v->left.w);
                 written = xl_stream_write(out, buf, n);
                 if (written != n)
                         return xl_raise(ERR_WRITE_FAILED, "print value");
@@ -198,7 +198,7 @@ xl_value_print(struct xl_stream *out, struct xl_value *v)
 
         if (v->tag & TAG_RIGHT_WORD)
         {
-                n = snprintf(buf, 64, "0x%lX", v->right.w);
+                n = snprintf(buf, 64, "0x%llX", v->right.w);
                 written = xl_stream_write(out, buf, n);
                 if (written != n)
                         return xl_raise(ERR_WRITE_FAILED, "print value");
