@@ -111,6 +111,7 @@ test_file(char *fname, bool debug, bool timing)
         CHECK_ERR("couldn't create scheduler");
 
         modinit_i = 0;
+        pushed_modinit = false;
         for (i = 0; i < n_graphs; i++)
         {
                 if (graphs[i]->tag & TAG_GRAPH_MODINIT)
