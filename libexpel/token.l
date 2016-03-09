@@ -62,6 +62,8 @@ NAME [a-z_][a-zA-Z0-9/_\-']*
 ")"                       TOKEN(CLOSE_PAR)
 "+"                       TOKEN(USES)
 "\."                      TOKEN(MEMBER)
+"{"                       TOKEN(OPEN_SCOPE)
+"}"                       TOKEN(CLOSE_SCOPE)
 [0-9]+                    { yylval->integer = atoi(yytext); return INTEGER; }
 ([0-9]+\.[0-9]*|\.[0-9]+) { yylval->floating = atof(yytext); return NUMBER; }
 {NAME}                    STRING(NAME)
