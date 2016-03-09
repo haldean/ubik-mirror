@@ -13,3 +13,17 @@ cascading polymorphic functions for typeclasses
 input nodes shouldn't have required_type, it should be taken from graph type
 closures
 interface files
+
+ideas
+==
+
+are records just scopes, where assignments in the scope build the record?
+that could be kind of cool. so this:
+
+Entity {
+    : id = 81
+    : name = "a thing"
+    : transform = \x -> + 8 x
+}
+
+Is equivalent to Entity 81 "a thing" (\x -> + 8 x)
