@@ -26,7 +26,8 @@ enum expr_type
 {
         EXPR_APPLY = 1,
         EXPR_ATOM,
-        EXPR_LAMBDA
+        EXPR_LAMBDA,
+        EXPR_CONSTRUCTOR
 };
 
 enum type_expr_type
@@ -44,6 +45,8 @@ enum atom_type
         ATOM_TYPE_NAME,
         ATOM_STRING
 };
+
+struct xl_ast;
 
 enum type_type
 {
@@ -88,6 +91,11 @@ struct xl_ast_expr
                         struct xl_ast_arg_list *args;
                         struct xl_ast_expr *body;
                 } lambda;
+                struct
+                {
+                        char *type_name;
+                        struct xl_ast *scope;
+                } constructor;
         };
         enum expr_type expr_type;
         struct xl_dagc_node *gen;
@@ -205,6 +213,13 @@ xl_ast_expr_new_lambda(
         struct xl_ast_arg_list *args,
         struct xl_ast_expr *body);
 
+no_ignore xl_error
+xl_ast_expr_new_constructor(
+        struct xl_ast_expr **expr,
+        char *type_name,
+        struct xl_ast *scope);
+
+/* Atom builders */
 no_ignore xl_error
 xl_ast_atom_new_name(
         struct xl_ast_atom **atom,

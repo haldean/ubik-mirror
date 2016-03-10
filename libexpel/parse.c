@@ -23,7 +23,7 @@
 
 
 no_ignore xl_error
-xl_parse(struct xl_ast *ast, struct xl_stream *stream)
+xl_parse(struct xl_ast **ast, struct xl_stream *stream)
 {
         int status;
         yypstate *ps;
@@ -47,7 +47,5 @@ xl_parse(struct xl_ast *ast, struct xl_stream *stream)
         yypstate_delete(ps);
         yylex_destroy(scanner);
 
-        if (ast->has_errors)
-                return xl_raise(ERR_BAD_VALUE, "parse failed");
         return OK;
 }

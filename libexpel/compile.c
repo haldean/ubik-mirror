@@ -76,11 +76,7 @@ xl_compile(
         struct xl_ast *ast;
         xl_error err;
 
-        err = xl_ast_new(&ast);
-        if (err != OK)
-                return err;
-
-        err = xl_parse(ast, in_stream);
+        err = xl_parse(&ast, in_stream);
         if (err != OK)
                 return err;
 
@@ -158,11 +154,7 @@ _add_requirement(
         if (err != OK)
                 return err;
 
-        err = xl_ast_new(&ast);
-        if (err != OK)
-                return err;
-
-        err = xl_parse(ast, &package_stream);
+        err = xl_parse(&ast, &package_stream);
         if (err != OK)
                 return err;
 

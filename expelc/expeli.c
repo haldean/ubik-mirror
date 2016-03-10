@@ -57,9 +57,7 @@ main(int argc, char *argv[])
 
         c(xl_stream_rfilep(&sstdin, stdin));
 
-        c(xl_ast_new(&ast));
-
-        parse_err = xl_parse(ast, &sstdin);
+        parse_err = xl_parse(&ast, &sstdin);
         if (argc > 1 && strcmp(argv[1], "show-ast") == 0)
                 err = xl_ast_print(ast);
         c(parse_err);

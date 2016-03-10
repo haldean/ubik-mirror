@@ -28,11 +28,11 @@
 #include <string.h>
 
 void
-yyerror(struct xl_ast *ast, void *scanner, const char *err)
+yyerror(struct xl_ast **ast, void *scanner, const char *err)
 {
         unused(scanner);
+        unused(ast);
         fprintf(stderr, "%s\n", err);
-        ast->has_errors = true;
 }
 
 #define wrap_err(x) do { xl_error _err = (x); if (_err != OK) YYABORT; } while (0);
@@ -58,7 +58,7 @@ yyerror(struct xl_ast *ast, void *scanner, const char *err)
 }
 
 %token <token> BIND TYPE IMPLIES GOES_TO LAMBDA IS OPEN_PAR CLOSE_PAR IMMEDIATE
-%token <token> USES MEMBER
+%token <token> USES MEMBER OPEN_SCOPE CLOSE_SCOPE
 %token <integer> INTEGER
 %token <floating> NUMBER
 %token <string> NAME TYPE_NAME STRING QUALIFIED_NAME
@@ -77,29 +77,35 @@ yyerror(struct xl_ast *ast, void *scanner, const char *err)
 %define api.push-pull push
 %define parse.error verbose
 
-%parse-param { struct xl_ast *ast }
+%parse-param { struct xl_ast **ast }
 %parse-param { void *scanner }
 %lex-param { void *scanner }
+
+%{
+#if YYDEBUG
+int yydebug = 1;
+#endif
+%}
 
 %%
 
 prog:
   blocks
-        { $$ = $1; }
+        { *ast = $1; }
 | blocks immediate
-        { $$ = $1;
+        { *ast = $1;
           wrap_err(xl_ast_set_immediate($$, $2)); }
 ;
 
 blocks:
   %empty
-        { $$ = ast; }
+        { wrap_err(xl_ast_new(&$$)); }
 | blocks binding
         { wrap_err(xl_ast_bind($1, $2)); $$ = $1; }
 | blocks imports
-        { wrap_err(xl_ast_import($1, $2)); $$= $1; }
+        { wrap_err(xl_ast_import($1, $2)); $$ = $1; }
 | blocks typedef
-        { wrap_err(xl_ast_add_type($1, $2)); $$= $1; }
+        { wrap_err(xl_ast_add_type($1, $2)); $$ = $1; }
 ;
 
 binding:
@@ -156,6 +162,8 @@ expr:
         { wrap_err(xl_ast_expr_new_atom(&$$, $1)); }
 | OPEN_PAR top_expr CLOSE_PAR
         { $$ = $2; }
+| TYPE_NAME OPEN_SCOPE blocks CLOSE_SCOPE
+        { wrap_err(xl_ast_expr_new_constructor(&$$, $1, $3)); }
 ;
 
 arg_list:

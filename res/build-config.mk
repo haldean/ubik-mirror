@@ -42,6 +42,9 @@ endif
 ifeq ($(debug_step),yes)
 COPTS += -DXL_SCHEDULE_STEP
 endif
+ifeq ($(debug_parse),yes)
+COPTS += -DYYDEBUG=1
+endif
 
 ifeq ($(type),release)
 $(info creating release build)

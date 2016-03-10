@@ -22,4 +22,4 @@
 #include "expel/stream.h"
 
 no_ignore xl_error
-xl_parse(struct xl_ast *ast, struct xl_stream *stream);
+xl_parse(struct xl_ast **ast, struct xl_stream *stream);
