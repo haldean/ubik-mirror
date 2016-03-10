@@ -408,17 +408,70 @@ When assigning nodes to AST elements, the first applicable rule applies:
      a. At the moment, no common subexpression elimination is in place
         to allow constant nodes with the same value to point at the same
         value in-memory.
+
 2. AST atoms that are names, where the name is in the argument list that
-   is relevant in that point in the source, are assigned REF nodes whose
-   referrent is the input node corresponding to that name.
-3. AST atoms that are names are assigned LOAD nodes whose URI has the
+   is in the nearest enclosing function in scope, are assigned REF nodes
+   whose referrent is the input node corresponding to that name.
+
+3. AST atoms that are names, where the name is defined in a scope that
+   is within the current function, are assigned LOAD nodes whose URI has
+   the given name, a NULL source and the LOCAL scope.
+
+4. AST atoms that are names, where the name is in the scope of an
+   enclosing function that is not the nearest function in scope, raise
+   the nearest function to a closure. The closure transformation adds an
+   argument to the head of the argument list for the closure and adds a
+   REF node from the AST element that raises the function to a closure
+   to the new INPUT node created corresponding to the argument.  The
+   function is then immediately applied to the argument from the
+   enclosing scope. This process continues recursively through the stack
+   until all modified functions have been raised if necessary.
+
+   This transforms this:
+        \x -> (\y -> + x y)
+   To this:
+        \x -> ((\x0 y -> + x0 y) x)
+
+   It transforms this:
+        \x -> (\y -> (\z -> x))
+   Into this:
+        \x -> ((\x0 y -> ((\x1 z -> x1) x0)) x)
+
+   It transforms this:
+        \x -> {
+            : y = + x 10
+            != \z -> y
+        }
+   Into this:
+        \x -> {
+            : y = + x 10
+            != (\y0 z -> y0) y
+        }
+
+   This closes these functions over the enclosing scope by making all
+   enclosing scope information an explicit argument to the function, and
+   then partially applying the function over that information.
+
+5. AST atoms that are qualified names are checked against the imports
+   that correspond to the source of the qualifier. If a corresponding
+   element in the module is found, the AST atom is assigned a LOAD node
+   whose URI has the given name, whose source is the name of the
+   package, and the PACKAGE source.
+
+   If no corresponding import is found, or there is no item within the
+   imported module with the given name, compilation fails.
+
+6. AST atoms that are names are assigned LOAD nodes whose URI has the
    given name and the UNKNOWN scope.
-4. AST expressions that represent application are assigned an APPLY node
+
+7. AST expressions that represent application are assigned an APPLY node
    with the func and args of the appropriate AST substructures.
-5. Bindings in the AST are assigned a STORE node with the location given
+
+8. Bindings in the AST are assigned a STORE node with the location given
    by the name of the binding and the LOCAL scope, and the value given
    by the appropriate AST substructure.
-6. Lambda statements in the AST are assigned a CONST node that points at
+
+9. Lambda statements in the AST are assigned a CONST node that points at
    the graph represented by the lambda's body (the "lambda subgraph").
    The lambda subgraph contains one input node for each item in the
    lambda statement's argument list.
