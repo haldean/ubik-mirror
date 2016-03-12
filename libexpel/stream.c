@@ -179,10 +179,15 @@ xl_stream_fp(struct xl_stream *sp)
         case STREAM_TYPE_FILE_W:
                 return sp->file;
         case STREAM_TYPE_BUFFER:
+#ifdef __MACH__
+                printf("WARNING: xl_stream_fp unsupported for memory buffers on Darwin");
+                return NULL;
+#else
                 return fmemopen(
                         sp->buffer->start,
                         sp->buffer->end - sp->buffer->start,
                         "r");
+#endif
         }
         return NULL;
 }
