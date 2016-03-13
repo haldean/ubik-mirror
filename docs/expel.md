@@ -200,7 +200,7 @@ like so:
     : ball-location
         ^ Ball -> Vector
         = \b -> is-hollow b
-            -> point-on-surface b
+            => point-on-surface b
             /> point-at-center b
 
 ### Compile-time partial application
