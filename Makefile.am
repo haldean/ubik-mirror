@@ -1,1 +1,1 @@
-SUBDIRS = include libexpel expelc expelrt
+SUBDIRS = include libexpel expelc runexpel

@@ -5558,7 +5558,7 @@ $as_echo "#define realloc rpl_realloc" >>confdefs.h
 fi
 
 
-for ac_func in bzero clock_gettime getcwd memmove memset strdup
+for ac_func in bzero clock_gettime fmemopen getcwd memmove memset strdup
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
@@ -5571,7 +5571,7 @@ fi
 done
 
 
-ac_config_files="$ac_config_files Makefile include/Makefile expelc/Makefile libexpel/Makefile"
+ac_config_files="$ac_config_files Makefile include/Makefile expelc/Makefile libexpel/Makefile runexpel/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -6304,6 +6304,7 @@ do
     "include/Makefile") CONFIG_FILES="$CONFIG_FILES include/Makefile" ;;
     "expelc/Makefile") CONFIG_FILES="$CONFIG_FILES expelc/Makefile" ;;
     "libexpel/Makefile") CONFIG_FILES="$CONFIG_FILES libexpel/Makefile" ;;
+    "runexpel/Makefile") CONFIG_FILES="$CONFIG_FILES runexpel/Makefile" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
   esac
