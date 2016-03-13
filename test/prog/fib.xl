@@ -1,9 +1,9 @@
 : fib
-    ^ Word -> Word -> Word
+    ^ Word -> Word
     = \x -> eq x 0
         => 1
         /> (eq x 1
                 => 1
                 /> uadd (fib (usub x 1)) (fib (usub x 2)))
 
-!= emit (humanize (fib 5))
+!= emit (concat (humanize (fib 5)) "\n")
