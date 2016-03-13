@@ -58,7 +58,7 @@ yyerror(struct xl_ast **ast, void *scanner, const char *err)
 }
 
 %token <token> BIND TYPE IMPLIES GOES_TO LAMBDA IS OPEN_PAR CLOSE_PAR IMMEDIATE
-%token <token> USES MEMBER OPEN_SCOPE CLOSE_SCOPE
+%token <token> USES MEMBER OPEN_SCOPE CLOSE_SCOPE OPPOSES
 %token <integer> INTEGER
 %token <floating> NUMBER
 %token <string> NAME TYPE_NAME STRING QUALIFIED_NAME
@@ -149,6 +149,8 @@ top_expr:
         { $$ = $1; }
 | LAMBDA arg_list GOES_TO top_expr
         { wrap_err(xl_ast_expr_new_lambda(&$$, $2, $4)); }
+| expr IMPLIES expr OPPOSES expr
+        { wrap_err(xl_ast_expr_new_conditional(&$$, $1, $3, $5)); }
 
 
 expr:

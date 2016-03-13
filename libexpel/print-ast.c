@@ -115,6 +115,20 @@ _print_expr(struct xl_ast_expr *expr, int indent)
                 _indent(indent + 4);
                 printf("}");
                 return OK;
+
+        case EXPR_CONDITIONAL:
+                err = _print_expr(expr->condition.cond, indent);
+                if (err != OK)
+                        return err;
+                printf(" => ");
+                err = _print_expr(expr->condition.implied, indent);
+                if (err != OK)
+                        return err;
+                printf(" /> ");
+                err = _print_expr(expr->condition.opposed, indent);
+                if (err != OK)
+                        return err;
+                return OK;
         }
 
         return xl_raise(ERR_UNKNOWN_TYPE, "unknown expr type");

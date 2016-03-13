@@ -193,6 +193,22 @@ _assign_apply_node(
 }
 
 no_ignore static xl_error
+_assign_conditional_node(
+        union xl_dagc_any_node *n,
+        struct xl_ast_expr *expr)
+{
+        n->node.node_type = DAGC_NODE_COND;
+        /* TODO */
+        n->node.id = 0;
+
+        n->as_cond.condition = expr->condition.cond->gen;
+        n->as_cond.if_true = expr->condition.implied->gen;
+        n->as_cond.if_false = expr->condition.opposed->gen;
+
+        return OK;
+}
+
+no_ignore static xl_error
 _assign_lambda(
         union xl_dagc_any_node *n,
         struct xl_ast_expr *expr,
@@ -308,6 +324,27 @@ _assign_nodes(
                         return err;
 
                 err = _assign_apply_node(n, expr);
+                if (err != OK)
+                        return err;
+                break;
+
+        case EXPR_CONDITIONAL:
+                err = _assign_nodes(
+                        builder, expr->condition.cond, args_in_scope, NULL);
+                if (err != OK)
+                        return err;
+
+                err = _assign_nodes(
+                        builder, expr->condition.implied, args_in_scope, NULL);
+                if (err != OK)
+                        return err;
+
+                err = _assign_nodes(
+                        builder, expr->condition.opposed, args_in_scope, NULL);
+                if (err != OK)
+                        return err;
+
+                err = _assign_conditional_node(n, expr);
                 if (err != OK)
                         return err;
                 break;

@@ -104,6 +104,15 @@ _free_expr(struct xl_ast_expr *expr)
                 free(expr->constructor.type_name);
                 err = xl_ast_free(expr->constructor.scope);
                 break;
+        case EXPR_CONDITIONAL:
+                err = _free_expr(expr->condition.cond);
+                if (err != OK)
+                        return err;
+                err = _free_expr(expr->condition.implied);
+                if (err != OK)
+                        return err;
+                err = _free_expr(expr->condition.opposed);
+                break;
         default:
                 return xl_raise(ERR_BAD_TYPE, "unknown expr type in free");
         }
@@ -362,6 +371,21 @@ xl_ast_expr_new_constructor(
         (*expr)->expr_type = EXPR_CONSTRUCTOR;
         (*expr)->constructor.type_name = type_name;
         (*expr)->constructor.scope = scope;
+        return OK;
+}
+
+no_ignore xl_error
+xl_ast_expr_new_conditional(
+        struct xl_ast_expr **expr,
+        struct xl_ast_expr *cond,
+        struct xl_ast_expr *implied,
+        struct xl_ast_expr *opposed)
+{
+        check_alloc(*expr, 1, struct xl_ast_expr);
+        (*expr)->expr_type = EXPR_CONDITIONAL;
+        (*expr)->condition.cond = cond;
+        (*expr)->condition.implied = implied;
+        (*expr)->condition.opposed = opposed;
         return OK;
 }
 

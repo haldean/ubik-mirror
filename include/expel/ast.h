@@ -27,7 +27,8 @@ enum expr_type
         EXPR_APPLY = 1,
         EXPR_ATOM,
         EXPR_LAMBDA,
-        EXPR_CONSTRUCTOR
+        EXPR_CONSTRUCTOR,
+        EXPR_CONDITIONAL,
 };
 
 enum type_expr_type
@@ -96,6 +97,12 @@ struct xl_ast_expr
                         char *type_name;
                         struct xl_ast *scope;
                 } constructor;
+                struct
+                {
+                        struct xl_ast_expr *cond;
+                        struct xl_ast_expr *implied;
+                        struct xl_ast_expr *opposed;
+                } condition;
         };
         enum expr_type expr_type;
         struct xl_dagc_node *gen;
@@ -218,6 +225,13 @@ xl_ast_expr_new_constructor(
         struct xl_ast_expr **expr,
         char *type_name,
         struct xl_ast *scope);
+
+no_ignore xl_error
+xl_ast_expr_new_conditional(
+        struct xl_ast_expr **expr,
+        struct xl_ast_expr *cond,
+        struct xl_ast_expr *implied,
+        struct xl_ast_expr *opposed);
 
 /* Atom builders */
 no_ignore xl_error

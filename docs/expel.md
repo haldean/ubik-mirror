@@ -190,6 +190,19 @@ Note that `(, f g) x` is equivalent to `g (f x)`; when using composition
 the functions are specified in the order that they are applied to the
 input.
 
+### Conditionals
+
+There is only one explicit control-flow construct in Expel: a simple
+conditional statement. You can create a conditional statement using the
+`=>` (pronounced "implies") and `/>` (pronounced "opposes") operator,
+like so:
+
+    : ball-location
+        ^ Ball -> Vector
+        = \b -> is-hollow b
+            -> point-on-surface b
+            /> point-at-center b
+
 ### Compile-time partial application
 
 Compile-time partially applied functions (CTPAs) are functions that have
@@ -337,6 +350,14 @@ compile time.
 ### `+`
 Pronounced "uses", used to indicate the usage of an external resource (a
 library, a state sink/source, etc).
+
+### `=>`
+Pronounced "implies", used to express that something is executed when
+a condition is true.
+
+### `\>`
+Pronounced "opposes", used to express that something is executed when
+a condition is not true.
 
 ## Ideas to expand
 - Data substrate

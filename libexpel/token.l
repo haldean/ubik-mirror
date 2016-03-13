@@ -55,6 +55,7 @@ NAME [a-z_][a-zA-Z0-9/_\-']*
 ":"                       TOKEN(BIND)
 "^"                       TOKEN(TYPE)
 "=>"                      TOKEN(IMPLIES)
+"/>"                      TOKEN(OPPOSES)
 "->"                      TOKEN(GOES_TO)
 "\\"                      TOKEN(LAMBDA)
 "="                       TOKEN(IS)
