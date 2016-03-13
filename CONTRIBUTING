@@ -1,0 +1,16 @@
+Contributing to Expel ==================================================
+Haldean Brown                                      First draft: Mar 2016
+                                                  Last updated: Mar 2016
+
+To contribute to Expel, please send a patch generated using git
+format-patch to expel@haldean.org. By sending the patches you agree to
+license your patch to the Expel project under the terms of the GNU
+Public License, version 2.
+
+Contributors to the Expel project --------------------------------------
+
+The following people have contributed to the Expel project:
+
+        Haldean Brown (haldean.org)
+        Xianhang Zhang (bumblebeelabs.com)
+

@@ -1,6 +1,6 @@
 Architecture of the Expel Runtime ======================================
 Haldean Brown                                      First draft: Nov 2015
-                                                  Last updated: Jan 2016
+                                                  Last updated: Mar 2016
 
 
 This document attempts to fully explain the implementation and behavior
