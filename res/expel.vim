@@ -6,10 +6,14 @@ endif
 
 syntax match expelBind ":"
 syntax match expelBind "\."
+syntax match expelBind "!="
 highlight link expelBind Delimiter
 
 syntax match expelSubbind "\^"
 syntax match expelSubbind "="
+syntax match expelSubbind "=>"
+syntax match expelSubbind "/>"
+syntax match expelSubbind "->"
 highlight link expelSubbind Keyword
 
 syntax region expelString start=/"/ skip=/\\"/ end=/"/ oneline
