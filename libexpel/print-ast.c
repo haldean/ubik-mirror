@@ -129,6 +129,15 @@ _print_expr(struct xl_ast_expr *expr, int indent)
                 if (err != OK)
                         return err;
                 return OK;
+
+        case EXPR_BLOCK:
+                printf("{\n");
+                err = _print_ast(expr->block, indent + 8);
+                if (err != OK)
+                        return err;
+                _indent(indent + 4);
+                printf("}");
+                return OK;
         }
 
         return xl_raise(ERR_UNKNOWN_TYPE, "unknown expr type");

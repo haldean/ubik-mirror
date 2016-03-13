@@ -32,6 +32,7 @@ enum xl_load_reason
 {
         LOAD_MAIN = 1,
         LOAD_IMPORTED,
+        LOAD_BLOCK
 };
 
 /* Compiles a single compilation unit down to a series of graphs.

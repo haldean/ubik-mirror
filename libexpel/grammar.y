@@ -166,6 +166,9 @@ expr:
         { $$ = $2; }
 | TYPE_NAME OPEN_SCOPE blocks CLOSE_SCOPE
         { wrap_err(xl_ast_expr_new_constructor(&$$, $1, $3)); }
+| OPEN_SCOPE blocks immediate CLOSE_SCOPE
+        { wrap_err(xl_ast_set_immediate($2, $3));
+          wrap_err(xl_ast_expr_new_block(&$$, $2)); }
 ;
 
 arg_list:

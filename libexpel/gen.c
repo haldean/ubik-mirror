@@ -209,6 +209,48 @@ _assign_conditional_node(
 }
 
 no_ignore static xl_error
+_assign_block(
+        union xl_dagc_any_node *n,
+        struct xl_ast_expr *expr)
+{
+        struct xl_dagc **graphs;
+        size_t n_graphs;
+        size_t i;
+        struct xl_gen_requires *requires;
+        struct xl_dagc *modinit;
+        xl_error err;
+
+        xl_assert(expr->block->immediate != NULL);
+
+        err = xl_compile_unit(
+                &graphs, &n_graphs, &requires,
+                expr->block, LOAD_BLOCK, NULL);
+        if (err != OK)
+                return err;
+
+        modinit = NULL;
+        for (i = 0; i < n_graphs; i++)
+                if (graphs[i]->tag & TAG_GRAPH_MODINIT)
+                {
+                        modinit = graphs[i];
+                        break;
+                }
+        xl_assert(modinit != NULL);
+
+        n->node.node_type = DAGC_NODE_CONST;
+        /* TODO */
+        n->node.id = 0;
+        n->as_const.value.graph = modinit;
+        /* TODO: type inference from type of immediate value*/
+        err = xl_value_new(&n->as_const.type);
+        if (err != OK)
+                return err;
+        n->as_const.type->tag |= TAG_LEFT_WORD | TAG_RIGHT_WORD;
+
+        return OK;
+}
+
+no_ignore static xl_error
 _assign_lambda(
         union xl_dagc_any_node *n,
         struct xl_ast_expr *expr,
@@ -230,6 +272,8 @@ _assign_lambda(
         i = 0;
         while (t->name != NULL)
         {
+                /* failing this means the type signature does not have enough
+                 * types for all arguments in the function. */
                 xl_assert(known_type != NULL);
 
                 input_node = calloc(1, sizeof(struct xl_dagc_input));
@@ -351,6 +395,12 @@ _assign_nodes(
 
         case EXPR_LAMBDA:
                 err = _assign_lambda(n, expr, known_type);
+                if (err != OK)
+                        return err;
+                break;
+
+        case EXPR_BLOCK:
+                err = _assign_block(n, expr);
                 if (err != OK)
                         return err;
                 break;
@@ -641,7 +691,8 @@ xl_create_modinit(
         if (err != OK)
                 return err;
 
-        if (ast->immediate != NULL && load_reason == LOAD_MAIN)
+        if (ast->immediate != NULL
+                && (load_reason == LOAD_MAIN || load_reason == LOAD_BLOCK))
         {
                 err = _assign_nodes(&builder, ast->immediate, NULL, NULL);
                 if (err != OK)

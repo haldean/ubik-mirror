@@ -113,6 +113,9 @@ _free_expr(struct xl_ast_expr *expr)
                         return err;
                 err = _free_expr(expr->condition.opposed);
                 break;
+        case EXPR_BLOCK:
+                err = xl_ast_free(expr->block);
+                break;
         default:
                 return xl_raise(ERR_BAD_TYPE, "unknown expr type in free");
         }
@@ -386,6 +389,17 @@ xl_ast_expr_new_conditional(
         (*expr)->condition.cond = cond;
         (*expr)->condition.implied = implied;
         (*expr)->condition.opposed = opposed;
+        return OK;
+}
+
+no_ignore xl_error
+xl_ast_expr_new_block(
+        struct xl_ast_expr **expr,
+        struct xl_ast *block)
+{
+        check_alloc(*expr, 1, struct xl_ast_expr);
+        (*expr)->expr_type = EXPR_BLOCK;
+        (*expr)->block = block;
         return OK;
 }
 
