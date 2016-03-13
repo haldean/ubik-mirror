@@ -18,9 +18,10 @@
  */
 
 #include "expel/parse.h"
-#include "grammar.tab.h"
-#include "token.tab.h"
+#include "grammar.h"
 
+extern int yylex_init(void *);
+extern int yylex(YYSTYPE *, void *);
 
 no_ignore xl_error
 xl_parse(struct xl_ast **ast, struct xl_stream *stream)
