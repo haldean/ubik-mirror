@@ -5583,7 +5583,7 @@ fi
 done
 
 
-ac_config_files="$ac_config_files Makefile include/Makefile expelc/Makefile libexpel/Makefile runexpel/Makefile"
+ac_config_files="$ac_config_files Makefile include/Makefile expelc/Makefile libexpel/Makefile runexpel/Makefile test/prog/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -6317,6 +6317,7 @@ do
     "expelc/Makefile") CONFIG_FILES="$CONFIG_FILES expelc/Makefile" ;;
     "libexpel/Makefile") CONFIG_FILES="$CONFIG_FILES libexpel/Makefile" ;;
     "runexpel/Makefile") CONFIG_FILES="$CONFIG_FILES runexpel/Makefile" ;;
+    "test/prog/Makefile") CONFIG_FILES="$CONFIG_FILES test/prog/Makefile" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
   esac

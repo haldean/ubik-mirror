@@ -46,5 +46,5 @@ AC_FUNC_REALLOC
 AC_CHECK_FUNCS([bzero clock_gettime fmemopen getcwd memmove memset strdup])
 
 AC_CONFIG_FILES([Makefile include/Makefile expelc/Makefile libexpel/Makefile
-                 runexpel/Makefile])
+                 runexpel/Makefile test/prog/Makefile])
 AC_OUTPUT
