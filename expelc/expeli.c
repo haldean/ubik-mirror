@@ -47,11 +47,17 @@ main(int argc, char *argv[])
         struct xl_ast *ast;
         struct xl_dagc **graphs;
         struct xl_stream sstdin;
-        struct xl_env env;
+        struct xl_env env = {0};
         struct xl_scheduler *s;
         size_t n_graphs;
+        size_t i;
         xl_error err;
+        xl_error teardown_err;
         xl_error parse_err;
+        char *buf;
+
+        ast = NULL;
+        graphs = NULL;
 
         c(xl_start());
 
@@ -71,14 +77,56 @@ main(int argc, char *argv[])
         c(xl_schedule_push(s, graphs[0], &env, NULL));
         c(xl_schedule_run(s));
 
-        c(xl_ast_free(ast));
-        c(xl_env_free(&env));
-
 teardown:
-        err = xl_teardown();
-        if (err != OK)
-                printf("error when tearing down runtime\n");
+        if (ast != NULL)
+        {
+                teardown_err = xl_ast_free(ast);
+                if (teardown_err != OK)
+                {
+                        buf = xl_error_explain(teardown_err);
+                        printf("error when freeing ast: %s\n", buf);
+                        free(buf);
+                        free(teardown_err);
+                }
+        }
 
+        if (graphs != NULL)
+        {
+                for (i = 0; i < n_graphs; i++)
+                {
+                        if (graphs[i] == NULL)
+                                continue;
+                        teardown_err = xl_release(graphs[i]);
+                        if (teardown_err != OK)
+                        {
+                                buf = xl_error_explain(teardown_err);
+                                printf("graph release failed: %s\n", buf);
+                                free(buf);
+                                free(teardown_err);
+                        }
+                }
+                free(graphs);
+        }
+
+        teardown_err = xl_env_free(&env);
+        if (teardown_err != OK)
+        {
+                buf = xl_error_explain(teardown_err);
+                printf("error when freeing environment: %s\n", buf);
+                free(buf);
+                free(teardown_err);
+        }
+
+        teardown_err = xl_teardown();
+        if (teardown_err != OK)
+        {
+                buf = xl_error_explain(teardown_err);
+                printf("error when tearing down runtime: %s\n", buf);
+                free(buf);
+                free(teardown_err);
+        }
+
+        free(err);
         return err == OK ? EXIT_SUCCESS : EXIT_FAILURE;
 }
 
