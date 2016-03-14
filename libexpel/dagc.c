@@ -27,48 +27,6 @@
 #include "expel/util.h"
 
 no_ignore xl_error
-xl_dagc_alloc(
-        struct xl_dagc **graph,
-        size_t n_nodes,
-        size_t size,
-        void *copy_from)
-{
-        size_t i;
-        union xl_dagc_any_node *node_memory;
-
-        *graph = calloc(1, size);
-        if (*graph == NULL)
-                return xl_raise(ERR_NO_MEMORY, "graph allocation");
-
-        if (copy_from != NULL)
-                memcpy(*graph, copy_from, size);
-
-        /* Every node is a different size in this regime of ours, which means we
-         * can't just allocate a list of xl_dagc_nodes and call it a day; they
-         * would all be too small. But we want the API of the graph to make it
-         * look like everything is a node, so here's what we do; we allocate a
-         * big memory region that we're going to use for all of our nodes, and
-         * then we make references into that region that are all spaced
-         * max-node-sized apart. While this means there's an extra indirection
-         * for each access to a node, sequential node access is rare and the API
-         * niceness is worth it. */
-        node_memory = calloc(n_nodes, sizeof(union xl_dagc_any_node));
-        if (node_memory == NULL)
-                return xl_raise(ERR_NO_MEMORY, "graph allocation");
-
-        (*graph)->nodes = calloc(n_nodes, sizeof(struct xl_dagc_node *));
-        if ((*graph)->nodes == NULL)
-                return xl_raise(ERR_NO_MEMORY, "graph allocation");
-
-        for (i = 0; i < n_nodes; i++)
-        {
-                (*graph)->nodes[i] = (struct xl_dagc_node *) &node_memory[i];
-        }
-        (*graph)->n = n_nodes;
-        return OK;
-}
-
-no_ignore xl_error
 xl_dagc_new(struct xl_dagc **graph, size_t n_nodes)
 {
         return xl_dagc_alloc(

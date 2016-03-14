@@ -19,11 +19,12 @@
 
 /* Define XL_GC_DEBUG to have garbage collection information
  * printed to stderr. */
-#ifdef XL_GC_DEBUG
+#if XL_GC_DEBUG
 #include <stdio.h>
 #define gc_out stderr
 #endif
 
+#include <inttypes.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
@@ -32,11 +33,17 @@
 #include "expel/dagc.h"
 #include "expel/expel.h"
 #include "expel/gc.h"
+#include "expel/pointerset.h"
 #include "expel/uri.h"
 #include "expel/util.h"
 
 static struct xl_alloc_page *page_tail;
 static struct xl_gc_info *gc_stats;
+
+#if XL_GC_DEBUG_V
+static struct xl_pointer_set graph_alloc = {0};
+static struct xl_pointer_set graph_freed = {0};
+#endif
 
 void
 xl_gc_start()
@@ -52,6 +59,38 @@ xl_gc_start()
 void
 xl_gc_teardown()
 {
+        #if XL_GC_DEBUG && XL_GC_DEBUG_V
+        size_t i;
+        bool present;
+        struct xl_dagc *graph;
+        xl_error err;
+
+        fprintf(gc_out, "========================================\ngc stats:\n");
+        fprintf(gc_out, "alloc %d pages, %d freed, %d remaining\n",
+                        gc_stats->n_page_allocs,
+                        gc_stats->n_page_frees,
+                        gc_stats->n_page_allocs - gc_stats->n_page_frees);
+        fprintf(gc_out, "alloc %d vals, %d freed, %d remaining\n",
+                        gc_stats->n_val_allocs,
+                        gc_stats->n_val_frees,
+                        gc_stats->n_val_allocs - gc_stats->n_val_frees);
+        fprintf(gc_out, "alloc %d graphs, %d freed, %d remaining\n",
+                        gc_stats->n_graph_allocs,
+                        gc_stats->n_graph_frees,
+                        gc_stats->n_graph_allocs - gc_stats->n_graph_frees);
+        fprintf(gc_out, "gc ran %d times\n", gc_stats->n_gc_runs);
+
+        printf("========================================\nleaked graphs:\n");
+        for (i = 0; i < graph_alloc.n; i++)
+        {
+                graph = (struct xl_dagc *) graph_alloc.elems[i];
+                err = xl_pointer_set_present(&present, &graph_freed, graph);
+                if (err != OK || present)
+                        continue;
+                fprintf(gc_out, "%016" PRIxPTR ": %d leaked refs\n",
+                                (uintptr_t) graph, graph->refcount);
+        }
+        #endif
         xl_gc_free_all();
         free(gc_stats);
         gc_stats = NULL;
@@ -75,6 +114,59 @@ xl_gc_free_all()
                 free(p->values);
                 free(p);
         }
+}
+
+no_ignore xl_error
+xl_dagc_alloc(
+        struct xl_dagc **graph,
+        size_t n_nodes,
+        size_t size,
+        void *copy_from)
+{
+        size_t i;
+        union xl_dagc_any_node *node_memory;
+        xl_error err;
+
+        *graph = calloc(1, size);
+        if (*graph == NULL)
+                return xl_raise(ERR_NO_MEMORY, "graph allocation");
+
+        #if XL_GC_DEBUG
+                #if XL_GC_DEBUG_V
+                        fprintf(gc_out, "alloc graph");
+                        err = xl_pointer_set_add(NULL, &graph_alloc, *graph);
+                        if (err != OK)
+                                return err;
+                #endif
+                gc_stats->n_graph_allocs++;
+        #endif
+
+        if (copy_from != NULL)
+                memcpy(*graph, copy_from, size);
+
+        /* Every node is a different size in this regime of ours, which means we
+         * can't just allocate a list of xl_dagc_nodes and call it a day; they
+         * would all be too small. But we want the API of the graph to make it
+         * look like everything is a node, so here's what we do; we allocate a
+         * big memory region that we're going to use for all of our nodes, and
+         * then we make references into that region that are all spaced
+         * max-node-sized apart. While this means there's an extra indirection
+         * for each access to a node, sequential node access is rare and the API
+         * niceness is worth it. */
+        node_memory = calloc(n_nodes, sizeof(union xl_dagc_any_node));
+        if (node_memory == NULL)
+                return xl_raise(ERR_NO_MEMORY, "graph allocation");
+
+        (*graph)->nodes = calloc(n_nodes, sizeof(struct xl_dagc_node *));
+        if ((*graph)->nodes == NULL)
+                return xl_raise(ERR_NO_MEMORY, "graph allocation");
+
+        for (i = 0; i < n_nodes; i++)
+        {
+                (*graph)->nodes[i] = (struct xl_dagc_node *) &node_memory[i];
+        }
+        (*graph)->n = n_nodes;
+        return OK;
 }
 
 /* Creates a new value. */
@@ -104,7 +196,7 @@ xl_value_new(struct xl_value **v)
 
         if (unlikely(pages_full))
         {
-                #ifdef XL_GC_DEBUG
+                #if XL_GC_DEBUG
                         gc_stats->n_page_allocs++;
                 #endif
                 p = calloc(1, sizeof(struct xl_alloc_page));
@@ -135,13 +227,14 @@ xl_value_new(struct xl_value **v)
         (*v)->refcount = 1;
         p->n_open_values--;
 
-        #ifdef XL_GC_DEBUG
-                #ifdef XL_GC_DEBUG_V
-                        printf("take slot %lu in page %04lx\n",
-                               ((uintptr_t) *v - (uintptr_t) p->values)
-                                        / sizeof(struct xl_value),
-                               ((uintptr_t) p) & 0xFFFF);
-                #endif
+        #if XL_GC_DEBUG && XL_GC_DEBUG_V
+                printf("take slot %lu in page %04lx\n",
+                       ((uintptr_t) *v - (uintptr_t) p->values)
+                                / sizeof(struct xl_value),
+                       ((uintptr_t) p) & 0xFFFF);
+        #endif
+
+        #if XL_GC_DEBUG
                 gc_stats->n_val_allocs++;
         #endif
         return OK;
@@ -191,7 +284,7 @@ xl_gc_run()
         struct xl_alloc_page *p;
         struct xl_alloc_page *to_free;
 
-        #ifdef XL_GC_DEBUG
+        #if XL_GC_DEBUG
                 gc_stats->n_gc_runs++;
         #endif
 
@@ -210,7 +303,7 @@ xl_gc_run()
                                 page_tail = to_free->prev;
                         free(to_free->values);
                         free(to_free);
-                        #ifdef XL_GC_DEBUG
+                        #if XL_GC_DEBUG
                                 gc_stats->n_page_frees++;
                         #endif
                 }
@@ -231,7 +324,7 @@ _release_value(struct xl_value *v)
         v->refcount--;
 
         gc_stats->releases_until_gc--;
-        #ifdef XL_GC_DEBUG
+        #if XL_GC_DEBUG
                 gc_stats->n_val_frees++;
         #endif
 
@@ -243,7 +336,7 @@ _release_value(struct xl_value *v)
                 p->open_values[p->n_open_values] = v;
                 p->n_open_values++;
 
-                #ifdef XL_GC_DEBUG_V
+                #if XL_GC_DEBUG && XL_GC_DEBUG_V
                         printf("release slot %lu in page %04lx\n",
                                ((uintptr_t) v - (uintptr_t) p->values)
                                         / sizeof(struct xl_value),
@@ -356,11 +449,14 @@ _release_graph(struct xl_dagc *g)
         free(g->terminals);
         free(g);
 
-        #ifdef XL_GC_DEBUG
-        #ifdef XL_GC_DEBUG_V
-        fprintf(gc_out, "released graph\n");
-        #endif
-        gc_stats->n_graph_frees++;
+        #if XL_GC_DEBUG
+                #if XL_GC_DEBUG_V
+                        fprintf(gc_out, "released graph\n");
+                        err = xl_pointer_set_add(NULL, &graph_freed, g);
+                        if (err != OK)
+                                return err;
+                #endif
+                gc_stats->n_graph_frees++;
         #endif
 
         return OK;
