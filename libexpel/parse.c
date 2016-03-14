@@ -20,8 +20,12 @@
 #include "expel/parse.h"
 #include "grammar.h"
 
-extern int yylex_init(void *);
-extern int yylex(YYSTYPE *, void *);
+/* autotools doesn't yet support flex headers, so we have to declare these
+ * extern instead. */
+extern int  yylex_init(void *);
+extern void yylex_destroy(void *);
+extern int  yylex(YYSTYPE *, void *);
+extern void yyset_in(FILE *, void *);
 
 no_ignore xl_error
 xl_parse(struct xl_ast **ast, struct xl_stream *stream)
