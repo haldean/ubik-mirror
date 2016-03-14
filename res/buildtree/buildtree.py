@@ -18,6 +18,10 @@
 import re
 
 
+class ParseError(Exception):
+    pass
+
+
 class Stream(object):
     def __init__(self, string):
         self._string = re.sub(r"[\s]", "", string)
@@ -52,7 +56,7 @@ class Stream(object):
 def build_tree(stream):
     c = stream.take()
     if c != "{":
-        raise Exception("expected {, got %s" % c)
+        raise ParseError("expected {, got %s" % c)
 
     c = stream.take()
     stream.push()
@@ -73,7 +77,7 @@ def build_tree(stream):
 
     c = stream.take()
     if c != "}":
-        raise Exception("expected }, got %s" % c)
+        raise ParseError("expected }, got %s" % c)
 
     return dict(left=left, right=right)
 
@@ -109,7 +113,7 @@ def type_to_tag_suffix(typ):
         return "GRAPH"
     if typ in ("w", "f"):
         return "WORD"
-    raise Exception("unknown value type %s" % typ)
+    raise ParseError("unknown value type %s" % typ)
 
 
 def emit_c_noindent(tree, options):
@@ -158,42 +162,13 @@ def parse(string):
     return tree, options
 
 
-class ParseError(Exception):
-    pass
-
-
-def parse_iter(f):
-    f_iter = iter(enumerate(f))
-    while True:
-        try:
-            i, line = next(f_iter)
-        except StopIteration:
-            return
-
-        if not line.strip().startswith("#pragma buildtree"):
-            yield line
-            continue
-
-        lines = [line.replace("#pragma buildtree", "", 1)]
-        while line.strip()[-1] == "\\":
-            try:
-                i, line = next(f_iter)
-            except StopIteration:
-                raise Exception("line %d: no line after line continuation" % i)
-            lines.append(line)
-
-        lines = map(lambda s: s.strip("\\ \n"), lines)
-        pragma = " ".join(lines)
-        tree, options = parse(pragma)
-        res = emit_c(tree, options)
-        yield res
-
-
 def parse_file(in_fname, out_fname):
     with open(in_fname) as in_f:
-        with open(out_fname, "w") as out_f:
-            for line in parse_iter(in_f):
-                out_f.write(line)
+        contents = in_f.read()
+    tree, options = parse(contents)
+    res = emit_c(tree, options)
+    with open(out_fname, "w") as out_f:
+        out_f.write(res)
 
 
 if __name__ == "__main__":

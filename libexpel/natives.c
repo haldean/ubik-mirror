@@ -450,13 +450,7 @@ _register_humanize(struct xl_env *env)
         if (err != OK)
                 return err;
 
-        #pragma buildtree { \
-                { { w:BASE_TYPE_WORD, w:0 }, g:wgraph }, \
-                { \
-                        { { w:BASE_TYPE_FLOAT, w:0 }, g:fgraph }, \
-                        w:0 \
-                } \
-        }; root: polyfunc; on error: return err;
+        #include "humanize-poly.h"
 
         err = _native_uri(&uri, "humanize");
         if (err != OK)

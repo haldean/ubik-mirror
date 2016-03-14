@@ -222,10 +222,7 @@ xl_uri_attach_value(struct xl_uri *uri)
         if (err != OK)
                 return err;
 
-        #pragma buildtree { \
-                { w:uri->version, w:uri->scope }, \
-                { t:name, t:source } \
-        }; root: uri->as_value; on_error: return err;
+        #include "uri-value.h"
 
         return OK;
 }

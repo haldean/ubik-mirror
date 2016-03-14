@@ -1,0 +1,4 @@
+{
+        { w:uri->version, w:uri->scope },
+        { t:name, t:source }
+}; root: uri->as_value; on_error: return err;
