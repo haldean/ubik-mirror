@@ -27,7 +27,7 @@ typedef struct
 
 #define assert(x) if (!(x)) return (test_t){.msg = #x, .line = __LINE__}
 #define run(x) { \
-        test_t __unit_res = x(); __n_tests++; \
+        test_t __unit_res = (x)(); __n_tests++; \
         if (__unit_res.msg != NULL) { \
                 printf("fail: %s line %d: %s\n", #x, __unit_res.line, __unit_res.msg); \
                 __n_errs++;\
@@ -38,3 +38,10 @@ typedef struct
                 printf("%d of %d tests succeeded\n", __n_tests - __n_errs, __n_tests); \
         return __n_errs;
 #define ok (test_t){.msg = NULL, .line = __LINE__}
+#define run_single(test) int main() { \
+        xl_error err = xl_start(); \
+        if (err != OK) { \
+                printf("couldn't start expel: %s\n", xl_error_explain(err)); \
+                return 1; \
+        } \
+        init(); run(test); finish(); }
