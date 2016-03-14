@@ -147,8 +147,15 @@ xl_uri_eq(struct xl_uri *u0, struct xl_uri *u1)
                 return false;
         if (strncmp(u0->name, u1->name, u0->name_len) != 0)
                 return false;
-        if (strncmp(u0->source, u1->source, u0->source_len) != 0)
+        if (u0->source == NULL && u1->source != NULL)
                 return false;
+        if (u0->source != NULL && u1->source == NULL)
+                return false;
+        if (u0->source != NULL && u1->source != NULL)
+        {
+                if (strncmp(u0->source, u1->source, u0->source_len) != 0)
+                        return false;
+        }
         return true;
 }
 
