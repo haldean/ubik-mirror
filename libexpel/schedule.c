@@ -317,6 +317,10 @@ xl_schedule_complete(
                         return err;
                 free(e->notify);
         }
+
+        err = xl_release(e->graph);
+        if (err != OK)
+                return err;
         free(e);
         return OK;
 }
@@ -365,6 +369,10 @@ _notify_node(
         if (err != OK)
                 return err;
 
+        err = xl_release(complete->graph);
+        if (err != OK)
+                return err;
+
         waiting->node->flags = XL_DAGC_FLAG_COMPLETE;
         err = xl_schedule_complete(s, waiting);
         if (err != OK)
@@ -393,6 +401,11 @@ _collapse_graph(
         /* Create a child environment to execute the function in. */
         child_env = calloc(1, sizeof(struct xl_env));
         err = xl_env_make_child(child_env, e->env);
+        if (err != OK)
+                return err;
+
+        /* Take a reference here that will be released in _notify_node */
+        err = xl_take(e->node->known.graph);
         if (err != OK)
                 return err;
 
