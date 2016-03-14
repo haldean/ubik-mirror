@@ -43,7 +43,7 @@ AC_TYPE_UINT8_T
 # Checks for library functions.
 AC_FUNC_MALLOC
 AC_FUNC_REALLOC
-AC_CHECK_FUNCS([bzero clock_gettime fmemopen getcwd memmove memset strdup])
+AC_CHECK_FUNCS([backtrace backtrace_symbols_fd bzero clock_gettime fmemopen getcwd memmove memset strdup])
 
 AC_CONFIG_FILES([Makefile include/Makefile expelc/Makefile libexpel/Makefile
                  runexpel/Makefile test/prog/Makefile test/unit/Makefile

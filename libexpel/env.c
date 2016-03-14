@@ -83,10 +83,13 @@ xl_env_free(struct xl_env *env)
                 }
                 free(env->bindings);
         }
+        if (likely(env->watches != NULL))
+                free(env->watches);
 
         env->n = 0;
         env->cap = 0;
         env->bindings = NULL;
+        env->watches = NULL;
         if (env != xl_env_get_root())
                 env->parent = xl_env_get_root();
         return OK;

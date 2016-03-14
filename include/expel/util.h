@@ -24,6 +24,8 @@
 #define likely(x) __builtin_expect((x), 1)
 #define unlikely(x) __builtin_expect((x), 0)
 
+#include "expel/expel.h"
+
 size_t
 size_max(size_t a, size_t b);
 
@@ -37,5 +39,9 @@ htonw(xl_word);
 /* Converts a word from network byte order to host byte order */
 xl_word
 ntohw(xl_word);
+
+/* Prints a stack trace to stderr. */
+void
+xl_trace_print(void);
 
 #endif

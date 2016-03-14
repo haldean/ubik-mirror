@@ -455,6 +455,13 @@ _register_humanize(struct xl_env *env)
         err = _native_uri(&uri, "humanize");
         if (err != OK)
                 return err;
+
+        wgraph->identity = uri;
+        err = xl_take(uri);
+        if (err != OK)
+                return err;
+
+        fgraph->identity = uri;
         err = xl_take(uri);
         if (err != OK)
                 return err;
@@ -469,9 +476,6 @@ _register_humanize(struct xl_env *env)
         if (err != OK)
                 return err;
 
-        err = xl_release(uri);
-        if (err != OK)
-                return err;
         err = xl_release(type);
         if (err != OK)
                 return err;

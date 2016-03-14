@@ -154,6 +154,9 @@ struct xl_dagc
          * should not touch it. */
         xl_tag tag;
 
+        /* The identity of the graph, in URI form. */
+        struct xl_uri *identity;
+
         /* The nodes participating in the graph. */
         struct xl_dagc_node **nodes;
         /* The number of nodes in the graph. */

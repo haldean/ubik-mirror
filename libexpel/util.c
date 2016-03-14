@@ -21,8 +21,11 @@
 #include "expel/util.h"
 
 #include <arpa/inet.h>
+#include <execinfo.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 size_t
 size_max(size_t a, size_t b)
@@ -80,4 +83,15 @@ ntohw(xl_word w)
         return ((uint64_t) ntohl(w >> 32)) |
                ((uint64_t) ntohl((uint32_t) w)) << 32;
 #endif
+}
+
+/* Obtain a backtrace and print it to stdout. */
+void
+xl_trace_print(void)
+{
+        void *array[40];
+        size_t size;
+
+        size = backtrace(array, 40);
+        backtrace_symbols_fd(array, size, STDERR_FILENO);
 }

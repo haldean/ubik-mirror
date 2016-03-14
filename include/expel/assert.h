@@ -20,6 +20,7 @@
 #ifndef XL_RECKLESS
         #include <stdio.h>
         #include <stdlib.h>
+        #include "expel/util.h"
 
         int
         break_on_assert();
@@ -30,6 +31,7 @@
                                 "assertion %s:%d failed: %s\n", \
                                 __FILE__, __LINE__, #x); \
                         break_on_assert(); \
+                        xl_trace_print(); \
                         exit(EXIT_FAILURE); \
                 }} while (0)
 #else

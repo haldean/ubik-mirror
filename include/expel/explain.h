@@ -20,6 +20,9 @@
 #include "expel/expel.h"
 
 char *
+xl_explain_uri(struct xl_uri *uri);
+
+char *
 xl_explain_node(struct xl_dagc_node *n);
 
 /* Converts a constant to its string value. */

@@ -717,6 +717,14 @@ xl_create_modinit(
                 return err;
         (*modinit)->tag |= TAG_GRAPH_UNRESOLVED | TAG_GRAPH_MODINIT;
 
+        (*modinit)->identity = calloc(1, sizeof(struct xl_uri));
+        if (uri_source == NULL)
+                err = xl_uri_user((*modinit)->identity, "__modinit");
+        else
+                err = xl_uri_package((*modinit)->identity, uri_source, "__modinit");
+        if (err != OK)
+                return err;
+
         return OK;
 }
 

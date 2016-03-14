@@ -68,6 +68,8 @@ _op_name(struct xl_env *env)
         err = _native_uri(&uri, DEF_OP_URI);
         if (err != OK)
                 return err;
+
+        ngraph->identity = uri;
         err = xl_take(uri);
         if (err != OK)
                 return err;
@@ -82,9 +84,6 @@ _op_name(struct xl_env *env)
         if (err != OK)
                 return err;
 
-        err = xl_release(uri);
-        if (err != OK)
-                return err;
         err = xl_release(type);
         if (err != OK)
                 return err;
@@ -119,6 +118,8 @@ _op_name(struct xl_env *env)
         err = _native_uri(&uri, DEF_OP_URI);
         if (err != OK)
                 return err;
+
+        ngraph->identity = uri;
         err = xl_take(uri);
         if (err != OK)
                 return err;
@@ -133,9 +134,6 @@ _op_name(struct xl_env *env)
         if (err != OK)
                 return err;
 
-        err = xl_release(uri);
-        if (err != OK)
-                return err;
         err = xl_release(type);
         if (err != OK)
                 return err;

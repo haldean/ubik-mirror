@@ -32,6 +32,7 @@
 #include "expel/assert.h"
 #include "expel/dagc.h"
 #include "expel/expel.h"
+#include "expel/explain.h"
 #include "expel/gc.h"
 #include "expel/pointerset.h"
 #include "expel/uri.h"
@@ -64,21 +65,22 @@ xl_gc_teardown()
         bool present;
         struct xl_dagc *graph;
         xl_error err;
+        char *buf;
 
         fprintf(gc_out, "========================================\ngc stats:\n");
-        fprintf(gc_out, "alloc %d pages, %d freed, %d remaining\n",
+        fprintf(gc_out, "alloc %lu pages, %lu freed, %lu remaining\n",
                         gc_stats->n_page_allocs,
                         gc_stats->n_page_frees,
                         gc_stats->n_page_allocs - gc_stats->n_page_frees);
-        fprintf(gc_out, "alloc %d vals, %d freed, %d remaining\n",
+        fprintf(gc_out, "alloc %lu vals, %lu freed, %lu remaining\n",
                         gc_stats->n_val_allocs,
                         gc_stats->n_val_frees,
                         gc_stats->n_val_allocs - gc_stats->n_val_frees);
-        fprintf(gc_out, "alloc %d graphs, %d freed, %d remaining\n",
+        fprintf(gc_out, "alloc %lu graphs, %lu freed, %lu remaining\n",
                         gc_stats->n_graph_allocs,
                         gc_stats->n_graph_frees,
                         gc_stats->n_graph_allocs - gc_stats->n_graph_frees);
-        fprintf(gc_out, "gc ran %d times\n", gc_stats->n_gc_runs);
+        fprintf(gc_out, "gc ran %lu times\n", gc_stats->n_gc_runs);
 
         printf("========================================\nleaked graphs:\n");
         for (i = 0; i < graph_alloc.n; i++)
@@ -87,8 +89,17 @@ xl_gc_teardown()
                 err = xl_pointer_set_present(&present, &graph_freed, graph);
                 if (err != OK || present)
                         continue;
-                fprintf(gc_out, "%016" PRIxPTR ": %d leaked refs\n",
-                                (uintptr_t) graph, graph->refcount);
+
+                fprintf(gc_out, "%016" PRIxPTR ":\n", (uintptr_t) graph);
+                fprintf(gc_out, "\t%lu leaked refs\n", graph->refcount);
+
+                if (graph->identity == NULL)
+                        buf = NULL;
+                else
+                        buf = xl_explain_uri(graph->identity);
+                fprintf(gc_out, "\tidentity %s\n", buf);
+                if (buf != NULL)
+                        free(buf);
         }
         #endif
         xl_gc_free_all();
@@ -447,6 +458,14 @@ _release_graph(struct xl_dagc *g)
 
         free(g->inputs);
         free(g->terminals);
+
+        if (g->identity != NULL)
+        {
+                err = xl_release(g->identity);
+                if (err != OK)
+                        return err;
+        }
+
         free(g);
 
         #if XL_GC_DEBUG

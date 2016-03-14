@@ -26,12 +26,28 @@
 #include "expel/uri.h"
 
 char *
+xl_explain_uri(struct xl_uri *uri)
+{
+        int aspr_res;
+        char *res;
+        char *scope;
+
+        scope = xl_explain_word(uri->scope);
+        aspr_res = asprintf(&res, "%s://%s/%s", scope, uri->source, uri->name);
+        free(scope);
+        if (aspr_res < 0)
+                res = NULL;
+        return res;
+}
+
+char *
 xl_explain_node(struct xl_dagc_node *node)
 {
         union xl_dagc_any_node *n;
         char *res;
         char *node_type;
         char *id;
+        char *uri;
         int aspr_res;
 
         node_type = xl_explain_word(node->node_type);
@@ -61,17 +77,19 @@ xl_explain_node(struct xl_dagc_node *node)
         }
         else if (node->node_type == DAGC_NODE_LOAD)
         {
+                uri = xl_explain_uri(n->as_load.loc);
                 aspr_res = asprintf(
-                        &res, "%s %s @%hx uri name = %s:%s",
-                        node_type, id, (short)((uintptr_t) n),
-                        n->as_load.loc->source, n->as_load.loc->name);
+                        &res, "%s %s @%hx uri %s",
+                        node_type, id, (short)((uintptr_t) n), uri);
+                free(uri);
         }
         else if (node->node_type == DAGC_NODE_STORE)
         {
+                uri = xl_explain_uri(n->as_store.loc);
                 aspr_res = asprintf(
-                        &res, "%s %s @%hx uri name = %s:%s",
-                        node_type, id, (short)((uintptr_t) n),
-                        n->as_store.loc->source, n->as_store.loc->name);
+                        &res, "%s %s @%hx uri %s",
+                        node_type, id, (short)((uintptr_t) n), uri);
+                free(uri);
         }
         else
         {
