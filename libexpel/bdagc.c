@@ -94,6 +94,8 @@ xl_bdagc_build(
         if (err != OK)
                 return err;
 
+        free(b->nodes);
+
         *outgraph = graph;
         return OK;
 }
