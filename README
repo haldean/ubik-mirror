@@ -24,12 +24,25 @@ to stay.
 There are unit tests and "integration tests"; unit tests are haphazard
 but the integration tests (in the form of pyasm scripts in
 test/pyasm/*.xlpy) are pretty comprehensive. You can run all of the
-tests by running `make test`.
+tests by running `make check`.
 
-Building the shared library is as simple as `make dist/libexpel.so`. To
-make a release build (optimizations turned on, instrumentation turned
-off), pass `type=release` to make, like `make type=release
-dist/libexpel.so`.
+To build and test expel, run the following commands:
+
+        ./configure
+        make check
+
+If the configure script is not present (i.e., you got Expel from git
+instead of from a tarball), you will need to run:
+
+        autoreconf --install
+
+Before you run anything else. When you're done with all that, the
+compiler will be present at expelc/expelc, the interpreter will be at
+expelc/expeli and the runtime will be at runexpel/runexpel. To install
+these to your system path (along with the headers and static library),
+use:
+
+        make install
 
 One last thing: before contributing, please ensure you have installed
 the pre-commit hook in the `res` directory before you commit anything.
@@ -42,6 +55,7 @@ For completeness, building Expel requires:
       versions of GCC and with clang, but they're untested)
     - Bison 3.0 or later
     - Flex 2.6 or later
+    - GNU autoconf 2.69 or later
 
 Expel has no runtime dependencies outside of libc. The rest of this
 document is more interesting, I promise.
