@@ -51,9 +51,12 @@ env()
         assert(xl_uri_user(&u, key) == OK);
         assert(xl_take(&u) == OK);
         assert(u.hash != 0);
+        assert(u.refcount == 1);
 
         assert(xl_env_init(&env) == OK);
         assert(xl_env_set(&env, &u, v, t) == OK);
+        assert(u.refcount == 2);
+
         assert(xl_env_get(&r, &rt, &env, &u) == OK);
         assert(r.tree == v.tree);
         assert(v.tree->refcount == 2);
@@ -80,6 +83,8 @@ env()
         assert(v.tree->refcount == N_TEST_URIS + 1);
         assert(xl_env_free(&env) == OK);
         assert(v.tree->refcount == 1);
+        assert(u.refcount == 1);
+
         return ok;
 }
 
