@@ -68,18 +68,18 @@ xl_gc_teardown()
         char *buf;
 
         fprintf(gc_out, "========================================\ngc stats:\n");
-        fprintf(gc_out, "alloc %lu pages, %lu freed, %lu remaining\n",
+        fprintf(gc_out, "alloc %lu pages, %lu freed, %ld remaining\n",
                         gc_stats->n_page_allocs,
                         gc_stats->n_page_frees,
-                        gc_stats->n_page_allocs - gc_stats->n_page_frees);
-        fprintf(gc_out, "alloc %lu vals, %lu freed, %lu remaining\n",
+                        (int64_t) gc_stats->n_page_allocs - gc_stats->n_page_frees);
+        fprintf(gc_out, "alloc %lu vals, %lu freed, %ld remaining\n",
                         gc_stats->n_val_allocs,
                         gc_stats->n_val_frees,
-                        gc_stats->n_val_allocs - gc_stats->n_val_frees);
-        fprintf(gc_out, "alloc %lu graphs, %lu freed, %lu remaining\n",
+                        (int64_t) gc_stats->n_val_allocs - gc_stats->n_val_frees);
+        fprintf(gc_out, "alloc %lu graphs, %lu freed, %ld remaining\n",
                         gc_stats->n_graph_allocs,
                         gc_stats->n_graph_frees,
-                        gc_stats->n_graph_allocs - gc_stats->n_graph_frees);
+                        (int64_t) gc_stats->n_graph_allocs - gc_stats->n_graph_frees);
         fprintf(gc_out, "gc ran %lu times\n", gc_stats->n_gc_runs);
 
         printf("========================================\nleaked graphs:\n");
@@ -144,7 +144,7 @@ xl_dagc_alloc(
 
         #if XL_GC_DEBUG
                 #if XL_GC_DEBUG_V
-                        fprintf(gc_out, "alloc graph");
+                        fprintf(gc_out, "alloc graph\n");
                         err = xl_pointer_set_add(NULL, &graph_alloc, *graph);
                         if (err != OK)
                                 return err;
