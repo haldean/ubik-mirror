@@ -171,7 +171,10 @@ xl_env_present(
         if (err == OK)
                 *is_present = true;
         else if (err->error_code == ERR_ABSENT)
+        {
+                free(err);
                 *is_present = false;
+        }
         else
                 return err;
         return OK;
