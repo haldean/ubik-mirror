@@ -1,2 +1,3 @@
 *.xlb
-test-runner
+*.trs
+*.log
