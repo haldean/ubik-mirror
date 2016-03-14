@@ -355,6 +355,7 @@ _notify_node(
         err = xl_env_free(complete->env);
         if (err != OK)
                 return err;
+        free(complete->env);
 
         err = xl_release(old);
         if (err != OK)
