@@ -216,16 +216,22 @@ _insert(
 
         /* There was already a value at this key, we need to release our
          * reference on it. */
-        err = OK;
         if (unlikely(binds[i].value.any != NULL))
         {
                 if (!overwrite)
                         return xl_raise(ERR_PRESENT, "env overwrite");
                 err = xl_release(binds[i].value.any);
+                if (err != OK)
+                        return err;
+                err = xl_release(binds[i].uri);
+                if (err != OK)
+                        return err;
+                err = xl_release(binds[i].type);
+                if (err != OK)
+                        return err;
         }
 
-        if (err == OK)
-                binds[i] = *insert;
+        binds[i] = *insert;
         return err;
 }
 
