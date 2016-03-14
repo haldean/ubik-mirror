@@ -1,1 +1,1 @@
-SUBDIRS = include libexpel expelc runexpel test/prog test/unit test/pyasm
+SUBDIRS = include libexpel expelc runexpel test/unit test/pyasm test/prog
