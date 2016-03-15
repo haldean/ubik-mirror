@@ -733,6 +733,9 @@ xl_create_modinit(
                 err = xl_uri_package((*modinit)->identity, uri_source, "__modinit");
         if (err != OK)
                 return err;
+        err = xl_take((*modinit)->identity);
+        if (err != OK)
+                return err;
 
         return OK;
 }
