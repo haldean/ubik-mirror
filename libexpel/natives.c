@@ -33,7 +33,6 @@ no_ignore static xl_error
 _native_uri(struct xl_uri **uri, char *name)
 {
         xl_error err;
-        char *heap_name;
         size_t name_len;
 
         *uri = calloc(1, sizeof(struct xl_uri));
@@ -44,12 +43,7 @@ _native_uri(struct xl_uri **uri, char *name)
         if (unlikely(name_len < 1))
                 return xl_raise(ERR_BAD_VALUE, "native uri must have name");
 
-        /* URI memory management assumes that the name lives on the heap; we
-         * copy these names onto the heap here to minimize the complexity of the
-         * memory manager. */
-        heap_name = strdup(name);
-        xl_assert(heap_name != NULL);
-        err = xl_uri_native(*uri, heap_name);
+        err = xl_uri_native(*uri, name);
         return err;
 }
 
