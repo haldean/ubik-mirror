@@ -433,6 +433,7 @@ _release_graph(struct xl_dagc *g)
 {
         size_t i;
         xl_error err;
+        char *buf;
 
         if (unlikely(g->refcount == 0))
                 return xl_raise(ERR_REFCOUNT_UNDERFLOW, "release");
@@ -464,7 +465,7 @@ _release_graph(struct xl_dagc *g)
                 #if XL_GC_DEBUG_V
                         fprintf(gc_out, "free graph %hx\n",
                                (uint16_t) ((uintptr_t) g));
-                        char *buf = xl_explain_uri(g->identity);
+                        buf = xl_explain_uri(g->identity);
                         fprintf(gc_out, "\t%s\n", buf);
                         free(buf);
                         err = xl_pointer_set_add(NULL, &graph_freed, g);
@@ -490,6 +491,8 @@ _release_graph(struct xl_dagc *g)
 no_ignore static xl_error
 _release_uri(struct xl_uri *u)
 {
+        char *buf;
+
         if (unlikely(u->refcount == 0))
         {
                 #if XL_GC_DEBUG && XL_GC_DEBUG_V
@@ -502,6 +505,12 @@ _release_uri(struct xl_uri *u)
         u->refcount--;
         if (u->refcount)
                 return OK;
+
+        #if XL_GC_DEBUG && XL_GC_DEBUG_V
+        buf = xl_explain_uri(u);
+        fprintf(gc_out, "free uri %s\n", buf);
+        free(buf);
+        #endif
 
         if (u->source != NULL)
                 free(u->source);

@@ -50,6 +50,7 @@ xl_uri_unknown(
         name_buf = strdup(name);
         if (name_buf == NULL)
                 return xl_raise(ERR_NO_MEMORY, "uri name copy");
+
         uri->name = name_buf;
         uri->name_len = strlen(name_buf);
         uri->source = NULL;
@@ -72,6 +73,7 @@ xl_uri_user(
         name_buf = strdup(name);
         if (name_buf == NULL)
                 return xl_raise(ERR_NO_MEMORY, "uri name copy");
+
         uri->name = name_buf;
         uri->name_len = strlen(name_buf);
         uri->source = NULL;
@@ -122,6 +124,7 @@ xl_uri_native(
         name_buf = strdup(name);
         if (name_buf == NULL)
                 return xl_raise(ERR_NO_MEMORY, "uri name copy");
+
         uri->name = name_buf;
         uri->name_len = strlen(name_buf);
         uri->source = NULL;

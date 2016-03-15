@@ -512,6 +512,9 @@ xl_resolve_uri(
         err = xl_uri_user(r, uri->name);
         if (err != OK)
                 return err;
+        err = xl_take(r);
+        if (err != OK)
+                return err;
 
         err = xl_env_present(&is_present, env, r);
         if (err != OK)
@@ -521,10 +524,18 @@ xl_resolve_uri(
                 *resolved = r;
                 return OK;
         }
+        err = xl_release(r);
+        if (err != OK)
+                return err;
+
+        r = calloc(1, sizeof(struct xl_uri));
 
         err = xl_uri_native(r, uri->name);
         if (err != OK)
                 return err;
+        err = xl_take(r);
+        if (err != OK)
+                return err;
 
         err = xl_env_present(&is_present, env, r);
         if (err != OK)
@@ -534,6 +545,9 @@ xl_resolve_uri(
                 *resolved = r;
                 return OK;
         }
+        err = xl_release(r);
+        if (err != OK)
+                return err;
 
         return xl_raise(ERR_ABSENT, "couldn't resolve uri");
 }
@@ -587,10 +601,8 @@ xl_resolve_uris(
                 if (err != OK)
                         return err;
 
+                /* The URI comes back from xl_resolve_uri with a reference */
                 load->loc = new_uri;
-                err = xl_take(load->loc);
-                if (err != OK)
-                        return err;
         }
 
         return OK;
