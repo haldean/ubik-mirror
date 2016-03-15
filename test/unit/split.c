@@ -17,7 +17,9 @@
  * 51 franklin street, fifth floor, boston, ma 02110-1301 usa.
  */
 
+#include <stdlib.h>
 #include <string.h>
+
 #include "expel/string.h"
 #include "unit.h"
 
@@ -28,6 +30,7 @@ split()
         size_t out_size;
         char *in;
         size_t in_size;
+        size_t i;
 
         in = "hello:world::this is your: new thing\n:   okay?";
         in_size = strlen(in);
@@ -39,6 +42,10 @@ split()
         assert(strcmp(out[3], "this is your") == 0);
         assert(strcmp(out[4], " new thing\n") == 0);
         assert(strcmp(out[5], "   okay?") == 0);
+
+        for (i = 0; i < out_size; i++)
+                free(out[i]);
+        free(out);
 
         return ok;
 }
