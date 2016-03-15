@@ -58,6 +58,7 @@ main(int argc, char *argv[])
 
         ast = NULL;
         graphs = NULL;
+        s = NULL;
 
         c(xl_start());
 
@@ -88,6 +89,19 @@ teardown:
                         free(buf);
                         free(teardown_err);
                 }
+        }
+
+        if (s != NULL)
+        {
+                teardown_err = xl_schedule_free(s);
+                if (teardown_err != OK)
+                {
+                        buf = xl_error_explain(teardown_err);
+                        printf("error when freeing scheduler: %s\n", buf);
+                        free(buf);
+                        free(teardown_err);
+                }
+                free(s);
         }
 
         if (graphs != NULL)
