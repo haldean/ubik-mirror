@@ -17,6 +17,8 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include <stdlib.h>
+
 #include "expel/expel.h"
 #include "expel/uri.h"
 #include "unit.h"
@@ -44,12 +46,23 @@ uri()
 
         assert(xl_uri_from_value(&u, user.as_value) == OK);
         assert(xl_uri_eq(&u, &user));
+        free(u.name);
 
         assert(xl_uri_from_value(&u, native.as_value) == OK);
         assert(xl_uri_eq(&u, &native));
+        free(u.name);
 
         assert(xl_uri_from_value(&u, unknown.as_value) == OK);
         assert(xl_uri_eq(&u, &unknown));
+        free(u.name);
+
+        assert(xl_release(user.as_value) == OK);
+        assert(xl_release(native.as_value) == OK);
+        assert(xl_release(unknown.as_value) == OK);
+
+        free(user.name);
+        free(native.name);
+        free(unknown.name);
         return ok;
 }
 
