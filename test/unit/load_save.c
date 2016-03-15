@@ -107,6 +107,10 @@ load_save()
         /* 1.right */
         assert(v->right.t->right.w == u->right.t->right.w);
 
+        xl_stream_close(&s);
+        free(u);
+        free(v);
+
         return ok;
 }
 
