@@ -456,6 +456,7 @@ xl_compile_binding(
         err = xl_take(uri);
         if (err != OK)
                 return err;
+        graphs[n_graphs]->identity = uri;
 
         /* TODO: add binding type here */
         err = xl_value_new(&type);
@@ -476,7 +477,7 @@ xl_compile_binding(
         if (err != OK)
                 return err;
 
-        err = xl_release(uri);
+        err = xl_release(graphs[n_graphs]);
         if (err != OK)
                 return err;
 
@@ -551,8 +552,6 @@ xl_resolve_uris(
         struct xl_uri *new_uri;
         xl_tag t;
 
-        unused(uri_source);
-
         /* Mark the graph resolved here, so that self-references do not cause us
          * to go into an infinite loop. */
         graph->tag &= ~TAG_GRAPH_UNRESOLVED;
@@ -578,11 +577,20 @@ xl_resolve_uris(
                 if (graph->nodes[i]->node_type != DAGC_NODE_LOAD)
                         continue;
                 load = (struct xl_dagc_load *) graph->nodes[i];
+
                 new_uri = NULL;
                 err = xl_resolve_uri(&new_uri, load->loc, local_env, requires);
                 if (err != OK)
                         return err;
+
+                err = xl_release(load->loc);
+                if (err != OK)
+                        return err;
+
                 load->loc = new_uri;
+                err = xl_take(load->loc);
+                if (err != OK)
+                        return err;
         }
 
         return OK;
@@ -630,16 +638,6 @@ _add_modinit_setter(
                         return err;
         }
 
-        err = xl_take(store_uri);
-        if (err != OK)
-                return err;
-        err = xl_take(value.any);
-        if (err != OK)
-                return err;
-        err = xl_take(type);
-        if (err != OK)
-                return err;
-
         const_node = calloc(1, sizeof(struct xl_dagc_const));
         if (const_node == NULL)
                 return xl_raise(ERR_NO_MEMORY, "modinit node alloc");
@@ -648,6 +646,13 @@ _add_modinit_setter(
         const_node->head.id = 0;
         const_node->type = type;
         const_node->value = value;
+
+        err = xl_take(value.any);
+        if (err != OK)
+                return err;
+        err = xl_take(type);
+        if (err != OK)
+                return err;
 
         store_node = calloc(1, sizeof(struct xl_dagc_store));
         if (store_node == NULL)
@@ -658,6 +663,10 @@ _add_modinit_setter(
         store_node->head.is_terminal = true;
         store_node->loc = store_uri;
         store_node->value = &const_node->head;
+
+        err = xl_take(store_uri);
+        if (err != OK)
+                return err;
 
         err = xl_bdagc_push_node(builder, &const_node->head);
         if (err != OK)

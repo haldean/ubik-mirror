@@ -144,7 +144,8 @@ xl_dagc_alloc(
 
         #if XL_GC_DEBUG
                 #if XL_GC_DEBUG_V
-                        fprintf(gc_out, "alloc graph\n");
+                        fprintf(gc_out, "alloc graph %hx\n",
+                               (uint16_t) ((uintptr_t) *graph));
                         err = xl_pointer_set_add(NULL, &graph_alloc, *graph);
                         if (err != OK)
                                 return err;
@@ -459,6 +460,20 @@ _release_graph(struct xl_dagc *g)
         free(g->inputs);
         free(g->terminals);
 
+        #if XL_GC_DEBUG
+                #if XL_GC_DEBUG_V
+                        fprintf(gc_out, "free graph %hx\n",
+                               (uint16_t) ((uintptr_t) g));
+                        char *buf = xl_explain_uri(g->identity);
+                        fprintf(gc_out, "\t%s\n", buf);
+                        free(buf);
+                        err = xl_pointer_set_add(NULL, &graph_freed, g);
+                        if (err != OK)
+                                return err;
+                #endif
+                gc_stats->n_graph_frees++;
+        #endif
+
         if (g->identity != NULL)
         {
                 err = xl_release(g->identity);
@@ -468,16 +483,6 @@ _release_graph(struct xl_dagc *g)
 
         free(g);
 
-        #if XL_GC_DEBUG
-                #if XL_GC_DEBUG_V
-                        fprintf(gc_out, "released graph\n");
-                        err = xl_pointer_set_add(NULL, &graph_freed, g);
-                        if (err != OK)
-                                return err;
-                #endif
-                gc_stats->n_graph_frees++;
-        #endif
-
         return OK;
 }
 
@@ -485,12 +490,20 @@ no_ignore static xl_error
 _release_uri(struct xl_uri *u)
 {
         if (unlikely(u->refcount == 0))
+        {
+                #if XL_GC_DEBUG && XL_GC_DEBUG_V
+                fprintf(gc_out, "ref underflow for uri %hx\n",
+                        (uint16_t) ((uintptr_t) u));
+                #endif
                 return xl_raise(ERR_REFCOUNT_UNDERFLOW, "release");
+        }
 
         u->refcount--;
         if (u->refcount)
                 return OK;
 
+        if (u->source != NULL)
+                free(u->source);
         free(u->name);
         free(u);
         return OK;
