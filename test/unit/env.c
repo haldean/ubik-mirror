@@ -34,6 +34,7 @@ env()
         int i;
         char *key;
         struct xl_uri uris[N_TEST_URIS];
+        xl_error err;
 
         assert(xl_value_new(&v.tree) == OK);
         v.tree->tag = TAG_VALUE | TAG_LEFT_WORD | TAG_RIGHT_WORD;
@@ -52,6 +53,7 @@ env()
         assert(xl_take(&u) == OK);
         assert(u.hash != 0);
         assert(u.refcount == 1);
+        free(key);
 
         assert(xl_env_init(&env) == OK);
         assert(xl_env_set(&env, &u, v, t) == OK);
@@ -61,7 +63,10 @@ env()
         assert(r.tree == v.tree);
         assert(v.tree->refcount == 2);
 
-        assert(xl_env_set(&env, &u, v, t)->error_code == ERR_PRESENT);
+        err = xl_env_set(&env, &u, v, t);
+        assert(err->error_code == ERR_PRESENT);
+        free(err);
+
         assert(v.tree->refcount == 2);
 
         assert(xl_env_overwrite(&env, &u, v, t) == OK);
@@ -73,6 +78,7 @@ env()
                 snprintf(key, 64, "test_var_%d", i);
                 assert(xl_uri_user(&uris[i], key) == OK);
                 assert(xl_take(&uris[i]) == OK);
+                free(key);
         }
 
         for (i = 0; i < N_TEST_URIS; i++)
@@ -84,6 +90,10 @@ env()
         assert(xl_env_free(&env) == OK);
         assert(v.tree->refcount == 1);
         assert(u.refcount == 1);
+
+        for (i = 0; i < N_TEST_URIS; i++)
+                free(uris[i].name);
+        free(u.name);
 
         return ok;
 }
