@@ -232,7 +232,7 @@ _insert(
         }
 
         binds[i] = *insert;
-        return err;
+        return OK;
 }
 
 /* Resizes and rebalances an environment, scaling the capacity by
