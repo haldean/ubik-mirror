@@ -1,0 +1,4 @@
+20160315
+finally fixed the leak with native URIs, expeli works with leak sanitizer on now
+made all the unit tests work with leak sanitizer on
+
