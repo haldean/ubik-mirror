@@ -583,5 +583,12 @@ xl_dagc_copy(
         qsort(result->adjacency, result->n,
               sizeof(struct xl_dagc_adjacency), _cmp_adjacency);
 
+        if (result->identity != NULL)
+        {
+                err = xl_take(result->identity);
+                if (err != OK)
+                        return err;
+        }
+
         return OK;
 }
