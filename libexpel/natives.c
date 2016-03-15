@@ -250,6 +250,7 @@ _native_emit(struct xl_env *env, struct xl_dagc *graph)
         if (err != OK)
                 return err;
         printf("%s", str);
+        free(str);
 
         graph->result->known.tree = graph->nodes[0]->known.tree;
         graph->result->known_type = graph->nodes[0]->known_type;
