@@ -45,6 +45,7 @@ buffer()
         n = xl_stream_read(c, &s, 5);
         assert(n == 0);
 
+        xl_stream_close(&s);
         return ok;
 }
 

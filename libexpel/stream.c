@@ -110,21 +110,27 @@ xl_stream_drop(struct xl_stream *src, size_t len)
 
 /* Allocate enough space in the provided buffer to fit the requested length in
  * after the write pointer. */
-static void
+static xl_error
 _buf_realloc(struct _xl_buf *buf, size_t req_len)
 {
         size_t n;
         uint8_t *old_start;
+        uint8_t *new_start;
 
         old_start = buf->start;
 
         n = buf->end - buf->start;
         n = size_max(n * n, n + req_len);
 
-        buf->start = realloc(buf->start, n);
+        new_start = realloc(buf->start, n);
+        if (new_start == NULL)
+                return xl_raise(ERR_NO_MEMORY, "buffer stream realloc");
+        buf->start = new_start;
         buf->read = buf->start + (buf->read - old_start);
         buf->write = buf->start + (buf->write - old_start);
         buf->end = buf->start + n;
+
+        return OK;
 }
 
 /* Attempts to write the specified number of bytes to the stream, returning the
@@ -133,6 +139,7 @@ size_t
 xl_stream_write(struct xl_stream *dst, void *src, size_t len)
 {
         size_t written;
+        xl_error err;
 
         switch (dst->stream_type)
         {
@@ -145,8 +152,11 @@ xl_stream_write(struct xl_stream *dst, void *src, size_t len)
 #endif
                 return written;
         case STREAM_TYPE_BUFFER:
+                err = OK;
                 if (len + dst->buffer->write >= dst->buffer->end)
-                        _buf_realloc(dst->buffer, len);
+                        err = _buf_realloc(dst->buffer, len);
+                if (err != OK)
+                        return 0;
                 memcpy(dst->buffer->write, src, len);
                 dst->buffer->write += len;
                 return len;
@@ -166,6 +176,8 @@ xl_stream_close(struct xl_stream *sp)
                         fclose(sp->file);
                 return;
         case STREAM_TYPE_BUFFER:
+                free(sp->buffer->start);
+                free(sp->buffer);
                 return;
         }
 }
