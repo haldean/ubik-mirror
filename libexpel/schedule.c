@@ -172,6 +172,7 @@ _eval_native_dagc(
         err = notify->notify(notify->arg, s, &unit);
         if (err != OK)
                 return err;
+        free(notify);
 
         return OK;
 }
