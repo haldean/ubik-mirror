@@ -481,6 +481,7 @@ _release_graph(struct xl_dagc *g)
                         return err;
         }
 
+        bzero(g, sizeof(*g));
         free(g);
 
         return OK;
@@ -505,6 +506,8 @@ _release_uri(struct xl_uri *u)
         if (u->source != NULL)
                 free(u->source);
         free(u->name);
+
+        bzero(u, sizeof(*u));
         free(u);
         return OK;
 }
