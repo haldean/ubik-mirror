@@ -67,3 +67,7 @@ xl_pointer_set_present(bool *present, struct xl_pointer_set *, void *item);
  * set, raises ERR_ABSENT. */
 no_ignore xl_error
 xl_pointer_set_find(size_t *index, struct xl_pointer_set *, void *item);
+
+/* Frees all memory associated with a pointer set. */
+no_ignore xl_error
+xl_pointer_set_free(struct xl_pointer_set *);

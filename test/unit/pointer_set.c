@@ -17,6 +17,8 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include <stdlib.h>
+
 #include "expel/expel.h"
 #include "expel/pointerset.h"
 #include "unit.h"
@@ -44,6 +46,7 @@ pointer_set()
         index = 17;
         err = xl_pointer_set_find(&index, &s, t0);
         assert(err != NULL && err->error_code == ERR_ABSENT);
+        free(err);
         assert(index == 17);
 
         assert(xl_pointer_set_add(&added, &s, t0) == OK);
@@ -58,6 +61,7 @@ pointer_set()
         assert(!present);
         err = xl_pointer_set_find(&index, &s, t1);
         assert(err != NULL && err->error_code == ERR_ABSENT);
+        free(err);
 
         assert(s.elems[0] == t0);
 
@@ -92,6 +96,8 @@ pointer_set()
         assert(s.elems[2] == t1);
         assert(s.elems[3] == t0);
         assert(s.elems[4] == t3);
+
+        assert(xl_pointer_set_free(&s) == 0);
 
         return ok;
 }

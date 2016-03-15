@@ -163,3 +163,11 @@ xl_pointer_set_find(size_t *ret_index, struct xl_pointer_set *set, void *item)
         *ret_index = index;
         return OK;
 }
+
+no_ignore xl_error
+xl_pointer_set_free(struct xl_pointer_set *set)
+{
+        free(set->elems);
+        bzero(set, sizeof(*set));
+        return OK;
+}
