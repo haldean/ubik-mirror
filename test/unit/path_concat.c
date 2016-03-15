@@ -17,7 +17,9 @@
  * 51 franklin street, fifth floor, boston, ma 02110-1301 usa.
  */
 
+#include <stdlib.h>
 #include <string.h>
+
 #include "expel/string.h"
 #include "unit.h"
 
@@ -28,15 +30,19 @@ path_concat()
 
         assert(xl_string_path_concat(&out, "/", "test_file") == OK);
         assert(strcmp(out, "/test_file") == 0);
+        free(out);
 
         assert(xl_string_path_concat(&out, "/hello/", "/test_file") == OK);
         assert(strcmp(out, "/hello/test_file") == 0);
+        free(out);
 
         assert(xl_string_path_concat(&out, "", "test_file") == OK);
         assert(strcmp(out, "test_file") == 0);
+        free(out);
 
         assert(xl_string_path_concat(&out, "./one/two/three", "four") == OK);
         assert(strcmp(out, "./one/two/three/four") == 0);
+        free(out);
 
         return ok;
 }
