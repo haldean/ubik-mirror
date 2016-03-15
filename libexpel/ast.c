@@ -72,6 +72,8 @@ _free_arg_list(struct xl_ast_arg_list *arg_list)
                 next = arg_list->next;
                 if (arg_list->name != NULL)
                         free(arg_list->name);
+                if (arg_list->gen != NULL)
+                        free(arg_list->gen);
                 free(arg_list);
                 arg_list = next;
         }
@@ -122,6 +124,9 @@ _free_expr(struct xl_ast_expr *expr)
 
         if (err != OK)
                 return err;
+
+        if (expr->gen != NULL)
+                free(expr->gen);
         free(expr);
         return OK;
 }
