@@ -80,4 +80,12 @@ gc()
         return ok;
 }
 
-run_single(gc)
+/* this has its own main function (instead of run_single) because we don't want
+ * to start up the interpreter. */
+int
+main()
+{
+        init();
+        run(gc);
+        finish();
+}

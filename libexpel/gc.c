@@ -136,7 +136,10 @@ xl_dagc_alloc(
 {
         size_t i;
         union xl_dagc_any_node *node_memory;
+
+        #if XL_GC_DEBUG && XL_GC_DEBUG_V
         xl_error err;
+        #endif
 
         *graph = calloc(1, size);
         if (*graph == NULL)
@@ -433,7 +436,10 @@ _release_graph(struct xl_dagc *g)
 {
         size_t i;
         xl_error err;
+
+        #if XL_GC_DEBUG && XL_GC_DEBUG_V
         char *buf;
+        #endif
 
         if (unlikely(g->refcount == 0))
                 return xl_raise(ERR_REFCOUNT_UNDERFLOW, "release");
@@ -491,7 +497,9 @@ _release_graph(struct xl_dagc *g)
 no_ignore static xl_error
 _release_uri(struct xl_uri *u)
 {
+        #if XL_GC_DEBUG && XL_GC_DEBUG_V
         char *buf;
+        #endif
 
         if (unlikely(u->refcount == 0))
         {
