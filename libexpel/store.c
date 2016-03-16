@@ -523,6 +523,10 @@ _store_graph(
                         return err;
         }
 
+        err = xl_pointer_set_free(&nodes);
+        if (err != OK)
+                return err;
+
         return OK;
 }
 
@@ -569,6 +573,13 @@ xl_save(struct xl_stream *sp, struct xl_dagc **in_graphs, size_t n_in_graphs)
                 if (err != OK)
                         return err;
         }
+
+        err = xl_pointer_set_free(&graphs);
+        if (err != OK)
+                return err;
+        err = xl_pointer_set_free(&values);
+        if (err != OK)
+                return err;
 
         return OK;
 }
