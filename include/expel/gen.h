@@ -35,6 +35,10 @@ enum xl_load_reason
         LOAD_BLOCK
 };
 
+/* Frees a requirement list. */
+no_ignore xl_error
+xl_gen_requires_free(struct xl_gen_requires *);
+
 /* Compiles a single compilation unit down to a series of graphs.
  *
  * The graphs and n_graphs parameters are filled in with the result of

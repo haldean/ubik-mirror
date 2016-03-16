@@ -223,6 +223,23 @@ _free_type(struct xl_ast_type *type)
         return OK;
 }
 
+no_ignore static xl_error
+_free_import_list(struct xl_ast_import_list *import_list)
+{
+        struct xl_ast_import_list *to_free;
+
+        while (import_list != NULL)
+        {
+                to_free = import_list;
+                import_list = to_free->next;
+
+                free(to_free->name);
+                free(to_free);
+        }
+
+        return OK;
+}
+
 no_ignore xl_error
 xl_ast_free(struct xl_ast *ast)
 {
@@ -248,6 +265,13 @@ xl_ast_free(struct xl_ast *ast)
         if (ast->immediate != NULL)
         {
                 err = _free_expr(ast->immediate);
+                if (err != OK)
+                        return err;
+        }
+
+        if (ast->imports != NULL)
+        {
+                err = _free_import_list(ast->imports);
                 if (err != OK)
                         return err;
         }

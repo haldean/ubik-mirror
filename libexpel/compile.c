@@ -213,6 +213,7 @@ xl_compile_ast(
         struct xl_compilation_env *cenv)
 {
         struct xl_gen_requires *requires;
+        struct xl_gen_requires *head;
         xl_error err;
 
         requires = NULL;
@@ -221,17 +222,20 @@ xl_compile_ast(
         if (err != OK)
                 return err;
 
-        if (requires != NULL)
+        head = requires;
+        while (requires != NULL)
         {
-                while (requires != NULL)
-                {
-                        err = _add_requirement(
-                                graphs, n_graphs, requires,
-                                requires->dependency, cenv);
-                        if (err != OK)
-                                return err;
-                        requires = requires->next;
-                }
+                err = _add_requirement(
+                        graphs, n_graphs, requires,
+                        requires->dependency, cenv);
+                if (err != OK)
+                        return err;
+                requires = requires->next;
         }
+
+        err = xl_gen_requires_free(head);
+        if (err != OK)
+                return err;
+
         return OK;
 }

@@ -94,7 +94,7 @@ prog:
         { *ast = $1; }
 | blocks immediate
         { *ast = $1;
-          wrap_err(xl_ast_set_immediate($$, $2)); }
+          wrap_err(xl_ast_set_immediate($1, $2)); }
 ;
 
 blocks:

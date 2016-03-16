@@ -484,6 +484,9 @@ xl_compile_binding(
         return OK;
 }
 
+/* Returns a fully-resolved URI, adding it to the requires list if necessary.
+ * The returned URI has one reference allocated for the caller, and one
+ * reference allocated for the requires list if appropriate. */
 no_ignore static xl_error
 xl_resolve_uri(
         struct xl_uri **resolved,
@@ -502,6 +505,12 @@ xl_resolve_uri(
                 new_req->dependency = uri;
                 new_req->next = *requires;
 
+                /* one ref for the *resolved pointer... */
+                err = xl_take(uri);
+                if (err != OK)
+                        return err;
+
+                /* ...and one for the *requires pointer */
                 err = xl_take(uri);
                 if (err != OK)
                         return err;
@@ -825,6 +834,26 @@ xl_compile_unit(
         err = xl_env_free(&local_env);
         if (err != OK)
                 return err;
+
+        return OK;
+}
+
+no_ignore xl_error
+xl_gen_requires_free(struct xl_gen_requires *req)
+{
+        struct xl_gen_requires *to_free;
+        xl_error err;
+
+        while (req != NULL)
+        {
+                to_free = req;
+                req = to_free->next;
+
+                err = xl_release(to_free->dependency);
+                if (err != OK)
+                        return err;
+                free(to_free);
+        }
 
         return OK;
 }
