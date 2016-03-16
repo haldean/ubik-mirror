@@ -482,6 +482,8 @@ xl_ast_atom_new_qualified(
                 return xl_raise(ERR_NO_MEMORY, "qualified alloc");
         memcpy((*atom)->qualified.tail, &name[head_len + 1], tail_len);
 
+        free(name);
+
         return OK;
 }
 
