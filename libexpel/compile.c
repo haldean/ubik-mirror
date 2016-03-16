@@ -30,7 +30,7 @@
 
 
 no_ignore xl_error
-xl_compile_default_env(struct xl_compilation_env *cenv)
+xl_compile_env_default(struct xl_compilation_env *cenv)
 {
         char *scratch_dir;
         char *include_dirs;
@@ -62,6 +62,20 @@ xl_compile_default_env(struct xl_compilation_env *cenv)
                 if (err != OK)
                         return err;
         }
+
+        return OK;
+}
+
+no_ignore xl_error
+xl_compile_env_free(struct xl_compilation_env *cenv)
+{
+        size_t i;
+
+        free(cenv->scratch_dir);
+
+        for (i = 0; i < cenv->n_include_dirs; i++)
+                free(cenv->include_dirs[i]);
+        free(cenv->include_dirs);
 
         return OK;
 }

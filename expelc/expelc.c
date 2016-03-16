@@ -75,13 +75,16 @@ main(int argc, char *argv[])
                 return EXIT_FAILURE;
         }
 
-        c(xl_compile_default_env(&env));
+        c(xl_compile_env_default(&env));
         c(xl_compile(&graphs, &n_graphs, &in, &env));
+        c(xl_compile_env_free(&env));
         c(xl_save(&out, graphs, n_graphs));
 
 teardown:
         xl_stream_close(&in);
         xl_stream_close(&out);
+
+        free(graphs);
 
         if (xl_teardown() != OK)
                 printf("error when tearing down runtime\n");

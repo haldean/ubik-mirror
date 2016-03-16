@@ -31,7 +31,10 @@ struct xl_compilation_env
 };
 
 no_ignore xl_error
-xl_compile_default_env(struct xl_compilation_env *cenv);
+xl_compile_env_default(struct xl_compilation_env *cenv);
+
+no_ignore xl_error
+xl_compile_env_free(struct xl_compilation_env *cenv);
 
 no_ignore xl_error
 xl_compile(
