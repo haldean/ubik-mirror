@@ -1,4 +1,10 @@
 20160315
+
+08:45
 finally fixed the leak with native URIs, expeli works with leak sanitizer on now
 made all the unit tests work with leak sanitizer on
 
+23:10
+Debian stopped working, so got an arch vm running and everything installed,
+newer gcc means better asan and more errors. A few of the unit tests didn't
+work; those are fixed now. Working on leaks found by the pyasm tests now.
