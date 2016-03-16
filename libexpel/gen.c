@@ -501,6 +501,11 @@ xl_resolve_uri(
                 new_req = calloc(1, sizeof(struct xl_gen_requires));
                 new_req->dependency = uri;
                 new_req->next = *requires;
+
+                err = xl_take(uri);
+                if (err != OK)
+                        return err;
+
                 *requires = new_req;
                 *resolved = uri;
                 return OK;
