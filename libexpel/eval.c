@@ -180,6 +180,7 @@ _eval_load(struct xl_env *env, struct xl_dagc_load *node)
 
                 if (err->error_code == ERR_ABSENT)
                 {
+                        free(err);
                         node->head.flags |= XL_DAGC_FLAG_WAIT_DATA;
                         err = xl_env_watch(
                                 _mark_load_complete, env, node->loc, node);
