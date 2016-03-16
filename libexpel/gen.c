@@ -612,6 +612,9 @@ struct modinit_iterator
 {
         struct xl_graph_builder *builder;
         char *uri_source;
+
+        struct xl_dagc_node **free_nodes;
+        size_t next_node;
 };
 
 no_ignore static xl_error
@@ -687,6 +690,9 @@ _add_modinit_setter(
         if (err != OK)
                 return err;
 
+        iter->free_nodes[iter->next_node++] = &const_node->head;
+        iter->free_nodes[iter->next_node++] = &store_node->head;
+
         return OK;
 }
 
@@ -701,6 +707,7 @@ xl_create_modinit(
         struct modinit_iterator iter;
         struct xl_graph_builder builder;
         xl_error err;
+        size_t i;
 
         err = xl_bdagc_init(&builder);
         if (err != OK)
@@ -708,6 +715,10 @@ xl_create_modinit(
 
         iter.builder = &builder;
         iter.uri_source = uri_source;
+        iter.free_nodes = calloc(
+                2 * local_env->n, sizeof(struct xl_dagc_node *));
+        iter.next_node = 0;
+
         err = xl_env_iterate(_add_modinit_setter, local_env, &iter);
         if (err != OK)
                 return err;
@@ -736,8 +747,8 @@ xl_create_modinit(
         err = xl_bdagc_build(modinit, &builder);
         if (err != OK)
                 return err;
-        (*modinit)->tag |= TAG_GRAPH_UNRESOLVED | TAG_GRAPH_MODINIT;
 
+        (*modinit)->tag |= TAG_GRAPH_UNRESOLVED | TAG_GRAPH_MODINIT;
         (*modinit)->identity = calloc(1, sizeof(struct xl_uri));
         if (uri_source == NULL)
                 err = xl_uri_user((*modinit)->identity, "__modinit");
@@ -748,6 +759,10 @@ xl_create_modinit(
         err = xl_take((*modinit)->identity);
         if (err != OK)
                 return err;
+
+        for (i = 0; i < iter.next_node; i++)
+                free(iter.free_nodes[i]);
+        free(iter.free_nodes);
 
         return OK;
 }
