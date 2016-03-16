@@ -41,10 +41,8 @@
 static struct xl_alloc_page *page_tail;
 static struct xl_gc_info *gc_stats;
 
-#if XL_GC_DEBUG_V
 static struct xl_pointer_set graph_alloc = {0};
 static struct xl_pointer_set graph_freed = {0};
-#endif
 
 void
 xl_gc_start()
@@ -60,11 +58,12 @@ xl_gc_start()
 void
 xl_gc_teardown()
 {
+        xl_error err;
+
         #if XL_GC_DEBUG && XL_GC_DEBUG_V
         size_t i;
         bool present;
         struct xl_dagc *graph;
-        xl_error err;
         char *buf;
 
         fprintf(gc_out, "========================================\ngc stats:\n");
@@ -102,6 +101,11 @@ xl_gc_teardown()
                         free(buf);
         }
         #endif
+        err = xl_pointer_set_free(&graph_alloc);
+        unused(err);
+        err = xl_pointer_set_free(&graph_freed);
+        unused(err);
+
         xl_gc_free_all();
         free(gc_stats);
         gc_stats = NULL;
