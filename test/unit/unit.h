@@ -38,6 +38,7 @@ typedef struct
                 printf("%d of %d tests succeeded\n", __n_tests - __n_errs, __n_tests); \
         return __n_errs;
 #define ok (test_t){.msg = NULL, .line = __LINE__}
+
 #define run_single(test) int main() { \
         xl_error err = xl_start(); \
         if (err != OK) { \

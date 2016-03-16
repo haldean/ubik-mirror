@@ -58,6 +58,7 @@ test_file(char *fname, bool debug, bool timing)
         err = OK;
         n_graphs = 0;
         graphs = NULL;
+        s = NULL;
 
         if (timing)
         {
@@ -171,6 +172,19 @@ test_file(char *fname, bool debug, bool timing)
 teardown:
         if (timing)
                 free(timer);
+
+        if (s != NULL)
+        {
+                teardown_err = xl_schedule_free(s);
+                if (teardown_err != OK)
+                {
+                        char *explain = xl_error_explain(teardown_err);
+                        printf("scheduler free failed: %s\n", explain);
+                        free(explain);
+                        free(teardown_err);
+                }
+                free(s);
+        }
 
         if (graphs != NULL)
         {
