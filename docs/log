@@ -7,4 +7,5 @@ made all the unit tests work with leak sanitizer on
 23:10
 Debian stopped working, so got an arch vm running and everything installed,
 newer gcc means better asan and more errors. A few of the unit tests didn't
-work; those are fixed now. Working on leaks found by the pyasm tests now.
+work; those are fixed now, as are all of the pyasm tests. fib.xl compiles will
+almost zero memory errors.
