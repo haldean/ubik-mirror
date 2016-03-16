@@ -64,6 +64,7 @@ xl_env_free(struct xl_env *env)
 {
         xl_error err;
         size_t i;
+        struct xl_env_watch_list *to_free;
 
         if (likely(env->bindings != NULL))
         {
@@ -83,12 +84,22 @@ xl_env_free(struct xl_env *env)
                 }
                 free(env->bindings);
         }
-        if (likely(env->watches != NULL))
-                free(env->watches);
+        while (env->watches != NULL)
+        {
+                to_free = env->watches;
+                env->watches = to_free->prev;
+
+                if (to_free->watch->refcount > 1)
+                        to_free->watch->refcount--;
+                else
+                        free(to_free->watch);
+                free(to_free);
+        }
 
         env->n = 0;
         env->cap = 0;
         env->bindings = NULL;
+
         env->watches = NULL;
         if (env != xl_env_get_root())
                 env->parent = xl_env_get_root();
@@ -376,6 +387,8 @@ _set(
                 watch = watch->prev;
 
                 if (to_free != NULL && to_free->watch->refcount == 0)
+                        free(to_free->watch);
+                if (to_free != NULL)
                         free(to_free);
         }
 
