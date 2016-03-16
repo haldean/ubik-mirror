@@ -29,3 +29,13 @@ Got ctags working (it was really easy).
 
 Fixed the use-after-free, just one leak left on import.xl... and it's fixed!
 "make check" finally passes with the memory sanitizer on. Thank fuck.
+
+.
+
+20160317
+
+@ 19:00
+
+Discovered that the debugging utilities I added to the GC module are actually
+retaining pointers to things that should be identified as leaked. The leak hunt
+is not over.
