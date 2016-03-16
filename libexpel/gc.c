@@ -471,9 +471,16 @@ _release_graph(struct xl_dagc *g)
                 #if XL_GC_DEBUG_V
                         fprintf(gc_out, "free graph %hx\n",
                                (uint16_t) ((uintptr_t) g));
-                        buf = xl_explain_uri(g->identity);
-                        fprintf(gc_out, "\t%s\n", buf);
-                        free(buf);
+                        fprintf(gc_out, "\tarity %lu\n", g->in_arity);
+                        if (g->identity != NULL)
+                        {
+                                buf = xl_explain_uri(g->identity);
+                                fprintf(gc_out, "\tidentity %s (%lu)\n",
+                                                buf, g->identity->refcount);
+                                free(buf);
+                        }
+                        else
+                                fprintf(gc_out, "\tidentity null\n");
                         err = xl_pointer_set_add(NULL, &graph_freed, g);
                         if (err != OK)
                                 return err;
