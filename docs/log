@@ -1,11 +1,31 @@
+.
+
 20160315
 
-08:45
+@ 08:45
 finally fixed the leak with native URIs, expeli works with leak sanitizer on now
 made all the unit tests work with leak sanitizer on
 
-23:10
+@ 23:10
 Debian stopped working, so got an arch vm running and everything installed,
 newer gcc means better asan and more errors. A few of the unit tests didn't
 work; those are fixed now, as are all of the pyasm tests. fib.xl compiles will
 almost zero memory errors.
+
+.
+
+20160316
+
+@ 18:30
+Memory used by compiler is mostly all cleaned up! Unit tests and test progs run
+with no leak errors except for the import test, which is use-after-free-ing. No
+luck yet on figuring out why; for some reason URIs at package scope end up with
+one-too-few references so when the dependency record gets cleaned up the URI is
+freed.
+
+Got ctags working (it was really easy).
+
+@ 23:00
+
+Fixed the use-after-free, just one leak left on import.xl... and it's fixed!
+"make check" finally passes with the memory sanitizer on. Thank fuck.
