@@ -43,6 +43,7 @@ char *read_string_literal(yyscan_t scanner);
 %option yylineno
 %option nounput
 %option bison-bridge
+%option bison-locations
 
 NAME [a-z_][a-zA-Z0-9/_\-']*
 
@@ -159,6 +160,7 @@ xl_tokenize(xl_token_cb callback, struct xl_stream *stream)
         xl_error err;
         int ret;
         YYSTYPE token_info;
+        YYLTYPE loc;
 
         err = OK;
 
@@ -168,7 +170,7 @@ xl_tokenize(xl_token_cb callback, struct xl_stream *stream)
 
         yyset_in(xl_stream_fp(stream), scanner);
 
-        while ((token.token_code = yylex(&token_info, scanner)) > 0)
+        while ((token.token_code = yylex(&token_info, &loc, scanner)) > 0)
         {
                 token.text = yyget_text(scanner);
                 token.text_len = yyget_leng(scanner);

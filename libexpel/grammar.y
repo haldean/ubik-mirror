@@ -27,15 +27,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-void
-yyerror(struct xl_ast **ast, void *scanner, const char *err)
-{
-        unused(scanner);
-        unused(ast);
-        fprintf(stderr, "%s\n", err);
-}
-
 #define wrap_err(x) do { xl_error _err = (x); if (_err != OK) YYABORT; } while (0);
+
+void
+yyerror();
 
 %}
 
@@ -76,6 +71,7 @@ yyerror(struct xl_ast **ast, void *scanner, const char *err)
 %define api.pure full
 %define api.push-pull push
 %define parse.error verbose
+%locations
 
 %parse-param { struct xl_ast **ast }
 %parse-param { void *scanner }
@@ -206,3 +202,14 @@ type_atom:
 ;
 
 %%
+
+void
+yyerror(YYLTYPE *loc, struct xl_ast **ast, void *scanner, const char *err)
+{
+        unused(scanner);
+        unused(ast);
+        fprintf(stderr, "lines %d:%d - %d:%d : %s\n",
+                loc->first_line, loc->first_column,
+                loc->last_line, loc->last_column,
+                err);
+}
