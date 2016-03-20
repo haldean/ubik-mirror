@@ -150,15 +150,16 @@ def pack_tree(t):
     assert(tag & 0x000F)
     return struct.pack(">H", tag) + left + right
 
-def graph(nodes, result_idx):
+def graph(nodes, result_idx, identity=None):
     return dict(
         nodes=nodes,
         result_idx=result_idx,
+        identity=identity,
     )
 
 def encode(graphs, expect=None):
     if len(sys.argv) < 2:
-        print "missing output file"
+        print("missing output file")
         return
 
     valueset = set()
@@ -168,6 +169,8 @@ def encode(graphs, expect=None):
             for v in node.itervalues():
                 if isinstance(v, tuple):
                     valueset.add(v)
+        if graph["identity"]:
+            valueset.add(graph["identity"])
     values = list(valueset)
     val_to_idx = dict((v, i) for v, i in zip(values, range(len(valueset))))
 
@@ -195,6 +198,11 @@ def encode(graphs, expect=None):
             f.write(struct.pack(">Q", result_idx))
             for i, node in enumerate(nodes):
                 node["idx"] = i
+
+            if graph["identity"] is None:
+                f.write(struct.pack(">Q", 0xFFFFFFFFFFFFFFFF))
+            else:
+                f.write(struct.pack(">Q", val_to_idx[graph["identity"]]))
 
             for node in nodes:
                 node_type = node["type"]

@@ -296,6 +296,11 @@ graph:
                0-3   The tag of the graph
               8-15   The number of nodes in the graph
              16-23   The index of the result node in the graph
+             24-31   The value index of the identity URI of the graph
+
+The identity URI represents the meaning of the graph; in most cases this
+will be the URI of whatever the graph is bound to. The result node
+should be set to all-ones if the graph has no identity.
 
 Following the graph header, the specified number of node encodings
 follows. The order of encoding matters; each node is identified by other

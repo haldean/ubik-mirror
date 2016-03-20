@@ -37,9 +37,9 @@ r3  = apply(r2, r0, nid="r3")
 r4  = apply(r3, r1, terminal=True, nid="r4")
 
 encode([
-    graph([r0, r1, r2, r3, r4], -1),
+    graph([r0, r1, r2, r3, r4], -1, identity=uri("calc-big")),
     graph([
         i0, i1, eq, sub, add, q0, q1, q2, q3, q4,
-        q5, q6, q7, q8, q9, q10, q11], -1),
+        q5, q6, q7, q8, q9, q10, q11], -1, identity=uri("mult")),
 ],
 expect=t(50000, 0))

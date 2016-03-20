@@ -492,6 +492,7 @@ _load_graph(
 {
         xl_word n_nodes;
         xl_word result_idx;
+        xl_word identity_idx;
         size_t i;
         xl_error err;
         xl_tag tag;
@@ -512,6 +513,9 @@ _load_graph(
 
         READ_INTO(result_idx, sp);
         result_idx = ntohw(result_idx);
+
+        READ_INTO(identity_idx, sp);
+        identity_idx = ntohw(identity_idx);
 
         /* This binary is too large to be read on this machine. Note that
          * performing this check up front means that we don't have to worry
@@ -557,6 +561,24 @@ _load_graph(
         err = xl_dagc_init(*graph);
         if (err != OK)
                 return err;
+
+        if (identity_idx != 0xFFFFFFFFFFFFFFFF)
+        {
+                if (identity_idx >= n_values)
+                        return xl_raise(
+                                ERR_BAD_HEADER, "identity_idx > n_values");
+                (*graph)->identity = calloc(1, sizeof(struct xl_uri));
+                err = xl_uri_from_value(
+                        (*graph)->identity, values[identity_idx]);
+                if (err != OK)
+                        return err;
+
+                err = xl_take((*graph)->identity);
+                if (err != OK)
+                        return err;
+        }
+        else
+                (*graph)->identity = NULL;
 
         (*graph)->tag = tag;
         return OK;

@@ -140,6 +140,13 @@ _collect(
         if (!added)
                 return OK;
 
+        if (graph->identity != NULL)
+        {
+                err = xl_pointer_set_add(NULL, values, graph->identity);
+                if (err != OK)
+                        return err;
+        }
+
         for (i = 0; i < graph->n; i++)
         {
                 n = (union xl_dagc_any_node *) graph->nodes[i];
@@ -460,6 +467,20 @@ _store_graph(
                 return xl_raise(ERR_ABSENT, "result node not in graph");
         t = htonw(i);
         WRITE_INTO(sp, t);
+
+        if (graph->identity == NULL)
+        {
+                t = 0xFFFFFFFFFFFFFFFF;
+                WRITE_INTO(sp, t);
+        }
+        else
+        {
+                err = xl_pointer_set_find(&t, values, graph->identity);
+                if (err != OK)
+                        return err;
+                t = htonw(t);
+                WRITE_INTO(sp, t);
+        }
 
         /* we write the nodes in pointerset order, not the order in which they
          * are given in the graph, so that we can efficiently look up indices
