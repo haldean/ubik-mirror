@@ -97,7 +97,7 @@ pointer_set()
         assert(s.elems[3] == t0);
         assert(s.elems[4] == t3);
 
-        assert(xl_pointer_set_free(&s) == 0);
+        xl_pointer_set_free(&s);
 
         return ok;
 }
