@@ -441,7 +441,7 @@ _store_graph(
         xl_tag tag;
         union xl_dagc_any_node *n;
         xl_error err;
-        struct xl_pointer_set nodes = {0};
+        __attribute__((cleanup(xl_pointer_set_free))) struct xl_pointer_set nodes = {0};
 
         tag = htons(graph->tag);
         WRITE_INTO(sp, tag);
@@ -544,18 +544,14 @@ _store_graph(
                         return err;
         }
 
-        err = xl_pointer_set_free(&nodes);
-        if (err != OK)
-                return err;
-
         return OK;
 }
 
 no_ignore xl_error
 xl_save(struct xl_stream *sp, struct xl_dagc **in_graphs, size_t n_in_graphs)
 {
-        struct xl_pointer_set graphs = {0};
-        struct xl_pointer_set values = {0};
+        __attribute__((cleanup(xl_pointer_set_free))) struct xl_pointer_set graphs = {0};
+        __attribute__((cleanup(xl_pointer_set_free))) struct xl_pointer_set values = {0};
         uint32_t version;
         size_t i;
         xl_word t;
@@ -594,13 +590,6 @@ xl_save(struct xl_stream *sp, struct xl_dagc **in_graphs, size_t n_in_graphs)
                 if (err != OK)
                         return err;
         }
-
-        err = xl_pointer_set_free(&graphs);
-        if (err != OK)
-                return err;
-        err = xl_pointer_set_free(&values);
-        if (err != OK)
-                return err;
 
         return OK;
 }

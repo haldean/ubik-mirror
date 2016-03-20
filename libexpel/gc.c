@@ -101,10 +101,8 @@ xl_gc_teardown()
                         free(buf);
         }
         #endif
-        err = xl_pointer_set_free(&graph_alloc);
-        unused(err);
-        err = xl_pointer_set_free(&graph_freed);
-        unused(err);
+        xl_pointer_set_free(&graph_alloc);
+        xl_pointer_set_free(&graph_freed);
 
         xl_gc_free_all();
         free(gc_stats);
