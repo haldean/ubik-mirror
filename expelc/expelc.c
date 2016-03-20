@@ -52,7 +52,7 @@ main(int argc, char *argv[])
 {
         struct xl_dagc **graphs;
         struct xl_stream in, out;
-        size_t n_graphs;
+        size_t i, n_graphs;
         xl_error err;
         struct xl_compilation_env env;
 
@@ -83,6 +83,12 @@ main(int argc, char *argv[])
 teardown:
         xl_stream_close(&in);
         xl_stream_close(&out);
+
+        for (i = 0; i < n_graphs; i++)
+        {
+                if (xl_release(graphs[i]) != OK)
+                        printf("error when releasing graph\n");
+        }
 
         free(graphs);
 
