@@ -142,7 +142,11 @@ _collect(
 
         if (graph->identity != NULL)
         {
-                err = xl_pointer_set_add(NULL, values, graph->identity);
+                err = xl_uri_attach_value(graph->identity);
+                if (err != OK)
+                        return err;
+
+                err = xl_pointer_set_add(NULL, values, graph->identity->as_value);
                 if (err != OK)
                         return err;
         }
@@ -475,7 +479,7 @@ _store_graph(
         }
         else
         {
-                err = xl_pointer_set_find(&t, values, graph->identity);
+                err = xl_pointer_set_find(&t, values, graph->identity->as_value);
                 if (err != OK)
                         return err;
                 t = htonw(t);
