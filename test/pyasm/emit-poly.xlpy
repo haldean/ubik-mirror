@@ -8,5 +8,5 @@ apf = apply(func=humanize, arg=f, nid="apply-f", terminal=True)
 apw = apply(func=humanize, arg=w, nid="apply-w", terminal=True)
 
 encode([
-    graph([humanize, f, w, apw, apf], -1),
+    graph([humanize, f, w, apw, apf], -1, identity=uri("call-things")),
 ])
