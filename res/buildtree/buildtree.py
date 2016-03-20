@@ -116,16 +116,16 @@ def type_to_tag_suffix(typ):
     raise ParseError("unknown value type %s" % typ)
 
 
-def emit_c_noindent(tree, options):
+def emit_c(tree, options):
     res = """
 err = xl_value_new(&{root});
 if (err != OK)
         {do_on_err};
-    """.format(root=tree["label"], do_on_err=options["on_error"])
+""".format(root=tree["label"], do_on_err=options["on_error"])
 
     left = tree["left"]
     if isinstance(left, dict):
-        left_res = emit_c_noindent(left, options)
+        left_res = emit_c(left, options)
         left_tag = "TAG_LEFT_NODE";
     else:
         left_type, left_assign = left.split(":", 1)
@@ -136,7 +136,7 @@ if (err != OK)
 
     right = tree["right"]
     if isinstance(right, dict):
-        right_res = emit_c_noindent(right, options)
+        right_res = emit_c(right, options)
         right_tag = "TAG_RIGHT_NODE"
     else:
         right_type, right_assign = right.split(":", 1)
@@ -147,12 +147,6 @@ if (err != OK)
 
     res += "\n{root}->tag = TAG_VALUE | {left_tag} | {right_tag};".format(
         root=tree["label"], left_tag=left_tag, right_tag=right_tag)
-    return res
-
-
-def emit_c(tree, options):
-    res = emit_c_noindent(tree, options)
-    res = "\n".join(map(lambda l: "        %s" % l.rstrip(), res.split("\n")))
     return res
 
 
