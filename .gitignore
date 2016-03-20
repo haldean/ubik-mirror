@@ -8,6 +8,7 @@ build
 *.o
 *.a
 /*.xl
+/*.xlb
 test/afl-out
 a.out
 
