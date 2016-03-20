@@ -477,10 +477,6 @@ xl_compile_binding(
         if (err != OK)
                 return err;
 
-        err = xl_release(graphs[n_graphs]);
-        if (err != OK)
-                return err;
-
         return OK;
 }
 
