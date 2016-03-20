@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "expel/assert.h"
 #include "expel/dagc.h"
 #include "expel/env.h"
 #include "expel/expel.h"
@@ -79,6 +80,8 @@ test_file(char *fname, bool debug, bool timing)
 
         err = xl_load(&graphs, &n_graphs, &stream);
         CHECK_ERR("couldn't load file");
+
+        xl_assert(n_graphs != 0);
 
         if (timing)
         {
