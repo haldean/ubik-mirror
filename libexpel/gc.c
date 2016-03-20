@@ -99,6 +99,8 @@ xl_gc_teardown()
                 fprintf(gc_out, "\tidentity %s\n", buf);
                 if (buf != NULL)
                         free(buf);
+
+                fprintf(gc_out, "\tin arity %lu\n", graph->in_arity);
         }
         #endif
         xl_pointer_set_free(&graph_alloc);
