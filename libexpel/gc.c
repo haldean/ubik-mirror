@@ -58,9 +58,8 @@ xl_gc_start()
 void
 xl_gc_teardown()
 {
-        xl_error err;
-
         #if XL_GC_DEBUG && XL_GC_DEBUG_V
+        xl_error err;
         size_t i;
         bool present;
         struct xl_dagc *graph;

@@ -163,7 +163,8 @@ def encode(graphs, expect=None):
         return
 
     valueset = set()
-    for graph in graphs:
+    modinit_i = 0
+    for i, graph in enumerate(graphs):
         nodes = graph["nodes"]
         for node in nodes:
             for v in node.itervalues():
@@ -171,6 +172,10 @@ def encode(graphs, expect=None):
                     valueset.add(v)
         if graph["identity"]:
             valueset.add(graph["identity"])
+        # if a modinit is specified, we use it. If no graphs request to be
+        # modinits, then we default to the zeroth.
+        if "modinit" in graph and graph["modinit"]:
+            modinit_i = i
     values = list(valueset)
     val_to_idx = dict((v, i) for v, i in zip(values, range(len(valueset))))
 
@@ -183,8 +188,8 @@ def encode(graphs, expect=None):
         for value in values:
             f.write(pack_tree(value))
 
-        for graph in graphs:
-            if "modinit" in graph and graph["modinit"]:
+        for i, graph in enumerate(graphs):
+            if i == modinit_i:
                 f.write(struct.pack(">H", 0x2004))
             else:
                 f.write(struct.pack(">H", 0x2000))

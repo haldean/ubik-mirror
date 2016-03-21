@@ -127,11 +127,7 @@ test_file(char *fname, bool debug, bool timing)
                         pushed_modinit = true;
                 }
         }
-        if (!pushed_modinit)
-        {
-                err = xl_schedule_push(s, graphs[modinit_i], &env, NULL);
-                CHECK_ERR("couldn't push graph into scheduler");
-        }
+        xl_assert(pushed_modinit);
 
         err = xl_schedule_run(s);
         CHECK_ERR("couldn't run scheduler");

@@ -39,3 +39,18 @@ Fixed the use-after-free, just one leak left on import.xl... and it's fixed!
 Discovered that the debugging utilities I added to the GC module are actually
 retaining pointers to things that should be identified as leaked. The leak hunt
 is not over.
+
+.
+
+20160320
+
+@ 17:45
+
+Spent a while working on memory problems. Discovered that failures in the pyasm
+checks had been masking failures in the test/prog checks. Fixed the test/prog
+checks, but still stumped on the pyasm memory leaks.
+
+Added please-leak.xlpy, which exercises the leak in the pyasm-generated graphs.
+Interestingly, the leak only occurs in this specific graph when the terminal
+node appears twice. More generally, it looks like the leaked graph is always the
+graph corresponding to the function that is called by the modinit.
