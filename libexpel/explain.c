@@ -22,26 +22,12 @@
 #include <stdlib.h>
 
 #include "expel/dagc.h"
-#include "expel/explain.h"
+#include "expel/expel.h"
 #include "expel/uri.h"
+#include "expel/util.h"
 
 char *
-xl_explain_uri(struct xl_uri *uri)
-{
-        int aspr_res;
-        char *res;
-        char *scope;
-
-        scope = xl_explain_word(uri->scope);
-        aspr_res = asprintf(&res, "%s://%s/%s", scope, uri->source, uri->name);
-        free(scope);
-        if (aspr_res < 0)
-                res = NULL;
-        return res;
-}
-
-char *
-xl_explain_node(struct xl_dagc_node *node)
+xl_node_explain(struct xl_dagc_node *node)
 {
         union xl_dagc_any_node *n;
         char *res;
@@ -50,8 +36,8 @@ xl_explain_node(struct xl_dagc_node *node)
         char *uri;
         int aspr_res;
 
-        node_type = xl_explain_word(node->node_type);
-        id = xl_explain_word(node->id);
+        node_type = xl_word_explain(node->node_type);
+        id = xl_word_explain(node->id);
 
         n = (union xl_dagc_any_node *) node;
 
@@ -77,7 +63,7 @@ xl_explain_node(struct xl_dagc_node *node)
         }
         else if (node->node_type == DAGC_NODE_LOAD)
         {
-                uri = xl_explain_uri(n->as_load.loc);
+                uri = xl_uri_explain(n->as_load.loc);
                 aspr_res = asprintf(
                         &res, "%s %s @%hx uri %s",
                         node_type, id, (short)((uintptr_t) n), uri);
@@ -85,7 +71,7 @@ xl_explain_node(struct xl_dagc_node *node)
         }
         else if (node->node_type == DAGC_NODE_STORE)
         {
-                uri = xl_explain_uri(n->as_store.loc);
+                uri = xl_uri_explain(n->as_store.loc);
                 aspr_res = asprintf(
                         &res, "%s %s @%hx uri %s",
                         node_type, id, (short)((uintptr_t) n), uri);
@@ -102,18 +88,5 @@ xl_explain_node(struct xl_dagc_node *node)
                 res = NULL;
         free(node_type);
         free(id);
-        return res;
-}
-
-char *
-xl_explain_word(xl_word word)
-{
-        size_t i;
-        char *res;
-        res = calloc(9, sizeof(char));
-        if (res == NULL)
-                return res;
-        for (i = 0; i < 8; i++)
-                res[i] = (char) (word >> (8 * (7 - i)));
         return res;
 }

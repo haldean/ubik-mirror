@@ -85,3 +85,7 @@ xl_uri_attach_value(struct xl_uri *uri);
  * caller must take a reference to it. */
 no_ignore xl_error
 xl_uri_parse(struct xl_uri *uri, char *str);
+
+/* Creates a string representation of a URI. */
+char *
+xl_uri_explain(struct xl_uri *uri);

@@ -31,7 +31,6 @@
 #include "expel/assert.h"
 #include "expel/dagc.h"
 #include "expel/expel.h"
-#include "expel/explain.h"
 #include "expel/gc.h"
 #include "expel/pointerset.h"
 #include "expel/uri.h"
@@ -143,7 +142,7 @@ xl_gc_teardown()
                 if (graph->identity == NULL)
                         buf = NULL;
                 else
-                        buf = xl_explain_uri(graph->identity);
+                        buf = xl_uri_explain(graph->identity);
                 fprintf(gc_out, "\tidentity %s\n", buf);
                 if (buf != NULL)
                         free(buf);
@@ -573,7 +572,7 @@ _release_graph(struct xl_dagc *g)
                         fprintf(gc_out, "\tarity %lu\n", g->in_arity);
                         if (g->identity != NULL)
                         {
-                                buf = xl_explain_uri(g->identity);
+                                buf = xl_uri_explain(g->identity);
                                 fprintf(gc_out, "\tidentity %s (%lu)\n",
                                                 buf, g->identity->refcount);
                                 free(buf);
@@ -621,7 +620,7 @@ _release_uri(struct xl_uri *u)
                 return OK;
 
         #if XL_GC_DEBUG && XL_GC_DEBUG_V
-        buf = xl_explain_uri(u);
+        buf = xl_uri_explain(u);
         fprintf(gc_out, "free uri %s\n", buf);
         free(buf);
         #endif

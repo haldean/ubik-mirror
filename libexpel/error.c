@@ -21,7 +21,6 @@
 #include <stdlib.h>
 
 #include "expel/expel.h"
-#include "expel/explain.h"
 #include "expel/util.h"
 
 xl_error
@@ -50,7 +49,7 @@ xl_error_explain(xl_error err)
         char *err_word_expl;
         int aspr_res;
 
-        err_word_expl = xl_explain_word(err->error_code);
+        err_word_expl = xl_word_explain(err->error_code);
         aspr_res = asprintf(&res, "error %s at %s:%u: %s",
                  err_word_expl, err->file, err->lineno, err->tag);
 

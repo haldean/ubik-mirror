@@ -95,3 +95,16 @@ xl_trace_print(void)
         size = backtrace(array, 40);
         backtrace_symbols_fd(array, size, STDERR_FILENO);
 }
+
+char *
+xl_word_explain(xl_word word)
+{
+        size_t i;
+        char *res;
+        res = calloc(9, sizeof(char));
+        if (res == NULL)
+                return res;
+        for (i = 0; i < 8; i++)
+                res[i] = (char) (word >> (8 * (7 - i)));
+        return res;
+}

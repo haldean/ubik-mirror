@@ -275,6 +275,12 @@ xl_dagc_new(struct xl_dagc **g, size_t n);
 no_ignore xl_error
 xl_dagc_init(struct xl_dagc *graph);
 
+/* Creates a string representation of a node.
+ *
+ * Useful for debugging, but not much else. */
+char *
+xl_node_explain(struct xl_dagc_node *n);
+
 /* Create an error object. */
 xl_error
 xl_error_new(

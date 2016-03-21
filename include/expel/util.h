@@ -44,4 +44,8 @@ ntohw(xl_word);
 void
 xl_trace_print(void);
 
+/* Converts a constant to its string value. */
+char *
+xl_word_explain(xl_word);
+
 #endif

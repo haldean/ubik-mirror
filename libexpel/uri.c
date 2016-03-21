@@ -17,6 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include <stdio.h>
 #include <string.h>
 
 #include "expel/assert.h"
@@ -288,4 +289,19 @@ xl_uri_parse(struct xl_uri *uri, char *str)
         uri->as_value = NULL;
 
         return _set_hash(uri);
+}
+
+char *
+xl_uri_explain(struct xl_uri *uri)
+{
+        int aspr_res;
+        char *res;
+        char *scope;
+
+        scope = xl_word_explain(uri->scope);
+        aspr_res = asprintf(&res, "%s://%s/%s", scope, uri->source, uri->name);
+        free(scope);
+        if (aspr_res < 0)
+                res = NULL;
+        return res;
 }

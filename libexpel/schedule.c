@@ -24,7 +24,6 @@
 #include "expel/assert.h"
 #include "expel/dagc.h"
 #include "expel/env.h"
-#include "expel/explain.h"
 #include "expel/schedule.h"
 #include "expel/util.h"
 
@@ -355,7 +354,7 @@ _notify_node(
 
 #ifdef XL_SCHEDULE_DEBUG
         printf("notifying %s on completion of %s\n",
-               xl_explain_node(waiting->node), xl_explain_node(complete->node));
+               xl_node_explain(waiting->node), xl_node_explain(complete->node));
 #endif
 
         /* We save these off here because we need to free them, but freeing them
@@ -447,7 +446,7 @@ _dump_exec_unit(struct xl_exec_unit *u)
         char *buf;
         xl_error err;
 
-        buf = xl_explain_node(u->node);
+        buf = xl_node_explain(u->node);
         printf("\t%s\n", buf);
         free(buf);
         printf("\t\tenv @%hx ", (short)((uintptr_t) u->env));
@@ -466,21 +465,21 @@ _dump_exec_unit(struct xl_exec_unit *u)
 
         if (d1 != NULL)
         {
-                buf = xl_explain_node(d1);
+                buf = xl_node_explain(d1);
                 printf("\t\td1: %s\n", buf);
                 free(buf);
         }
 
         if (d2 != NULL)
         {
-                buf = xl_explain_node(d2);
+                buf = xl_node_explain(d2);
                 printf("\t\td2: %s\n", buf);
                 free(buf);
         }
 
         if (d3 != NULL)
         {
-                buf = xl_explain_node(d3);
+                buf = xl_node_explain(d3);
                 printf("\t\td3: %s\n", buf);
                 free(buf);
         }
@@ -537,7 +536,7 @@ _run_single_pass(struct xl_scheduler *s)
                 {
 #ifdef XL_SCHEDULE_DEBUG
                         printf("moving %s from waiting to ready\n",
-                               xl_explain_node(u->node));
+                               xl_node_explain(u->node));
 #endif
                         u->next = s->ready;
                         s->ready = u;
@@ -586,7 +585,7 @@ _run_single_pass(struct xl_scheduler *s)
                 {
 #ifdef XL_SCHEDULE_DEBUG
                         printf("collapsing %s\n",
-                               xl_explain_node(u->node));
+                               xl_node_explain(u->node));
 #endif
                         /* Here, we collapse the graph and don't mark the things
                          * depending on the node as ready; when we finish
@@ -600,7 +599,7 @@ _run_single_pass(struct xl_scheduler *s)
                 {
 #ifdef XL_SCHEDULE_DEBUG
                         printf("marking %s complete\n",
-                               xl_explain_node(u->node));
+                               xl_node_explain(u->node));
 #endif
                         err = xl_schedule_complete(s, u);
                         if (err != OK)
@@ -610,7 +609,7 @@ _run_single_pass(struct xl_scheduler *s)
                 {
 #ifdef XL_SCHEDULE_DEBUG
                         printf("moving %s back to waiting\n",
-                               xl_explain_node(u->node));
+                               xl_node_explain(u->node));
 #endif
                         u->next = s->wait;
                         s->wait = u;
