@@ -510,6 +510,8 @@ _release_graph(struct xl_dagc *g)
 {
         size_t i;
         xl_error err;
+        uint64_t self_refs;
+        struct xl_dagc_const *n;
 
         #if XL_GC_DEBUG && XL_GC_DEBUG_V
         char *buf;
@@ -529,7 +531,20 @@ _release_graph(struct xl_dagc *g)
                 xl_trace_print();
         }
 
-        if (g->refcount)
+        self_refs = 0;
+        for (i = 0; i < g->n; i++)
+        {
+                if (g->nodes[i]->known.graph == g)
+                        self_refs++;
+
+                n = (struct xl_dagc_const *) g->nodes[i];
+                if (n->head.node_type != DAGC_NODE_CONST)
+                        continue;
+                if (n->value.graph == g)
+                        self_refs++;
+        }
+
+        if (g->refcount > self_refs)
                 return OK;
 
         for (i = 0; i < g->n; i++)
