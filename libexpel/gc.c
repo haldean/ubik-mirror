@@ -81,6 +81,20 @@ xl_gc_start()
                         return;
                 }
 
+                err = xl_take(graph_trace);
+                if (err != OK)
+                {
+                        buf = xl_error_explain(err);
+                        fprintf(gc_out, "couldn't trace: take uri failed: %s\n", buf);
+                        free(buf);
+                        free(graph_trace);
+                        free(graph_trace->name);
+                        if (graph_trace->source != NULL)
+                                free(graph_trace->source);
+                        graph_trace = NULL;
+                        return;
+                }
+
                 graph_trace_str = trace_uri_str;
                 fprintf(gc_out, "tracing %s\n", graph_trace_str);
         }
@@ -89,10 +103,12 @@ xl_gc_start()
 void
 xl_gc_teardown()
 {
-        #if XL_GC_DEBUG && XL_GC_DEBUG_V
         xl_error err;
+
+        #if XL_GC_DEBUG && XL_GC_DEBUG_V
         size_t i;
         bool present;
+        bool any_leaked;
         struct xl_dagc *graph;
         char *buf;
 
@@ -112,12 +128,14 @@ xl_gc_teardown()
         fprintf(gc_out, "gc ran %lu times\n", gc_stats->n_gc_runs);
 
         fprintf(gc_out, "========================================\nleaked graphs:\n");
+        any_leaked = false;
         for (i = 0; i < graph_alloc.n; i++)
         {
                 graph = (struct xl_dagc *) graph_alloc.elems[i];
                 err = xl_pointer_set_present(&present, &graph_freed, graph);
                 if (err != OK || present)
                         continue;
+                any_leaked = true;
 
                 fprintf(gc_out, "%016" PRIxPTR ":\n", (uintptr_t) graph);
                 fprintf(gc_out, "\t%lu leaked refs\n", graph->refcount);
@@ -132,6 +150,9 @@ xl_gc_teardown()
 
                 fprintf(gc_out, "\tin arity %lu\n", graph->in_arity);
         }
+        if (!any_leaked)
+                fprintf(gc_out, "none!\n");
+        fprintf(gc_out, "========================================\n");
         #endif
         xl_pointer_set_free(&graph_alloc);
         xl_pointer_set_free(&graph_freed);
@@ -140,8 +161,13 @@ xl_gc_teardown()
         free(gc_stats);
         gc_stats = NULL;
 
-        free(graph_trace);
-        graph_trace = NULL;
+        if (graph_trace != NULL)
+        {
+                err = xl_release(graph_trace);
+                if (err != OK)
+                        fprintf(gc_out, "couldn't free graph trace\n");
+                graph_trace = NULL;
+        }
 }
 
 void
@@ -319,7 +345,7 @@ xl_take(void *p)
                         return xl_raise(ERR_REFCOUNT_OVERFLOW, "take");
                 g->refcount++;
 
-                if (g->identity != NULL
+                if (g->identity != NULL && graph_trace != NULL
                         && unlikely(xl_uri_eq(g->identity, graph_trace)))
                 {
                         fprintf(gc_out, "\ntaking ref to traced %s\n", graph_trace_str);
@@ -493,7 +519,8 @@ _release_graph(struct xl_dagc *g)
                 return xl_raise(ERR_REFCOUNT_UNDERFLOW, "release");
         g->refcount--;
 
-        if (g->identity != NULL && unlikely(xl_uri_eq(g->identity, graph_trace)))
+        if (g->identity != NULL && graph_trace != NULL
+                && unlikely(xl_uri_eq(g->identity, graph_trace)))
         {
                 fprintf(gc_out, "\nreleasing ref to traced %s\n",
                         graph_trace_str);
