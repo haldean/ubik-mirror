@@ -292,4 +292,6 @@ xl_error_explain(xl_error err);
 #define xl_raise(code, tag) \
         xl_error_new((code), (tag), __FILE__, __LINE__, __FUNCTION__)
 
+#define local(type) __attribute__((cleanup(xl_ ## type ## _free)))
+
 #endif

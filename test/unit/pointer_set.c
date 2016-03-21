@@ -27,7 +27,7 @@
 test_t
 pointer_set()
 {
-        struct xl_pointer_set s = {0};
+        local(pointer_set) struct xl_pointer_set s = {0};
         bool present;
         bool added;
         size_t index;
@@ -96,8 +96,6 @@ pointer_set()
         assert(s.elems[2] == t1);
         assert(s.elems[3] == t0);
         assert(s.elems[4] == t3);
-
-        xl_pointer_set_free(&s);
 
         return ok;
 }
