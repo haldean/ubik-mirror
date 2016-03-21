@@ -19,10 +19,9 @@
 
 /* Define XL_GC_DEBUG to have garbage collection information
  * printed to stderr. */
-#if XL_GC_DEBUG
+
 #include <stdio.h>
 #define gc_out stderr
-#endif
 
 #include <inttypes.h>
 #include <stdbool.h>
@@ -44,15 +43,47 @@ static struct xl_gc_info *gc_stats;
 static struct xl_pointer_set graph_alloc = {0};
 static struct xl_pointer_set graph_freed = {0};
 
+static struct xl_uri *graph_trace = NULL;
+static char *graph_trace_str = NULL;
+
 void
 xl_gc_start()
 {
+        char *trace_uri_str;
+        char *buf;
+        xl_error err;
+
         page_tail = NULL;
         if (unlikely(gc_stats != NULL))
                 free(gc_stats);
 
         gc_stats = calloc(1, sizeof(struct xl_gc_info));
         gc_stats->releases_until_gc = XL_GC_TRIGGER_RELEASES;
+
+        trace_uri_str = getenv("EXPEL_TRACE_GRAPH");
+        if (trace_uri_str != NULL)
+        {
+                graph_trace = calloc(1, sizeof(struct xl_uri));
+                if (graph_trace == NULL)
+                {
+                        fprintf(gc_out, "couldn't trace: alloc uri failed\n");
+                        return;
+                }
+
+                err = xl_uri_parse(graph_trace, trace_uri_str);
+                if (err != OK)
+                {
+                        buf = xl_error_explain(err);
+                        fprintf(gc_out, "couldn't trace: parse uri failed: %s\n", buf);
+                        free(buf);
+                        free(graph_trace);
+                        graph_trace = NULL;
+                        return;
+                }
+
+                graph_trace_str = trace_uri_str;
+                fprintf(gc_out, "tracing %s\n", graph_trace_str);
+        }
 }
 
 void
@@ -80,7 +111,7 @@ xl_gc_teardown()
                         (int64_t) gc_stats->n_graph_allocs - gc_stats->n_graph_frees);
         fprintf(gc_out, "gc ran %lu times\n", gc_stats->n_gc_runs);
 
-        printf("========================================\nleaked graphs:\n");
+        fprintf(gc_out, "========================================\nleaked graphs:\n");
         for (i = 0; i < graph_alloc.n; i++)
         {
                 graph = (struct xl_dagc *) graph_alloc.elems[i];
@@ -108,6 +139,9 @@ xl_gc_teardown()
         xl_gc_free_all();
         free(gc_stats);
         gc_stats = NULL;
+
+        free(graph_trace);
+        graph_trace = NULL;
 }
 
 void
@@ -246,10 +280,11 @@ xl_value_new(struct xl_value **v)
         p->n_open_values--;
 
         #if XL_GC_DEBUG && XL_GC_DEBUG_V
-                printf("take slot %lu in page %04lx\n",
-                       ((uintptr_t) *v - (uintptr_t) p->values)
+                fprintf(gc_out,
+                        "take slot %lu in page %04lx\n",
+                        ((uintptr_t) *v - (uintptr_t) p->values)
                                 / sizeof(struct xl_value),
-                       ((uintptr_t) p) & 0xFFFF);
+                        ((uintptr_t) p) & 0xFFFF);
         #endif
 
         #if XL_GC_DEBUG
@@ -283,6 +318,15 @@ xl_take(void *p)
                 if (unlikely(g->refcount == UINT64_MAX))
                         return xl_raise(ERR_REFCOUNT_OVERFLOW, "take");
                 g->refcount++;
+
+                if (g->identity != NULL
+                        && unlikely(xl_uri_eq(g->identity, graph_trace)))
+                {
+                        fprintf(gc_out, "\ntaking ref to traced %s\n", graph_trace_str);
+                        fprintf(gc_out, "addr 0x%" PRIxPTR " arity %lu new ref %lu\n",
+                                (uintptr_t) g, g->in_arity, g->refcount);
+                        xl_trace_print();
+                }
                 return OK;
         }
         if ((tag & TAG_TYPE_MASK) == TAG_URI)
@@ -355,10 +399,11 @@ _release_value(struct xl_value *v)
                 p->n_open_values++;
 
                 #if XL_GC_DEBUG && XL_GC_DEBUG_V
-                        printf("release slot %lu in page %04lx\n",
-                               ((uintptr_t) v - (uintptr_t) p->values)
-                                        / sizeof(struct xl_value),
-                               ((uintptr_t) p) & 0xFFFF);
+                        fprintf(gc_out,
+                                "release slot %lu in page %04lx\n",
+                                ((uintptr_t) v - (uintptr_t) p->values)
+                                / sizeof(struct xl_value),
+                                ((uintptr_t) p) & 0xFFFF);
                 #endif
 
                 if (v->tag & (TAG_LEFT_NODE | TAG_LEFT_GRAPH))
@@ -447,6 +492,15 @@ _release_graph(struct xl_dagc *g)
         if (unlikely(g->refcount == 0))
                 return xl_raise(ERR_REFCOUNT_UNDERFLOW, "release");
         g->refcount--;
+
+        if (g->identity != NULL && unlikely(xl_uri_eq(g->identity, graph_trace)))
+        {
+                fprintf(gc_out, "\nreleasing ref to traced %s\n",
+                        graph_trace_str);
+                fprintf(gc_out, "addr 0x%" PRIxPTR " arity %lu new ref %lu\n",
+                        (uintptr_t) g, g->in_arity, g->refcount);
+                xl_trace_print();
+        }
 
         if (g->refcount)
                 return OK;
