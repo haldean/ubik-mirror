@@ -253,7 +253,7 @@ xl_uri_parse(struct xl_uri *uri, char *str)
         if (str[scope_len] != ':')
                 return xl_raise(ERR_BAD_VALUE, "no scope terminator");
 
-        if (strncmp(str, "user", scope_len) == 0)
+        if (strncmp(str, "userdef", scope_len) == 0)
                 scope = SCOPE_USER_DEFINED;
         else if (strncmp(str, "native", scope_len) == 0)
                 scope = SCOPE_NATIVE;
