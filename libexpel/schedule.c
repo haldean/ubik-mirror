@@ -119,6 +119,23 @@ _enqueue(
 {
         struct xl_exec_unit *u;
         xl_error err;
+        struct xl_exec_unit *test;
+
+        test = s->wait;
+        while (test != NULL)
+        {
+                if (test->node == node)
+                        return OK;
+                test = test->next;
+        }
+
+        test = s->ready;
+        while (test != NULL)
+        {
+                if (test->node == node)
+                        return OK;
+                test = test->next;
+        }
 
         u = calloc(1, sizeof(struct xl_exec_unit));
         if (u == NULL)
