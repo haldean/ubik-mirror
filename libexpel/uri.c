@@ -236,3 +236,56 @@ xl_uri_attach_value(struct xl_uri *uri)
 
         return OK;
 }
+
+no_ignore xl_error
+xl_uri_parse(struct xl_uri *uri, char *str)
+{
+        xl_word scope;
+        size_t scope_len;
+        size_t i;
+        size_t len;
+
+        len = strlen(str);
+
+        for (scope_len = 0;
+                scope_len < len && str[scope_len] != ':';
+                scope_len++);
+        if (str[scope_len] != ':')
+                return xl_raise(ERR_BAD_VALUE, "no scope terminator");
+
+        if (strncmp(str, "user", scope_len) == 0)
+                scope = SCOPE_USER_DEFINED;
+        else if (strncmp(str, "native", scope_len) == 0)
+                scope = SCOPE_NATIVE;
+        else if (strncmp(str, "package", scope_len) == 0)
+                scope = SCOPE_PACKAGE;
+        else if (strncmp(str, "unknown", scope_len) == 0)
+                scope = SCOPE_UNKNOWN;
+        else
+                return xl_raise(ERR_BAD_VALUE, "bad scope value");
+
+        i = scope_len;
+        if (i > len - 3)
+                return xl_raise(ERR_BAD_VALUE, "nothing after scope");
+        if (str[++i] != '/')
+                return xl_raise(ERR_BAD_VALUE, "no first slash");
+        if (str[++i] != '/')
+                return xl_raise(ERR_BAD_VALUE, "no second slash");
+        i++;
+
+        if (str[i] != '/')
+                return xl_raise(ERR_NOT_IMPLEMENTED, "package URIs not supported");
+        i++;
+
+        uri->tag = TAG_URI;
+        uri->name = strdup(&str[i]);
+        uri->name_len = len - i;
+        uri->source = NULL;
+        uri->source_len = 0;
+        uri->version = 0;
+        uri->scope = scope;
+        uri->refcount = 0;
+        uri->as_value = NULL;
+
+        return _set_hash(uri);
+}

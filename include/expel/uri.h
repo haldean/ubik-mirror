@@ -80,3 +80,8 @@ xl_uri_eq(struct xl_uri *u0, struct xl_uri *u1);
  * no-op. */
 no_ignore xl_error
 xl_uri_attach_value(struct xl_uri *uri);
+
+/* Parses a URI string into a URI struct. Returns struct has no references;
+ * caller must take a reference to it. */
+no_ignore xl_error
+xl_uri_parse(struct xl_uri *uri, char *str);

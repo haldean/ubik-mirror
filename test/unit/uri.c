@@ -26,7 +26,7 @@
 test_t
 uri()
 {
-        struct xl_uri user, native, unknown, u;
+        struct xl_uri user, native, unknown, parsed, u;
 
         assert(xl_uri_unknown(&unknown, "unknown-uri") == OK);
         assert(xl_uri_user(&user, "user-uri") == OK);
@@ -55,6 +55,10 @@ uri()
         assert(xl_uri_from_value(&u, unknown.as_value) == OK);
         assert(xl_uri_eq(&u, &unknown));
         free(u.name);
+
+        assert(xl_uri_parse(&parsed, "user:///user-uri") == OK);
+        assert(xl_uri_eq(&parsed, &user));
+        free(parsed.name);
 
         assert(xl_release(user.as_value) == OK);
         assert(xl_release(native.as_value) == OK);
