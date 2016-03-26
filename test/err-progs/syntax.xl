@@ -1,0 +1,4 @@
+: test-thing
+: out-of-place
+    ^ Int
+
