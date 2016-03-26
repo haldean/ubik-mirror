@@ -50,9 +50,10 @@ usage()
 int
 main(int argc, char *argv[])
 {
-        struct xl_dagc **graphs;
+        struct xl_dagc **graphs = NULL;
         struct xl_stream in, out;
-        size_t i, n_graphs;
+        size_t i;
+        size_t n_graphs = 0;
         xl_error err;
         struct xl_compilation_env env;
 
