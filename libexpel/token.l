@@ -34,6 +34,8 @@
         return token; \
 }
 
+#define YY_USER_ACTION (yyget_lloc(yyscanner)->first_line = yyget_lloc(yyscanner)->last_line = yylineno);
+
 char *read_string_literal(yyscan_t scanner);
 
 %}

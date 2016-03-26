@@ -34,7 +34,7 @@ xl_parse(struct xl_ast **ast, struct xl_stream *stream)
         yypstate *ps;
         void *scanner;
         YYSTYPE val;
-        YYLTYPE loc;
+        YYLTYPE loc = {0};
         int token;
 
         status = yylex_init(&scanner);
