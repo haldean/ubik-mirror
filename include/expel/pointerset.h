@@ -22,6 +22,7 @@
 #include <stdint.h>
 
 #include "expel/expel.h"
+#include "expel/vector.h"
 
 /* Pointer sets represent sets of objects where the identity of an object is the
  * address at which it is stored.
@@ -45,12 +46,6 @@
  * is O(1). Insertion is expensive, as it requires a full rebuild in general,
  * and thus is O(n).
  */
-struct xl_pointer_set
-{
-        void **elems;
-        size_t n;
-        size_t cap;
-};
 
 /* Adds item to the given pointer set. If added is not NULL, sets bool to true
  * only if the item was not already present in the set. If the item is already
