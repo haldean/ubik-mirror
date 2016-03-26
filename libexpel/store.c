@@ -445,7 +445,7 @@ _store_graph(
         xl_tag tag;
         union xl_dagc_any_node *n;
         xl_error err;
-        local(pointer_set) struct xl_vector nodes = {0};
+        local(vector) struct xl_vector nodes = {0};
 
         tag = htons(graph->tag);
         WRITE_INTO(sp, tag);
@@ -554,8 +554,8 @@ _store_graph(
 no_ignore xl_error
 xl_save(struct xl_stream *sp, struct xl_dagc **in_graphs, size_t n_in_graphs)
 {
-        local(pointer_set) struct xl_vector graphs = {0};
-        local(pointer_set) struct xl_vector values = {0};
+        local(vector) struct xl_vector graphs = {0};
+        local(vector) struct xl_vector values = {0};
         uint32_t version;
         size_t i;
         xl_word t;

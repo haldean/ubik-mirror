@@ -21,13 +21,14 @@
 
 #include "expel/expel.h"
 #include "expel/pointerset.h"
+#include "expel/vector.h"
 #include "unit.h"
 
 
 test_t
 pointer_set()
 {
-        local(pointer_set) struct xl_vector s = {0};
+        local(vector) struct xl_vector s = {0};
         bool present;
         bool added;
         size_t index;

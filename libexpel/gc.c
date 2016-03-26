@@ -35,6 +35,7 @@
 #include "expel/pointerset.h"
 #include "expel/uri.h"
 #include "expel/util.h"
+#include "expel/vector.h"
 
 static struct xl_alloc_page *page_tail;
 static struct xl_gc_info *gc_stats;
@@ -153,8 +154,8 @@ xl_gc_teardown()
                 fprintf(gc_out, "none!\n");
         fprintf(gc_out, "========================================\n");
         #endif
-        xl_pointer_set_free(&graph_alloc);
-        xl_pointer_set_free(&graph_freed);
+        xl_vector_free(&graph_alloc);
+        xl_vector_free(&graph_freed);
 
         xl_gc_free_all();
         free(gc_stats);
