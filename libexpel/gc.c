@@ -39,8 +39,8 @@
 static struct xl_alloc_page *page_tail;
 static struct xl_gc_info *gc_stats;
 
-static struct xl_pointer_set graph_alloc = {0};
-static struct xl_pointer_set graph_freed = {0};
+static struct xl_vector graph_alloc = {0};
+static struct xl_vector graph_freed = {0};
 
 static struct xl_uri *graph_trace = NULL;
 static char *graph_trace_str = NULL;

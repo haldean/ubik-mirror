@@ -27,7 +27,7 @@
 test_t
 pointer_set()
 {
-        local(pointer_set) struct xl_pointer_set s = {0};
+        local(pointer_set) struct xl_vector s = {0};
         bool present;
         bool added;
         size_t index;

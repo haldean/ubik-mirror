@@ -35,7 +35,7 @@ no_ignore xl_error
 _store_value(
         struct xl_stream *sp,
         struct xl_value *in,
-        struct xl_pointer_set *graphs)
+        struct xl_vector *graphs)
 {
         xl_tag tag;
         xl_word val;
@@ -117,8 +117,8 @@ xl_value_save(struct xl_stream *sp, struct xl_value *in)
 
 no_ignore static xl_error
 _collect(
-        struct xl_pointer_set *graphs,
-        struct xl_pointer_set *values,
+        struct xl_vector *graphs,
+        struct xl_vector *values,
         struct xl_dagc *graph)
 {
         bool added;
@@ -221,8 +221,8 @@ _collect(
 
 no_ignore static xl_error
 _collect_graphs_and_values(
-        struct xl_pointer_set *graphs,
-        struct xl_pointer_set *values,
+        struct xl_vector *graphs,
+        struct xl_vector *values,
         struct xl_dagc **start_graphs,
         size_t n_start_graphs)
 {
@@ -242,7 +242,7 @@ no_ignore static xl_error
 _store_apply(
         struct xl_stream *sp,
         struct xl_dagc_apply *n,
-        struct xl_pointer_set *nodes)
+        struct xl_vector *nodes)
 {
         xl_word index;
         xl_error err;
@@ -269,7 +269,7 @@ no_ignore static xl_error
 _store_cond(
         struct xl_stream *sp,
         struct xl_dagc_cond *n,
-        struct xl_pointer_set *nodes)
+        struct xl_vector *nodes)
 {
         xl_word index;
         xl_error err;
@@ -303,8 +303,8 @@ no_ignore static xl_error
 _store_const(
         struct xl_stream *sp,
         struct xl_dagc_const *n,
-        struct xl_pointer_set *graphs,
-        struct xl_pointer_set *values)
+        struct xl_vector *graphs,
+        struct xl_vector *values)
 {
         xl_word index;
         xl_error err;
@@ -344,7 +344,7 @@ no_ignore static xl_error
 _store_input(
         struct xl_stream *sp,
         struct xl_dagc_input *n,
-        struct xl_pointer_set *values)
+        struct xl_vector *values)
 {
         xl_error err;
         xl_word t;
@@ -368,7 +368,7 @@ no_ignore static xl_error
 _store_load(
         struct xl_stream *sp,
         struct xl_dagc_load *n,
-        struct xl_pointer_set *values)
+        struct xl_vector *values)
 {
         xl_error err;
         size_t sindex;
@@ -388,7 +388,7 @@ no_ignore static xl_error
 _store_ref(
         struct xl_stream *sp,
         struct xl_dagc_ref *n,
-        struct xl_pointer_set *nodes)
+        struct xl_vector *nodes)
 {
         xl_error err;
         size_t sindex;
@@ -408,8 +408,8 @@ no_ignore static xl_error
 _store_store(
         struct xl_stream *sp,
         struct xl_dagc_store *n,
-        struct xl_pointer_set *nodes,
-        struct xl_pointer_set *values)
+        struct xl_vector *nodes,
+        struct xl_vector *values)
 {
         xl_error err;
         xl_word index;
@@ -436,8 +436,8 @@ no_ignore static xl_error
 _store_graph(
         struct xl_stream *sp,
         struct xl_dagc *graph,
-        struct xl_pointer_set *graphs,
-        struct xl_pointer_set *values)
+        struct xl_vector *graphs,
+        struct xl_vector *values)
 {
         size_t i;
         uint8_t b;
@@ -445,7 +445,7 @@ _store_graph(
         xl_tag tag;
         union xl_dagc_any_node *n;
         xl_error err;
-        local(pointer_set) struct xl_pointer_set nodes = {0};
+        local(pointer_set) struct xl_vector nodes = {0};
 
         tag = htons(graph->tag);
         WRITE_INTO(sp, tag);
@@ -554,8 +554,8 @@ _store_graph(
 no_ignore xl_error
 xl_save(struct xl_stream *sp, struct xl_dagc **in_graphs, size_t n_in_graphs)
 {
-        local(pointer_set) struct xl_pointer_set graphs = {0};
-        local(pointer_set) struct xl_pointer_set values = {0};
+        local(pointer_set) struct xl_vector graphs = {0};
+        local(pointer_set) struct xl_vector values = {0};
         uint32_t version;
         size_t i;
         xl_word t;

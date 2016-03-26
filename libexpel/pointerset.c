@@ -25,7 +25,7 @@
 #include "expel/pointerset.h"
 
 no_ignore static xl_error
-_pointer_set_grow(struct xl_pointer_set *set)
+_pointer_set_grow(struct xl_vector *set)
 {
         size_t new_cap;
         void **new_elems;
@@ -56,7 +56,7 @@ _pointer_set_grow(struct xl_pointer_set *set)
  * present. If the item is not present, the returned index is the index at which
  * the item should be inserted. */
 no_ignore static xl_error
-_pointer_set_index(size_t *index, struct xl_pointer_set *set, void *item)
+_pointer_set_index(size_t *index, struct xl_vector *set, void *item)
 {
         size_t start;
         size_t end;
@@ -91,7 +91,7 @@ _pointer_set_index(size_t *index, struct xl_pointer_set *set, void *item)
 }
 
 no_ignore xl_error
-xl_pointer_set_add(bool *added, struct xl_pointer_set *set, void *item)
+xl_pointer_set_add(bool *added, struct xl_vector *set, void *item)
 {
         size_t insert_at;
         xl_error err;
@@ -128,7 +128,7 @@ xl_pointer_set_add(bool *added, struct xl_pointer_set *set, void *item)
 }
 
 no_ignore xl_error
-xl_pointer_set_present(bool *present, struct xl_pointer_set *set, void *item)
+xl_pointer_set_present(bool *present, struct xl_vector *set, void *item)
 {
         size_t index;
         xl_error err;
@@ -147,7 +147,7 @@ xl_pointer_set_present(bool *present, struct xl_pointer_set *set, void *item)
 }
 
 no_ignore xl_error
-xl_pointer_set_find(size_t *ret_index, struct xl_pointer_set *set, void *item)
+xl_pointer_set_find(size_t *ret_index, struct xl_vector *set, void *item)
 {
         size_t index;
         xl_error err;
@@ -165,7 +165,7 @@ xl_pointer_set_find(size_t *ret_index, struct xl_pointer_set *set, void *item)
 }
 
 void
-xl_pointer_set_free(struct xl_pointer_set *set)
+xl_pointer_set_free(struct xl_vector *set)
 {
         free(set->elems);
         bzero(set, sizeof(*set));
