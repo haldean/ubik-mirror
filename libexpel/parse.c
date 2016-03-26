@@ -53,5 +53,7 @@ xl_parse(struct xl_ast **ast, struct xl_stream *stream)
         yypstate_delete(ps);
         yylex_destroy(scanner);
 
-        return OK;
+        if (status == 0)
+                return OK;
+        return xl_raise(ERR_BAD_VALUE, "could not parse input");
 }
