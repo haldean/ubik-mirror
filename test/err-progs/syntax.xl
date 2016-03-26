@@ -1,4 +1,4 @@
 : test-thing
-: out-of-place
+    : out-of-place
     ^ Int
 

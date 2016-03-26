@@ -74,6 +74,7 @@ yyerror();
 %locations
 
 %parse-param { struct xl_ast **ast }
+%parse-param { struct xl_ast_error_loc **error_loc }
 %parse-param { void *scanner }
 %lex-param { void *scanner }
 
@@ -204,12 +205,20 @@ type_atom:
 %%
 
 void
-yyerror(YYLTYPE *loc, struct xl_ast **ast, void *scanner, const char *err)
+yyerror(
+        YYLTYPE *loc,
+        struct xl_ast **ast,
+        struct xl_ast_error_loc **error_loc,
+        void *scanner,
+        const char *err)
 {
         unused(scanner);
         unused(ast);
-        fprintf(stderr, "lines %d:%d - %d:%d : %s\n",
-                loc->first_line, loc->first_column,
-                loc->last_line, loc->last_column,
-                err);
+
+        *error_loc = calloc(1, sizeof(struct xl_ast_error_loc));
+        (*error_loc)->line_start = loc->first_line;
+        (*error_loc)->line_end = loc->last_line;
+        (*error_loc)->col_start = loc->first_column;
+        (*error_loc)->col_end = loc->last_column;
+        (*error_loc)->message = strdup(err);
 }

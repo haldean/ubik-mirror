@@ -19,6 +19,7 @@
 
 %{
 
+#include "expel/ast.h"
 #include "expel/token.h"
 #include "grammar.h"
 
@@ -34,7 +35,11 @@
         return token; \
 }
 
-#define YY_USER_ACTION (yyget_lloc(yyscanner)->first_line = yyget_lloc(yyscanner)->last_line = yylineno);
+#define YY_USER_ACTION do { \
+        yyget_lloc(yyscanner)->first_line = yyget_lloc(yyscanner)->last_line = yylineno; \
+        yyget_lloc(yyscanner)->first_column = yycolumn; \
+        yyget_lloc(yyscanner)->last_column = yycolumn + yyleng - 1; \
+        yycolumn += yyleng; } while (0);
 
 char *read_string_literal(yyscan_t scanner);
 

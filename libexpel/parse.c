@@ -36,6 +36,7 @@ xl_parse(struct xl_ast **ast, struct xl_stream *stream)
         YYSTYPE val;
         YYLTYPE loc = {0};
         int token;
+        struct xl_ast_error_loc *err_loc = NULL;
 
         status = yylex_init(&scanner);
         if (status != 0)
@@ -47,7 +48,8 @@ xl_parse(struct xl_ast **ast, struct xl_stream *stream)
         do
         {
                 token = yylex(&val, &loc, scanner);
-                status = yypush_parse(ps, token, &val, &loc, ast, scanner);
+                status = yypush_parse(
+                        ps, token, &val, &loc, ast, &err_loc, scanner);
         } while (status == YYPUSH_MORE);
 
         yypstate_delete(ps);
@@ -55,5 +57,13 @@ xl_parse(struct xl_ast **ast, struct xl_stream *stream)
 
         if (status == 0)
                 return OK;
+
+        if (err_loc != NULL)
+        {
+                fprintf(stderr, "%lu:%lu: error: %s\n",
+                        err_loc->line_start, err_loc->col_start,
+                        err_loc->message);
+                xl_ast_error_loc_free(err_loc);
+        }
         return xl_raise(ERR_BAD_VALUE, "could not parse input");
 }
