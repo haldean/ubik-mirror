@@ -22,6 +22,7 @@
 #include "expel/expel.h"
 #include "expel/ast.h"
 #include "expel/stream.h"
+#include "expel/vector.h"
 
 struct xl_parse_context
 {
@@ -29,6 +30,10 @@ struct xl_parse_context
 
         struct xl_ast_loc *err_loc;
         char *err_msg;
+
+        /* we keep track of everything allocated during parsing so that we can
+         * clean up if the parse fails halfway through. */
+        struct xl_vector allocs;
 };
 
 no_ignore xl_error

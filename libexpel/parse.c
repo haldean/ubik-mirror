@@ -28,6 +28,12 @@ extern void yylex_destroy(void *);
 extern int  yylex(YYSTYPE *, YYLTYPE *, void *);
 extern void yyset_in(FILE *, void *);
 
+void
+xl_parse_context_free(struct xl_parse_context *ctx)
+{
+        xl_vector_free(&ctx->allocs);
+}
+
 no_ignore xl_error
 xl_parse(struct xl_ast **ast, struct xl_stream *stream)
 {
@@ -37,7 +43,7 @@ xl_parse(struct xl_ast **ast, struct xl_stream *stream)
         YYSTYPE val;
         YYLTYPE loc = {0};
         int token;
-        struct xl_parse_context ctx = {0};
+        local(parse_context) struct xl_parse_context ctx = {0};
 
         status = yylex_init(&scanner);
         if (status != 0)

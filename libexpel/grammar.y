@@ -29,6 +29,10 @@
 #include <string.h>
 
 #define wrap_err(x) do { xl_error _err = (x); if (_err != OK) YYABORT; } while (0);
+#define alloc(x, nelem, contents) do { \
+        (x) = calloc(nelem, sizeof(contents)); \
+        if ((x) == NULL) YYABORT; \
+        wrap_err(xl_vector_append(&ctx->allocs, x)); } while (0);
 
 void
 yyerror();
@@ -96,7 +100,7 @@ prog:
 
 blocks:
   %empty
-        { wrap_err(xl_ast_new(&$$)); }
+        { alloc($$, 1, struct xl_ast); }
 | blocks binding
         { wrap_err(xl_ast_bind($1, $2)); $$ = $1; }
 | blocks imports
@@ -107,9 +111,14 @@ blocks:
 
 binding:
   BIND NAME IS top_expr
-        { wrap_err(xl_ast_binding_new(&$$, $2, $4, NULL)); }
+        { alloc($$, 1, struct xl_ast_binding);
+          $$->name = $2;
+          $$->expr = $4; }
 | BIND NAME TYPE type_expr IS top_expr
-        { wrap_err(xl_ast_binding_new(&$$, $2, $6, $4)); }
+        { alloc($$, 1, struct xl_ast_binding);
+          $$->name = $2;
+          $$->expr = $6;
+          $$->type_expr = $4; }
 ;
 
 immediate:
@@ -119,11 +128,16 @@ immediate:
 
 imports:
   USES NAME
-        { wrap_err(xl_ast_import_list_new(&$$, $2)); }
+        { alloc($$, 1, struct xl_ast_import_list);
+          $$->name = $2; }
+;
 
 typedef:
   TYPE TYPE_NAME members
-        { wrap_err(xl_ast_type_new_record(&$$, $2, $3)); }
+        { alloc($$, 1, struct xl_ast_type);
+          $$->name = $2;
+          $$->type = TYPE_RECORD;
+          $$->members = $3; }
 ;
 
 members:
@@ -134,7 +148,9 @@ members:
 
 member:
   MEMBER NAME TYPE type_expr
-        { wrap_err(xl_ast_member_list_new(&$$, $2, $4)); }
+        { alloc($$, 1, struct xl_ast_member_list);
+          $$->name = $2;
+          $$->type = $4; }
 ;
 
 /* top_expr is a "top expression" in the parse tree; these are things that can't
@@ -145,27 +161,50 @@ top_expr:
   expr
         { $$ = $1; }
 | LAMBDA arg_list GOES_TO top_expr
-        { wrap_err(xl_ast_expr_new_lambda(&$$, $2, $4)); }
+        { alloc($$, 1, struct xl_ast_expr);
+          $$->expr_type = EXPR_LAMBDA;
+          $$->lambda.args = $2;
+          $$->lambda.body = $4; }
 | expr IMPLIES expr OPPOSES expr
-        { wrap_err(xl_ast_expr_new_conditional(&$$, $1, $3, $5)); }
-
+        { alloc($$, 1, struct xl_ast_expr);
+          $$->expr_type = EXPR_CONDITIONAL;
+          $$->condition.cond = $1;
+          $$->condition.implied = $3;
+          $$->condition.opposed = $5; }
+;
 
 expr:
   expr atom
         { struct xl_ast_expr *tail;
-          wrap_err(xl_ast_expr_new_atom(&tail, $2));
-          wrap_err(xl_ast_expr_new_apply(&$$, $1, tail)); }
+          alloc(tail, 1, struct xl_ast_expr);
+          tail->expr_type = EXPR_ATOM;
+          tail->atom = $2;
+
+          alloc($$, 1, struct xl_ast_expr);
+          $$->expr_type = EXPR_APPLY;
+          $$->apply.head = $1;
+          $$->apply.tail = tail; }
 | expr OPEN_PAR top_expr CLOSE_PAR
-        { wrap_err(xl_ast_expr_new_apply(&$$, $1, $3)); }
+        { alloc($$, 1, struct xl_ast_expr);
+          $$->expr_type = EXPR_APPLY;
+          $$->apply.head = $1;
+          $$->apply.tail = $3; }
 | atom
-        { wrap_err(xl_ast_expr_new_atom(&$$, $1)); }
+        { alloc($$, 1, struct xl_ast_expr);
+          $$->expr_type = EXPR_ATOM;
+          $$->atom = $1; }
 | OPEN_PAR top_expr CLOSE_PAR
         { $$ = $2; }
 | TYPE_NAME OPEN_SCOPE blocks CLOSE_SCOPE
-        { wrap_err(xl_ast_expr_new_constructor(&$$, $1, $3)); }
+        { alloc($$, 1, struct xl_ast_expr);
+          $$->expr_type = EXPR_CONSTRUCTOR;
+          $$->constructor.type_name = $1;
+          $$->constructor.scope = $3; }
 | OPEN_SCOPE blocks immediate CLOSE_SCOPE
-        { wrap_err(xl_ast_set_immediate($2, $3));
-          wrap_err(xl_ast_expr_new_block(&$$, $2)); }
+        { $2->immediate = $3;
+          alloc($$, 1, struct xl_ast_expr);
+          $$->expr_type = EXPR_BLOCK;
+          $$->block = $2; }
 ;
 
 arg_list:

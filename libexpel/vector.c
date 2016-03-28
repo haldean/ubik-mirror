@@ -28,6 +28,9 @@ xl_vector_ensure_size(struct xl_vector *v, size_t size)
         size_t new_cap;
         void **new_elems;
 
+        if (v->cap > size)
+                return OK;
+
         if (v->cap == 0)
         {
                 v->elems = calloc(size_max(8, size), sizeof(void *));
