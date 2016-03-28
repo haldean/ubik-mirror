@@ -209,9 +209,11 @@ expr:
 
 arg_list:
   %empty
-        { wrap_err(xl_ast_arg_list_new_empty(&$$)); }
+        { alloc($$, 1, struct xl_ast_arg_list); }
 | NAME arg_list
-        { wrap_err(xl_ast_arg_list_new_pushl(&$$, $1, $2)); }
+        { alloc($$, 1, struct xl_ast_arg_list);
+          $$->name = $1;
+          $$->next = $2; }
 ;
 
 atom:
