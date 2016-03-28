@@ -21,6 +21,7 @@
 
 #include "expel/expel.h"
 #include "expel/ast.h"
+#include "expel/parse.h"
 #include "expel/util.h"
 
 #include <stdio.h>
@@ -73,8 +74,7 @@ yyerror();
 %define parse.error verbose
 %locations
 
-%parse-param { struct xl_ast **ast }
-%parse-param { struct xl_ast_error_loc **error_loc }
+%parse-param { struct xl_parse_context *ctx }
 %parse-param { void *scanner }
 %lex-param { void *scanner }
 
@@ -88,9 +88,9 @@ int yydebug = 1;
 
 prog:
   blocks
-        { *ast = $1; }
+        { ctx->ast = $1; }
 | blocks immediate
-        { *ast = $1;
+        { ctx->ast = $1;
           wrap_err(xl_ast_set_immediate($1, $2)); }
 ;
 
@@ -207,18 +207,16 @@ type_atom:
 void
 yyerror(
         YYLTYPE *loc,
-        struct xl_ast **ast,
-        struct xl_ast_error_loc **error_loc,
+        struct xl_parse_context *ctx,
         void *scanner,
         const char *err)
 {
         unused(scanner);
-        unused(ast);
 
-        *error_loc = calloc(1, sizeof(struct xl_ast_error_loc));
-        (*error_loc)->line_start = loc->first_line;
-        (*error_loc)->line_end = loc->last_line;
-        (*error_loc)->col_start = loc->first_column;
-        (*error_loc)->col_end = loc->last_column;
-        (*error_loc)->message = strdup(err);
+        ctx->err_loc = calloc(1, sizeof(struct xl_ast_loc));
+        ctx->err_loc->line_start = loc->first_line;
+        ctx->err_loc->line_end = loc->last_line;
+        ctx->err_loc->col_start = loc->first_column;
+        ctx->err_loc->col_end = loc->last_column;
+        ctx->err_msg = strdup(err);
 }

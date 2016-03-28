@@ -240,15 +240,6 @@ _free_import_list(struct xl_ast_import_list *import_list)
         return OK;
 }
 
-void
-xl_ast_error_loc_free(struct xl_ast_error_loc *err_loc)
-{
-        if (err_loc == NULL)
-                return;
-        free(err_loc->message);
-        free(err_loc);
-}
-
 no_ignore xl_error
 xl_ast_free(struct xl_ast *ast)
 {

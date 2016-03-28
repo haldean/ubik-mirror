@@ -17,6 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include <stdlib.h>
 #include "expel/parse.h"
 #include "grammar.h"
 
@@ -36,7 +37,7 @@ xl_parse(struct xl_ast **ast, struct xl_stream *stream)
         YYSTYPE val;
         YYLTYPE loc = {0};
         int token;
-        struct xl_ast_error_loc *err_loc = NULL;
+        struct xl_parse_context ctx = {0};
 
         status = yylex_init(&scanner);
         if (status != 0)
@@ -48,22 +49,25 @@ xl_parse(struct xl_ast **ast, struct xl_stream *stream)
         do
         {
                 token = yylex(&val, &loc, scanner);
-                status = yypush_parse(
-                        ps, token, &val, &loc, ast, &err_loc, scanner);
+                status = yypush_parse(ps, token, &val, &loc, &ctx, scanner);
         } while (status == YYPUSH_MORE);
 
         yypstate_delete(ps);
         yylex_destroy(scanner);
 
         if (status == 0)
+        {
+                *ast = ctx.ast;
                 return OK;
+        }
 
-        if (err_loc != NULL)
+        if (ctx.err_loc != NULL)
         {
                 fprintf(stderr, "%lu:%lu: error: %s\n",
-                        err_loc->line_start, err_loc->col_start,
-                        err_loc->message);
-                xl_ast_error_loc_free(err_loc);
+                        ctx.err_loc->line_start, ctx.err_loc->col_start,
+                        ctx.err_msg);
+                free(ctx.err_loc);
+                free(ctx.err_msg);
         }
         return xl_raise(ERR_BAD_VALUE, "could not parse input");
 }

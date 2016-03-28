@@ -154,13 +154,12 @@ struct xl_ast_type
         enum type_type type;
 };
 
-struct xl_ast_error_loc
+struct xl_ast_loc
 {
         size_t line_start;
         size_t line_end;
         size_t col_start;
         size_t col_end;
-        char *message;
 };
 
 struct xl_ast
@@ -186,7 +185,7 @@ no_ignore xl_error
 xl_ast_free(struct xl_ast *ast);
 
 void
-xl_ast_error_loc_free(struct xl_ast_error_loc *err_loc);
+xl_ast_error_loc_free(struct xl_ast_loc *err_loc);
 
 /* Prints the AST to stdout. */
 no_ignore xl_error

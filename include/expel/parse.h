@@ -17,9 +17,19 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#pragma once
+
 #include "expel/expel.h"
 #include "expel/ast.h"
 #include "expel/stream.h"
+
+struct xl_parse_context
+{
+        struct xl_ast *ast;
+
+        struct xl_ast_loc *err_loc;
+        char *err_msg;
+};
 
 no_ignore xl_error
 xl_parse(struct xl_ast **ast, struct xl_stream *stream);
