@@ -34,9 +34,6 @@
         if ((x) == NULL) YYABORT; \
         wrap_err(xl_vector_append(&ctx->allocs, x)); } while (0);
 
-void
-yyerror();
-
 %}
 
 %union {
@@ -80,7 +77,24 @@ yyerror();
 
 %parse-param { struct xl_parse_context *ctx }
 %parse-param { void *scanner }
+%lex-param { struct xl_parse_context *ctx }
 %lex-param { void *scanner }
+
+%code provides {
+void
+yyerror(
+        YYLTYPE *loc,
+        struct xl_parse_context *ctx,
+        void *scanner,
+        const char *err);
+
+#define YY_DECL int yylex( \
+        YYSTYPE *yylval_param, \
+        YYLTYPE *yylloc_param, \
+        void *yyscanner, \
+        struct xl_parse_context *ctx)
+extern YY_DECL;
+}
 
 %{
 #if YYDEBUG

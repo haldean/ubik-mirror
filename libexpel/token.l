@@ -159,36 +159,3 @@ read_string_literal(yyscan_t scanner)
         }
         return temp;
 }
-
-no_ignore xl_error
-xl_tokenize(xl_token_cb callback, struct xl_stream *stream)
-{
-        struct xl_token token;
-        yyscan_t scanner;
-        xl_error err;
-        int ret;
-        YYSTYPE token_info;
-        YYLTYPE loc;
-
-        err = OK;
-
-        ret = yylex_init(&scanner);
-        if (ret != 0)
-                return xl_raise(ERR_UNEXPECTED_FAILURE, "yylex_init failed");
-
-        yyset_in(xl_stream_fp(stream), scanner);
-
-        while ((token.token_code = yylex(&token_info, &loc, scanner)) > 0)
-        {
-                token.text = yyget_text(scanner);
-                token.text_len = yyget_leng(scanner);
-                token.line_no = yyget_lineno(scanner);
-                err = callback(token);
-                if (err != OK)
-                        goto exit;
-        }
-
-exit:
-        yylex_destroy(scanner);
-        return err;
-}

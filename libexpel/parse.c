@@ -25,7 +25,6 @@
  * extern instead. */
 extern int  yylex_init(void *);
 extern void yylex_destroy(void *);
-extern int  yylex(YYSTYPE *, YYLTYPE *, void *);
 extern void yyset_in(FILE *, void *);
 
 void
@@ -54,7 +53,7 @@ xl_parse(struct xl_ast **ast, struct xl_stream *stream)
         ps = yypstate_new();
         do
         {
-                token = yylex(&val, &loc, scanner);
+                token = yylex(&val, &loc, scanner, &ctx);
                 status = yypush_parse(ps, token, &val, &loc, &ctx, scanner);
         } while (status == YYPUSH_MORE);
 
