@@ -218,29 +218,44 @@ arg_list:
 
 atom:
   NAME
-        { wrap_err(xl_ast_atom_new_name(&$$, $1)); }
+        { alloc($$, 1, struct xl_ast_atom);
+          $$->atom_type = ATOM_NAME;
+          $$->str = $1; }
 | QUALIFIED_NAME
         { wrap_err(xl_ast_atom_new_qualified(&$$, $1)); }
 | TYPE_NAME
-        { wrap_err(xl_ast_atom_new_type_name(&$$, $1)); }
+        { alloc($$, 1, struct xl_ast_atom);
+          $$->atom_type = ATOM_TYPE_NAME;
+          $$->str = $1; }
 | INTEGER
-        { wrap_err(xl_ast_atom_new_integer(&$$, $1)); }
+        { alloc($$, 1, struct xl_ast_atom);
+          $$->atom_type = ATOM_INT;
+          $$->integer = $1; }
 | NUMBER
-        { wrap_err(xl_ast_atom_new_number(&$$, $1)); }
+        { alloc($$, 1, struct xl_ast_atom);
+          $$->atom_type = ATOM_NUM;
+          $$->number = $1; }
 | STRING
-        { wrap_err(xl_ast_atom_new_string(&$$, $1)); }
+        { alloc($$, 1, struct xl_ast_atom);
+          $$->atom_type = ATOM_STRING;
+          $$->str = $1; }
 ;
 
 type_expr:
   type_atom
         { $$ = $1; }
 | type_atom GOES_TO type_expr
-        { wrap_err(xl_ast_type_expr_new_apply(&$$, $1, $3)); }
+        { alloc($$, 1, struct xl_ast_type_expr);
+          $$->type_expr_type = TYPE_EXPR_APPLY;
+          $$->apply.head = $1;
+          $$->apply.tail = $3; }
 ;
 
 type_atom:
   TYPE_NAME
-        { wrap_err(xl_ast_type_expr_new_atom(&$$, $1)); }
+        { alloc($$, 1, struct xl_ast_type_expr);
+          $$->type_expr_type = TYPE_EXPR_ATOM;
+          $$->name = $1; }
 ;
 
 %%
