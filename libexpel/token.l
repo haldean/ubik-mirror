@@ -33,6 +33,7 @@
 #define TOKEN(x) { yylval->token = x; return x; }
 #define TSTRING(token) { \
         yylval->string = strdup(yytext); \
+        if (xl_vector_append(&ctx->allocs, yylval->string) != OK) return 0; \
         return token; \
 }
 
