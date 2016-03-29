@@ -43,6 +43,7 @@ xl_parse(struct xl_ast **ast, struct xl_stream *stream)
         YYLTYPE loc = {0};
         int token;
         local(parse_context) struct xl_parse_context ctx = {0};
+        size_t i;
 
         status = yylex_init(&scanner);
         if (status != 0)
@@ -74,5 +75,7 @@ xl_parse(struct xl_ast **ast, struct xl_stream *stream)
                 free(ctx.err_loc);
                 free(ctx.err_msg);
         }
+        for (i = 0; i < ctx.allocs.n; i++)
+                free(ctx.allocs.elems[i]);
         return xl_raise(ERR_BAD_VALUE, "could not parse input");
 }

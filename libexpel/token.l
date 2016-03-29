@@ -43,7 +43,7 @@
         yyget_lloc(yyscanner)->last_column = yycolumn + yyleng - 1; \
         yycolumn += yyleng; } while (0);
 
-char *read_string_literal(yyscan_t scanner);
+char *read_string_literal(struct xl_parse_context *ctx, yyscan_t scanner);
 
 %}
 
@@ -82,7 +82,7 @@ NAME [a-z_][a-zA-Z0-9/_\-']*
 {NAME}                    TSTRING(NAME)
 {NAME}:{NAME}             TSTRING(QUALIFIED_NAME)
 [A-Z][a-zA-Z0-9/']*       TSTRING(TYPE_NAME)
-"\""                      { yylval->string = read_string_literal(yyscanner);
+"\""                      { yylval->string = read_string_literal(ctx, yyscanner);
                             return STRING; }
 
 .                         { printf("%d: invalid character %s\n",
@@ -93,7 +93,7 @@ NAME [a-z_][a-zA-Z0-9/_\-']*
 %%
 
 char *
-read_string_literal(yyscan_t scanner)
+read_string_literal(struct xl_parse_context *ctx, yyscan_t scanner)
 {
         char *res;
         char *temp;
@@ -156,6 +156,11 @@ read_string_literal(yyscan_t scanner)
         if (temp == NULL)
         {
                 free(res);
+                return NULL;
+        }
+        if (xl_vector_append(&ctx->allocs, temp) != OK)
+        {
+                free(temp);
                 return NULL;
         }
         return temp;
