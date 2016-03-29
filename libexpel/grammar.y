@@ -95,7 +95,7 @@ prog:
         { ctx->ast = $1; }
 | blocks immediate
         { ctx->ast = $1;
-          wrap_err(xl_ast_set_immediate($1, $2)); }
+          ctx->ast->immediate = $2; }
 ;
 
 blocks:
@@ -142,7 +142,10 @@ typedef:
 
 members:
   members member
-        { wrap_err(xl_ast_member_list_append($1, $2)); $$ = $1; }
+        { struct xl_ast_member_list *t = $1;
+          while (t->next != NULL)
+                  t = t->next;
+          t->next = $2; }
 | member
 ;
 

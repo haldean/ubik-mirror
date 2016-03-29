@@ -197,63 +197,9 @@ xl_ast_bind(
         struct xl_ast_binding *bind);
 
 no_ignore xl_error
-xl_ast_set_immediate(
-        struct xl_ast *ast,
-        struct xl_ast_expr *expr);
-
-no_ignore xl_error
 xl_ast_add_type(
         struct xl_ast *ast,
         struct xl_ast_type *type);
-
-no_ignore xl_error
-xl_ast_binding_new(
-        struct xl_ast_binding **binding,
-        char *name,
-        struct xl_ast_expr *expr,
-        struct xl_ast_type_expr *type_expr);
-
-/* Expression builders */
-no_ignore xl_error
-xl_ast_expr_new_apply(
-        struct xl_ast_expr **expr,
-        struct xl_ast_expr *head,
-        struct xl_ast_expr *tail);
-
-no_ignore xl_error
-xl_ast_expr_new_atom(
-        struct xl_ast_expr **expr,
-        struct xl_ast_atom *value);
-
-no_ignore xl_error
-xl_ast_expr_new_lambda(
-        struct xl_ast_expr **expr,
-        struct xl_ast_arg_list *args,
-        struct xl_ast_expr *body);
-
-no_ignore xl_error
-xl_ast_expr_new_constructor(
-        struct xl_ast_expr **expr,
-        char *type_name,
-        struct xl_ast *scope);
-
-no_ignore xl_error
-xl_ast_expr_new_conditional(
-        struct xl_ast_expr **expr,
-        struct xl_ast_expr *cond,
-        struct xl_ast_expr *implied,
-        struct xl_ast_expr *opposed);
-
-no_ignore xl_error
-xl_ast_expr_new_block(
-        struct xl_ast_expr **expr,
-        struct xl_ast *block);
-
-/* Atom builders */
-no_ignore xl_error
-xl_ast_atom_new_name(
-        struct xl_ast_atom **atom,
-        char *name);
 
 no_ignore xl_error
 xl_ast_atom_new_qualified(
@@ -261,74 +207,6 @@ xl_ast_atom_new_qualified(
         char *name);
 
 no_ignore xl_error
-xl_ast_atom_new_type_name(
-        struct xl_ast_atom **atom,
-        char *type_name);
-
-no_ignore xl_error
-xl_ast_atom_new_integer(
-        struct xl_ast_atom **atom,
-        xl_word integer);
-
-no_ignore xl_error
-xl_ast_atom_new_number(
-        struct xl_ast_atom **atom,
-        xl_float number);
-
-no_ignore xl_error
-xl_ast_atom_new_string(
-        struct xl_ast_atom **atom,
-        char *string);
-
-/* Type expression builders */
-no_ignore xl_error
-xl_ast_type_expr_new_atom(
-        struct xl_ast_type_expr **expr,
-        char *type_name);
-
-no_ignore xl_error
-xl_ast_type_expr_new_apply(
-        struct xl_ast_type_expr **expr,
-        struct xl_ast_type_expr *head,
-        struct xl_ast_type_expr *tail);
-
-/* Argument list builders */
-no_ignore xl_error
-xl_ast_arg_list_new_empty(
-        struct xl_ast_arg_list **arg_list);
-
-no_ignore xl_error
-xl_ast_arg_list_new_pushl(
-        struct xl_ast_arg_list **arg_list,
-        char *head,
-        struct xl_ast_arg_list *tail);
-
-/* Import list builders */
-no_ignore xl_error
 xl_ast_import(
         struct xl_ast *ast,
         struct xl_ast_import_list *import_list);
-
-no_ignore xl_error
-xl_ast_import_list_new(
-        struct xl_ast_import_list **import_list,
-        char *head);
-
-/* Type builders */
-no_ignore xl_error
-xl_ast_type_new_record(
-        struct xl_ast_type **type,
-        char *name,
-        struct xl_ast_member_list *members);
-
-/* Member list builders */
-no_ignore xl_error
-xl_ast_member_list_new(
-        struct xl_ast_member_list **member_list,
-        char *name,
-        struct xl_ast_type_expr *type);
-
-no_ignore xl_error
-xl_ast_member_list_append(
-        struct xl_ast_member_list *heads,
-        struct xl_ast_member_list *tail);
