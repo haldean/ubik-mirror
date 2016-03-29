@@ -8,5 +8,5 @@ set -ex
 
 export EXPEL_INCLUDE="${INCLUDE:-$PWD}"
 
-$EXPELC $XL_FILE a.out
-$RUNEXPEL a.out
+$EXPELC $XL_FILE $XL_FILE.out
+$RUNEXPEL $XL_FILE.out
