@@ -56,6 +56,7 @@ main(int argc, char *argv[])
         size_t n_graphs = 0;
         xl_error err;
         struct xl_compilation_env env;
+        char *source_name;
 
         if (argc != 3)
         {
@@ -65,7 +66,8 @@ main(int argc, char *argv[])
 
         c(xl_start());
 
-        if (xl_stream_rfile(&in, argv[1]) != OK)
+        source_name = argv[1];
+        if (xl_stream_rfile(&in, source_name) != OK)
         {
                 printf("could not open %s for reading\n", argv[1]);
                 return EXIT_FAILURE;
@@ -77,7 +79,7 @@ main(int argc, char *argv[])
         }
 
         c(xl_compile_env_default(&env));
-        c(xl_compile(&graphs, &n_graphs, &in, &env));
+        c(xl_compile(&graphs, &n_graphs, source_name, &in, &env));
         c(xl_compile_env_free(&env));
         c(xl_save(&out, graphs, n_graphs));
 

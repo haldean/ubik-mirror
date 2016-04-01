@@ -40,6 +40,7 @@ no_ignore xl_error
 xl_compile(
         struct xl_dagc ***graphs,
         size_t *n_graphs,
+        char *source_name,
         struct xl_stream *in_stream,
         struct xl_compilation_env *cenv);
 

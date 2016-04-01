@@ -34,7 +34,7 @@ xl_parse_context_free(struct xl_parse_context *ctx)
 }
 
 no_ignore xl_error
-xl_parse(struct xl_ast **ast, struct xl_stream *stream)
+xl_parse(struct xl_ast **ast, char *source_name, struct xl_stream *stream)
 {
         int status;
         yypstate *ps;
@@ -69,9 +69,9 @@ xl_parse(struct xl_ast **ast, struct xl_stream *stream)
 
         if (ctx.err_loc != NULL)
         {
-                fprintf(stderr, "%lu:%lu: error: %s\n",
-                        ctx.err_loc->line_start, ctx.err_loc->col_start,
-                        ctx.err_msg);
+                fprintf(stderr, "%s:%lu:%lu: error: %s\n",
+                        source_name, ctx.err_loc->line_start,
+                        ctx.err_loc->col_start, ctx.err_msg);
                 free(ctx.err_loc);
                 free(ctx.err_msg);
         }

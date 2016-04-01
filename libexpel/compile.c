@@ -84,13 +84,14 @@ no_ignore xl_error
 xl_compile(
         struct xl_dagc ***graphs,
         size_t *n_graphs,
+        char *source_name,
         struct xl_stream *in_stream,
         struct xl_compilation_env *cenv)
 {
         struct xl_ast *ast;
         xl_error err;
 
-        err = xl_parse(&ast, in_stream);
+        err = xl_parse(&ast, source_name, in_stream);
         if (err != OK)
                 return err;
 
@@ -108,6 +109,7 @@ xl_compile(
 no_ignore static xl_error
 _open_stream_for_requirement(
         struct xl_stream *out,
+        char **source_name,
         char *package_name,
         struct xl_compilation_env *cenv)
 {
@@ -135,7 +137,7 @@ _open_stream_for_requirement(
                         printf("found %s for %s\n", test_file, package_name);
 #endif
                         free(test_file);
-                        free(test_basename);
+                        *source_name = test_basename;
                         return OK;
                 }
                 free(test_file);
@@ -159,16 +161,18 @@ _add_requirement(
         struct xl_stream package_stream;
         struct xl_ast *ast;
         struct xl_dagc **buf;
+        char *source_name;
         xl_error err;
 
         unused(requires);
 
         err = _open_stream_for_requirement(
-                &package_stream, dependency->source, cenv);
+                &package_stream, &source_name, dependency->source, cenv);
         if (err != OK)
                 return err;
 
-        err = xl_parse(&ast, &package_stream);
+        err = xl_parse(&ast, source_name, &package_stream);
+        free(source_name);
         if (err != OK)
                 return err;
 
