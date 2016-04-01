@@ -82,6 +82,12 @@ xl_stream_drop(struct xl_stream *src, size_t len);
 FILE *
 xl_stream_fp(struct xl_stream *sp);
 
+/* Resets a stream to the start.
+ *
+ * In some cases this may be equivalent to closing and reopening the stream. */
+void
+xl_stream_reset(struct xl_stream *sp);
+
 /* Closes a stream. */
 void
 xl_stream_close(struct xl_stream *sp);

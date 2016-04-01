@@ -203,3 +203,20 @@ xl_stream_fp(struct xl_stream *sp)
         }
         return NULL;
 }
+
+void
+xl_stream_reset(struct xl_stream *sp)
+{
+        switch (sp->stream_type)
+        {
+        case STREAM_TYPE_FILE_R:
+        case STREAM_TYPE_FILE_W:
+                rewind(sp->file);
+                return;
+
+        case STREAM_TYPE_BUFFER:
+                sp->buffer->read = sp->buffer->start;
+                sp->buffer->write = sp->buffer->start;
+                return;
+        }
+}

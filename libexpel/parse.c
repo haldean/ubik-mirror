@@ -33,6 +33,64 @@ xl_parse_context_free(struct xl_parse_context *ctx)
         xl_vector_free(&ctx->allocs);
 }
 
+#define lis_buf_size 1024
+void
+_print_line_in_stream(struct xl_stream *stream, size_t line)
+{
+        char buf[lis_buf_size];
+        size_t i;
+        size_t n_lines_seen;
+        size_t read;
+
+        xl_stream_reset(stream);
+        n_lines_seen = 0;
+
+        for (;;)
+        {
+                read = xl_stream_read(buf, stream, lis_buf_size - 1);
+                if (read == 0)
+                        return;
+                buf[read] = '\0';
+
+                for (i = 0; i < lis_buf_size - 1; i++)
+                {
+                        if (buf[i] == '\n')
+                        {
+                                n_lines_seen++;
+                                if (n_lines_seen == line)
+                                        goto line_found;
+                        }
+                }
+        }
+
+line_found:
+        for (;;)
+        {
+                for (i++; i < lis_buf_size - 1; i++)
+                {
+                        putchar(buf[i]);
+                        if (buf[i] == '\n')
+                                return;
+                }
+                read = xl_stream_read(buf, stream, lis_buf_size - 1);
+                if (read == 0)
+                {
+                        printf("\n");
+                        return;
+                }
+                i = 0;
+        }
+}
+
+void
+_show_char_in_line(size_t column)
+{
+        size_t i;
+        for (i = 0; i < column - 1; i++)
+                putchar(' ');
+        printf("^\n");
+}
+
 no_ignore xl_error
 xl_parse(struct xl_ast **ast, char *source_name, struct xl_stream *stream)
 {
@@ -72,6 +130,8 @@ xl_parse(struct xl_ast **ast, char *source_name, struct xl_stream *stream)
                 fprintf(stderr, "%s:%lu:%lu: error: %s\n",
                         source_name, ctx.err_loc->line_start,
                         ctx.err_loc->col_start, ctx.err_msg);
+                _print_line_in_stream(stream, ctx.err_loc->line_start - 1);
+                _show_char_in_line(ctx.err_loc->col_start);
                 free(ctx.err_loc);
                 free(ctx.err_msg);
         }
