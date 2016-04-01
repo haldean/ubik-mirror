@@ -127,7 +127,8 @@ xl_parse(struct xl_ast **ast, char *source_name, struct xl_stream *stream)
 
         if (ctx.err_loc != NULL)
         {
-                fprintf(stderr, "%s:%lu:%lu: error: %s\n",
+                fprintf(stderr,
+                        "\x1b[37m%s:%lu:%lu:\x1b[31m error:\x1b[0m %s\n",
                         source_name, ctx.err_loc->line_start,
                         ctx.err_loc->col_start, ctx.err_msg);
                 _print_line_in_stream(stream, ctx.err_loc->line_start - 1);
