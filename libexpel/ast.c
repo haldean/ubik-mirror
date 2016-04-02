@@ -246,21 +246,21 @@ xl_ast_free(struct xl_ast *ast)
         size_t i;
         xl_error err;
 
-        for (i = 0; i < ast->n_bindings; i++)
+        for (i = 0; i < ast->bindings.n; i++)
         {
-                err = _free_binding(ast->bindings[i]);
+                err = _free_binding(ast->bindings.elems[i]);
                 if (err != OK)
                         return err;
         }
-        free(ast->bindings);
+        xl_vector_free(&ast->bindings);
 
-        for (i = 0; i < ast->n_types; i++)
+        for (i = 0; i < ast->types.n; i++)
         {
-                err = _free_type(ast->types[i]);
+                err = _free_type(ast->types.elems[i]);
                 if (err != OK)
                         return err;
         }
-        free(ast->types);
+        xl_vector_free(&ast->types);
 
         if (ast->immediate != NULL)
         {
@@ -283,49 +283,13 @@ xl_ast_free(struct xl_ast *ast)
 no_ignore xl_error
 xl_ast_bind(struct xl_ast *ast, struct xl_ast_binding *bind)
 {
-        struct xl_ast_binding **temp;
-        size_t new_cap;
-
-        if (ast->n_bindings < ast->cap_bindings)
-        {
-                ast->bindings[ast->n_bindings++] = bind;
-                return OK;
-        }
-
-        new_cap = ast->cap_bindings == 0 ? 8 : 2 * ast->cap_bindings;
-        temp = realloc(
-                ast->bindings,
-                new_cap * sizeof(struct xl_ast_binding *));
-        if (temp == NULL)
-                return xl_raise(ERR_NO_MEMORY, "ast bindings realloc");
-        ast->cap_bindings = new_cap;
-        ast->bindings = temp;
-        ast->bindings[ast->n_bindings++] = bind;
-        return OK;
+        return xl_vector_append(&ast->bindings, bind);
 }
 
 no_ignore xl_error
 xl_ast_add_type(struct xl_ast *ast, struct xl_ast_type *type)
 {
-        struct xl_ast_type **temp;
-        size_t new_cap;
-
-        if (ast->n_types < ast->cap_types)
-        {
-                ast->types[ast->n_types++] = type;
-                return OK;
-        }
-
-        new_cap = ast->cap_types == 0 ? 8 : 2 * ast->cap_types;
-        temp = realloc(
-                ast->types,
-                new_cap * sizeof(struct xl_ast_type *));
-        if (temp == NULL)
-                return xl_raise(ERR_NO_MEMORY, "ast types realloc");
-        ast->cap_types = new_cap;
-        ast->types = temp;
-        ast->types[ast->n_types++] = type;
-        return OK;
+        return xl_vector_append(&ast->types, type);
 }
 
 no_ignore xl_error

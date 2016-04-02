@@ -202,23 +202,23 @@ _print_ast(struct xl_ast *ast, int indent)
         xl_error err;
         struct xl_ast_binding *b;
 
-        if (ast->n_types > 0)
+        if (ast->types.n > 0)
         {
                 _indent(indent);
-                printf("%lu types:\n", ast->n_types);
-                for (i = 0; i < ast->n_types; i++)
+                printf("%lu types:\n", ast->types.n);
+                for (i = 0; i < ast->types.n; i++)
                 {
-                        err = _print_type(ast->types[i], indent + 4);
+                        err = _print_type(ast->types.elems[i], indent + 4);
                         if (err != OK)
                                 return err;
                 }
         }
 
         _indent(indent);
-        printf("%lu bindings:\n", ast->n_bindings);
-        for (i = 0; i < ast->n_bindings; i++)
+        printf("%lu bindings:\n", ast->bindings.n);
+        for (i = 0; i < ast->bindings.n; i++)
         {
-                b = ast->bindings[i];
+                b = ast->bindings.elems[i];
                 _indent(indent + 4);
                 printf("bind %s", b->name);
                 if (b->type_expr != NULL)

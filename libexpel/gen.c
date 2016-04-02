@@ -794,7 +794,7 @@ xl_compile_unit(
         if (err != OK)
                 return err;
 
-        *graphs = calloc(ast->n_bindings + 1, sizeof(struct xl_dagc *));
+        *graphs = calloc(ast->bindings.n + 1, sizeof(struct xl_dagc *));
         if (*graphs == NULL)
                 return xl_raise(ERR_NO_MEMORY, "compile graph alloc");
 
@@ -802,10 +802,11 @@ xl_compile_unit(
          * that the zeroth graph can be the modinit. */
         *n_graphs = 1;
 
-        for (i = 0; i < ast->n_bindings; i++)
+        for (i = 0; i < ast->bindings.n; i++)
         {
                 err = xl_compile_binding(
-                        *graphs, (*n_graphs)++, ast->bindings[i], &local_env);
+                        *graphs, (*n_graphs)++, ast->bindings.elems[i],
+                        &local_env);
                 if (err != OK)
                         return err;
         }

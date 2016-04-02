@@ -19,6 +19,7 @@
 
 #pragma once
 #include "expel/expel.h"
+#include "expel/vector.h"
 
 #include <stdbool.h>
 
@@ -164,13 +165,11 @@ struct xl_ast_loc
 
 struct xl_ast
 {
-        struct xl_ast_binding **bindings;
-        size_t n_bindings;
-        size_t cap_bindings;
+        /* members are struct xl_ast_binding pointers */
+        struct xl_vector bindings;
 
-        struct xl_ast_type **types;
-        size_t n_types;
-        size_t cap_types;
+        /* members are struct xl_ast_type pointers */
+        struct xl_vector types;
 
         struct xl_ast_expr *immediate;
 
