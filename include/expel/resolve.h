@@ -20,12 +20,16 @@
 #pragma once
 #include "expel/expel.h"
 #include "expel/ast.h"
+#include "expel/vector.h"
 
 enum xl_resolve_type
 {
+        /* if a name resolves locally, then the name should be accessed by using
+         * a ref node to the appropriate node for the name. */
         RESOLVE_LOCAL = 1,
-        RESOLVE_PUBLIC,
-        RESOLVE_CLOSURE
+        /* if a name resolves globally, then the name should be accessed by
+         * using a load node with the userdef scope. */
+        RESOLVE_GLOBAL
 };
 
 struct xl_resolve_name
@@ -42,17 +46,20 @@ struct xl_resolve_name
  * parent is accessible (as it's just a scope object inside another
  * scope). If a scope has a BOUNDARY_FUNCTION boundary type, its parent
  * is not accessible as they exist in separate functions, and we need to
- * close over its parents' values. */
+ * close over its parents' values. If a scope has a BOUNDARY_GLOBAL boundary
+ * type, its members can be accessed using load nodes instead of ref nodes and
+ * thus they don't have to be closed over. */
 enum xl_resolve_boundary_type
 {
         BOUNDARY_BLOCK = 1,
-        BOUNDARY_FUNCTION
+        BOUNDARY_FUNCTION,
+        BOUNDARY_GLOBAL
 };
 
 struct xl_resolve_scope
 {
-        struct xl_resolve_name *names;
-        size_t n_names;
+        /* members of are struct xl_resolve_name pointers */
+        struct xl_vector names;
 
         struct xl_resolve_scope *parent;
         enum xl_resolve_boundary_type boundary;

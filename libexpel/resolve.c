@@ -28,6 +28,7 @@ assign_initial_scopes(
         struct xl_ast *subast;
         struct xl_ast_expr *subexprs[8];
         size_t n_subexprs;
+        size_t i;
         xl_error err;
 
         switch (expr->expr_type)
@@ -63,6 +64,20 @@ assign_initial_scopes(
         err = xl_ast_subexprs(&subast, subexprs, &n_subexprs, expr);
         if (err != OK)
                 return err;
+
+        if (subast != NULL)
+        {
+                err = assign_all_initial_scopes(subast, expr->scope);
+                if (err != OK)
+                        return err;
+        }
+
+        for (i = 0; i < n_subexprs; i++)
+        {
+                err = assign_initial_scopes(subexprs[i], expr->scope);
+                if (err != OK)
+                        return err;
+        }
         return OK;
 }
 
@@ -78,7 +93,8 @@ assign_all_initial_scopes(
         if (ast->scope == NULL)
                 return xl_raise(ERR_NO_MEMORY, "ast scope alloc");
         ast->scope->parent = parent;
-        ast->scope->boundary = BOUNDARY_BLOCK;
+        ast->scope->boundary =
+                parent == NULL ? BOUNDARY_GLOBAL : BOUNDARY_BLOCK;
 
         for (i = 0; i < ast->bindings.n; i++)
         {
@@ -98,28 +114,66 @@ assign_all_initial_scopes(
         return OK;
 }
 
+no_ignore static xl_error
+find_blocks_and_bind(struct xl_ast_expr *expr)
+{
+        struct xl_ast *subast;
+        struct xl_ast_expr *subexprs[8];
+        size_t n_subexprs;
+        size_t i;
+        xl_error err;
+
+        err = xl_ast_subexprs(&subast, subexprs, &n_subexprs, expr);
+        if (err != OK)
+                return err;
+
+        if (subast != NULL)
+        {
+                err = update_scopes_with_bindings(subast);
+                if (err != OK)
+                        return err;
+        }
+
+        for (i = 0; i < n_subexprs; i++)
+        {
+                err = find_blocks_and_bind(subexprs[i]);
+                if (err != OK)
+                        return err;
+        }
+        return OK;
+}
+
 no_ignore xl_error
 update_scopes_with_bindings(struct xl_ast *ast)
 {
         size_t i;
         struct xl_ast_binding *bind;
+        struct xl_resolve_name *name;
         xl_error err;
-
-        ast->scope = calloc(1, sizeof(struct xl_resolve_scope));
-        if (ast->scope == NULL)
-                return xl_raise(ERR_NO_MEMORY, "ast scope alloc");
 
         for (i = 0; i < ast->bindings.n; i++)
         {
                 bind = ast->bindings.elems[i];
-                err = assign_initial_scopes(bind->expr, ast->scope);
+                name = calloc(1, sizeof(struct xl_resolve_name));
+                if (name == NULL)
+                        return xl_raise(ERR_NO_MEMORY, "bind to scope alloc");
+                name->name = bind->name;
+                name->type = ast->scope->boundary == BOUNDARY_GLOBAL
+                        ? RESOLVE_GLOBAL
+                        : RESOLVE_LOCAL;
+
+                err = xl_vector_append(&ast->scope->names, name);
+                if (err != OK)
+                        return err;
+
+                err = find_blocks_and_bind(bind->expr);
                 if (err != OK)
                         return err;
         }
 
         if (ast->immediate != NULL)
         {
-                err = assign_initial_scopes(ast->immediate, ast->scope);
+                err = find_blocks_and_bind(ast->immediate);
                 if (err != OK)
                         return err;
         }
