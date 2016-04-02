@@ -405,6 +405,7 @@ _assign_nodes(
                         return err;
                 break;
 
+        case EXPR_CONSTRUCTOR:
         default:
                 return xl_raise(ERR_UNKNOWN_TYPE, "compile assign node");
         }

@@ -50,6 +50,7 @@ enum atom_type
 };
 
 struct xl_ast;
+struct xl_resolve_scope;
 
 enum type_type
 {
@@ -108,6 +109,8 @@ struct xl_ast_expr
                 struct xl_ast *block;
         };
         enum expr_type expr_type;
+
+        struct xl_resolve_scope *scope;
         struct xl_dagc_node *gen;
 };
 
@@ -167,13 +170,14 @@ struct xl_ast
 {
         /* members are struct xl_ast_binding pointers */
         struct xl_vector bindings;
-
         /* members are struct xl_ast_type pointers */
         struct xl_vector types;
-
+        /* to run when ast is evaluted */
         struct xl_ast_expr *immediate;
-
+        /* things this depends on existing */
         struct xl_ast_import_list *imports;
+        /* everything in scope in this ast */
+        struct xl_resolve_scope *scope;
 };
 
 /* Allocates a new AST. */
@@ -209,3 +213,10 @@ no_ignore xl_error
 xl_ast_import(
         struct xl_ast *ast,
         struct xl_ast_import_list *import_list);
+
+no_ignore xl_error
+xl_ast_subexprs(
+        struct xl_ast **subast,
+        struct xl_ast_expr **subexprs,
+        size_t *n_subexprs,
+        struct xl_ast_expr *expr);
