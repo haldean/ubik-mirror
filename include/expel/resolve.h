@@ -66,9 +66,4 @@ struct xl_resolve_scope
 };
 
 no_ignore xl_error
-assign_all_initial_scopes(
-        struct xl_ast *ast,
-        struct xl_resolve_scope *parent);
-
-no_ignore xl_error
-update_scopes_with_bindings(struct xl_ast *ast);
+xl_resolve(struct xl_ast *ast);

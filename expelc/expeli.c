@@ -27,6 +27,7 @@
 #include "expel/env.h"
 #include "expel/expel.h"
 #include "expel/parse.h"
+#include "expel/resolve.h"
 #include "expel/schedule.h"
 #include "expel/value.h"
 
@@ -69,6 +70,8 @@ main(int argc, char *argv[])
                 err = xl_ast_print(ast);
         c(parse_err);
         c(err);
+
+        c(xl_resolve(ast));
 
         c(xl_compile_ast(&graphs, &n_graphs, ast, NULL));
 

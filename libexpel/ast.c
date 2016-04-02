@@ -345,3 +345,13 @@ xl_ast_import(
         ast->imports = import_list;
         return OK;
 }
+
+no_ignore xl_error
+xl_ast_subexprs(
+        struct xl_ast **subast,
+        struct xl_ast_expr **subexprs,
+        size_t *n_subexprs,
+        struct xl_ast_expr *expr)
+{
+
+}

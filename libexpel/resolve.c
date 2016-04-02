@@ -21,6 +21,15 @@
 #include "expel/ast.h"
 #include "expel/resolve.h"
 
+no_ignore xl_error
+assign_all_initial_scopes(
+        struct xl_ast *ast,
+        struct xl_resolve_scope *parent);
+
+no_ignore xl_error
+update_scopes_with_bindings(struct xl_ast *ast);
+
+
 no_ignore static xl_error
 assign_initial_scopes(
         struct xl_ast_expr *expr, struct xl_resolve_scope *parent)
@@ -177,6 +186,22 @@ update_scopes_with_bindings(struct xl_ast *ast)
                 if (err != OK)
                         return err;
         }
+
+        return OK;
+}
+
+no_ignore xl_error
+xl_resolve(struct xl_ast *ast)
+{
+        xl_error err;
+
+        err = assign_all_initial_scopes(ast, NULL);
+        if (err != OK)
+                return err;
+
+        err = update_scopes_with_bindings(ast);
+        if (err != OK)
+                return err;
 
         return OK;
 }
