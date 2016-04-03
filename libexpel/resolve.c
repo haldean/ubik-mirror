@@ -348,6 +348,7 @@ find_name_resolution_types(
         struct xl_ast_expr *subexprs[8];
         struct xl_resolve_name_loc *name_loc;
         struct xl_resolve_scope *scope;
+        struct xl_resolve_name *check_name;
         xl_error err;
 
         if (expr->expr_type == EXPR_ATOM && expr->atom->atom_type == ATOM_NAME)
@@ -372,7 +373,8 @@ find_name_resolution_types(
                 {
                         for (i = 0; i < scope->names.n; i++)
                         {
-                                if (strcmp(name, scope->names.elems[i]) == 0)
+                                check_name = scope->names.elems[i];
+                                if (strcmp(name, check_name->name) == 0)
                                         found = true;
                         }
                         if (!found && scope->boundary == BOUNDARY_FUNCTION)
@@ -459,7 +461,15 @@ add_uri_to_scope(void *ctx_v, struct xl_env *env, struct xl_uri *uri)
                 return err;
         }
 
-        name->name = uri->name;
+        name->name = strdup(uri->name);
+        err = xl_vector_append(&ctx->allocs, name->name);
+        if (err != OK)
+        {
+                free(name->name);
+                free(name);
+                return err;
+        }
+
         name->type = RESOLVE_GLOBAL;
         return xl_vector_append(&ctx->native_scope->names, name);
 }
