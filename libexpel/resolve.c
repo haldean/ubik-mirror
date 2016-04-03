@@ -377,7 +377,9 @@ find_name_resolution_types(
                                 if (strcmp(name, check_name->name) == 0)
                                         found = true;
                         }
-                        if (!found && scope->boundary == BOUNDARY_FUNCTION)
+                        if (scope->boundary == BOUNDARY_GLOBAL)
+                                highest_bdry = BOUNDARY_GLOBAL;
+                        else if (!found && scope->boundary == BOUNDARY_FUNCTION)
                                 highest_bdry = BOUNDARY_FUNCTION;
                         scope = scope->parent;
                 }
@@ -389,9 +391,23 @@ find_name_resolution_types(
                                 return err;
                 }
 
-                expr->atom->name_loc->type = highest_bdry == BOUNDARY_FUNCTION
-                        ? RESOLVE_CLOSURE
-                        : RESOLVE_LOCAL;
+                switch (highest_bdry)
+                {
+                case BOUNDARY_FUNCTION:
+                        expr->atom->name_loc->type = RESOLVE_CLOSURE;
+                        break;
+                case BOUNDARY_GLOBAL:
+                        expr->atom->name_loc->type = RESOLVE_GLOBAL;
+                        break;
+                case BOUNDARY_BLOCK:
+                        expr->atom->name_loc->type = RESOLVE_LOCAL;
+                        break;
+                }
+                printf("name %s resolves with type %s\n",
+                        name,
+                        expr->atom->name_loc->type == RESOLVE_CLOSURE
+                        ? "closure" : (expr->atom->name_loc->type == RESOLVE_GLOBAL
+                                ? "global" : "local"));
         }
 
         err = xl_ast_subexprs(&subast, subexprs, &n_subexprs, expr);
