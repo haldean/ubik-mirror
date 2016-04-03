@@ -29,7 +29,10 @@ enum xl_resolve_type
         RESOLVE_LOCAL = 1,
         /* if a name resolves globally, then the name should be accessed by
          * using a load node with the userdef scope. */
-        RESOLVE_GLOBAL
+        RESOLVE_GLOBAL,
+        /* if a name resolves through closure, then the ast needs to be
+         * transformed such that the name can be accessed as a local. */
+        RESOLVE_CLOSURE,
 };
 
 struct xl_resolve_name
@@ -37,6 +40,11 @@ struct xl_resolve_name
         char *name;
         enum xl_resolve_type type;
         struct xl_dagc_node *node;
+};
+
+struct xl_resolve_name_loc
+{
+        enum xl_resolve_type type;
 };
 
 /* Scope boundaries are used to determine whether something is
@@ -52,8 +60,8 @@ struct xl_resolve_name
 enum xl_resolve_boundary_type
 {
         BOUNDARY_BLOCK = 1,
+        BOUNDARY_GLOBAL,
         BOUNDARY_FUNCTION,
-        BOUNDARY_GLOBAL
 };
 
 struct xl_resolve_scope
@@ -65,5 +73,30 @@ struct xl_resolve_scope
         enum xl_resolve_boundary_type boundary;
 };
 
+enum xl_resolve_error_type
+{
+        RESOLVE_ERR_NAME_NOT_FOUND = 1,
+};
+
+struct xl_resolve_error
+{
+        enum xl_resolve_error_type err_type;
+        char *name;
+};
+
+struct xl_resolve_context
+{
+        struct xl_resolve_scope *native_scope;
+        struct xl_vector scope_allocs;
+        struct xl_vector allocs;
+        struct xl_vector errors;
+};
+
 no_ignore xl_error
-xl_resolve(struct xl_ast *ast);
+xl_resolve(
+        struct xl_ast *ast,
+        char *source_name,
+        struct xl_resolve_context *ctx);
+
+void
+xl_resolve_context_free(struct xl_resolve_context *ctx);

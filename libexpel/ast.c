@@ -353,5 +353,40 @@ xl_ast_subexprs(
         size_t *n_subexprs,
         struct xl_ast_expr *expr)
 {
+        *subast = NULL;
+        *n_subexprs = 0;
 
+        switch (expr->expr_type)
+        {
+        case EXPR_ATOM:
+                return OK;
+
+        case EXPR_APPLY:
+                subexprs[0] = expr->apply.head;
+                subexprs[1] = expr->apply.tail;
+                *n_subexprs = 2;
+                return OK;
+
+        case EXPR_LAMBDA:
+                subexprs[0] = expr->lambda.body;
+                *n_subexprs = 1;
+                return OK;
+
+        case EXPR_CONSTRUCTOR:
+                *subast = expr->constructor.scope;
+                return OK;
+
+        case EXPR_CONDITIONAL:
+                subexprs[0] = expr->condition.cond;
+                subexprs[1] = expr->condition.implied;
+                subexprs[2] = expr->condition.opposed;
+                *n_subexprs = 3;
+                return OK;
+
+        case EXPR_BLOCK:
+                *subast = expr->block;
+                return OK;
+        }
+
+        return xl_raise(ERR_BAD_TYPE, "bad type in expr subexpressions");
 }

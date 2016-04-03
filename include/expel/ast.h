@@ -51,6 +51,7 @@ enum atom_type
 
 struct xl_ast;
 struct xl_resolve_scope;
+struct xl_resolve_name_loc;
 
 enum type_type
 {
@@ -71,6 +72,7 @@ struct xl_ast_atom
                 } qualified;
         };
         enum atom_type atom_type;
+        struct xl_resolve_name_loc *name_loc;
 };
 
 struct xl_ast_arg_list

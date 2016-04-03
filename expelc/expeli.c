@@ -50,6 +50,7 @@ main(int argc, char *argv[])
         struct xl_stream sstdin;
         struct xl_env env = {0};
         struct xl_scheduler *s;
+        local(resolve_context) struct xl_resolve_context rctx = {0};
         size_t n_graphs;
         size_t i;
         xl_error err;
@@ -71,7 +72,7 @@ main(int argc, char *argv[])
         c(parse_err);
         c(err);
 
-        c(xl_resolve(ast));
+        c(xl_resolve(ast, "(stdin)", &rctx));
 
         c(xl_compile_ast(&graphs, &n_graphs, ast, NULL));
 
@@ -143,7 +144,6 @@ teardown:
                 free(teardown_err);
         }
 
-        free(err);
         return err == OK ? EXIT_SUCCESS : EXIT_FAILURE;
 }
 

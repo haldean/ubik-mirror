@@ -14,6 +14,7 @@ syntax match expelSubbind "="
 syntax match expelSubbind "=>"
 syntax match expelSubbind "/>"
 syntax match expelSubbind "->"
+syntax match expelSubbind "\\"
 highlight link expelSubbind Keyword
 
 syntax region expelString start=/"/ skip=/\\"/ end=/"/ oneline
