@@ -186,21 +186,33 @@ apply_upwards_transform(
         size_t i;
         struct xl_ast_expr *expr;
         struct xl_ast_arg_list *args;
+        struct xl_resolve_scope *scope;
 
         resolving_name = *resolving_name_ref;
         expr = *expr_ref;
 
+        /* check to see if we can reach the definition of this name from where
+         * we are, without crossing a boundary. */
         is_top = false;
-        for (i = 0; i < expr->scope->names.n; i++)
+        scope = expr->scope;
+        do
         {
-                struct xl_resolve_name *name;
-                name = expr->scope->names.elems[i];
-                if (strcmp(name->name, resolving_name) == 0)
+                for (i = 0; i < scope->names.n; i++)
                 {
-                        is_top = true;
-                        break;
+                        struct xl_resolve_name *name;
+                        name = scope->names.elems[i];
+                        if (strcmp(name->name, resolving_name) == 0)
+                        {
+                                is_top = true;
+                                goto break_all;
+                        }
                 }
-        }
+                if (scope->boundary == BOUNDARY_FUNCTION)
+                        goto break_all;
+                scope = scope->parent;
+        } while (scope != NULL);
+
+break_all:
 
         if (expr->expr_type == EXPR_LAMBDA)
         {
