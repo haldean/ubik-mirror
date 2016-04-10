@@ -19,6 +19,7 @@
 
 #include <stdlib.h>
 #include "expel/parse.h"
+#include "expel/streamutil.h"
 #include "grammar.h"
 
 /* autotools doesn't yet support flex headers, so we have to declare these
@@ -33,53 +34,22 @@ xl_parse_context_free(struct xl_parse_context *ctx)
         xl_vector_free(&ctx->allocs);
 }
 
-#define lis_buf_size 1024
 void
 _print_line_in_stream(struct xl_stream *stream, size_t line)
 {
-        char buf[lis_buf_size];
-        size_t i;
-        size_t n_lines_seen;
-        size_t read;
+        #define lis_buf_len 512
+        char buf[lis_buf_len];
+        char *explain;
+        xl_error err;
 
-        xl_stream_reset(stream);
-        n_lines_seen = 0;
-
-        for (;;)
+        err = xl_streamutil_get_line(buf, stream, line, lis_buf_len);
+        if (err != OK)
         {
-                read = xl_stream_read(buf, stream, lis_buf_size - 1);
-                if (read == 0)
-                        return;
-                buf[read] = '\0';
-
-                for (i = 0; i < lis_buf_size - 1; i++)
-                {
-                        if (buf[i] == '\n')
-                        {
-                                n_lines_seen++;
-                                if (n_lines_seen == line)
-                                        goto line_found;
-                        }
-                }
+                explain = xl_error_explain(err);
+                printf("couldn't print line in file: %s\n", explain);
+                return;
         }
-
-line_found:
-        for (;;)
-        {
-                for (i++; i < lis_buf_size - 1; i++)
-                {
-                        putchar(buf[i]);
-                        if (buf[i] == '\n')
-                                return;
-                }
-                read = xl_stream_read(buf, stream, lis_buf_size - 1);
-                if (read == 0)
-                {
-                        printf("\n");
-                        return;
-                }
-                i = 0;
-        }
+        printf("%s\n", buf);
 }
 
 void
