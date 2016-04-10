@@ -45,15 +45,13 @@
  *      2. For every expression above the bottom expression, apply the
  *         first of the following applicable rules (this happens in
  *         apply_upward_transform):
- *          a. If the expression is a lambda expression and its
- *             arguments do not contain A, prepend A to its list of
- *             arguments and mark it as needing application (this state
- *             is stored in expr->scope->needs_closure_appl).
- *          b. If the expression is a lambda expression and its
- *             arguments contain A, this expression is the "top"
- *             expression: the expression at which A is defined. Goto 3.
- *          c. TODO: determine that a name is bound in a block object?
- *          d. For all other expressions, do nothing and recurse to its
+ *          a. If the expression is a lambda expression, prepend A to
+ *             its list of arguments and mark it as needing application
+ *             (this state is stored in expr->scope->needs_closure_appl).
+ *             If the expression's parent scope contains A, this
+ *             expression is the "top" expression; goto 3. Else continue
+ *             recursing upwards.
+ *          b. For all other expressions, do nothing and recurse to its
  *             parent.
  *      3. Let X by the top expression (this, as well as steps 4 and 5,
  *         happen in apply_downwards_transform).
@@ -114,17 +112,24 @@ no_ignore static xl_error
 apply_downwards_transform(
         char *resolving_name,
         struct xl_resolve_context *ctx,
-        struct xl_ast_expr *expr)
+        struct xl_ast_expr **expr_ref)
 {
         struct xl_ast *subast;
         xl_error err;
         size_t i;
+        struct xl_ast_expr *expr;
+
+        expr = *expr_ref;
+        if (expr->scope->needs_closure_appl)
+        {
+                err = apply_closure(expr_ref, resolving_name);
+                if (err != OK)
+                        return err;
+                expr = *expr_ref;
+        }
 
         #define check_closure_appl(subexpr) do { \
-                if (subexpr->scope->needs_closure_appl) \
-                { err = apply_closure(&subexpr, resolving_name); \
-                  if (err != OK) return err; } \
-                err = apply_downwards_transform(resolving_name, ctx, subexpr); \
+                err = apply_downwards_transform(resolving_name, ctx, &subexpr); \
                 if (err != OK) return err; \
         } while (0)
 
@@ -159,12 +164,8 @@ apply_downwards_transform(
         for (i = 0; i < subast->bindings.n; i++)
         {
                 struct xl_ast_binding *bind;
-
                 bind = subast->bindings.elems[i];
-                err = apply_downwards_transform(
-                        resolving_name, ctx, bind->expr);
-                if (err != OK)
-                        return err;
+                check_closure_appl(bind->expr);
         }
 
         if (subast->immediate != NULL)
@@ -175,70 +176,48 @@ apply_downwards_transform(
 }
 
 no_ignore static xl_error
-apply_upwards_lambda_transform(
+apply_upwards_transform(
         char **resolving_name_ref,
         struct xl_resolve_context *ctx,
-        struct xl_ast_expr *expr)
+        struct xl_ast_expr **expr_ref)
 {
         char *resolving_name;
-        struct xl_ast_arg_list *args;
         bool is_top;
+        size_t i;
+        struct xl_ast_expr *expr;
+        struct xl_ast_arg_list *args;
 
         resolving_name = *resolving_name_ref;
+        expr = *expr_ref;
 
-        args = expr->lambda.args;
         is_top = false;
-
-        while (args->name != NULL)
+        for (i = 0; i < expr->scope->names.n; i++)
         {
-                if (strcmp(args->name, resolving_name) == 0)
+                struct xl_resolve_name *name;
+                name = expr->scope->names.elems[i];
+                if (strcmp(name->name, resolving_name) == 0)
                 {
                         is_top = true;
                         break;
                 }
-                args = args->next;
+        }
+
+        if (expr->expr_type == EXPR_LAMBDA)
+        {
+                args = calloc(1, sizeof(struct xl_ast_arg_list));
+                args->name = strdup(resolving_name);
+                args->next = expr->lambda.args;
+
+                expr->lambda.args = args;
+                expr->scope->needs_closure_appl = true;
         }
 
         if (is_top)
         {
                 *resolving_name_ref = NULL;
-                return apply_downwards_transform(resolving_name, ctx, expr);
+                return apply_downwards_transform(resolving_name, ctx, expr_ref);
         }
-
-        args = calloc(1, sizeof(struct xl_ast_arg_list));
-        args->name = strdup(resolving_name);
-        args->next = expr->lambda.args;
-
-        expr->lambda.args = args;
-        expr->scope->needs_closure_appl = true;
         return OK;
-}
-
-no_ignore static xl_error
-apply_upwards_transform(
-        char **resolving_name,
-        struct xl_resolve_context *ctx,
-        struct xl_ast_expr *expr)
-{
-        switch (expr->expr_type)
-        {
-        case EXPR_LAMBDA:
-                return apply_upwards_lambda_transform(
-                        resolving_name, ctx, expr);
-
-        case EXPR_BLOCK:
-        case EXPR_CONDITIONAL:
-                /* TODO: gotta do these. */
-                return OK;
-
-        case EXPR_APPLY:
-        case EXPR_ATOM:
-        case EXPR_CONSTRUCTOR:
-                /* nothing else needs any transformation on the way up. */
-                return OK;
-        }
-
-        __builtin_unreachable();
 }
 
 static inline bool
@@ -263,13 +242,13 @@ traverse_expr(
         char **resolving_name,
         bool *changed,
         struct xl_resolve_context *ctx,
-        struct xl_ast_expr *expr)
+        struct xl_ast_expr **expr_ref)
 {
         struct xl_ast *subast;
-        struct xl_ast_expr *subexprs[XL_MAX_SUBEXPRS];
-        size_t i;
-        size_t n_subexprs;
+        struct xl_ast_expr *expr;
         xl_error err;
+
+        expr = *expr_ref;
 
         if (is_closure_ref(expr))
         {
@@ -279,9 +258,45 @@ traverse_expr(
                 return OK;
         }
 
-        err = xl_ast_subexprs(&subast, subexprs, &n_subexprs, expr);
-        if (err != OK)
-                return err;
+        #define traverse_child(subexpr) do { \
+                err = traverse_expr(resolving_name, changed, ctx, &subexpr); \
+                if (err != OK) \
+                        return err; \
+                if (*resolving_name != NULL) \
+                { \
+                        err = apply_upwards_transform( \
+                                resolving_name, ctx, expr_ref); \
+                        return err; \
+                } \
+        } while (0)
+
+        switch (expr->expr_type)
+        {
+        case EXPR_ATOM:
+                return OK;
+
+        case EXPR_APPLY:
+                traverse_child(expr->apply.head);
+                traverse_child(expr->apply.tail);
+                return OK;
+
+        case EXPR_LAMBDA:
+                traverse_child(expr->lambda.body);
+                return OK;
+
+        case EXPR_CONDITIONAL:
+                traverse_child(expr->condition.cond);
+                traverse_child(expr->condition.implied);
+                traverse_child(expr->condition.opposed);
+                return OK;
+
+        case EXPR_CONSTRUCTOR:
+                subast = expr->constructor.scope;
+                break;
+        case EXPR_BLOCK:
+                subast = expr->block;
+                break;
+        }
 
         if (subast != NULL)
         {
@@ -292,21 +307,7 @@ traverse_expr(
                 if (*resolving_name != NULL)
                 {
                         err = apply_upwards_transform(
-                                resolving_name, ctx, expr);
-                        return err;
-                }
-        }
-
-        for (i = 0; i < n_subexprs; i++)
-        {
-                err = traverse_expr(resolving_name, changed, ctx, subexprs[i]);
-                if (err != OK)
-                        return err;
-
-                if (*resolving_name != NULL)
-                {
-                        err = apply_upwards_transform(
-                                resolving_name, ctx, expr);
+                                resolving_name, ctx, expr_ref);
                         return err;
                 }
         }
@@ -329,7 +330,7 @@ traverse_ast(
 
                 bind = ast->bindings.elems[i];
                 err = traverse_expr(
-                        resolving_name, changed, ctx, bind->expr);
+                        resolving_name, changed, ctx, &bind->expr);
                 if (err != OK)
                         return err;
         }
@@ -337,7 +338,7 @@ traverse_ast(
         if (ast->immediate != NULL)
         {
                 err = traverse_expr(
-                        resolving_name, changed, ctx, ast->immediate);
+                        resolving_name, changed, ctx, &ast->immediate);
                 if (err != OK)
                         return err;
         }
