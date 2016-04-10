@@ -98,7 +98,7 @@ xl_compile(
         if (err != OK)
                 return err;
 
-        err = xl_resolve(ast, source_name, &ctx);
+        err = xl_resolve(ast, source_name, in_stream, &ctx);
         if (err != OK)
                 goto free_ast;
 

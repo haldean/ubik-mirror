@@ -26,6 +26,7 @@
 #include "expel/env.h"
 #include "expel/natives.h"
 #include "expel/resolve.h"
+#include "expel/streamutil.h"
 #include "expel/util.h"
 
 no_ignore xl_error
@@ -515,10 +516,38 @@ create_native_scope(struct xl_resolve_context *ctx)
         return OK;
 }
 
+static void
+_print_line_in_stream(struct xl_stream *stream, size_t line)
+{
+        #define lis_buf_len 512
+        char buf[lis_buf_len];
+        char *explain;
+        xl_error err;
+
+        err = xl_streamutil_get_line(buf, stream, line, lis_buf_len);
+        if (err != OK)
+        {
+                explain = xl_error_explain(err);
+                printf("couldn't print line in file: %s\n", explain);
+                return;
+        }
+        printf("%s\n", buf);
+}
+
+static void
+_show_char_in_line(size_t column)
+{
+        size_t i;
+        for (i = 0; i < column - 1; i++)
+                putchar(' ');
+        printf("^\n");
+}
+
 no_ignore xl_error
 xl_resolve(
         struct xl_ast *ast,
         char *source_name,
+        struct xl_stream *stream,
         struct xl_resolve_context *ctx)
 {
         struct xl_resolve_error *resolv_err;
@@ -564,6 +593,10 @@ xl_resolve(
                                         resolv_err->loc.line_start,
                                         resolv_err->loc.col_start,
                                         resolv_err->name);
+                                _print_line_in_stream(
+                                        stream,
+                                        resolv_err->loc.line_start - 1);
+                                _show_char_in_line(resolv_err->loc.col_start);
                         }
                 }
                 return xl_raise(ERR_BAD_VALUE, "couldn't resolve some names");

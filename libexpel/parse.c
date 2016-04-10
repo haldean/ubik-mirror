@@ -34,7 +34,7 @@ xl_parse_context_free(struct xl_parse_context *ctx)
         xl_vector_free(&ctx->allocs);
 }
 
-void
+static void
 _print_line_in_stream(struct xl_stream *stream, size_t line)
 {
         #define lis_buf_len 512
@@ -52,7 +52,7 @@ _print_line_in_stream(struct xl_stream *stream, size_t line)
         printf("%s\n", buf);
 }
 
-void
+static void
 _show_char_in_line(size_t column)
 {
         size_t i;
