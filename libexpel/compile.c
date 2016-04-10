@@ -25,6 +25,7 @@
 #include "expel/compile.h"
 #include "expel/gen.h"
 #include "expel/parse.h"
+#include "expel/resolve.h"
 #include "expel/string.h"
 #include "expel/util.h"
 
@@ -89,20 +90,28 @@ xl_compile(
         struct xl_compilation_env *cenv)
 {
         struct xl_ast *ast;
+        local(resolve_context) struct xl_resolve_context ctx = {0};
         xl_error err;
+        xl_error free_err;
 
         err = xl_parse(&ast, source_name, in_stream);
         if (err != OK)
                 return err;
 
+        err = xl_resolve(ast, source_name, &ctx);
+        if (err != OK)
+                goto free_ast;
+
         err = xl_compile_ast(graphs, n_graphs, ast, cenv);
         if (err != OK)
-                return err;
+                goto free_ast;
 
-        err = xl_ast_free(ast);
+free_ast:
+        free_err = xl_ast_free(ast);
         if (err != OK)
                 return err;
-
+        if (free_err != OK)
+                return free_err;
         return OK;
 }
 

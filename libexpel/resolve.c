@@ -404,11 +404,6 @@ find_name_resolution_types(
                         expr->atom->name_loc->type = RESOLVE_LOCAL;
                         break;
                 }
-                printf("name %s resolves with type %s\n",
-                        name,
-                        expr->atom->name_loc->type == RESOLVE_CLOSURE
-                        ? "closure" : (expr->atom->name_loc->type == RESOLVE_GLOBAL
-                                ? "global" : "local"));
         }
 
         err = xl_ast_subexprs(&subast, subexprs, &n_subexprs, expr);
