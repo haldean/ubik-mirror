@@ -48,9 +48,10 @@
  *          a. If the expression is a lambda expression, prepend A to
  *             its list of arguments and mark it as needing application
  *             (this state is stored in expr->scope->needs_closure_appl).
- *             If the expression's parent scope contains A, this
- *             expression is the "top" expression; goto 3. Else continue
- *             recursing upwards.
+ *             If the binding for A is reachable from this expression's scope
+ *             without crossing a function boundary, this expression is
+ *             the "top" expression; goto 3. Else continue recursing
+ *             upwards.
  *          b. For all other expressions, do nothing and recurse to its
  *             parent.
  *      3. Let X by the top expression (this, as well as steps 4 and 5,
