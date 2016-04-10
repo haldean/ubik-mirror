@@ -51,7 +51,10 @@ update_names_with_resolution_types(
         struct xl_ast *ast);
 
 no_ignore xl_error
-xl_resolve_context_missing_name(struct xl_resolve_context *ctx, char *name);
+xl_resolve_context_missing_name(
+        struct xl_resolve_context *ctx,
+        char *name,
+        struct xl_ast_loc loc);
 
 
 no_ignore static xl_error
@@ -387,7 +390,8 @@ find_name_resolution_types(
 
                 if (!found)
                 {
-                        err = xl_resolve_context_missing_name(ctx, name);
+                        err = xl_resolve_context_missing_name(
+                                ctx, name, expr->loc);
                         if (err != OK)
                                 return err;
                 }
@@ -556,7 +560,10 @@ xl_resolve(
                                 fprintf(stderr,
                                         "\x1b[37m%s:%lu:%lu:\x1b[31m "
                                         "error:\x1b[0m name not found: %s\n",
-                                        source_name, 0ul, 0ul, resolv_err->name);
+                                        source_name,
+                                        resolv_err->loc.line_start,
+                                        resolv_err->loc.col_start,
+                                        resolv_err->name);
                         }
                 }
                 return xl_raise(ERR_BAD_VALUE, "couldn't resolve some names");
@@ -565,7 +572,10 @@ xl_resolve(
 }
 
 no_ignore xl_error
-xl_resolve_context_missing_name(struct xl_resolve_context *ctx, char *name)
+xl_resolve_context_missing_name(
+        struct xl_resolve_context *ctx,
+        char *name,
+        struct xl_ast_loc loc)
 {
         struct xl_resolve_error *resolv_err;
         xl_error err;
@@ -576,6 +586,7 @@ xl_resolve_context_missing_name(struct xl_resolve_context *ctx, char *name)
 
         resolv_err->err_type = RESOLVE_ERR_NAME_NOT_FOUND;
         resolv_err->name = name;
+        resolv_err->loc = loc;
 
         err = xl_vector_append(&ctx->errors, resolv_err);
         if (err != OK)

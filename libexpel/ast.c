@@ -390,3 +390,15 @@ xl_ast_subexprs(
 
         return xl_raise(ERR_BAD_TYPE, "bad type in expr subexpressions");
 }
+
+void
+xl_ast_merge_loc(
+        struct xl_ast_loc *res,
+        struct xl_ast_loc *l1,
+        struct xl_ast_loc *l2)
+{
+        res->line_start = size_min(l1->line_start, l2->line_start);
+        res->line_end = size_max(l1->line_end, l2->line_end);
+        res->col_start = size_min(l1->col_start, l2->col_start);
+        res->col_end = size_max(l1->col_end, l2->col_end);
+}

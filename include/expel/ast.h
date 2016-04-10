@@ -61,6 +61,14 @@ enum type_type
         TYPE_RECORD = 1,
 };
 
+struct xl_ast_loc
+{
+        size_t line_start;
+        size_t line_end;
+        size_t col_start;
+        size_t col_end;
+};
+
 struct xl_ast_atom
 {
         union
@@ -76,6 +84,7 @@ struct xl_ast_atom
         };
         enum atom_type atom_type;
         struct xl_resolve_name_loc *name_loc;
+        struct xl_ast_loc loc;
 };
 
 struct xl_ast_arg_list
@@ -83,6 +92,7 @@ struct xl_ast_arg_list
         char *name;
         struct xl_ast_arg_list *next;
         struct xl_dagc_node *gen;
+        struct xl_ast_loc loc;
 };
 
 struct xl_ast_expr
@@ -117,6 +127,7 @@ struct xl_ast_expr
 
         struct xl_resolve_scope *scope;
         struct xl_dagc_node *gen;
+        struct xl_ast_loc loc;
 };
 
 struct xl_ast_type_expr
@@ -131,6 +142,7 @@ struct xl_ast_type_expr
                 } apply;
         };
         enum type_expr_type type_expr_type;
+        struct xl_ast_loc loc;
 };
 
 struct xl_ast_binding
@@ -138,11 +150,13 @@ struct xl_ast_binding
         char *name;
         struct xl_ast_expr *expr;
         struct xl_ast_type_expr *type_expr;
+        struct xl_ast_loc loc;
 };
 
 struct xl_ast_import_list
 {
         char *name;
+        struct xl_ast_loc loc;
         struct xl_ast_import_list *next;
 };
 
@@ -150,6 +164,7 @@ struct xl_ast_member_list
 {
         char *name;
         struct xl_ast_type_expr *type;
+        struct xl_ast_loc loc;
         struct xl_ast_member_list *next;
 };
 
@@ -161,14 +176,7 @@ struct xl_ast_type
         };
         char *name;
         enum type_type type;
-};
-
-struct xl_ast_loc
-{
-        size_t line_start;
-        size_t line_end;
-        size_t col_start;
-        size_t col_end;
+        struct xl_ast_loc loc;
 };
 
 struct xl_ast
@@ -183,6 +191,9 @@ struct xl_ast
         struct xl_ast_import_list *imports;
         /* everything in scope in this ast */
         struct xl_resolve_scope *scope;
+        /* the location of this ast (useful because there are sub-ASTs whose
+         * location is actually interesting) */
+        struct xl_ast_loc loc;
 };
 
 /* Allocates a new AST. */
@@ -225,3 +236,9 @@ xl_ast_subexprs(
         struct xl_ast_expr **subexprs,
         size_t *n_subexprs,
         struct xl_ast_expr *expr);
+
+void
+xl_ast_merge_loc(
+        struct xl_ast_loc *res,
+        struct xl_ast_loc *l1,
+        struct xl_ast_loc *l2);

@@ -69,5 +69,6 @@ xl_vector_append(struct xl_vector *v, void *elem)
 void
 xl_vector_free(struct xl_vector *v)
 {
-        free(v->elems);
+        if (v != NULL && v->elems != NULL)
+                free(v->elems);
 }

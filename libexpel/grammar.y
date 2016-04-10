@@ -28,11 +28,18 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define wrap_err(x) do { xl_error _err = (x); if (_err != OK) YYABORT; } while (0);
+#define wrap_err(x) do { xl_error _err = (x); if (_err != OK) YYABORT; } while (0)
 #define alloc(x, nelem, contents) do { \
         (x) = calloc(nelem, sizeof(contents)); \
         if ((x) == NULL) YYABORT; \
-        wrap_err(xl_vector_append(&ctx->allocs, x)); } while (0);
+        wrap_err(xl_vector_append(&ctx->allocs, x)); } while (0)
+#define load_loc(loc_ptr) do { \
+        (loc_ptr).line_start = yyloc.first_line; \
+        (loc_ptr).line_end = yyloc.last_line; \
+        (loc_ptr).col_start = yyloc.first_column; \
+        (loc_ptr).col_end = yyloc.last_column; \
+        } while (0)
+#define merge_loc(res, l1, l2) xl_ast_merge_loc(&res->loc, &l1->loc, &l2->loc)
 
 %}
 
@@ -114,36 +121,61 @@ prog:
 
 blocks:
   %empty
-        { alloc($$, 1, struct xl_ast); }
+        { alloc($$, 1, struct xl_ast);
+          load_loc($$->loc);
+        }
 | blocks binding
-        { wrap_err(xl_ast_bind($1, $2)); $$ = $1; }
+        { wrap_err(xl_ast_bind($1, $2));
+          $$ = $1;
+          merge_loc($$, $$, $2);
+        }
 | blocks imports
-        { wrap_err(xl_ast_import($1, $2)); $$ = $1; }
+        { wrap_err(xl_ast_import($1, $2));
+          $$ = $1;
+          merge_loc($$, $$, $2);
+        }
 | blocks typedef
-        { wrap_err(xl_ast_add_type($1, $2)); $$ = $1; }
+        { wrap_err(xl_ast_add_type($1, $2));
+          $$ = $1;
+          merge_loc($$, $$, $2);
+        }
 ;
 
 binding:
   BIND NAME IS top_expr
         { alloc($$, 1, struct xl_ast_binding);
           $$->name = $2;
-          $$->expr = $4; }
+          $$->expr = $4;
+
+          load_loc($$->loc);
+          merge_loc($$, $$, $4);
+        }
 | BIND NAME TYPE type_expr IS top_expr
         { alloc($$, 1, struct xl_ast_binding);
           $$->name = $2;
           $$->expr = $6;
-          $$->type_expr = $4; }
+          $$->type_expr = $4;
+
+          load_loc($$->loc);
+          merge_loc($$, $$, $4);
+          merge_loc($$, $$, $6);
+        }
 ;
 
 immediate:
   IMMEDIATE IS top_expr
-        { $$ = $3; }
+        { $$ = $3;
+          load_loc($$->loc);
+          merge_loc($$, $$, $3);
+        }
 ;
 
 imports:
   USES NAME
         { alloc($$, 1, struct xl_ast_import_list);
-          $$->name = $2; }
+          $$->name = $2;
+          load_loc($$->loc);
+        }
 ;
 
 typedef:
@@ -151,7 +183,11 @@ typedef:
         { alloc($$, 1, struct xl_ast_type);
           $$->name = $2;
           $$->type = TYPE_RECORD;
-          $$->members = $3; }
+          $$->members = $3;
+
+          load_loc($$->loc);
+          merge_loc($$, $$, $3);
+        }
 ;
 
 members:
@@ -159,7 +195,10 @@ members:
         { struct xl_ast_member_list *t = $1;
           while (t->next != NULL)
                   t = t->next;
-          t->next = $2; }
+          t->next = $2;
+          $$ = $1;
+          merge_loc($$, $$, $2);
+        }
 | member
 ;
 
@@ -167,7 +206,11 @@ member:
   MEMBER NAME TYPE type_expr
         { alloc($$, 1, struct xl_ast_member_list);
           $$->name = $2;
-          $$->type = $4; }
+          $$->type = $4;
+
+          load_loc($$->loc);
+          merge_loc($$, $$, $4);
+        }
 ;
 
 /* top_expr is a "top expression" in the parse tree; these are things that can't
@@ -181,13 +224,23 @@ top_expr:
         { alloc($$, 1, struct xl_ast_expr);
           $$->expr_type = EXPR_LAMBDA;
           $$->lambda.args = $2;
-          $$->lambda.body = $4; }
+          $$->lambda.body = $4;
+
+          load_loc($$->loc);
+          merge_loc($$, $$, $2);
+          merge_loc($$, $$, $4);
+        }
 | expr IMPLIES expr OPPOSES expr
         { alloc($$, 1, struct xl_ast_expr);
           $$->expr_type = EXPR_CONDITIONAL;
           $$->condition.cond = $1;
           $$->condition.implied = $3;
-          $$->condition.opposed = $5; }
+          $$->condition.opposed = $5;
+
+          $$->loc = $1->loc;
+          merge_loc($$, $$, $3);
+          merge_loc($$, $$, $5);
+        }
 ;
 
 expr:
@@ -196,66 +249,98 @@ expr:
           alloc(tail, 1, struct xl_ast_expr);
           tail->expr_type = EXPR_ATOM;
           tail->atom = $2;
+          tail->loc = $2->loc;
 
           alloc($$, 1, struct xl_ast_expr);
           $$->expr_type = EXPR_APPLY;
           $$->apply.head = $1;
-          $$->apply.tail = tail; }
+          $$->apply.tail = tail;
+
+          merge_loc($$, $1, $2);
+        }
 | expr OPEN_PAR top_expr CLOSE_PAR
         { alloc($$, 1, struct xl_ast_expr);
           $$->expr_type = EXPR_APPLY;
           $$->apply.head = $1;
-          $$->apply.tail = $3; }
+          $$->apply.tail = $3;
+          merge_loc($$, $1, $3);
+        }
 | atom
         { alloc($$, 1, struct xl_ast_expr);
           $$->expr_type = EXPR_ATOM;
-          $$->atom = $1; }
+          $$->atom = $1;
+          $$->loc = $1->loc;
+        }
 | OPEN_PAR top_expr CLOSE_PAR
-        { $$ = $2; }
+        { $$ = $2;
+        }
 | TYPE_NAME OPEN_SCOPE blocks CLOSE_SCOPE
         { alloc($$, 1, struct xl_ast_expr);
           $$->expr_type = EXPR_CONSTRUCTOR;
           $$->constructor.type_name = $1;
-          $$->constructor.scope = $3; }
+          $$->constructor.scope = $3;
+          load_loc($$->loc);
+          merge_loc($$, $$, $3);
+        }
 | OPEN_SCOPE blocks immediate CLOSE_SCOPE
         { $2->immediate = $3;
           alloc($$, 1, struct xl_ast_expr);
           $$->expr_type = EXPR_BLOCK;
-          $$->block = $2; }
+          $$->block = $2;
+          load_loc($$->loc);
+          merge_loc($$, $$, $2);
+          merge_loc($$, $$, $3);
+        }
 ;
 
 arg_list:
   %empty
-        { alloc($$, 1, struct xl_ast_arg_list); }
+        { alloc($$, 1, struct xl_ast_arg_list);
+          load_loc($$->loc);
+        }
 | NAME arg_list
         { alloc($$, 1, struct xl_ast_arg_list);
           $$->name = $1;
-          $$->next = $2; }
+          $$->next = $2;
+          load_loc($$->loc);
+        }
 ;
 
 atom:
   NAME
         { alloc($$, 1, struct xl_ast_atom);
           $$->atom_type = ATOM_NAME;
-          $$->str = $1; }
+          $$->str = $1;
+          load_loc($$->loc);
+        }
 | QUALIFIED_NAME
-        { wrap_err(xl_ast_atom_new_qualified(&$$, $1)); }
+        { wrap_err(xl_ast_atom_new_qualified(&$$, $1));
+          load_loc($$->loc);
+        }
 | TYPE_NAME
         { alloc($$, 1, struct xl_ast_atom);
           $$->atom_type = ATOM_TYPE_NAME;
-          $$->str = $1; }
+          $$->str = $1;
+          load_loc($$->loc);
+        }
 | INTEGER
         { alloc($$, 1, struct xl_ast_atom);
           $$->atom_type = ATOM_INT;
-          $$->integer = $1; }
+          $$->integer = $1;
+          load_loc($$->loc);
+        }
 | NUMBER
         { alloc($$, 1, struct xl_ast_atom);
           $$->atom_type = ATOM_NUM;
-          $$->number = $1; }
+          $$->number = $1;
+          load_loc($$->loc);
+        }
 | STRING
         { alloc($$, 1, struct xl_ast_atom);
           $$->atom_type = ATOM_STRING;
-          $$->str = $1; }
+          $$->str = $1;
+          load_loc($$->loc);
+        }
 ;
 
 type_expr:
@@ -265,14 +350,18 @@ type_expr:
         { alloc($$, 1, struct xl_ast_type_expr);
           $$->type_expr_type = TYPE_EXPR_APPLY;
           $$->apply.head = $1;
-          $$->apply.tail = $3; }
+          $$->apply.tail = $3;
+          merge_loc($$, $1, $3);
+        }
 ;
 
 type_atom:
   TYPE_NAME
         { alloc($$, 1, struct xl_ast_type_expr);
           $$->type_expr_type = TYPE_EXPR_ATOM;
-          $$->name = $1; }
+          $$->name = $1;
+          load_loc($$->loc);
+        }
 ;
 
 %%
@@ -284,12 +373,12 @@ yyerror(
         void *scanner,
         const char *err)
 {
+        YYLTYPE yyloc;
         unused(scanner);
 
         ctx->err_loc = calloc(1, sizeof(struct xl_ast_loc));
-        ctx->err_loc->line_start = loc->first_line;
-        ctx->err_loc->line_end = loc->last_line;
-        ctx->err_loc->col_start = loc->first_column;
-        ctx->err_loc->col_end = loc->last_column;
+
+        yyloc = *loc;
+        load_loc(*ctx->err_loc);
         ctx->err_msg = strdup(err);
 }

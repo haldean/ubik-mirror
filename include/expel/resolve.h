@@ -86,6 +86,7 @@ struct xl_resolve_error
 {
         enum xl_resolve_error_type err_type;
         char *name;
+        struct xl_ast_loc loc;
 };
 
 struct xl_resolve_context
