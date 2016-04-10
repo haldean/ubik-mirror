@@ -22,6 +22,7 @@
 #include <string.h>
 
 #include "expel/ast.h"
+#include "expel/closure.h"
 #include "expel/env.h"
 #include "expel/natives.h"
 #include "expel/resolve.h"
@@ -60,7 +61,7 @@ assign_initial_scopes(
         struct xl_resolve_scope *parent)
 {
         struct xl_ast *subast;
-        struct xl_ast_expr *subexprs[8];
+        struct xl_ast_expr *subexprs[XL_MAX_SUBEXPRS];
         size_t n_subexprs;
         size_t i;
         xl_error err;
@@ -177,7 +178,7 @@ find_blocks_and_bind(
         struct xl_ast_expr *expr)
 {
         struct xl_ast *subast;
-        struct xl_ast_expr *subexprs[8];
+        struct xl_ast_expr *subexprs[XL_MAX_SUBEXPRS];
         size_t n_subexprs;
         size_t i;
         xl_error err;
@@ -257,7 +258,7 @@ find_lambdas_and_bind(
         struct xl_ast_arg_list *args;
         struct xl_resolve_name *name;
         struct xl_ast *subast;
-        struct xl_ast_expr *subexprs[8];
+        struct xl_ast_expr *subexprs[XL_MAX_SUBEXPRS];
         size_t n_subexprs;
         size_t i;
         xl_error err;
@@ -345,7 +346,7 @@ find_name_resolution_types(
         size_t n_subexprs;
         enum xl_resolve_boundary_type highest_bdry;
         struct xl_ast *subast;
-        struct xl_ast_expr *subexprs[8];
+        struct xl_ast_expr *subexprs[XL_MAX_SUBEXPRS];
         struct xl_resolve_name_loc *name_loc;
         struct xl_resolve_scope *scope;
         struct xl_resolve_name *check_name;
@@ -542,6 +543,10 @@ xl_resolve(
                 return err;
 
         err = update_names_with_resolution_types(ctx, ast);
+        if (err != OK)
+                return err;
+
+        err = xl_reduce_closures(ctx, ast);
         if (err != OK)
                 return err;
 

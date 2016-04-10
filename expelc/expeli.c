@@ -67,12 +67,13 @@ main(int argc, char *argv[])
         c(xl_stream_rfilep(&sstdin, stdin));
 
         parse_err = xl_parse(&ast, "(stdin)", &sstdin);
+        if (parse_err == OK)
+                parse_err = xl_resolve(ast, "(stdin)", &rctx);
+        printf("post-resolution\n");
         if (argc > 1 && strcmp(argv[1], "emit-ast") == 0)
                 err = xl_ast_print(ast);
         c(parse_err);
         c(err);
-
-        c(xl_resolve(ast, "(stdin)", &rctx));
 
         c(xl_compile_ast(&graphs, &n_graphs, ast, NULL));
 

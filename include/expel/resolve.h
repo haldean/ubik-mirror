@@ -71,6 +71,10 @@ struct xl_resolve_scope
 
         struct xl_resolve_scope *parent;
         enum xl_resolve_boundary_type boundary;
+
+        /* This thing is complicated. There's a long explanation in closure.c
+         * about what it means. Go read that. */
+        bool needs_closure_appl;
 };
 
 enum xl_resolve_error_type

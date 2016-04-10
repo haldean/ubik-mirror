@@ -18,6 +18,7 @@
  */
 
 #include "expel/ast.h"
+#include "expel/resolve.h"
 
 #include <inttypes.h>
 #include <stdio.h>
@@ -36,6 +37,21 @@ _indent(int indent)
 no_ignore static xl_error
 _print_atom(struct xl_ast_atom *atom)
 {
+        if (atom->name_loc != 0)
+        {
+                switch (atom->name_loc->type)
+                {
+                case RESOLVE_LOCAL:
+                        printf(".");
+                        break;
+                case RESOLVE_GLOBAL:
+                        printf("*");
+                        break;
+                case RESOLVE_CLOSURE:
+                        printf("%%");
+                        break;
+                }
+        }
         switch (atom->atom_type)
         {
         case ATOM_INT:
