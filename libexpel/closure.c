@@ -370,16 +370,12 @@ xl_reduce_closures(
 
         do
         {
-                err = xl_ast_print(ast);
-                if (err != OK)
-                        return err;
-
                 changed = false;
                 resolving_name = NULL;
+
                 err = traverse_ast(&resolving_name, &changed, ctx, ast);
                 if (err != OK)
                         return err;
-
                 xl_assert(resolving_name == NULL);
         } while (changed);
 
