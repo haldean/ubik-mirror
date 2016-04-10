@@ -1,5 +1,5 @@
 : test-thing
     ^ Word
-    = \x -> uadd x y
+    = \x -> uadd (uadd x y) z
 
 != test-thing 8
