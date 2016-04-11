@@ -70,6 +70,7 @@ load_save()
 
         v = calloc(1, sizeof(struct xl_value));
         assert(xl_value_load(v, &s) == OK);
+        assert(xl_take(v) == OK);
 
         /* make sure tags are correct. */
         assert(v->tag == u[0].tag);
@@ -79,8 +80,8 @@ load_save()
         assert(v->right.t->left.t->right.t->tag == u[4].tag);
         assert(v->right.t->left.t->left.t->left.t->tag == u[5].tag);
 
-        /* make sure refcounts are all 1 except the root, which is not taken. */
-        assert(v->refcount == 0);
+        /* make sure refcounts are all 1 except the root. */
+        assert(v->refcount == 1);
         assert(v->right.t->refcount == 1);
         assert(v->right.t->left.t->refcount == 1);
         assert(v->right.t->left.t->left.t->refcount == 1);
@@ -109,7 +110,7 @@ load_save()
 
         xl_stream_close(&s);
         free(u);
-        free(v);
+        assert(xl_release(v) == OK);
 
         return ok;
 }
