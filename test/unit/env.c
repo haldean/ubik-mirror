@@ -91,6 +91,7 @@ env()
         assert(xl_env_free(&env) == OK);
         assert(v.tree->refcount == 1);
         assert(u.refcount == 1);
+        assert(xl_release(v.tree) == OK);
 
         for (i = 0; i < N_TEST_URIS; i++)
                 free(uris[i].name);

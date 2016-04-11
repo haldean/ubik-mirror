@@ -71,6 +71,10 @@ gc()
         {
                 assert(xl_value_new(&vals[i]) == 0);
         }
+        for (i = 0; i < XL_GC_PAGE_SIZE * 2; i++)
+        {
+                assert(xl_release(vals[i]) == 0);
+        }
 
         xl_gc_get_stats(&gc_stats);
         #ifdef XL_GC_DEBUG
