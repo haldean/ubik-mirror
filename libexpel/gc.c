@@ -22,6 +22,7 @@
 
 #include <stdio.h>
 #define gc_out stderr
+#define XL_GC_NOPAGES 1
 
 #include <inttypes.h>
 #include <stdbool.h>
@@ -251,15 +252,25 @@ xl_dagc_alloc(
 no_ignore xl_error
 xl_value_new(struct xl_value **v)
 {
+#if !XL_GC_NOPAGES
         struct xl_alloc_page *p;
         size_t i;
         bool pages_full;
+#endif
 
 #ifndef XL_RECKLESS
         if (unlikely(gc_stats == NULL))
                 return xl_raise(ERR_NOT_STARTED, "gc not started");
 #endif
 
+#if XL_GC_NOPAGES
+        *v = calloc(1, sizeof(struct xl_value));
+        if (*v == NULL)
+                return xl_raise(ERR_NO_MEMORY, "new value");
+        (*v)->tag = TAG_VALUE;
+        (*v)->refcount = 1;
+        return OK;
+#else
         pages_full = true;
         p = page_tail;
         while (p != NULL)
@@ -317,6 +328,7 @@ xl_value_new(struct xl_value **v)
                 gc_stats->n_val_allocs++;
         #endif
         return OK;
+#endif
 }
 
 /* Takes a reference to the given tree. */
@@ -405,7 +417,9 @@ no_ignore static xl_error
 _release_value(struct xl_value *v)
 {
         xl_error err;
+#if !XL_GC_NOPAGES
         struct xl_alloc_page *p;
+#endif
 
         if (unlikely(v->refcount == 0))
                 return xl_raise(ERR_REFCOUNT_UNDERFLOW, "release");
@@ -420,6 +434,14 @@ _release_value(struct xl_value *v)
 
         if (v->refcount == 0)
         {
+                if (v->tag & (TAG_LEFT_NODE | TAG_LEFT_GRAPH))
+                        err = xl_release(v->left.any);
+                if (err == OK && (v->tag & (TAG_RIGHT_NODE | TAG_RIGHT_GRAPH)))
+                        err = xl_release(v->right.any);
+
+#if XL_GC_NOPAGES
+                free(v);
+#else
                 p = v->alloc_page;
                 p->open_values[p->n_open_values] = v;
                 p->n_open_values++;
@@ -431,11 +453,8 @@ _release_value(struct xl_value *v)
                                 / sizeof(struct xl_value),
                                 ((uintptr_t) p) & 0xFFFF);
                 #endif
+#endif
 
-                if (v->tag & (TAG_LEFT_NODE | TAG_LEFT_GRAPH))
-                        err = xl_release(v->left.any);
-                if (err == OK && (v->tag & (TAG_RIGHT_NODE | TAG_RIGHT_GRAPH)))
-                        err = xl_release(v->right.any);
         }
 
         if (unlikely(err == OK && gc_stats->releases_until_gc == 0))

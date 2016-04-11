@@ -86,6 +86,7 @@ env()
                 assert(xl_env_overwrite(&env, &uris[i], v, t) == OK);
         }
 
+        assert(xl_release(t) == OK);
         assert(v.tree->refcount == N_TEST_URIS + 1);
         assert(xl_env_free(&env) == OK);
         assert(v.tree->refcount == 1);
