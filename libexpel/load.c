@@ -483,7 +483,6 @@ _load_graph(
         xl_word n_nodes;
         xl_word result_idx;
         xl_word identity_idx;
-        xl_word type_idx;
         size_t i;
         xl_error err;
         xl_tag tag;
@@ -507,9 +506,6 @@ _load_graph(
 
         READ_INTO(identity_idx, sp);
         identity_idx = ntohw(identity_idx);
-
-        READ_INTO(type_idx, sp);
-        type_idx = ntohw(type_idx);
 
         /* This binary is too large to be read on this machine. Note that
          * performing this check up front means that we don't have to worry
@@ -573,13 +569,6 @@ _load_graph(
         }
         else
                 (*graph)->identity = NULL;
-
-        if (type_idx >= n_values)
-                return xl_raise(ERR_BAD_HEADER, "type_idx > n_values");
-        (*graph)->type = values[type_idx];
-        err = xl_take((*graph)->type);
-        if (err != OK)
-                return err;
 
         (*graph)->tag = tag;
         return OK;

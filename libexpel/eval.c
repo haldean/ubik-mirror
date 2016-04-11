@@ -84,9 +84,6 @@ _eval_apply(struct xl_env *env, struct xl_dagc_apply *node)
         err = xl_type_func_apply(node->head.known_type, node->func->known_type);
         if (err != OK)
                 return err;
-        err = xl_type_func_apply(result->type, proto->type);
-        if (err != OK)
-                return err;
 
         node->head.flags |= XL_DAGC_FLAG_COMPLETE;
         return OK;

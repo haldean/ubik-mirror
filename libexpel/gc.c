@@ -607,9 +607,6 @@ _release_graph(struct xl_dagc *g)
                 if (err != OK)
                         return err;
         }
-        err = xl_release(g->type);
-        if (err != OK)
-                return err;
 
         bzero(g, sizeof(*g));
         free(g);

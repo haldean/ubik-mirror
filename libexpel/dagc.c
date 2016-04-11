@@ -586,9 +586,5 @@ xl_dagc_copy(
                         return err;
         }
 
-        err = xl_take(result->type);
-        if (err != OK)
-                return err;
-
         return OK;
 }
