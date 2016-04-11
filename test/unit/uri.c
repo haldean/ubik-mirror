@@ -60,8 +60,13 @@ uri()
         assert(xl_uri_eq(&parsed, &user));
         free(parsed.name);
 
+        /* each of these has two refs: one from the original URI and one from
+         * the one we made as a value. We release twice to release both refs. */
+        assert(xl_release(user.as_value) == OK);
         assert(xl_release(user.as_value) == OK);
         assert(xl_release(native.as_value) == OK);
+        assert(xl_release(native.as_value) == OK);
+        assert(xl_release(unknown.as_value) == OK);
         assert(xl_release(unknown.as_value) == OK);
 
         free(user.name);
