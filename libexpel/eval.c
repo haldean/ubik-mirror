@@ -33,7 +33,6 @@ _eval_apply(struct xl_env *env, struct xl_dagc_apply *node)
         struct xl_dagc *result;
         struct xl_dagc *proto;
         size_t i;
-        char *msg;
 
         unused(env);
 
@@ -67,22 +66,6 @@ _eval_apply(struct xl_env *env, struct xl_dagc_apply *node)
         for (i = 0; i < result->in_arity; i++)
                 result->inputs[i] = result->inputs[i + 1];
 
-        if (!xl_type_satisfied(input->required_type, node->arg->known_type))
-        {
-                fprintf(stderr, "could not apply argument to function:\n");
-
-                msg = xl_type_explain(input->required_type);
-                fprintf(stderr, "required type: %s\n", msg);
-                free(msg);
-
-                msg = xl_type_explain(node->arg->known_type);
-                fprintf(stderr, "got type: %s\n", msg);
-                free(msg);
-
-                return xl_raise(
-                        ERR_BAD_TYPE, "input type and arg type incompatible");
-        }
-
         input->head.flags = XL_DAGC_FLAG_COMPLETE;
 
         input->head.known_type = node->arg->known_type;
@@ -99,6 +82,9 @@ _eval_apply(struct xl_env *env, struct xl_dagc_apply *node)
         if (err != OK)
                 return err;
         err = xl_type_func_apply(node->head.known_type, node->func->known_type);
+        if (err != OK)
+                return err;
+        err = xl_type_func_apply(result->type, proto->type);
         if (err != OK)
                 return err;
 

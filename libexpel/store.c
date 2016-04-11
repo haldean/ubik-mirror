@@ -159,6 +159,7 @@ _collect(
                 {
                 case DAGC_NODE_APPLY:
                 case DAGC_NODE_COND:
+                case DAGC_NODE_INPUT:
                 case DAGC_NODE_REF:
                         break;
 
@@ -180,13 +181,6 @@ _collect(
                         }
                         err = xl_pointer_set_add(
                                 NULL, values, n->as_const.value.tree);
-                        if (err != OK)
-                                return err;
-                        break;
-
-                case DAGC_NODE_INPUT:
-                        err = xl_pointer_set_add(
-                                NULL, values, n->as_input.required_type);
                         if (err != OK)
                                 return err;
                         break;
@@ -343,23 +337,12 @@ _store_const(
 no_ignore static xl_error
 _store_input(
         struct xl_stream *sp,
-        struct xl_dagc_input *n,
-        struct xl_vector *values)
+        struct xl_dagc_input *n)
 {
-        xl_error err;
         xl_word t;
-        xl_word index;
-        size_t sindex;
 
         t = htonw(n->arg_num);
         WRITE_INTO(sp, t);
-
-        err = xl_pointer_set_find(&sindex, values, n->required_type);
-        if (err != OK)
-                return err;
-        index = sindex;
-        index = htonw(index);
-        WRITE_INTO(sp, index);
 
         return OK;
 }
@@ -522,7 +505,7 @@ _store_graph(
                         break;
 
                 case DAGC_NODE_INPUT:
-                        err = _store_input(sp, &n->as_input, values);
+                        err = _store_input(sp, &n->as_input);
                         break;
 
                 case DAGC_NODE_LOAD:

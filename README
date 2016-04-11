@@ -297,6 +297,7 @@ graph:
               8-15   The number of nodes in the graph
              16-23   The index of the result node in the graph
              24-31   The value index of the identity URI of the graph
+             32-39   The value index of the type of the graph
 
 The identity URI represents the meaning of the graph; in most cases this
 will be the URI of whatever the graph is bound to. The result node
@@ -355,8 +356,6 @@ Nodes with node type `   input` have the following body:
 
         Byte index   Field
                0-7   Argument index of the node
-              8-15   Value index of the tree-encoded type requirement on
-                     the argument
 
 Nodes with node type `    cond` have the following body:
 

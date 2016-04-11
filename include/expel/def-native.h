@@ -56,14 +56,6 @@ _op_name(struct xl_env *env)
         err = _create_op(&ngraph, 2, DEF_OP_EVAL);
         if (err != OK)
                 return err;
-        err = DEF_ARG_TYPE(
-                ((struct xl_dagc_input *) ngraph->inputs[0])->required_type);
-        if (err != OK)
-                return err;
-        err = DEF_ARG_TYPE(
-                ((struct xl_dagc_input *) ngraph->inputs[1])->required_type);
-        if (err != OK)
-                return err;
 
         err = _native_uri(&uri, DEF_OP_URI);
         if (err != OK)
@@ -108,10 +100,6 @@ _op_name(struct xl_env *env)
 
         ngraph = NULL;
         err = _create_op(&ngraph, 1, DEF_OP_EVAL);
-        if (err != OK)
-                return err;
-        err = DEF_ARG_TYPE(
-                ((struct xl_dagc_input *) ngraph->inputs[0])->required_type);
         if (err != OK)
                 return err;
 

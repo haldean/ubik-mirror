@@ -239,24 +239,14 @@ _load_store(
 no_ignore static xl_error
 _load_input(
         struct xl_dagc_input *node,
-        struct xl_stream *sp,
-        struct xl_value **values,
-        size_t n_values)
+        struct xl_stream *sp)
 {
-        xl_word value_index;
         xl_word arg_num;
-        xl_error err;
 
         READ_INTO(arg_num, sp);
         node->arg_num = ntohw(arg_num);
 
-        READ_INTO(value_index, sp);
-        value_index = ntohw(value_index);
-        if (value_index >= n_values)
-                return xl_raise(ERR_OUT_OF_BOUNDS, "input value index");
-        node->required_type = values[value_index];
-        err = xl_take(node->required_type);
-        return err;
+        return OK;
 }
 
 no_ignore static xl_error
@@ -332,7 +322,7 @@ _load_node(
                 err = _load_store(&n->as_store, sp, values, n_values);
                 break;
         case DAGC_NODE_INPUT:
-                err = _load_input(&n->as_input, sp, values, n_values);
+                err = _load_input(&n->as_input, sp);
                 break;
         case DAGC_NODE_COND:
                 err = _load_cond(&n->as_cond, sp);
@@ -493,6 +483,7 @@ _load_graph(
         xl_word n_nodes;
         xl_word result_idx;
         xl_word identity_idx;
+        xl_word type_idx;
         size_t i;
         xl_error err;
         xl_tag tag;
@@ -516,6 +507,9 @@ _load_graph(
 
         READ_INTO(identity_idx, sp);
         identity_idx = ntohw(identity_idx);
+
+        READ_INTO(type_idx, sp);
+        type_idx = ntohw(type_idx);
 
         /* This binary is too large to be read on this machine. Note that
          * performing this check up front means that we don't have to worry
@@ -579,6 +573,13 @@ _load_graph(
         }
         else
                 (*graph)->identity = NULL;
+
+        if (type_idx >= n_values)
+                return xl_raise(ERR_BAD_HEADER, "type_idx > n_values");
+        (*graph)->type = values[type_idx];
+        err = xl_take((*graph)->type);
+        if (err != OK)
+                return err;
 
         (*graph)->tag = tag;
         return OK;

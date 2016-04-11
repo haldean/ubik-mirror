@@ -184,6 +184,9 @@ struct xl_dagc
 
         /* The result node in the graph. */
         struct xl_dagc_node *result;
+
+        /* The effective type of the graph. */
+        struct xl_value *type;
 };
 
 /* Starts the expel runtime.

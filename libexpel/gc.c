@@ -455,6 +455,7 @@ _release_node(struct xl_dagc_node *node)
         {
         case DAGC_NODE_APPLY:
         case DAGC_NODE_COND:
+        case DAGC_NODE_INPUT:
         case DAGC_NODE_NATIVE:
         case DAGC_NODE_REF:
                 break;
@@ -476,12 +477,6 @@ _release_node(struct xl_dagc_node *node)
 
         case DAGC_NODE_STORE:
                 err = xl_release(n->as_store.loc);
-                if (err != OK)
-                        return err;
-                break;
-
-        case DAGC_NODE_INPUT:
-                err = xl_release(n->as_input.required_type);
                 if (err != OK)
                         return err;
                 break;
@@ -593,6 +588,9 @@ _release_graph(struct xl_dagc *g)
                 if (err != OK)
                         return err;
         }
+        err = xl_release(g->type);
+        if (err != OK)
+                return err;
 
         bzero(g, sizeof(*g));
         free(g);

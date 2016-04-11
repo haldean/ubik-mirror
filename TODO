@@ -9,3 +9,4 @@ cascading polymorphic functions for typeclasses
 input nodes shouldn't have required_type, it should be taken from graph type
 interface files
 real parser for URIs instead of hacky shit
+untangle gen.c

@@ -78,9 +78,6 @@ _create_op(
                 in->head.is_terminal = 0x00;
                 in->head.flags = 0x00;
                 in->arg_num = i;
-                err = xl_value_new(&in->required_type);
-                if (err != OK)
-                        return err;
         }
 
         /* Create output native node */
@@ -91,6 +88,10 @@ _create_op(
         graph->nodes[arity]->flags = 0x00;
 
         graph->result = graph->nodes[arity];
+
+        err = xl_value_new(&graph->type);
+        if (err != OK)
+                return err;
 
         err = xl_dagc_init(graph);
         if (err != OK)
@@ -431,17 +432,9 @@ _register_humanize(struct xl_env *env)
         err = _create_op(&wgraph, 1, _native_humanize_word);
         if (err != OK)
                 return err;
-        err = xl_type_word(
-                ((struct xl_dagc_input *) wgraph->inputs[0])->required_type);
-        if (err != OK)
-                return err;
 
         fgraph = NULL;
         err = _create_op(&fgraph, 1, _native_humanize_float);
-        if (err != OK)
-                return err;
-        err = xl_type_float(
-                ((struct xl_dagc_input *) fgraph->inputs[0])->required_type);
         if (err != OK)
                 return err;
 
