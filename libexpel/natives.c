@@ -92,6 +92,9 @@ _create_op(
         err = xl_value_new(&graph->type);
         if (err != OK)
                 return err;
+        graph->type->tag |= TAG_LEFT_WORD | TAG_RIGHT_WORD;
+        graph->type->left.w = 0;
+        graph->type->right.w = 0;
 
         err = xl_dagc_init(graph);
         if (err != OK)
