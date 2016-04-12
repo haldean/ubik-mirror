@@ -1,7 +1,7 @@
-TESTS = add.xlb cond.xlb const.xlb emit-poly.xlb huge.xlb loadstore.xlb mult.xlb please-leak.xlb ref.xlb simplefunc.xlb
-XFAIL_TESTS = mult.xlb
-TEST_EXTENSIONS = .xlb
-XLB_LOG_COMPILER = $(top_srcdir)/ubik/ubik
+TESTS = add.ub cond.ub const.ub emit-poly.ub huge.ub loadstore.ub mult.ub please-leak.ub ref.ub simplefunc.ub
+XFAIL_TESTS = mult.ub
+TEST_EXTENSIONS = .ub
+UB_LOG_COMPILER = $(top_srcdir)/ubik/ubik
 
 .upy.ub:
 	PYTHONPATH=$(top_srcdir) $(PYTHON) $< $@
