@@ -1,24 +1,24 @@
-Architecture of the Expel Runtime ======================================
+Architecture of the Ubik Runtime =======================================
 Haldean Brown                                      First draft: Nov 2015
                                                   Last updated: Mar 2016
 
 
 This document attempts to fully explain the implementation and behavior
-of the Expel runtime. When the code and this document disagree, the code
+of the Ubik runtime. When the code and this document disagree, the code
 is incorrect; on the other hand, don't trust anything in this document.
 
 
 Structure of the project -----------------------------------------------
 
 The project itself is divided into a few software components. By far the
-most interesting is libexpel, which is the shared library that contains
-the entirety of the Expel runtime. There's runexpel, which is a simple
-thing that uses libexpel to load and run Expel bytecode. There's expelc
-and expeli, which are a compiler and interpreter, respectively; both are
-thin wrappers around libexpel, which contains the actual compiler
+most interesting is libubik, which is the shared library that contains
+the entirety of the Ubik runtime. There's runubik, which is a simple
+thing that uses libubik to load and run Ubik bytecode. There's ubikc
+and ubiki, which are a compiler and interpreter, respectively; both are
+thin wrappers around libubik, which contains the actual compiler
 implementation. And then there's pyasm, which is a hilarious "assembler"
 written as a Python DSL; pyasm will be gone the moment there's a working
-Expel compiler, but for now, with my focus on the runtime, pyasm is here
+Ubik compiler, but for now, with my focus on the runtime, pyasm is here
 to stay.
 
 There are unit tests and "integration tests"; unit tests are haphazard
@@ -26,19 +26,19 @@ but the integration tests (in the form of pyasm scripts in
 test/pyasm/*.xlpy) are pretty comprehensive. You can run all of the
 tests by running `make check`.
 
-To build and test expel, run the following commands:
+To build and test ubik, run the following commands:
 
         ./configure
         make check
 
-If the configure script is not present (i.e., you got Expel from git
+If the configure script is not present (i.e., you got Ubik from git
 instead of from a tarball), you will need to run:
 
         autoreconf --install
 
 Before you run anything else. When you're done with all that, the
-compiler will be present at expelc/expelc, the interpreter will be at
-expelc/expeli and the runtime will be at runexpel/runexpel. To install
+compiler will be present at ubikc/ubikc, the interpreter will be at
+ubikc/ubiki and the runtime will be at runubik/runubik. To install
 these to your system path (along with the headers and static library),
 use:
 
@@ -49,7 +49,7 @@ the pre-commit hook in the `res` directory before you commit anything.
 It does some simple checks to make sure that you're not doing anything
 dumb.
 
-For completeness, building Expel requires:
+For completeness, building Ubik requires:
 
     - GCC 4.9 or later (it's possible that the build works with other
       versions of GCC and with clang, but they're untested)
@@ -57,18 +57,18 @@ For completeness, building Expel requires:
     - Flex 2.6 or later
     - GNU autoconf 2.69 or later
 
-Expel has no runtime dependencies outside of libc. The rest of this
+Ubik has no runtime dependencies outside of libc. The rest of this
 document is more interesting, I promise.
 
 
 Runtime representations ------------------------------------------------
 
-Expel is based on a simple primitive: unbalanced binary trees of 64-bit
+Ubik is based on a simple primitive: unbalanced binary trees of 64-bit
 values (called "words"). Everything is expressed in this way, from
 integers to types to functions; this homogeneity of data representation
 allows us to simplify otherwise-complicated tasks and has a satisfying
 purity. Note that the in-memory representation is extremely close to the
-on-disk representation of compiled Expel programs.
+on-disk representation of compiled Ubik programs.
 
 Each node in the tree has a left value, a right value, and a tag. Each
 value can be one of two things: a pointer to another node or a word; the
@@ -110,7 +110,7 @@ Types can be base types or derived types. Base types are special in that
 they are identified only by an integer constant; derived types (quite
 predictably) require quite a bit more information about the type itself.
 
-The base types of Expel are a few flavors of integer, lists and tuples.
+The base types of Ubik are a few flavors of integer, lists and tuples.
 Each of these has a base type code and comes with a tree encoding. The
 full list of base type codes is:
 
@@ -171,7 +171,7 @@ word `type` and its right is the descriptor itself. Anything that would
 appear on the left of a typed value is a type descriptor value, and
 could appear on the right of a type node.
 
-A resource identifier is how all entities within the expel runtime are
+A resource identifier is how all entities within the ubik runtime are
 identified. Resources all have a name, author, version and scope; all of
 these are encoded in the URI tree. The left of a URI tree is the
 constant word `uri`, and the right is a cons-cell list, where the first
@@ -185,7 +185,7 @@ section below.
 
 Building logic ---------------------------------------------------------
 
-Logic in Expel is encoded in a directed acyclic graph of computations
+Logic in Ubik is encoded in a directed acyclic graph of computations
 (DAGC); nodes in this graph then reference values stored as trees. There
 are four kinds of nodes in a DAGC:
 
@@ -214,7 +214,7 @@ are four kinds of nodes in a DAGC:
                     evaluating them just calls the associated native
                     code block. That code block then fills in the result
                     of the compuation over the graph on the native node.
-                    Reading native nodes in from expel bytecode is not
+                    Reading native nodes in from ubik bytecode is not
                     supported; this is only a construct used internally
                     in the runtime.
         `ref`       This node has the value of another node in the
@@ -231,7 +231,7 @@ node is one of them. The minimal set of nodes required to evaluate all
 terminal nodes is found, and all nodes in that set are evaluated in
 turn. This gives the result for the DAGC. Once evaluated, the DAGC is
 semantically and computationally equivalent to a single value; this is
-possible because all functions in Expel are idempotent, and thus a
+possible because all functions in Ubik are idempotent, and thus a
 zero-arity function is equivalent to a value.
 
 Logic is then built up by creating a number of graphs and referencing
@@ -240,7 +240,7 @@ of the referenced DAGC is made and that DAGC's `input` nodes are
 completed.  Once all required input nodes have been completed, the DAGC
 can be evaluated.
 
-An expel bytecode blob contains some number of graphs; the various
+An ubik bytecode blob contains some number of graphs; the various
 graphs can reference each other, and in general their ordering in the
 bytecode does not matter. There is only one exception: when evaluating a
 bytecode blob, the first graph is considered to represent the desired
@@ -250,7 +250,7 @@ first graph is the "main method" of other languages.
 
 Encoding in-flight and at-rest -----------------------------------------
 
-Expel bytecode has a single binary storage format that is used for
+Ubik bytecode has a single binary storage format that is used for
 network operations and for on-disk storage. The format begins with a
 header, and then contains a number of encoded graphs.
 
@@ -369,18 +369,18 @@ Nodes with node type `     ref` have the following body:
         Byte index   Field
                0-7   Node index of referrent node
 
-Expel bytecode blobs may have arbitrary data following the data encoded
+Ubik bytecode blobs may have arbitrary data following the data encoded
 by the standard; conforming parsers will ignore the data that follows
 the encoded graphs. This is provided as a means for tools to attach
 metadata onto the end of the bytecode if so desired.
 
 Compilation ------------------------------------------------------------
 
-The compiler for Expel is distributed as part of the Expel library; a
+The compiler for Ubik is distributed as part of the Ubik library; a
 compiler executable can be built using:
 
-        $ make dist/expelc
-        $ dist/expelc path/to/file.xl out.xlb
+        $ make dist/ubic
+        $ dist/ubic path/to/file.xl out.xlb
 
 The process of creating an executable is divided into two phases, not
 unlike compilation for C and other native languages: compilation and
@@ -391,7 +391,7 @@ the source, and all linking is static. The compiler abstracts most of
 the details away from the user, but they still get the advantage of
 fast, incremental builds.
 
-Compilation begins by loading the given Expel file and generating code
+Compilation begins by loading the given Ubik file and generating code
 for the module (see below). In general, at the end of this process there
 are still unresolved references; we collect all of the imports that
 provide those references, and find the files that provide the requisite

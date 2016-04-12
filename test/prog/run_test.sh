@@ -1,12 +1,12 @@
 #!/bin/sh
 
-EXPELC=${EXPELC:-../../expelc/expelc}
-RUNEXPEL=${RUNEXPEL:-../../runexpel/runexpel}
+UBIC=${UBIKC:-../../ub/ubic}
+UBIK=${RUNUBIK:-../../ubik/ubik}
 XL_FILE=$1
 
 set -ex
 
-export EXPEL_INCLUDE="${INCLUDE:-$PWD}"
+export UBIK_INCLUDE="${INCLUDE:-$PWD}"
 
-$EXPELC $XL_FILE $XL_FILE.out
-$RUNEXPEL $XL_FILE.out
+$UBIC $XL_FILE $XL_FILE.out
+$UBIK $XL_FILE.out

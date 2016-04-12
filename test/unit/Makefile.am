@@ -13,4 +13,4 @@ pointer_set_test_SOURCES=pointer_set.c
 split_test_SOURCES=split.c
 uri_test_SOURCES=uri.c
 
-LDADD = $(top_builddir)/libexpel/libexpel.a
+LDADD = $(top_builddir)/libubik/libubik.a

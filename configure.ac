@@ -2,13 +2,13 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.69])
-AC_INIT([expel], [0.1], [expel@haldean.org])
+AC_INIT([ubik], [0.1], [ubik@haldean.org])
 
 # Use automake to compile Makefile.ac to Makefile.in
 AM_INIT_AUTOMAKE([foreign -Wall -Werror])
 
 # Make sure we're running in the right directory
-AC_CONFIG_SRCDIR([libexpel/rt.c])
+AC_CONFIG_SRCDIR([libubik/rt.c])
 
 AC_CONFIG_HEADERS([config.h])
 
@@ -45,7 +45,7 @@ AC_FUNC_MALLOC
 AC_FUNC_REALLOC
 AC_CHECK_FUNCS([backtrace backtrace_symbols_fd bzero clock_gettime fmemopen getcwd memmove memset strdup])
 
-AC_CONFIG_FILES([Makefile include/Makefile expelc/Makefile libexpel/Makefile
-                 runexpel/Makefile test/prog/Makefile test/unit/Makefile
+AC_CONFIG_FILES([Makefile include/Makefile ub/Makefile libubik/Makefile
+                 ubik/Makefile test/prog/Makefile test/unit/Makefile
                  test/pyasm/Makefile])
 AC_OUTPUT
