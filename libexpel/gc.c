@@ -33,14 +33,19 @@
 #include "expel/expel.h"
 #include "expel/gc.h"
 #include "expel/pointerset.h"
+#include "expel/stream.h"
 #include "expel/uri.h"
 #include "expel/util.h"
 #include "expel/vector.h"
+#include "expel/value.h"
 
 static struct xl_gc_info *gc_stats;
 
 static struct xl_vector graph_alloc = {0};
 static struct xl_vector graph_freed = {0};
+
+static struct xl_vector value_alloc = {0};
+static struct xl_vector value_freed = {0};
 
 static struct xl_uri *graph_trace = NULL;
 static char *graph_trace_str = NULL;
@@ -107,13 +112,18 @@ xl_gc_teardown()
         bool present;
         bool any_leaked;
         struct xl_dagc *graph;
+        struct xl_value *value;
         char *buf;
+        struct xl_stream s;
+
+        err = xl_stream_wfilep(&s, gc_out);
+        if (err != OK)
+        {
+                fprintf(gc_out, "couldn't open stream to gc output\n");
+                return;
+        }
 
         fprintf(gc_out, "========================================\ngc stats:\n");
-        fprintf(gc_out, "alloc %lu pages, %lu freed, %ld remaining\n",
-                        gc_stats->n_page_allocs,
-                        gc_stats->n_page_frees,
-                        (int64_t) gc_stats->n_page_allocs - gc_stats->n_page_frees);
         fprintf(gc_out, "alloc %lu vals, %lu freed, %ld remaining\n",
                         gc_stats->n_val_allocs,
                         gc_stats->n_val_frees,
@@ -148,10 +158,35 @@ xl_gc_teardown()
         }
         if (!any_leaked)
                 fprintf(gc_out, "none!\n");
+
+        fprintf(gc_out, "========================================\nleaked values:\n");
+        any_leaked = false;
+        for (i = 0; i < value_alloc.n; i++)
+        {
+
+                value = (struct xl_value *) value_alloc.elems[i];
+                err = xl_pointer_set_present(&present, &value_freed, value);
+                if (err != OK || present)
+                        continue;
+                any_leaked = true;
+
+                fprintf(gc_out, "%016" PRIxPTR ":\n", (uintptr_t) value);
+                fprintf(gc_out, "\t%lu leaked refs\n", value->refcount);
+                fprintf(gc_out, "\t");
+                err = xl_value_print(&s, value);
+                if (err != OK)
+                        fprintf(gc_out, "...couldn't print value");
+                fprintf(gc_out, "\n");
+        }
+        if (!any_leaked)
+                fprintf(gc_out, "none!\n");
         fprintf(gc_out, "========================================\n");
         #endif
+
         xl_vector_free(&graph_alloc);
         xl_vector_free(&graph_freed);
+        xl_vector_free(&value_alloc);
+        xl_vector_free(&value_freed);
 
         xl_gc_free_all();
         free(gc_stats);
@@ -238,6 +273,8 @@ xl_dagc_alloc(
 no_ignore xl_error
 xl_value_new(struct xl_value **v)
 {
+        xl_error err;
+
         xl_assert(gc_stats != NULL);
 
         *v = calloc(1, sizeof(struct xl_value));
@@ -248,6 +285,12 @@ xl_value_new(struct xl_value **v)
 
         #if XL_GC_DEBUG
         gc_stats->n_val_allocs++;
+
+        #if XL_GC_DEBUG_V
+        err = xl_pointer_set_add(NULL, &value_alloc, *v);
+        if (err != OK)
+                return err;
+        #endif
         #endif
 
         return OK;
@@ -310,10 +353,6 @@ _release_value(struct xl_value *v)
                 return xl_raise(ERR_REFCOUNT_UNDERFLOW, "release");
         v->refcount--;
 
-        #if XL_GC_DEBUG
-        gc_stats->n_val_frees++;
-        #endif
-
         err = OK;
 
         if (v->refcount == 0)
@@ -322,6 +361,16 @@ _release_value(struct xl_value *v)
                         err = xl_release(v->left.any);
                 if (err == OK && (v->tag & (TAG_RIGHT_NODE | TAG_RIGHT_GRAPH)))
                         err = xl_release(v->right.any);
+
+                #if XL_GC_DEBUG
+                gc_stats->n_val_frees++;
+                #if XL_GC_DEBUG_V
+                err = xl_pointer_set_add(NULL, &value_freed, v);
+                if (err != OK)
+                        return err;
+                #endif
+                #endif
+
                 free(v);
         }
 
