@@ -19,8 +19,8 @@
 
 #pragma once
 
-#include "expel/expel.h"
-#include "expel/uri.h"
+#include "ubik/expel.h"
+#include "ubik/uri.h"
 
 #include <stdbool.h>
 #include <stdint.h>

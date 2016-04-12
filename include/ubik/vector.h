@@ -1,5 +1,5 @@
 /*
- * token.h: expel language tokenizer
+ * vector.h: growable arrays
  * Copyright (C) 2016, Haldean Brown
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,18 +17,25 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include "expel/expel.h"
-#include "expel/stream.h"
+#pragma once
+#include <stdint.h>
+#include "ubik/expel.h"
 
-struct xl_token
+struct xl_vector
 {
-        int token_code;
-        char *text;
-        size_t text_len;
-        int line_no;
+        void **elems;
+        size_t n;
+        size_t cap;
 };
 
-typedef xl_error (*xl_token_cb)(struct xl_token t);
-
+/* Ensures that the vector has the capacity to hold at least the given size. */
 no_ignore xl_error
-xl_tokenize(xl_token_cb callback, struct xl_stream *stream);
+xl_vector_ensure_size(struct xl_vector *, size_t size);
+
+/* Appends an element onto the list. */
+no_ignore xl_error
+xl_vector_append(struct xl_vector *, void *elem);
+
+/* Frees all memory associated with a vector. */
+void
+xl_vector_free(struct xl_vector *);

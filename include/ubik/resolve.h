@@ -18,9 +18,9 @@
  */
 
 #pragma once
-#include "expel/expel.h"
-#include "expel/ast.h"
-#include "expel/vector.h"
+#include "ubik/expel.h"
+#include "ubik/ast.h"
+#include "ubik/vector.h"
 
 enum xl_resolve_type
 {

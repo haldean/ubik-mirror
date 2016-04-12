@@ -17,7 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include "expel/expel.h"
+#include "ubik/expel.h"
 
 struct xl_scheduler;
 struct xl_exec_unit;

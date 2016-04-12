@@ -1,5 +1,5 @@
 /*
- * natives.h: built-in native methods
+ * assert.h: compile-conditional assertions
  * Copyright (C) 2015, Haldean Brown
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,8 +17,23 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include "expel/expel.h"
+#ifndef XL_RECKLESS
+        #include <stdio.h>
+        #include <stdlib.h>
+        #include "ubik/util.h"
 
-no_ignore xl_error
-xl_natives_register(struct xl_env *env);
+        int
+        break_on_assert();
 
+        #define xl_assert(x) do { \
+                if (!(x)) { \
+                        fprintf(stderr, \
+                                "assertion %s:%d failed: %s\n", \
+                                __FILE__, __LINE__, #x); \
+                        break_on_assert(); \
+                        xl_trace_print(); \
+                        exit(EXIT_FAILURE); \
+                }} while (0)
+#else
+        #define xl_assert(x)
+#endif

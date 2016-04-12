@@ -1,5 +1,5 @@
 /*
- * streamutil.h: generally useful stream helpers
+ * compile.h: expel compilation
  * Copyright (C) 2016, Haldean Brown
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,13 +17,37 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include "expel/stream.h"
+#pragma once
+#include "ubik/expel.h"
+#include "ubik/ast.h"
 
-/* Takes the line with index i from stream and copies it into the n-length
- * buffer res. */
+
+struct xl_compilation_env
+{
+        char *scratch_dir;
+
+        char **include_dirs;
+        size_t n_include_dirs;
+};
+
 no_ignore xl_error
-xl_streamutil_get_line(
-        char *res,
-        struct xl_stream *stream,
-        size_t i,
-        size_t n);
+xl_compile_env_default(struct xl_compilation_env *cenv);
+
+no_ignore xl_error
+xl_compile_env_free(struct xl_compilation_env *cenv);
+
+no_ignore xl_error
+xl_compile(
+        struct xl_dagc ***graphs,
+        size_t *n_graphs,
+        char *source_name,
+        struct xl_stream *in_stream,
+        struct xl_compilation_env *cenv);
+
+no_ignore xl_error
+xl_compile_ast(
+        struct xl_dagc ***graphs,
+        size_t *n_graphs,
+        struct xl_ast *ast,
+        struct xl_compilation_env *cenv);
+

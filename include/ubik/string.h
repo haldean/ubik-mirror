@@ -1,5 +1,5 @@
 /*
- * closure.h: closure transformation on ASTs
+ * string.h: extensions to the strings API provided by glibc
  * Copyright (C) 2016, Haldean Brown
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,15 +17,22 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#pragma once
-#include "expel/ast.h"
-#include "expel/expel.h"
-#include "expel/resolve.h"
+#include <strings.h>
+#include "ubik/expel.h"
 
-/* Takes an AST and transforms closures into partially-applied functions. This
- * transformation is explained in-depth in the "Code generation" portion of the
- * architecture document. */
+/* Splits a NULL-terminated string into multiple smaller NULL-terminated
+ * strings, each separated by the delim character. */
 no_ignore xl_error
-xl_reduce_closures(
-        struct xl_resolve_context *ctx,
-        struct xl_ast *ast);
+xl_string_split(
+        char ***out,
+        size_t *n_out,
+        char *in,
+        size_t n_in,
+        char delim);
+
+/* Joins two NULL-terminated path segments into a single path. */
+no_ignore xl_error
+xl_string_path_concat(
+        char **out,
+        char *first,
+        char *second);

@@ -1,6 +1,6 @@
 /*
- * assert.h: compile-conditional assertions
- * Copyright (C) 2015, Haldean Brown
+ * parse.h: expel language parser
+ * Copyright (C) 2016, Haldean Brown
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,23 +17,24 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#ifndef XL_RECKLESS
-        #include <stdio.h>
-        #include <stdlib.h>
-        #include "expel/util.h"
+#pragma once
 
-        int
-        break_on_assert();
+#include "ubik/expel.h"
+#include "ubik/ast.h"
+#include "ubik/stream.h"
+#include "ubik/vector.h"
 
-        #define xl_assert(x) do { \
-                if (!(x)) { \
-                        fprintf(stderr, \
-                                "assertion %s:%d failed: %s\n", \
-                                __FILE__, __LINE__, #x); \
-                        break_on_assert(); \
-                        xl_trace_print(); \
-                        exit(EXIT_FAILURE); \
-                }} while (0)
-#else
-        #define xl_assert(x)
-#endif
+struct xl_parse_context
+{
+        struct xl_ast *ast;
+
+        struct xl_ast_loc *err_loc;
+        char *err_msg;
+
+        /* we keep track of everything allocated during parsing so that we can
+         * clean up if the parse fails halfway through. */
+        struct xl_vector allocs;
+};
+
+no_ignore xl_error
+xl_parse(struct xl_ast **ast, char *source_name, struct xl_stream *stream);

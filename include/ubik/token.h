@@ -1,5 +1,5 @@
 /*
- * parse.h: expel language parser
+ * token.h: expel language tokenizer
  * Copyright (C) 2016, Haldean Brown
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,24 +17,18 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#pragma once
+#include "ubik/expel.h"
+#include "ubik/stream.h"
 
-#include "expel/expel.h"
-#include "expel/ast.h"
-#include "expel/stream.h"
-#include "expel/vector.h"
-
-struct xl_parse_context
+struct xl_token
 {
-        struct xl_ast *ast;
-
-        struct xl_ast_loc *err_loc;
-        char *err_msg;
-
-        /* we keep track of everything allocated during parsing so that we can
-         * clean up if the parse fails halfway through. */
-        struct xl_vector allocs;
+        int token_code;
+        char *text;
+        size_t text_len;
+        int line_no;
 };
 
+typedef xl_error (*xl_token_cb)(struct xl_token t);
+
 no_ignore xl_error
-xl_parse(struct xl_ast **ast, char *source_name, struct xl_stream *stream);
+xl_tokenize(xl_token_cb callback, struct xl_stream *stream);

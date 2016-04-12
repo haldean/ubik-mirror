@@ -19,7 +19,7 @@
 
 #include <stdbool.h>
 
-#include "expel/expel.h"
+#include "ubik/expel.h"
 
 bool
 xl_type_satisfied(

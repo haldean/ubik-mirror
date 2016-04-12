@@ -1,6 +1,6 @@
 /*
- * string.h: extensions to the strings API provided by glibc
- * Copyright (C) 2016, Haldean Brown
+ * natives.h: built-in native methods
+ * Copyright (C) 2015, Haldean Brown
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,22 +17,8 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include <strings.h>
-#include "expel/expel.h"
+#include "ubik/expel.h"
 
-/* Splits a NULL-terminated string into multiple smaller NULL-terminated
- * strings, each separated by the delim character. */
 no_ignore xl_error
-xl_string_split(
-        char ***out,
-        size_t *n_out,
-        char *in,
-        size_t n_in,
-        char delim);
+xl_natives_register(struct xl_env *env);
 
-/* Joins two NULL-terminated path segments into a single path. */
-no_ignore xl_error
-xl_string_path_concat(
-        char **out,
-        char *first,
-        char *second);

@@ -23,7 +23,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "expel/const.h"
+#include "ubik/const.h"
 
 typedef uint16_t xl_tag;
 typedef uint64_t xl_word;

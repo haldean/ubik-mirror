@@ -1,6 +1,6 @@
 /*
- * vector.h: growable arrays
- * Copyright (C) 2016, Haldean Brown
+ * util.h: internal runtime utilities
+ * Copyright (C) 2015, Haldean Brown
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,25 +17,35 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#pragma once
-#include <stdint.h>
-#include "expel/expel.h"
+#ifndef EXPEL_UTIL_H__
+#define EXPEL_UTIL_H__
 
-struct xl_vector
-{
-        void **elems;
-        size_t n;
-        size_t cap;
-};
+#define unused(x) (void)(x)
+#define likely(x) __builtin_expect((x), 1)
+#define unlikely(x) __builtin_expect((x), 0)
 
-/* Ensures that the vector has the capacity to hold at least the given size. */
-no_ignore xl_error
-xl_vector_ensure_size(struct xl_vector *, size_t size);
+#include "ubik/expel.h"
 
-/* Appends an element onto the list. */
-no_ignore xl_error
-xl_vector_append(struct xl_vector *, void *elem);
+size_t
+size_max(size_t a, size_t b);
 
-/* Frees all memory associated with a vector. */
+size_t
+size_min(size_t a, size_t b);
+
+/* Converts a word from host byte order to network byte order */
+xl_word
+htonw(xl_word);
+
+/* Converts a word from network byte order to host byte order */
+xl_word
+ntohw(xl_word);
+
+/* Prints a stack trace to stderr. */
 void
-xl_vector_free(struct xl_vector *);
+xl_trace_print(void);
+
+/* Converts a constant to its string value. */
+char *
+xl_word_explain(xl_word);
+
+#endif

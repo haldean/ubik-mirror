@@ -1,5 +1,5 @@
 /*
- * bdagc.h: graph builder
+ * timer.h: x-platform timing code
  * Copyright (C) 2016, Haldean Brown
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,30 +17,15 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#pragma once
-#include "expel/dagc.h"
-#include "expel/expel.h"
+#include "ubik/expel.h"
 
-struct xl_graph_builder
-{
-        struct xl_dagc_node **nodes;
-        size_t n_nodes;
-        size_t cap_nodes;
-
-        struct xl_dagc_node *result;
-};
+struct xl_timer;
 
 no_ignore xl_error
-xl_bdagc_init(struct xl_graph_builder *b);
+xl_timer_new(struct xl_timer **t);
 
-/* Adds a node to the graph. */
 no_ignore xl_error
-xl_bdagc_push_node(
-        struct xl_graph_builder *b,
-        struct xl_dagc_node *node);
+xl_timer_start(struct xl_timer *t);
 
-/* Builds the graph. */
 no_ignore xl_error
-xl_bdagc_build(
-        struct xl_dagc **graph,
-        struct xl_graph_builder *b);
+xl_timer_elapsed(int64_t *microsec, struct xl_timer *t);

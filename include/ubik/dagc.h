@@ -20,7 +20,7 @@
 #ifndef EXPEL_DAGC_H
 #define EXPEL_DAGC_H
 
-#include "expel/expel.h"
+#include "ubik/expel.h"
 
 /* node is fully evaluated */
 #define XL_DAGC_FLAG_COMPLETE   0x01

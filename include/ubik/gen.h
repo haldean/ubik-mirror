@@ -18,9 +18,9 @@
  */
 
 #pragma once
-#include "expel/expel.h"
-#include "expel/ast.h"
-#include "expel/uri.h"
+#include "ubik/expel.h"
+#include "ubik/ast.h"
+#include "ubik/uri.h"
 
 struct xl_gen_requires
 {

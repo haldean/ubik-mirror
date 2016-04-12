@@ -18,8 +18,8 @@
  */
 
 #pragma once
-#include "expel/expel.h"
-#include "expel/vector.h"
+#include "ubik/expel.h"
+#include "ubik/vector.h"
 
 #include <stdbool.h>
 

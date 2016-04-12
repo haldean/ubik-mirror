@@ -1,5 +1,5 @@
 /*
- * timer.h: x-platform timing code
+ * streamutil.h: generally useful stream helpers
  * Copyright (C) 2016, Haldean Brown
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,15 +17,13 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include "expel/expel.h"
+#include "ubik/stream.h"
 
-struct xl_timer;
-
+/* Takes the line with index i from stream and copies it into the n-length
+ * buffer res. */
 no_ignore xl_error
-xl_timer_new(struct xl_timer **t);
-
-no_ignore xl_error
-xl_timer_start(struct xl_timer *t);
-
-no_ignore xl_error
-xl_timer_elapsed(int64_t *microsec, struct xl_timer *t);
+xl_streamutil_get_line(
+        char *res,
+        struct xl_stream *stream,
+        size_t i,
+        size_t n);

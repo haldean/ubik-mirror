@@ -1,5 +1,5 @@
 /*
- * compile.h: expel compilation
+ * bdagc.h: graph builder
  * Copyright (C) 2016, Haldean Brown
  *
  * This program is free software; you can redistribute it and/or modify
@@ -18,36 +18,29 @@
  */
 
 #pragma once
-#include "expel/expel.h"
-#include "expel/ast.h"
+#include "ubik/dagc.h"
+#include "ubik/expel.h"
 
-
-struct xl_compilation_env
+struct xl_graph_builder
 {
-        char *scratch_dir;
+        struct xl_dagc_node **nodes;
+        size_t n_nodes;
+        size_t cap_nodes;
 
-        char **include_dirs;
-        size_t n_include_dirs;
+        struct xl_dagc_node *result;
 };
 
 no_ignore xl_error
-xl_compile_env_default(struct xl_compilation_env *cenv);
+xl_bdagc_init(struct xl_graph_builder *b);
 
+/* Adds a node to the graph. */
 no_ignore xl_error
-xl_compile_env_free(struct xl_compilation_env *cenv);
+xl_bdagc_push_node(
+        struct xl_graph_builder *b,
+        struct xl_dagc_node *node);
 
+/* Builds the graph. */
 no_ignore xl_error
-xl_compile(
-        struct xl_dagc ***graphs,
-        size_t *n_graphs,
-        char *source_name,
-        struct xl_stream *in_stream,
-        struct xl_compilation_env *cenv);
-
-no_ignore xl_error
-xl_compile_ast(
-        struct xl_dagc ***graphs,
-        size_t *n_graphs,
-        struct xl_ast *ast,
-        struct xl_compilation_env *cenv);
-
+xl_bdagc_build(
+        struct xl_dagc **graph,
+        struct xl_graph_builder *b);

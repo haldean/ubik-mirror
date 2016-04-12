@@ -19,7 +19,7 @@
 
 #include <stdbool.h>
 
-#include "expel/expel.h"
+#include "ubik/expel.h"
 
 bool
 xl_value_eq(struct xl_value *v1, struct xl_value *v2);
