@@ -18,8 +18,8 @@
  */
 
 
-#include "expel/expel.h"
-#include "expel/util.h"
+#include "ubik/expel.h"
+#include "ubik/util.h"
 #include "unit.h"
 
 test_t

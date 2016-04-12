@@ -20,7 +20,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "expel/string.h"
+#include "ubik/string.h"
 #include "unit.h"
 
 test_t

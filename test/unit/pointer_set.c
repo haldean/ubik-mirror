@@ -19,9 +19,9 @@
 
 #include <stdlib.h>
 
-#include "expel/expel.h"
-#include "expel/pointerset.h"
-#include "expel/vector.h"
+#include "ubik/expel.h"
+#include "ubik/pointerset.h"
+#include "ubik/vector.h"
 #include "unit.h"
 
 

@@ -17,8 +17,8 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include "expel/env.h"
-#include "expel/expel.h"
+#include "ubik/env.h"
+#include "ubik/expel.h"
 #include "unit.h"
 
 

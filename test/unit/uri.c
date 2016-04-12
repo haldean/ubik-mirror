@@ -19,8 +19,8 @@
 
 #include <stdlib.h>
 
-#include "expel/expel.h"
-#include "expel/uri.h"
+#include "ubik/expel.h"
+#include "ubik/uri.h"
 #include "unit.h"
 
 test_t

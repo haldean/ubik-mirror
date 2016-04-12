@@ -19,8 +19,8 @@
 
 #include <stdlib.h>
 
-#include "expel/expel.h"
-#include "expel/stream.h"
+#include "ubik/expel.h"
+#include "ubik/stream.h"
 #include "unit.h"
 
 
