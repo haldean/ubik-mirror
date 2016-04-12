@@ -75,12 +75,11 @@ def apply(func, arg, terminal=False, nid=None):
         is_term=terminal,
     )
 
-def arg(arg_num, type, terminal=False, nid=None):
+def arg(arg_num, terminal=False, nid=None):
     return dict(
         type="input",
         id=nid,
         arg_num=arg_num,
-        req_type=type,
         is_term=terminal,
     )
 
@@ -236,7 +235,6 @@ def encode(graphs, expect=None):
                     f.write(struct.pack(">Q", node["arg"]["idx"]))
                 elif node_type == "input":
                     f.write(struct.pack(">Q", node["arg_num"]))
-                    f.write(struct.pack(">Q", val_to_idx[node["req_type"]]))
                 elif node_type == "cond":
                     f.write(struct.pack(">Q", node["condition"]["idx"]))
                     f.write(struct.pack(">Q", node["true"]["idx"]))
