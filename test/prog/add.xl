@@ -1,4 +1,4 @@
-# expel hello world, with a function call for kicks
+# ubik hello world, with a function call for kicks
 
 : add-two-numbers
   = uadd 2 64

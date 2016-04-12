@@ -4,30 +4,30 @@ if exists("b:current_syntax")
     finish
 endif
 
-syntax match expelBind ":"
-syntax match expelBind "\."
-syntax match expelBind "!="
-highlight link expelBind Delimiter
+syntax match ubikBind ":"
+syntax match ubikBind "\."
+syntax match ubikBind "!="
+highlight link ubikBind Delimiter
 
-syntax match expelSubbind "\^"
-syntax match expelSubbind "="
-syntax match expelSubbind "=>"
-syntax match expelSubbind "/>"
-syntax match expelSubbind "->"
-syntax match expelSubbind "\\"
-highlight link expelSubbind Keyword
+syntax match ubikSubbind "\^"
+syntax match ubikSubbind "="
+syntax match ubikSubbind "=>"
+syntax match ubikSubbind "/>"
+syntax match ubikSubbind "->"
+syntax match ubikSubbind "\\"
+highlight link ubikSubbind Keyword
 
-syntax region expelString start=/"/ skip=/\\"/ end=/"/ oneline
-highlight default link expelString String
+syntax region ubikString start=/"/ skip=/\\"/ end=/"/ oneline
+highlight default link ubikString String
 
-syntax region expelComment start=/#/ end=/\n/ oneline
-highlight default link expelComment Comment
+syntax region ubikComment start=/#/ end=/\n/ oneline
+highlight default link ubikComment Comment
 
-syntax match expelNumber "\v<\d+>"
-syntax match expelNumber "\v<\d+\.\d+>"
-highlight default link expelNumber Number
+syntax match ubikNumber "\v<\d+>"
+syntax match ubikNumber "\v<\d+\.\d+>"
+highlight default link ubikNumber Number
 
 setlocal shiftwidth=4
 setlocal tabstop=4
 
-let b:current_syntax = "expel"
+let b:current_syntax = "ubik"

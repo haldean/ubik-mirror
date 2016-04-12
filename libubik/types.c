@@ -1,5 +1,5 @@
 /*
- * types.h: runtime type system for expel
+ * types.h: runtime type system for ubik
  * Copyright (C) 2016, Haldean Brown
  *
  * This program is free software; you can redistribute it and/or modify

@@ -1,5 +1,5 @@
 /*
- * compile.h: expel compilation
+ * compile.h: ubik compilation
  * Copyright (C) 2016, Haldean Brown
  *
  * This program is free software; you can redistribute it and/or modify

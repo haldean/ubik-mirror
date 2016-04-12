@@ -1,5 +1,5 @@
 /*
- * uri.h: expel content identifiers
+ * uri.h: ubik content identifiers
  * Copyright (C) 2015, Haldean Brown
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,7 +23,7 @@
 
 #include "ubik/ubik.h"
 
-/* Identifies values in the expel substrate */
+/* Identifies values in the ubik substrate */
 struct xl_uri {
         xl_tag    tag;
         xl_word   hash;

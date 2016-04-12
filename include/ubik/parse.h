@@ -1,5 +1,5 @@
 /*
- * parse.h: expel language parser
+ * parse.h: ubik language parser
  * Copyright (C) 2016, Haldean Brown
  *
  * This program is free software; you can redistribute it and/or modify

@@ -1,5 +1,5 @@
 /*
- * expelc.c: expel compiler
+ * ubikc.c: ubik compiler
  * Copyright (C) 2016, Haldean Brown
  *
  * This program is free software; you can redistribute it and/or modify
@@ -43,8 +43,8 @@
 void
 usage()
 {
-        printf("expelc compiles expel source code to bytecode\n");
-        printf("usage: expelc SOURCE OUT\n");
+        printf("ubikc compiles ubik source code to bytecode\n");
+        printf("usage: ubikc SOURCE OUT\n");
 }
 
 int

@@ -1,5 +1,5 @@
 /*
- * grammar.y: expel language grammar
+ * grammar.y: ubik language grammar
  * Copyright (C) 2016, Haldean Brown
  *
  * This program is free software; you can redistribute it and/or modify

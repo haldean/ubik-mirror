@@ -1,5 +1,5 @@
 /*
- * save.c: save expel data to streams
+ * save.c: save ubik data to streams
  * Copyright (C) 2016, Haldean Brown
  *
  * This program is free software; you can redistribute it and/or modify

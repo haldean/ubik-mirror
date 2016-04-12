@@ -1,5 +1,5 @@
 /*
- * schedule.h: definitions for the expel scheduler
+ * schedule.h: definitions for the ubik scheduler
  * Copyright (C) 2015, Haldean Brown
  *
  * This program is free software; you can redistribute it and/or modify

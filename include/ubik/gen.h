@@ -1,5 +1,5 @@
 /*
- * gen.h: expel bytecode generation
+ * gen.h: ubik bytecode generation
  * Copyright (C) 2016, Haldean Brown
  *
  * This program is free software; you can redistribute it and/or modify

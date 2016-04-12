@@ -1,5 +1,5 @@
 /*
- * load.c: load expel data from streams
+ * load.c: load ubik data from streams
  * Copyright (C) 2015, Haldean Brown
  *
  * This program is free software; you can redistribute it and/or modify

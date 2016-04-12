@@ -1,5 +1,5 @@
 /*
- * compile.c: expel compilation
+ * compile.c: ubik compilation
  * Copyright (C) 2016, Haldean Brown
  *
  * This program is free software; you can redistribute it and/or modify
@@ -43,7 +43,7 @@ xl_compile_env_default(struct xl_compilation_env *cenv)
                 perror("could not open current directory");
                 return xl_raise(ERR_UNEXPECTED_FAILURE, "getcwd");
         }
-        strcat(scratch_dir, "/expel-build");
+        strcat(scratch_dir, "/ubik-build");
         cenv->scratch_dir = scratch_dir;
 
         include_dirs = getenv("EXPEL_INCLUDE");

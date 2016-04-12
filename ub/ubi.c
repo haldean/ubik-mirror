@@ -1,5 +1,5 @@
 /*
- * expeli.c: expel interpreter
+ * ubiki.c: ubik interpreter
  * Copyright (C) 2016, Haldean Brown
  *
  * This program is free software; you can redistribute it and/or modify

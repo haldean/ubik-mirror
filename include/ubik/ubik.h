@@ -1,5 +1,5 @@
 /*
- * expel.h: minimal public API
+ * ubik.h: minimal public API
  * Copyright (C) 2015, Haldean Brown
  *
  * This program is free software; you can redistribute it and/or modify
@@ -186,13 +186,13 @@ struct xl_dagc
         struct xl_dagc_node *result;
 };
 
-/* Starts the expel runtime.
+/* Starts the ubik runtime.
  *
  * Returns OK on success. */
 no_ignore xl_error
 xl_start();
 
-/* Stops the expel runtime.
+/* Stops the ubik runtime.
  *
  * Returns OK on success. */
 no_ignore xl_error
@@ -222,7 +222,7 @@ xl_take(void *v);
 no_ignore xl_error
 xl_release(void *v);
 
-/* Loads an expel bytecode blob from a stream.
+/* Loads an ubik bytecode blob from a stream.
  *
  * Returns OK on success, or a nonzero error word. */
 no_ignore xl_error

@@ -1,5 +1,5 @@
 /*
- * env.h: expel environment definitions
+ * env.h: ubik environment definitions
  * Copyright (C) 2015, Haldean Brown
  *
  * This program is free software; you can redistribute it and/or modify

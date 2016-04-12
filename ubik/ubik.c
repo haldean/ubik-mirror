@@ -70,7 +70,7 @@ test_file(char *fname, bool debug, bool timing)
         }
 
         err = xl_start();
-        CHECK_ERR("couldn't start expel");
+        CHECK_ERR("couldn't start ubik");
 
         err = xl_stream_rfile(&stream, fname);
         CHECK_ERR("couldn't open file");

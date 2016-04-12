@@ -42,13 +42,13 @@ typedef struct
 #define run_single(test) int main() { \
         xl_error err = xl_start(); \
         if (err != OK) { \
-                printf("couldn't start expel: %s\n", xl_error_explain(err)); \
+                printf("couldn't start ubik: %s\n", xl_error_explain(err)); \
                 return 1; \
         } \
         init(); run(test); \
         err = xl_teardown(); \
         if (err != OK) { \
-                printf("couldn't close expel: %s\n", xl_error_explain(err)); \
+                printf("couldn't close ubik: %s\n", xl_error_explain(err)); \
                 return 1; \
         } \
         finish(); }

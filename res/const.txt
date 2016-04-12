@@ -16,7 +16,7 @@
 - 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 -------------------------------------------------------------------------------
-- Every line in this file will become a constant in dist/include/expel/const.h
+- Every line in this file will become a constant in dist/include/ubik/const.h
 - when the project is made. Lines that begin with - are ignored. The format is
 - "  packed.NAME_OF_CONSTANT"; the packed value must be 8 characters long.
 
