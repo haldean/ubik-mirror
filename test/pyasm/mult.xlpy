@@ -5,8 +5,8 @@ eq  = load(nid="load-eq", uri=uri(name="eq", scope=pack("native")))
 sub = load(nid="load-sub", uri=uri(name="usub", scope=pack("native")))
 add = load(nid="load-add", uri=uri(name="uadd", scope=pack("native")))
 
-i0  = arg(0, word(), nid="i0")
-i1  = arg(1, word(), nid="i1")
+i0  = arg(0, nid="i0")
+i1  = arg(1, nid="i1")
 
 # i1 == 0
 q0  = const_word(0, nid="q0")
