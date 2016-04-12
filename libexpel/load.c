@@ -72,7 +72,6 @@ xl_value_load(struct xl_value *out, struct xl_stream *sp)
                         out->tag &= ~TAG_LEFT_NODE;
                         return err;
                 }
-                out->left.t->refcount = 1;
         }
         else return xl_raise(ERR_BAD_TAG, "left is not set");
 
@@ -97,7 +96,6 @@ xl_value_load(struct xl_value *out, struct xl_stream *sp)
                         out->tag &= ~TAG_RIGHT_NODE;
                         return err;
                 }
-                out->right.t->refcount = 1;
         }
         else return xl_raise(ERR_BAD_TAG, "right is not set");
 
