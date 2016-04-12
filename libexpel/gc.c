@@ -483,6 +483,7 @@ _release_graph(struct xl_dagc *g)
 no_ignore static xl_error
 _release_uri(struct xl_uri *u)
 {
+        xl_error err;
         #if XL_GC_DEBUG && XL_GC_DEBUG_V
         char *buf;
         #endif
@@ -505,6 +506,13 @@ _release_uri(struct xl_uri *u)
         fprintf(gc_out, "free uri %s\n", buf);
         free(buf);
         #endif
+
+        if (u->as_value != NULL)
+        {
+                err = xl_release(u->as_value);
+                if (err != OK)
+                        return err;
+        }
 
         if (u->source != NULL)
                 free(u->source);
