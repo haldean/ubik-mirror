@@ -121,6 +121,8 @@ apply_downwards_transform(
         struct xl_ast_expr *expr;
 
         expr = *expr_ref;
+        subast = NULL;
+
         if (expr->scope->needs_closure_appl)
         {
                 err = apply_closure(expr_ref, resolving_name);
@@ -262,6 +264,7 @@ traverse_expr(
         xl_error err;
 
         expr = *expr_ref;
+        subast = NULL;
 
         if (is_closure_ref(expr))
         {

@@ -175,6 +175,7 @@ _add_requirement(
 
         unused(requires);
 
+        source_name = NULL;
         err = _open_stream_for_requirement(
                 &package_stream, &source_name, dependency->source, cenv);
         if (err != OK)
