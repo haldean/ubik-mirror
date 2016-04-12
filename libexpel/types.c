@@ -17,7 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include "ubik/expel.h"
+#include "ubik/ubik.h"
 #include "ubik/types.h"
 #include "ubik/value.h"
 

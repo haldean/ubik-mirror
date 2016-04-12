@@ -22,12 +22,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "expel/compile.h"
-#include "expel/env.h"
-#include "expel/expel.h"
-#include "expel/parse.h"
-#include "expel/schedule.h"
-#include "expel/value.h"
+#include "ubik/compile.h"
+#include "ubik/env.h"
+#include "ubik/ubik.h"
+#include "ubik/parse.h"
+#include "ubik/schedule.h"
+#include "ubik/value.h"
 
 #define c(x) \
         do { \

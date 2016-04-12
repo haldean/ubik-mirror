@@ -19,7 +19,7 @@
 
 #pragma once
 #include "ubik/dagc.h"
-#include "ubik/expel.h"
+#include "ubik/ubik.h"
 
 struct xl_graph_builder
 {

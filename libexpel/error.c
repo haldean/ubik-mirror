@@ -20,7 +20,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "ubik/expel.h"
+#include "ubik/ubik.h"
 #include "ubik/util.h"
 
 xl_error

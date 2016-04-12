@@ -23,7 +23,7 @@
 
 #include "ubik/assert.h"
 #include "ubik/dagc.h"
-#include "ubik/expel.h"
+#include "ubik/ubik.h"
 #include "ubik/util.h"
 
 no_ignore xl_error

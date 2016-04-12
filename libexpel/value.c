@@ -23,7 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "ubik/expel.h"
+#include "ubik/ubik.h"
 #include "ubik/stream.h"
 #include "ubik/util.h"
 #include "ubik/value.h"

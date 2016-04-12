@@ -30,7 +30,7 @@
 
 #include "ubik/assert.h"
 #include "ubik/dagc.h"
-#include "ubik/expel.h"
+#include "ubik/ubik.h"
 #include "ubik/gc.h"
 #include "ubik/pointerset.h"
 #include "ubik/stream.h"

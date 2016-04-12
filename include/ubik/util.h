@@ -24,7 +24,7 @@
 #define likely(x) __builtin_expect((x), 1)
 #define unlikely(x) __builtin_expect((x), 0)
 
-#include "ubik/expel.h"
+#include "ubik/ubik.h"
 
 size_t
 size_max(size_t a, size_t b);

@@ -21,7 +21,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "ubik/expel.h"
+#include "ubik/ubik.h"
 #include "ubik/vector.h"
 
 /* Pointer sets represent sets of objects where the identity of an object is the

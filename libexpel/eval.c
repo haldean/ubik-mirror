@@ -20,7 +20,7 @@
 #include "ubik/assert.h"
 #include "ubik/dagc.h"
 #include "ubik/env.h"
-#include "ubik/expel.h"
+#include "ubik/ubik.h"
 #include "ubik/types.h"
 #include "ubik/util.h"
 #include "ubik/value.h"

@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "ubik/expel.h"
+#include "ubik/ubik.h"
 #include "ubik/uri.h"
 
 #include <stdbool.h>

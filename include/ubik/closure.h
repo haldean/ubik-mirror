@@ -19,7 +19,7 @@
 
 #pragma once
 #include "ubik/ast.h"
-#include "ubik/expel.h"
+#include "ubik/ubik.h"
 #include "ubik/resolve.h"
 
 /* Takes an AST and transforms closures into partially-applied functions. This

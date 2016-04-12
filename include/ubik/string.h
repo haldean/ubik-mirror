@@ -18,7 +18,7 @@
  */
 
 #include <strings.h>
-#include "ubik/expel.h"
+#include "ubik/ubik.h"
 
 /* Splits a NULL-terminated string into multiple smaller NULL-terminated
  * strings, each separated by the delim character. */

@@ -18,7 +18,7 @@
  */
 
 
-#include "ubik/expel.h"
+#include "ubik/ubik.h"
 #include "ubik/util.h"
 #include "unit.h"
 

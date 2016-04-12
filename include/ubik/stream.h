@@ -22,7 +22,7 @@
 
 #include <stdio.h>
 
-#include "ubik/expel.h"
+#include "ubik/ubik.h"
 
 struct _xl_buf {
         uint8_t *start;

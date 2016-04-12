@@ -21,7 +21,7 @@
 #include "ubik/bdagc.h"
 #include "ubik/dagc.h"
 #include "ubik/env.h"
-#include "ubik/expel.h"
+#include "ubik/ubik.h"
 #include "ubik/gen.h"
 #include "ubik/types.h"
 #include "ubik/uri.h"

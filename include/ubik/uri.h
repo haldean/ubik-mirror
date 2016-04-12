@@ -21,7 +21,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "ubik/expel.h"
+#include "ubik/ubik.h"
 
 /* Identifies values in the expel substrate */
 struct xl_uri {

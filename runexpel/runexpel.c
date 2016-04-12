@@ -22,15 +22,15 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "expel/assert.h"
-#include "expel/dagc.h"
-#include "expel/env.h"
-#include "expel/expel.h"
-#include "expel/schedule.h"
-#include "expel/stream.h"
-#include "expel/timer.h"
-#include "expel/util.h"
-#include "expel/value.h"
+#include "ubik/assert.h"
+#include "ubik/dagc.h"
+#include "ubik/env.h"
+#include "ubik/ubik.h"
+#include "ubik/schedule.h"
+#include "ubik/stream.h"
+#include "ubik/timer.h"
+#include "ubik/util.h"
+#include "ubik/value.h"
 
 #define CHECK_ERR(msg) \
         do { if (err != OK) \

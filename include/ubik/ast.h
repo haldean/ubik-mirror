@@ -18,7 +18,7 @@
  */
 
 #pragma once
-#include "ubik/expel.h"
+#include "ubik/ubik.h"
 #include "ubik/vector.h"
 
 #include <stdbool.h>

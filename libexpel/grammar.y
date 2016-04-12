@@ -19,7 +19,7 @@
 
 %{
 
-#include "ubik/expel.h"
+#include "ubik/ubik.h"
 #include "ubik/ast.h"
 #include "ubik/parse.h"
 #include "ubik/util.h"

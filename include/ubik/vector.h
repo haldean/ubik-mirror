@@ -19,7 +19,7 @@
 
 #pragma once
 #include <stdint.h>
-#include "ubik/expel.h"
+#include "ubik/ubik.h"
 
 struct xl_vector
 {

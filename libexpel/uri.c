@@ -21,7 +21,7 @@
 #include <string.h>
 
 #include "ubik/assert.h"
-#include "ubik/expel.h"
+#include "ubik/ubik.h"
 #include "ubik/uri.h"
 #include "ubik/value.h"
 

@@ -19,7 +19,7 @@
 
 #include <stdlib.h>
 
-#include "ubik/expel.h"
+#include "ubik/ubik.h"
 #include "ubik/uri.h"
 #include "unit.h"
 
