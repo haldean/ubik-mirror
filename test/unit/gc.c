@@ -47,39 +47,10 @@ gc()
         #ifdef XL_GC_DEBUG
                 assert(gc_stats.n_val_allocs == N_TEST_GC_VALUES);
                 assert(gc_stats.n_val_frees == N_TEST_GC_VALUES);
-                assert(gc_stats.n_val_frees >= gc_stats.n_gc_runs);
-        #endif
-
-        assert(xl_gc_run() == OK);
-        xl_gc_get_stats(&gc_stats);
-        #ifdef XL_GC_DEBUG
-                assert(gc_stats.n_page_frees == gc_stats.n_page_allocs);
         #endif
 
         xl_gc_free_all();
         xl_gc_start();
-
-        for (i = 0; i < XL_GC_PAGE_SIZE * 2; i++)
-        {
-                assert(xl_value_new(&vals[i]) == 0);
-        }
-        for (i = 0; i < XL_GC_PAGE_SIZE * 2; i++)
-        {
-                assert(xl_release(vals[i]) == 0);
-        }
-        for (i = 0; i < XL_GC_PAGE_SIZE * 2; i++)
-        {
-                assert(xl_value_new(&vals[i]) == 0);
-        }
-        for (i = 0; i < XL_GC_PAGE_SIZE * 2; i++)
-        {
-                assert(xl_release(vals[i]) == 0);
-        }
-
-        xl_gc_get_stats(&gc_stats);
-        #ifdef XL_GC_DEBUG
-                assert(gc_stats.n_page_allocs == 2);
-        #endif
 
         return ok;
 }
