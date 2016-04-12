@@ -118,7 +118,7 @@ def type_to_tag_suffix(typ):
 
 def emit_c(tree, options):
     res = """
-err = xl_value_new(&{root});
+err = ubik_value_new(&{root});
 if (err != OK)
         {do_on_err};
 """.format(root=tree["label"], do_on_err=options["on_error"])

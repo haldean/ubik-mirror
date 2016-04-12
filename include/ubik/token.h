@@ -20,7 +20,7 @@
 #include "ubik/ubik.h"
 #include "ubik/stream.h"
 
-struct xl_token
+struct ubik_token
 {
         int token_code;
         char *text;
@@ -28,7 +28,7 @@ struct xl_token
         int line_no;
 };
 
-typedef xl_error (*xl_token_cb)(struct xl_token t);
+typedef ubik_error (*ubik_token_cb)(struct ubik_token t);
 
-no_ignore xl_error
-ubik_tokenize(xl_token_cb callback, struct xl_stream *stream);
+no_ignore ubik_error
+ubik_tokenize(ubik_token_cb callback, struct ubik_stream *stream);

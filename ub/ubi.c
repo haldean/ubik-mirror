@@ -36,7 +36,7 @@
         err = x; \
         if (err != OK) \
         { \
-                char *expl = xl_error_explain(err); \
+                char *expl = ubik_error_explain(err); \
                 printf("%s\n", expl); \
                 free(err); free(expl); \
                 goto teardown; \
@@ -45,50 +45,50 @@
 int
 main(int argc, char *argv[])
 {
-        struct xl_ast *ast;
-        struct xl_dagc **graphs;
-        struct xl_stream sstdin;
-        struct xl_env env = {0};
-        struct xl_scheduler *s;
-        local(resolve_context) struct xl_resolve_context rctx = {0};
+        struct ubik_ast *ast;
+        struct ubik_dagc **graphs;
+        struct ubik_stream sstdin;
+        struct ubik_env env = {0};
+        struct ubik_scheduler *s;
+        local(resolve_context) struct ubik_resolve_context rctx = {0};
         size_t n_graphs;
         size_t i;
-        xl_error err;
-        xl_error teardown_err;
-        xl_error parse_err;
+        ubik_error err;
+        ubik_error teardown_err;
+        ubik_error parse_err;
         char *buf;
 
         ast = NULL;
         graphs = NULL;
         s = NULL;
 
-        c(xl_start());
+        c(ubik_start());
 
-        c(xl_stream_rfilep(&sstdin, stdin));
+        c(ubik_stream_rfilep(&sstdin, stdin));
 
-        parse_err = xl_parse(&ast, "(stdin)", &sstdin);
+        parse_err = ubik_parse(&ast, "(stdin)", &sstdin);
         if (parse_err == OK)
-                parse_err = xl_resolve(ast, "(stdin)", &sstdin, &rctx);
+                parse_err = ubik_resolve(ast, "(stdin)", &sstdin, &rctx);
         if (argc > 1 && strcmp(argv[1], "emit-ast") == 0)
-                err = xl_ast_print(ast);
+                err = ubik_ast_print(ast);
         c(parse_err);
         c(err);
 
-        c(xl_compile_ast(&graphs, &n_graphs, ast, NULL));
+        c(ubik_compile_ast(&graphs, &n_graphs, ast, NULL));
 
-        c(xl_env_init(&env));
+        c(ubik_env_init(&env));
 
-        c(xl_schedule_new(&s));
-        c(xl_schedule_push(s, graphs[0], &env, NULL));
-        c(xl_schedule_run(s));
+        c(ubik_schedule_new(&s));
+        c(ubik_schedule_push(s, graphs[0], &env, NULL));
+        c(ubik_schedule_run(s));
 
 teardown:
         if (ast != NULL)
         {
-                teardown_err = xl_ast_free(ast);
+                teardown_err = ubik_ast_free(ast);
                 if (teardown_err != OK)
                 {
-                        buf = xl_error_explain(teardown_err);
+                        buf = ubik_error_explain(teardown_err);
                         printf("error when freeing ast: %s\n", buf);
                         free(buf);
                         free(teardown_err);
@@ -97,10 +97,10 @@ teardown:
 
         if (s != NULL)
         {
-                teardown_err = xl_schedule_free(s);
+                teardown_err = ubik_schedule_free(s);
                 if (teardown_err != OK)
                 {
-                        buf = xl_error_explain(teardown_err);
+                        buf = ubik_error_explain(teardown_err);
                         printf("error when freeing scheduler: %s\n", buf);
                         free(buf);
                         free(teardown_err);
@@ -114,10 +114,10 @@ teardown:
                 {
                         if (graphs[i] == NULL)
                                 continue;
-                        teardown_err = xl_release(graphs[i]);
+                        teardown_err = ubik_release(graphs[i]);
                         if (teardown_err != OK)
                         {
-                                buf = xl_error_explain(teardown_err);
+                                buf = ubik_error_explain(teardown_err);
                                 printf("graph release failed: %s\n", buf);
                                 free(buf);
                                 free(teardown_err);
@@ -126,19 +126,19 @@ teardown:
                 free(graphs);
         }
 
-        teardown_err = xl_env_free(&env);
+        teardown_err = ubik_env_free(&env);
         if (teardown_err != OK)
         {
-                buf = xl_error_explain(teardown_err);
+                buf = ubik_error_explain(teardown_err);
                 printf("error when freeing environment: %s\n", buf);
                 free(buf);
                 free(teardown_err);
         }
 
-        teardown_err = xl_teardown();
+        teardown_err = ubik_teardown();
         if (teardown_err != OK)
         {
-                buf = xl_error_explain(teardown_err);
+                buf = ubik_error_explain(teardown_err);
                 printf("error when tearing down runtime: %s\n", buf);
                 free(buf);
                 free(teardown_err);

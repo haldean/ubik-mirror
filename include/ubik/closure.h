@@ -25,7 +25,7 @@
 /* Takes an AST and transforms closures into partially-applied functions. This
  * transformation is explained in-depth in the "Code generation" portion of the
  * architecture document. */
-no_ignore xl_error
+no_ignore ubik_error
 ubik_reduce_closures(
-        struct xl_resolve_context *ctx,
-        struct xl_ast *ast);
+        struct ubik_resolve_context *ctx,
+        struct ubik_ast *ast);

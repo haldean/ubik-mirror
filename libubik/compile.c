@@ -30,18 +30,18 @@
 #include "ubik/util.h"
 
 
-no_ignore xl_error
-ubik_compile_env_default(struct xl_compilation_env *cenv)
+no_ignore ubik_error
+ubik_compile_env_default(struct ubik_compilation_env *cenv)
 {
         char *scratch_dir;
         char *include_dirs;
-        xl_error err;
+        ubik_error err;
 
         scratch_dir = calloc(512, sizeof(char));
         if (getcwd(scratch_dir, 500) == NULL)
         {
                 perror("could not open current directory");
-                return xl_raise(ERR_UNEXPECTED_FAILURE, "getcwd");
+                return ubik_raise(ERR_UNEXPECTED_FAILURE, "getcwd");
         }
         strcat(scratch_dir, "/ubik-build");
         cenv->scratch_dir = scratch_dir;
@@ -54,7 +54,7 @@ ubik_compile_env_default(struct xl_compilation_env *cenv)
         }
         else
         {
-                err = xl_string_split(
+                err = ubik_string_split(
                         &cenv->include_dirs,
                         &cenv->n_include_dirs,
                         include_dirs,
@@ -67,8 +67,8 @@ ubik_compile_env_default(struct xl_compilation_env *cenv)
         return OK;
 }
 
-no_ignore xl_error
-ubik_compile_env_free(struct xl_compilation_env *cenv)
+no_ignore ubik_error
+ubik_compile_env_free(struct ubik_compilation_env *cenv)
 {
         size_t i;
 
@@ -81,33 +81,33 @@ ubik_compile_env_free(struct xl_compilation_env *cenv)
         return OK;
 }
 
-no_ignore xl_error
+no_ignore ubik_error
 ubik_compile(
-        struct xl_dagc ***graphs,
+        struct ubik_dagc ***graphs,
         size_t *n_graphs,
         char *source_name,
-        struct xl_stream *in_stream,
-        struct xl_compilation_env *cenv)
+        struct ubik_stream *in_stream,
+        struct ubik_compilation_env *cenv)
 {
-        struct xl_ast *ast;
-        local(resolve_context) struct xl_resolve_context ctx = {0};
-        xl_error err;
-        xl_error free_err;
+        struct ubik_ast *ast;
+        local(resolve_context) struct ubik_resolve_context ctx = {0};
+        ubik_error err;
+        ubik_error free_err;
 
-        err = xl_parse(&ast, source_name, in_stream);
+        err = ubik_parse(&ast, source_name, in_stream);
         if (err != OK)
                 return err;
 
-        err = xl_resolve(ast, source_name, in_stream, &ctx);
+        err = ubik_resolve(ast, source_name, in_stream, &ctx);
         if (err != OK)
                 goto free_ast;
 
-        err = xl_compile_ast(graphs, n_graphs, ast, cenv);
+        err = ubik_compile_ast(graphs, n_graphs, ast, cenv);
         if (err != OK)
                 goto free_ast;
 
 free_ast:
-        free_err = xl_ast_free(ast);
+        free_err = ubik_ast_free(ast);
         if (err != OK)
                 return err;
         if (free_err != OK)
@@ -115,17 +115,17 @@ free_ast:
         return OK;
 }
 
-no_ignore static xl_error
+no_ignore static ubik_error
 _open_stream_for_requirement(
-        struct xl_stream *out,
+        struct ubik_stream *out,
         char **source_name,
         char *package_name,
-        struct xl_compilation_env *cenv)
+        struct ubik_compilation_env *cenv)
 {
         size_t i;
         char *test_file;
         char *test_basename;
-        xl_error err;
+        ubik_error err;
 
         test_basename = calloc(strlen(package_name) + 4, sizeof(char));
         strcpy(test_basename, package_name);
@@ -133,13 +133,13 @@ _open_stream_for_requirement(
 
         for (i = 0; i < cenv->n_include_dirs; i++)
         {
-                err = xl_string_path_concat(
+                err = ubik_string_path_concat(
                         &test_file, cenv->include_dirs[i], test_basename);
                 if (err != OK)
                         return err;
                 if (access(test_file, R_OK) == 0)
                 {
-                        err = xl_stream_rfile(out, test_file);
+                        err = ubik_stream_rfile(out, test_file);
                         if (err != OK)
                                 return err;
 #ifdef XL_COMPILE_DEBUG
@@ -153,25 +153,25 @@ _open_stream_for_requirement(
         }
 
         free(test_basename);
-        return xl_raise(ERR_ABSENT, package_name);
+        return ubik_raise(ERR_ABSENT, package_name);
 }
 
-no_ignore static xl_error
+no_ignore static ubik_error
 _add_requirement(
-        struct xl_dagc ***graphs,
+        struct ubik_dagc ***graphs,
         size_t *n_graphs,
-        struct xl_gen_requires *requires,
-        struct xl_uri *dependency,
-        struct xl_compilation_env *cenv)
+        struct ubik_gen_requires *requires,
+        struct ubik_uri *dependency,
+        struct ubik_compilation_env *cenv)
 {
-        struct xl_dagc **req_graphs;
+        struct ubik_dagc **req_graphs;
         size_t n_req_graphs;
-        struct xl_gen_requires *req_requires;
-        struct xl_stream package_stream;
-        struct xl_ast *ast;
-        struct xl_dagc **buf;
+        struct ubik_gen_requires *req_requires;
+        struct ubik_stream package_stream;
+        struct ubik_ast *ast;
+        struct ubik_dagc **buf;
         char *source_name;
-        xl_error err;
+        ubik_error err;
 
         unused(requires);
 
@@ -181,57 +181,57 @@ _add_requirement(
         if (err != OK)
                 return err;
 
-        err = xl_parse(&ast, source_name, &package_stream);
+        err = ubik_parse(&ast, source_name, &package_stream);
         free(source_name);
         if (err != OK)
                 return err;
 
         req_requires = NULL;
-        err = xl_compile_unit(
+        err = ubik_compile_unit(
                 &req_graphs, &n_req_graphs, &req_requires, ast, LOAD_IMPORTED,
                 dependency->source);
         if (err != OK)
                 return err;
         if (req_requires != NULL)
-                return xl_raise(
+                return ubik_raise(
                         ERR_NOT_IMPLEMENTED,
                         "only one level of imports allowed");
 
         buf = realloc(
                 *graphs,
-                (*n_graphs + n_req_graphs) * sizeof(struct xl_dagc **));
+                (*n_graphs + n_req_graphs) * sizeof(struct ubik_dagc **));
         if (buf == NULL)
-                return xl_raise(ERR_NO_MEMORY, "graph list realloc");
+                return ubik_raise(ERR_NO_MEMORY, "graph list realloc");
         memcpy(
                 &buf[*n_graphs],
                 req_graphs,
-                n_req_graphs * sizeof(struct xl_dagc **));
+                n_req_graphs * sizeof(struct ubik_dagc **));
         *graphs = buf;
         *n_graphs += n_req_graphs;
 
-        err = xl_ast_free(ast);
+        err = ubik_ast_free(ast);
         if (err != OK)
                 return err;
 
-        xl_stream_close(&package_stream);
+        ubik_stream_close(&package_stream);
         free(req_graphs);
 
         return OK;
 }
 
-no_ignore xl_error
+no_ignore ubik_error
 ubik_compile_ast(
-        struct xl_dagc ***graphs,
+        struct ubik_dagc ***graphs,
         size_t *n_graphs,
-        struct xl_ast *ast,
-        struct xl_compilation_env *cenv)
+        struct ubik_ast *ast,
+        struct ubik_compilation_env *cenv)
 {
-        struct xl_gen_requires *requires;
-        struct xl_gen_requires *head;
-        xl_error err;
+        struct ubik_gen_requires *requires;
+        struct ubik_gen_requires *head;
+        ubik_error err;
 
         requires = NULL;
-        err = xl_compile_unit(
+        err = ubik_compile_unit(
                 graphs, n_graphs, &requires, ast, LOAD_MAIN, NULL);
         if (err != OK)
                 return err;
@@ -247,7 +247,7 @@ ubik_compile_ast(
                 requires = requires->next;
         }
 
-        err = xl_gen_requires_free(head);
+        err = ubik_gen_requires_free(head);
         if (err != OK)
                 return err;
 

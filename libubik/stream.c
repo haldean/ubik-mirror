@@ -25,33 +25,33 @@
 #include "ubik/util.h"
 
 /* Opens a stream for reading from the given file. */
-no_ignore xl_error
-ubik_stream_rfile(struct xl_stream *sp, char *file)
+no_ignore ubik_error
+ubik_stream_rfile(struct ubik_stream *sp, char *file)
 {
         sp->stream_type = STREAM_TYPE_FILE_R;
         sp->file = fopen(file, "r");
-        return sp->file == NULL ? xl_raise(ERR_ABSENT, "rfile") : OK;
+        return sp->file == NULL ? ubik_raise(ERR_ABSENT, "rfile") : OK;
 }
 
 /* Opens a stream for writing to the given file. */
-no_ignore xl_error
-ubik_stream_wfile(struct xl_stream *sp, char *file)
+no_ignore ubik_error
+ubik_stream_wfile(struct ubik_stream *sp, char *file)
 {
         sp->stream_type = STREAM_TYPE_FILE_W;
         sp->file = fopen(file, "w");
-        return sp->file == NULL ? xl_raise(ERR_ABSENT, "wfile") : OK;
+        return sp->file == NULL ? ubik_raise(ERR_ABSENT, "wfile") : OK;
 }
 
-no_ignore xl_error
-ubik_stream_rfilep(struct xl_stream *sp, FILE *file)
+no_ignore ubik_error
+ubik_stream_rfilep(struct ubik_stream *sp, FILE *file)
 {
         sp->stream_type = STREAM_TYPE_FILE_R;
         sp->file = file;
         return OK;
 }
 
-no_ignore xl_error
-ubik_stream_wfilep(struct xl_stream *sp, FILE *file)
+no_ignore ubik_error
+ubik_stream_wfilep(struct ubik_stream *sp, FILE *file)
 {
         sp->stream_type = STREAM_TYPE_FILE_W;
         sp->file = file;
@@ -59,18 +59,18 @@ ubik_stream_wfilep(struct xl_stream *sp, FILE *file)
 }
 
 /* Opens a stream backed by an in-memory buffer. */
-no_ignore xl_error
-ubik_stream_buffer(struct xl_stream *sp)
+no_ignore ubik_error
+ubik_stream_buffer(struct ubik_stream *sp)
 {
         sp->stream_type = STREAM_TYPE_BUFFER;
-        sp->buffer = calloc(1, sizeof(struct _xl_buf));
-        return sp->buffer == NULL ? xl_raise(ERR_NO_MEMORY, "buffer") : OK;
+        sp->buffer = calloc(1, sizeof(struct _ubik_buf));
+        return sp->buffer == NULL ? ubik_raise(ERR_NO_MEMORY, "buffer") : OK;
 }
 
 /* Attempts to read the specified number of bytes from the stream, returning the
  * number of bytes read. */
 no_ignore size_t
-ubik_stream_read(void *dst, struct xl_stream *src, size_t len)
+ubik_stream_read(void *dst, struct ubik_stream *src, size_t len)
 {
         size_t n;
         switch (src->stream_type)
@@ -89,7 +89,7 @@ ubik_stream_read(void *dst, struct xl_stream *src, size_t len)
 }
 
 no_ignore size_t
-ubik_stream_drop(struct xl_stream *src, size_t len)
+ubik_stream_drop(struct ubik_stream *src, size_t len)
 {
         size_t n;
         switch (src->stream_type)
@@ -110,8 +110,8 @@ ubik_stream_drop(struct xl_stream *src, size_t len)
 
 /* Allocate enough space in the provided buffer to fit the requested length in
  * after the write pointer. */
-static xl_error
-_buf_realloc(struct _xl_buf *buf, size_t req_len)
+static ubik_error
+_buf_realloc(struct _ubik_buf *buf, size_t req_len)
 {
         size_t n;
         uint8_t *old_start;
@@ -124,7 +124,7 @@ _buf_realloc(struct _xl_buf *buf, size_t req_len)
 
         new_start = realloc(buf->start, n);
         if (new_start == NULL)
-                return xl_raise(ERR_NO_MEMORY, "buffer stream realloc");
+                return ubik_raise(ERR_NO_MEMORY, "buffer stream realloc");
         buf->start = new_start;
         buf->read = buf->start + (buf->read - old_start);
         buf->write = buf->start + (buf->write - old_start);
@@ -136,10 +136,10 @@ _buf_realloc(struct _xl_buf *buf, size_t req_len)
 /* Attempts to write the specified number of bytes to the stream, returning the
  * number of bytes written. */
 size_t
-ubik_stream_write(struct xl_stream *dst, void *src, size_t len)
+ubik_stream_write(struct ubik_stream *dst, void *src, size_t len)
 {
         size_t written;
-        xl_error err;
+        ubik_error err;
 
         switch (dst->stream_type)
         {
@@ -166,7 +166,7 @@ ubik_stream_write(struct xl_stream *dst, void *src, size_t len)
 
 /* Closes a stream. */
 void
-ubik_stream_close(struct xl_stream *sp)
+ubik_stream_close(struct ubik_stream *sp)
 {
         switch (sp->stream_type)
         {
@@ -183,7 +183,7 @@ ubik_stream_close(struct xl_stream *sp)
 }
 
 FILE *
-ubik_stream_fp(struct xl_stream *sp)
+ubik_stream_fp(struct ubik_stream *sp)
 {
         switch (sp->stream_type)
         {
@@ -192,7 +192,7 @@ ubik_stream_fp(struct xl_stream *sp)
                 return sp->file;
         case STREAM_TYPE_BUFFER:
 #ifdef __MACH__
-                printf("WARNING: xl_stream_fp unsupported for memory buffers on Darwin");
+                printf("WARNING: ubik_stream_fp unsupported for memory buffers on Darwin");
                 return NULL;
 #else
                 return fmemopen(
@@ -205,7 +205,7 @@ ubik_stream_fp(struct xl_stream *sp)
 }
 
 void
-ubik_stream_reset(struct xl_stream *sp)
+ubik_stream_reset(struct ubik_stream *sp)
 {
         switch (sp->stream_type)
         {

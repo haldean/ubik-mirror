@@ -1,5 +1,5 @@
 /*
- * value.h: encoding and decoding xl_values
+ * value.h: encoding and decoding ubik_values
  * Copyright (C) 2016, Haldean Brown
  *
  * This program is free software; you can redistribute it and/or modify
@@ -22,19 +22,19 @@
 #include "ubik/ubik.h"
 
 bool
-ubik_value_eq(struct xl_value *v1, struct xl_value *v2);
+ubik_value_eq(struct ubik_value *v1, struct ubik_value *v2);
 
-no_ignore xl_error
-ubik_value_print(struct xl_stream *out, struct xl_value *v);
+no_ignore ubik_error
+ubik_value_print(struct ubik_stream *out, struct ubik_value *v);
 
-no_ignore xl_error
-ubik_packed_read(uint8_t **dest, size_t *n, struct xl_value *src);
+no_ignore ubik_error
+ubik_packed_read(uint8_t **dest, size_t *n, struct ubik_value *src);
 
-no_ignore xl_error
-ubik_string_read(char **dest, size_t *n, struct xl_value *src);
+no_ignore ubik_error
+ubik_string_read(char **dest, size_t *n, struct ubik_value *src);
 
-no_ignore xl_error
-ubik_value_as_bool(bool *res, struct xl_value *v);
+no_ignore ubik_error
+ubik_value_as_bool(bool *res, struct ubik_value *v);
 
-no_ignore xl_error
-ubik_value_pack_string(struct xl_value *dest, char *src, size_t n);
+no_ignore ubik_error
+ubik_value_pack_string(struct ubik_value *dest, char *src, size_t n);

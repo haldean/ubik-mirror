@@ -23,8 +23,8 @@
 #include <inttypes.h>
 #include <stdio.h>
 
-no_ignore xl_error
-_print_ast(struct xl_ast *ast, int indent);
+no_ignore ubik_error
+_print_ast(struct ubik_ast *ast, int indent);
 
 static inline void
 _indent(int indent)
@@ -34,8 +34,8 @@ _indent(int indent)
                 printf(" ");
 }
 
-no_ignore static xl_error
-_print_atom(struct xl_ast_atom *atom)
+no_ignore static ubik_error
+_print_atom(struct ubik_ast_atom *atom)
 {
         if (atom->name_loc != 0)
         {
@@ -74,11 +74,11 @@ _print_atom(struct xl_ast_atom *atom)
                 return OK;
         }
 
-        return xl_raise(ERR_UNKNOWN_TYPE, "unknown atom type");
+        return ubik_raise(ERR_UNKNOWN_TYPE, "unknown atom type");
 }
 
-no_ignore static xl_error
-_print_arg_list(struct xl_ast_arg_list *arg_list)
+no_ignore static ubik_error
+_print_arg_list(struct ubik_ast_arg_list *arg_list)
 {
         printf("( ");
         while (arg_list->name != NULL)
@@ -90,10 +90,10 @@ _print_arg_list(struct xl_ast_arg_list *arg_list)
         return OK;
 }
 
-no_ignore static xl_error
-_print_expr(struct xl_ast_expr *expr, int indent)
+no_ignore static ubik_error
+_print_expr(struct ubik_ast_expr *expr, int indent)
 {
-        xl_error err;
+        ubik_error err;
 
         switch (expr->expr_type)
         {
@@ -156,13 +156,13 @@ _print_expr(struct xl_ast_expr *expr, int indent)
                 return OK;
         }
 
-        return xl_raise(ERR_UNKNOWN_TYPE, "unknown expr type");
+        return ubik_raise(ERR_UNKNOWN_TYPE, "unknown expr type");
 }
 
-no_ignore static xl_error
-_print_type_expr(struct xl_ast_type_expr *type_expr)
+no_ignore static ubik_error
+_print_type_expr(struct ubik_ast_type_expr *type_expr)
 {
-        xl_error err;
+        ubik_error err;
 
         switch (type_expr->type_expr_type)
         {
@@ -180,14 +180,14 @@ _print_type_expr(struct xl_ast_type_expr *type_expr)
                 printf(")");
                 return OK;
         }
-        return xl_raise(ERR_UNKNOWN_TYPE, "unknown type expr type");
+        return ubik_raise(ERR_UNKNOWN_TYPE, "unknown type expr type");
 }
 
-no_ignore static xl_error
-_print_type(struct xl_ast_type *type, int indent)
+no_ignore static ubik_error
+_print_type(struct ubik_ast_type *type, int indent)
 {
-        struct xl_ast_member_list *m;
-        xl_error err;
+        struct ubik_ast_member_list *m;
+        ubik_error err;
 
         _indent(indent);
         printf("type %s\n", type->name);
@@ -211,12 +211,12 @@ _print_type(struct xl_ast_type *type, int indent)
         return OK;
 }
 
-no_ignore xl_error
-_print_ast(struct xl_ast *ast, int indent)
+no_ignore ubik_error
+_print_ast(struct ubik_ast *ast, int indent)
 {
         size_t i;
-        xl_error err;
-        struct xl_ast_binding *b;
+        ubik_error err;
+        struct ubik_ast_binding *b;
 
         if (ast->types.n > 0)
         {
@@ -264,8 +264,8 @@ _print_ast(struct xl_ast *ast, int indent)
         return OK;
 }
 
-no_ignore xl_error
-ubik_ast_print(struct xl_ast *ast)
+no_ignore ubik_error
+ubik_ast_print(struct ubik_ast *ast)
 {
         return _print_ast(ast, 0);
 }

@@ -40,7 +40,7 @@ size_min(size_t a, size_t b)
 }
 
 ubik_word
-htonw(xl_word w)
+htonw(ubik_word w)
 {
 #ifdef __BYTE_ORDER__
 #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
@@ -63,7 +63,7 @@ htonw(xl_word w)
 }
 
 ubik_word
-ntohw(xl_word w)
+ntohw(ubik_word w)
 {
 #ifdef __BYTE_ORDER__
 #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
@@ -97,7 +97,7 @@ ubik_trace_print(void)
 }
 
 char *
-ubik_word_explain(xl_word word)
+ubik_word_explain(ubik_word word)
 {
         size_t i;
         char *res;

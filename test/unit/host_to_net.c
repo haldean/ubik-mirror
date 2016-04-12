@@ -25,7 +25,7 @@
 test_t
 host_to_net()
 {
-        xl_word v;
+        ubik_word v;
 
         v = 0x0123456789ABCDEF;
         v = htonw(v);

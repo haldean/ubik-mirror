@@ -66,38 +66,38 @@
  *      7. Repeat until there are no more names resolved to a closure.
  */
 
-no_ignore static xl_error
-apply_closure(struct xl_ast_expr **lambda, char *resolving_name)
+no_ignore static ubik_error
+apply_closure(struct ubik_ast_expr **lambda, char *resolving_name)
 {
-        struct xl_ast_expr *apply;
-        struct xl_ast_expr *name;
+        struct ubik_ast_expr *apply;
+        struct ubik_ast_expr *name;
 
         (*lambda)->scope->needs_closure_appl = false;
 
         /* damn this is a lot of work. */
-        name = calloc(1, sizeof(struct xl_ast_expr));
+        name = calloc(1, sizeof(struct ubik_ast_expr));
         if (name == NULL)
-                return xl_raise(ERR_NO_MEMORY, "closure name alloc");
+                return ubik_raise(ERR_NO_MEMORY, "closure name alloc");
         name->expr_type = EXPR_ATOM;
 
-        name->atom = calloc(1, sizeof(struct xl_ast_atom));
+        name->atom = calloc(1, sizeof(struct ubik_ast_atom));
         if (name->atom == NULL)
-                return xl_raise(ERR_NO_MEMORY, "closure name alloc");
+                return ubik_raise(ERR_NO_MEMORY, "closure name alloc");
         name->atom->atom_type = ATOM_NAME;
-        name->atom->name_loc = calloc(1, sizeof(struct xl_resolve_name_loc));
+        name->atom->name_loc = calloc(1, sizeof(struct ubik_resolve_name_loc));
         if (name->atom->name_loc == NULL)
-                return xl_raise(ERR_NO_MEMORY, "closure name alloc");
+                return ubik_raise(ERR_NO_MEMORY, "closure name alloc");
         name->atom->name_loc->type = RESOLVE_LOCAL;
 
         name->atom->str = strdup(resolving_name);
         if (name->atom->str == NULL)
-                return xl_raise(ERR_NO_MEMORY, "closure name alloc");
+                return ubik_raise(ERR_NO_MEMORY, "closure name alloc");
 
         name->scope = (*lambda)->scope->parent;
 
-        apply = calloc(1, sizeof(struct xl_ast_expr));
+        apply = calloc(1, sizeof(struct ubik_ast_expr));
         if (apply == NULL)
-                return xl_raise(ERR_NO_MEMORY, "closure apply alloc");
+                return ubik_raise(ERR_NO_MEMORY, "closure apply alloc");
         apply->expr_type = EXPR_APPLY;
 
         apply->scope = (*lambda)->scope->parent;
@@ -109,16 +109,16 @@ apply_closure(struct xl_ast_expr **lambda, char *resolving_name)
         return OK;
 }
 
-no_ignore static xl_error
+no_ignore static ubik_error
 apply_downwards_transform(
         char *resolving_name,
-        struct xl_resolve_context *ctx,
-        struct xl_ast_expr **expr_ref)
+        struct ubik_resolve_context *ctx,
+        struct ubik_ast_expr **expr_ref)
 {
-        struct xl_ast *subast;
-        xl_error err;
+        struct ubik_ast *subast;
+        ubik_error err;
         size_t i;
-        struct xl_ast_expr *expr;
+        struct ubik_ast_expr *expr;
 
         expr = *expr_ref;
         subast = NULL;
@@ -166,7 +166,7 @@ apply_downwards_transform(
 
         for (i = 0; i < subast->bindings.n; i++)
         {
-                struct xl_ast_binding *bind;
+                struct ubik_ast_binding *bind;
                 bind = subast->bindings.elems[i];
                 check_closure_appl(bind->expr);
         }
@@ -178,18 +178,18 @@ apply_downwards_transform(
         return OK;
 }
 
-no_ignore static xl_error
+no_ignore static ubik_error
 apply_upwards_transform(
         char **resolving_name_ref,
-        struct xl_resolve_context *ctx,
-        struct xl_ast_expr **expr_ref)
+        struct ubik_resolve_context *ctx,
+        struct ubik_ast_expr **expr_ref)
 {
         char *resolving_name;
         bool is_top;
         size_t i;
-        struct xl_ast_expr *expr;
-        struct xl_ast_arg_list *args;
-        struct xl_resolve_scope *scope;
+        struct ubik_ast_expr *expr;
+        struct ubik_ast_arg_list *args;
+        struct ubik_resolve_scope *scope;
 
         resolving_name = *resolving_name_ref;
         expr = *expr_ref;
@@ -202,7 +202,7 @@ apply_upwards_transform(
         {
                 for (i = 0; i < scope->names.n; i++)
                 {
-                        struct xl_resolve_name *name;
+                        struct ubik_resolve_name *name;
                         name = scope->names.elems[i];
                         if (strcmp(name->name, resolving_name) == 0)
                         {
@@ -219,7 +219,7 @@ break_all:
 
         if (expr->expr_type == EXPR_LAMBDA)
         {
-                args = calloc(1, sizeof(struct xl_ast_arg_list));
+                args = calloc(1, sizeof(struct ubik_ast_arg_list));
                 args->name = strdup(resolving_name);
                 args->next = expr->lambda.args;
 
@@ -236,7 +236,7 @@ break_all:
 }
 
 static inline bool
-is_closure_ref(struct xl_ast_expr *expr)
+is_closure_ref(struct ubik_ast_expr *expr)
 {
         if (expr->expr_type != EXPR_ATOM)
                 return false;
@@ -245,23 +245,23 @@ is_closure_ref(struct xl_ast_expr *expr)
         return expr->atom->name_loc->type == RESOLVE_CLOSURE;
 }
 
-no_ignore static xl_error
+no_ignore static ubik_error
 traverse_ast(
         char **resolving_name,
         bool *changed,
-        struct xl_resolve_context *ctx,
-        struct xl_ast *ast);
+        struct ubik_resolve_context *ctx,
+        struct ubik_ast *ast);
 
-no_ignore static xl_error
+no_ignore static ubik_error
 traverse_expr(
         char **resolving_name,
         bool *changed,
-        struct xl_resolve_context *ctx,
-        struct xl_ast_expr **expr_ref)
+        struct ubik_resolve_context *ctx,
+        struct ubik_ast_expr **expr_ref)
 {
-        struct xl_ast *subast;
-        struct xl_ast_expr *expr;
-        xl_error err;
+        struct ubik_ast *subast;
+        struct ubik_ast_expr *expr;
+        ubik_error err;
 
         expr = *expr_ref;
         subast = NULL;
@@ -330,19 +330,19 @@ traverse_expr(
         return OK;
 }
 
-no_ignore xl_error
+no_ignore ubik_error
 traverse_ast(
         char **resolving_name,
         bool *changed,
-        struct xl_resolve_context *ctx,
-        struct xl_ast *ast)
+        struct ubik_resolve_context *ctx,
+        struct ubik_ast *ast)
 {
         size_t i;
-        xl_error err;
+        ubik_error err;
 
         for (i = 0; i < ast->bindings.n; i++)
         {
-                struct xl_ast_binding *bind;
+                struct ubik_ast_binding *bind;
 
                 bind = ast->bindings.elems[i];
                 err = traverse_expr(
@@ -362,14 +362,14 @@ traverse_ast(
         return OK;
 }
 
-no_ignore xl_error
+no_ignore ubik_error
 ubik_reduce_closures(
-        struct xl_resolve_context *ctx,
-        struct xl_ast *ast)
+        struct ubik_resolve_context *ctx,
+        struct ubik_ast *ast)
 {
         char *resolving_name;
         bool changed;
-        xl_error err;
+        ubik_error err;
 
         do
         {
@@ -379,7 +379,7 @@ ubik_reduce_closures(
                 err = traverse_ast(&resolving_name, &changed, ctx, ast);
                 if (err != OK)
                         return err;
-                xl_assert(resolving_name == NULL);
+                ubik_assert(resolving_name == NULL);
         } while (changed);
 
         return OK;

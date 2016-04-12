@@ -28,11 +28,11 @@
 test_t
 pointer_set()
 {
-        local(vector) struct xl_vector s = {0};
+        local(vector) struct ubik_vector s = {0};
         bool present;
         bool added;
         size_t index;
-        xl_error err;
+        ubik_error err;
         void *t0, *t1, *t2, *t3, *t4;
 
         t0 = (void *)((uintptr_t) 24);
@@ -41,55 +41,55 @@ pointer_set()
         t3 = (void *)((uintptr_t) 0xFFFFF);
         t4 = (void *)((uintptr_t) 0);
 
-        assert(xl_pointer_set_present(&present, &s, t0) == OK);
+        assert(ubik_pointer_set_present(&present, &s, t0) == OK);
         assert(!present);
 
         index = 17;
-        err = xl_pointer_set_find(&index, &s, t0);
+        err = ubik_pointer_set_find(&index, &s, t0);
         assert(err != NULL && err->error_code == ERR_ABSENT);
         free(err);
         assert(index == 17);
 
-        assert(xl_pointer_set_add(&added, &s, t0) == OK);
+        assert(ubik_pointer_set_add(&added, &s, t0) == OK);
         assert(added);
 
-        assert(xl_pointer_set_present(&present, &s, t0) == OK);
+        assert(ubik_pointer_set_present(&present, &s, t0) == OK);
         assert(present);
-        assert(xl_pointer_set_find(&index, &s, t0) == OK);
+        assert(ubik_pointer_set_find(&index, &s, t0) == OK);
         assert(index == 0);
 
-        assert(xl_pointer_set_present(&present, &s, t1) == OK);
+        assert(ubik_pointer_set_present(&present, &s, t1) == OK);
         assert(!present);
-        err = xl_pointer_set_find(&index, &s, t1);
+        err = ubik_pointer_set_find(&index, &s, t1);
         assert(err != NULL && err->error_code == ERR_ABSENT);
         free(err);
 
         assert(s.elems[0] == t0);
 
-        assert(xl_pointer_set_add(&added, &s, t0) == OK);
+        assert(ubik_pointer_set_add(&added, &s, t0) == OK);
         assert(!added);
 
-        assert(xl_pointer_set_add(&added, &s, t1) == OK);
+        assert(ubik_pointer_set_add(&added, &s, t1) == OK);
         assert(added);
         assert(s.elems[0] == t1);
         assert(s.elems[1] == t0);
 
-        assert(xl_pointer_set_add(&added, &s, t2) == OK);
+        assert(ubik_pointer_set_add(&added, &s, t2) == OK);
         assert(added);
         assert(s.elems[0] == t2);
         assert(s.elems[1] == t1);
         assert(s.elems[2] == t0);
 
-        assert(xl_pointer_set_add(&added, &s, t3) == OK);
+        assert(ubik_pointer_set_add(&added, &s, t3) == OK);
         assert(added);
         assert(s.elems[0] == t2);
         assert(s.elems[1] == t1);
         assert(s.elems[2] == t0);
         assert(s.elems[3] == t3);
 
-        assert(xl_pointer_set_add(&added, &s, t4) == OK);
+        assert(ubik_pointer_set_add(&added, &s, t4) == OK);
         assert(added);
-        assert(xl_pointer_set_add(&added, &s, t4) == OK);
+        assert(ubik_pointer_set_add(&added, &s, t4) == OK);
         assert(!added);
 
         assert(s.elems[0] == t4);

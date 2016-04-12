@@ -25,15 +25,15 @@
 
 #include "ubik/const.h"
 
-typedef uint16_t xl_tag;
-typedef uint64_t xl_word;
+typedef uint16_t ubik_tag;
+typedef uint64_t ubik_word;
 
 #if __SIZEOF_DOUBLE__ == 8
-typedef double xl_float;
+typedef double ubik_float;
 #elif __SIZEOF_FLOAT__ == 8
-typedef float xl_float;
+typedef float ubik_float;
 #elif __SIZEOF_LONG_DOUBLE__ == 8
-typedef long double xl_float;
+typedef long double ubik_float;
 #else
 #error "word size and float size do not match"
 #endif
@@ -64,82 +64,82 @@ typedef long double xl_float;
 #define CURRENT_ENCODING_VERSION 1
 
 /* Private data structures referenced by public data structures. */
-struct xl_alloc_page;
-struct xl_env;
-struct xl_stream;
-struct xl_user;
-struct xl_uri;
-struct xl_dagc_adjacency;
+struct ubik_alloc_page;
+struct ubik_env;
+struct ubik_stream;
+struct ubik_user;
+struct ubik_uri;
+struct ubik_dagc_adjacency;
 
-struct xl_dagc;
+struct ubik_dagc;
 
 /* Used to communicate errors through the stack. */
-struct xl_error
+struct ubik_error
 {
-        xl_word error_code;
+        ubik_word error_code;
         const char *tag;
         const char *file;
         const char *function;
         uint32_t lineno;
 };
-typedef struct xl_error * xl_error;
-#define OK ((xl_error) NULL)
+typedef struct ubik_error * ubik_error;
+#define OK ((ubik_error) NULL)
 
 #define no_ignore __attribute__((__warn_unused_result__))
 
-union xl_atom
+union ubik_atom
 {
-        struct xl_value *t;
-        struct xl_dagc *g;
+        struct ubik_value *t;
+        struct ubik_dagc *g;
         void *any;
-        xl_word w;
-        xl_float f;
+        ubik_word w;
+        ubik_float f;
 };
 
 /* The base type of all data in Ubik; it's a cons cell. */
-struct xl_value
+struct ubik_value
 {
         /* A bitset of the TAG_ constants. One each of the
          * TAG_LEFT_ and TAG_RIGHT_ bits must be set, along with
          * the TAG_VALUE bit. */
-        xl_tag tag;
+        ubik_tag tag;
 
-        union xl_atom left;
-        union xl_atom right;
+        union ubik_atom left;
+        union ubik_atom right;
 
         /* The page in which the value was allocated, used by the
          * garbage collector. */
-        struct xl_alloc_page *alloc_page;
+        struct ubik_alloc_page *alloc_page;
         /* The number of references to the value, used by the
          * garbage collector. Special hell awaits those who modify
          * this value. */
         uint64_t refcount;
 };
 
-struct xl_dagc;
+struct ubik_dagc;
 
-union xl_value_or_graph
+union ubik_value_or_graph
 {
-        struct xl_value *tree;
-        struct xl_dagc  *graph;
+        struct ubik_value *tree;
+        struct ubik_dagc  *graph;
         void            *any;
-        xl_tag          *tag;
+        ubik_tag          *tag;
 };
 
-struct xl_dagc_node
+struct ubik_dagc_node
 {
         /* One of the DAGC_NODE constants */
-        xl_word node_type;
+        ubik_word node_type;
         /* The unique identifier of this node */
-        xl_word id;
+        ubik_word id;
         /* The evaluated type of the node, populated after the
-         * node is evaluated by xl_dagc_eval. */
-        struct xl_value *known_type;
+         * node is evaluated by ubik_dagc_eval. */
+        struct ubik_value *known_type;
         /* The evaluated computation graph of the node, populated
-         * after the node is evaluated by xl_dagc_eval. The
+         * after the node is evaluated by ubik_dagc_eval. The
          * tag field tells you which member of the union to
          * access. */
-        union xl_value_or_graph known;
+        union ubik_value_or_graph known;
         /* Nonzero if we want the value of this node at the end of
          * evaluation */
         uint8_t is_terminal;
@@ -147,23 +147,23 @@ struct xl_dagc_node
         uint8_t flags;
 };
 
-struct xl_dagc
+struct ubik_dagc
 {
         /* Used to determine if a void* is a graph or a value.
-         * This is set by xl_dagc_init; users of the DAGC API
+         * This is set by ubik_dagc_init; users of the DAGC API
          * should not touch it. */
-        xl_tag tag;
+        ubik_tag tag;
 
         /* The identity of the graph, in URI form. */
-        struct xl_uri *identity;
+        struct ubik_uri *identity;
 
         /* The nodes participating in the graph. */
-        struct xl_dagc_node **nodes;
+        struct ubik_dagc_node **nodes;
         /* The number of nodes in the graph. */
         size_t n;
 
         /* Below this is only members that are populated by
-         * calling xl_dagc_init; callers should initialize nodes
+         * calling ubik_dagc_init; callers should initialize nodes
          * and n above and then call init to take care of
          * everything else. */
 
@@ -172,96 +172,96 @@ struct xl_dagc
 
         /* A list of structs which encode backlinks from child to
          * parent. */
-        struct xl_dagc_adjacency *adjacency;
+        struct ubik_dagc_adjacency *adjacency;
 
         /* The input nodes in the graph. */
-        struct xl_dagc_node **inputs;
+        struct ubik_dagc_node **inputs;
         size_t in_arity;
 
         /* The terminal nodes in the graph. */
-        struct xl_dagc_node **terminals;
+        struct ubik_dagc_node **terminals;
         size_t out_arity;
 
         /* The result node in the graph. */
-        struct xl_dagc_node *result;
+        struct ubik_dagc_node *result;
 };
 
 /* Starts the ubik runtime.
  *
  * Returns OK on success. */
-no_ignore xl_error
+no_ignore ubik_error
 ubik_start();
 
 /* Stops the ubik runtime.
  *
  * Returns OK on success. */
-no_ignore xl_error
+no_ignore ubik_error
 ubik_teardown();
 
 /* Creates a new value.
  *
- * The returned value has a refcount of one; callers to xl_new do
+ * The returned value has a refcount of one; callers to ubik_new do
  * not need to take the result. This may result in an allocation
- * but is not guaranteed to; xl_values are allocated in pages. */
-no_ignore xl_error
-ubik_value_new(struct xl_value **v);
+ * but is not guaranteed to; ubik_values are allocated in pages. */
+no_ignore ubik_error
+ubik_value_new(struct ubik_value **v);
 
 /* Takes a reference to the given tree or graph.
  *
  * Returns OK on success, or a nonzero error code on failure. */
-no_ignore xl_error
+no_ignore ubik_error
 ubik_take(void *v);
 
 /* Releases a reference to the given tree or graph.
  *
  * Returns OK on success, or a nonzero error code on failure. If
  * passed a value, this may result in a free but is not guaranteed
- * to; xl_values are garbage-collected periodically. If passed a
+ * to; ubik_values are garbage-collected periodically. If passed a
  * graph and the releaser was the last owner of the graph, this
  * will free the graph. */
-no_ignore xl_error
+no_ignore ubik_error
 ubik_release(void *v);
 
 /* Loads an ubik bytecode blob from a stream.
  *
  * Returns OK on success, or a nonzero error word. */
-no_ignore xl_error
-ubik_load(struct xl_dagc ***out, size_t *n_graphs, struct xl_stream *sp);
+no_ignore ubik_error
+ubik_load(struct ubik_dagc ***out, size_t *n_graphs, struct ubik_stream *sp);
 
 /* Saves a list of graphs and all accessible subgraphs to a stream.
  *
  * Returns OK on success, or a nonzero error word. */
-no_ignore xl_error
-ubik_save(struct xl_stream *sp, struct xl_dagc **graphs, size_t n);
+no_ignore ubik_error
+ubik_save(struct ubik_stream *sp, struct ubik_dagc **graphs, size_t n);
 
 /* Loads a tree from a stream.
  *
  * Note that any contained graph references are initialized to the index
  * of the graph in some other structure; if you're loading values with
  * graph references you probably want to load the whole thing in one go
- * with xl_load.
+ * with ubik_load.
  *
  * The returned tree is not taken; it is up to the caller to take the
  * tree. Returns OK on success, or a nonzero error word. */
-no_ignore xl_error
-ubik_value_load(struct xl_value *out, struct xl_stream *sp);
+no_ignore ubik_error
+ubik_value_load(struct ubik_value *out, struct ubik_stream *sp);
 
 /* Saves a tree to a stream.
  *
  * Note that this cannot save any values that contain any graph
  * references; for that you'll need to serialize the entire structure
- * with xl_save.
+ * with ubik_save.
  *
  * Returns OK on success, or a nonzero error word. */
-no_ignore xl_error
-ubik_value_save(struct xl_stream *sp, struct xl_value *in);
+no_ignore ubik_error
+ubik_value_save(struct ubik_stream *sp, struct ubik_value *in);
 
 /* Allocates a graph object.
  *
  * All graph objects must be allocated on the heap; call into this
  * method to allocate a graph of a given size. */
-no_ignore xl_error
-ubik_dagc_new(struct xl_dagc **g, size_t n);
+no_ignore ubik_error
+ubik_dagc_new(struct ubik_dagc **g, size_t n);
 
 /* Initializes derived quantities on graphs.
  *
@@ -272,19 +272,19 @@ ubik_dagc_new(struct xl_dagc **g, size_t n);
  * This resets the refcount of the given graph to 1; initializers
  * of graph structs do not need to take a reference to the graph
  * after initialization. */
-no_ignore xl_error
-ubik_dagc_init(struct xl_dagc *graph);
+no_ignore ubik_error
+ubik_dagc_init(struct ubik_dagc *graph);
 
 /* Creates a string representation of a node.
  *
  * Useful for debugging, but not much else. */
 char *
-ubik_node_explain(struct xl_dagc_node *n);
+ubik_node_explain(struct ubik_dagc_node *n);
 
 /* Create an error object. */
 ubik_error
 ubik_error_new(
-        const xl_word code,
+        const ubik_word code,
         const char *tag,
         const char *file,
         const uint32_t lineno,
@@ -292,12 +292,12 @@ ubik_error_new(
 
 /* Creates a string representation of an error object. */
 char *
-ubik_error_explain(xl_error err);
+ubik_error_explain(ubik_error err);
 
 /* Raise an error with the current file and line populated. */
-#define xl_raise(code, tag) \
-        xl_error_new((code), (tag), __FILE__, __LINE__, __FUNCTION__)
+#define ubik_raise(code, tag) \
+        ubik_error_new((code), (tag), __FILE__, __LINE__, __FUNCTION__)
 
-#define local(type) __attribute__((cleanup(xl_ ## type ## _free)))
+#define local(type) __attribute__((cleanup(ubik_ ## type ## _free)))
 
 #endif

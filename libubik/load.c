@@ -30,26 +30,26 @@
 
 /* Reads sizeof(x) bytes into x from sp. */
 #define READ_INTO(x, sp) \
-        if (xl_stream_read(&x, sp, sizeof(x)) != sizeof(x)) \
-                return xl_raise(ERR_NO_DATA, #x);
+        if (ubik_stream_read(&x, sp, sizeof(x)) != sizeof(x)) \
+                return ubik_raise(ERR_NO_DATA, #x);
 
-no_ignore xl_error
-ubik_value_load(struct xl_value *out, struct xl_stream *sp)
+no_ignore ubik_error
+ubik_value_load(struct ubik_value *out, struct ubik_stream *sp)
 {
-        xl_tag tag;
-        xl_error err;
-        xl_error err_ignore;
+        ubik_tag tag;
+        ubik_error err;
+        ubik_error err_ignore;
 
         READ_INTO(tag, sp);
         tag = ntohs(tag);
 
-        xl_assert(((tag & TAG_LEFT_WORD) ? 1 : 0)
+        ubik_assert(((tag & TAG_LEFT_WORD) ? 1 : 0)
                 + ((tag & TAG_LEFT_NODE) ? 1 : 0)
                 + ((tag & TAG_LEFT_GRAPH) ? 1 : 0) == 1);
-        xl_assert(((tag & TAG_RIGHT_WORD) ? 1 : 0)
+        ubik_assert(((tag & TAG_RIGHT_WORD) ? 1 : 0)
                 + ((tag & TAG_RIGHT_NODE) ? 1 : 0)
                 + ((tag & TAG_RIGHT_GRAPH) ? 1 : 0) == 1);
-        xl_assert((tag & TAG_TYPE_MASK) == TAG_VALUE);
+        ubik_assert((tag & TAG_TYPE_MASK) == TAG_VALUE);
 
         if (tag & (TAG_LEFT_WORD | TAG_LEFT_GRAPH))
         {
@@ -58,13 +58,13 @@ ubik_value_load(struct xl_value *out, struct xl_stream *sp)
         }
         else if (tag & TAG_LEFT_NODE)
         {
-                err = xl_value_new(&out->left.t);
+                err = ubik_value_new(&out->left.t);
                 if (err != OK)
                         return err;
-                err = xl_value_load(out->left.t, sp);
+                err = ubik_value_load(out->left.t, sp);
                 if (err != OK)
                 {
-                        err_ignore = xl_release(out->left.t);
+                        err_ignore = ubik_release(out->left.t);
                         unused(err_ignore);
 
                         /* unset the tag so that releasing the provided node
@@ -73,7 +73,7 @@ ubik_value_load(struct xl_value *out, struct xl_stream *sp)
                         return err;
                 }
         }
-        else return xl_raise(ERR_BAD_TAG, "left is not set");
+        else return ubik_raise(ERR_BAD_TAG, "left is not set");
 
         if (tag & (TAG_RIGHT_WORD | TAG_RIGHT_GRAPH))
         {
@@ -82,13 +82,13 @@ ubik_value_load(struct xl_value *out, struct xl_stream *sp)
         }
         else if (tag & TAG_RIGHT_NODE)
         {
-                err = xl_value_new(&out->right.t);
+                err = ubik_value_new(&out->right.t);
                 if (err != OK)
                         return err;
-                err = xl_value_load(out->right.t, sp);
+                err = ubik_value_load(out->right.t, sp);
                 if (err != OK)
                 {
-                        err_ignore = xl_release(out->right.t);
+                        err_ignore = ubik_release(out->right.t);
                         unused(err_ignore);
 
                         /* unset the tag so that releasing the provided node
@@ -97,47 +97,47 @@ ubik_value_load(struct xl_value *out, struct xl_stream *sp)
                         return err;
                 }
         }
-        else return xl_raise(ERR_BAD_TAG, "right is not set");
+        else return ubik_raise(ERR_BAD_TAG, "right is not set");
 
         /* set the tag only if everything went according to plan. This means
-         * that callers can safely pass the value here into xl_release, and it
+         * that callers can safely pass the value here into ubik_release, and it
          * won't try to free children that were never populated when we exit
          * early on an error condition. */
         out->tag = tag;
         return OK;
 }
 
-no_ignore static xl_error
-_load_apply(struct xl_dagc_apply *node, struct xl_stream *sp)
+no_ignore static ubik_error
+_load_apply(struct ubik_dagc_apply *node, struct ubik_stream *sp)
 {
         uint64_t node_index;
 
         /* Because of the check to make sure that the number of nodes does not
-         * exceed the size of a pointer inside xl_load, we can safely jam this
+         * exceed the size of a pointer inside ubik_load, we can safely jam this
          * index into a pointer. */
         READ_INTO(node_index, sp);
         node_index = ntohw(node_index);
-        node->func = (struct xl_dagc_node *) ((uintptr_t) node_index);
+        node->func = (struct ubik_dagc_node *) ((uintptr_t) node_index);
 
         READ_INTO(node_index, sp);
         node_index = ntohw(node_index);
-        node->arg = (struct xl_dagc_node *) ((uintptr_t) node_index);
+        node->arg = (struct ubik_dagc_node *) ((uintptr_t) node_index);
 
         return OK;
 }
 
 
-no_ignore static xl_error
+no_ignore static ubik_error
 _load_const(
-        struct xl_dagc_const *node,
-        struct xl_stream *sp,
-        struct xl_value **values,
+        struct ubik_dagc_const *node,
+        struct ubik_stream *sp,
+        struct ubik_value **values,
         size_t n_values)
 {
-        xl_word graph_index;
-        xl_word value_index;
-        xl_word value_type;
-        xl_error err;
+        ubik_word graph_index;
+        ubik_word value_index;
+        ubik_word value_type;
+        ubik_error err;
 
         READ_INTO(value_type, sp);
         value_type = ntohw(value_type);
@@ -145,9 +145,9 @@ _load_const(
         READ_INTO(value_index, sp);
         value_index = ntohw(value_index);
         if (value_index >= n_values)
-                return xl_raise(ERR_OUT_OF_BOUNDS, "const value index");
+                return ubik_raise(ERR_OUT_OF_BOUNDS, "const value index");
         node->type = values[value_index];
-        err = xl_take(node->type);
+        err = ubik_take(node->type);
         if (err != OK)
                 return err;
 
@@ -156,90 +156,90 @@ _load_const(
                 READ_INTO(value_index, sp);
                 value_index = ntohw(value_index);
                 if (value_index >= n_values)
-                        return xl_raise(ERR_OUT_OF_BOUNDS, "const value index");
+                        return ubik_raise(ERR_OUT_OF_BOUNDS, "const value index");
                 node->value.tree = values[value_index];
-                err = xl_take(node->value.tree);
+                err = ubik_take(node->value.tree);
                 return err;
         }
         if (value_type == DAGC_TYPE_GRAPH)
         {
                 READ_INTO(graph_index, sp);
                 graph_index = ntohw(graph_index);
-                node->value.graph = (struct xl_dagc *)((uintptr_t) graph_index);
+                node->value.graph = (struct ubik_dagc *)((uintptr_t) graph_index);
                 return OK;
         }
-        return xl_raise(ERR_BAD_HEADER, "const subtype");
+        return ubik_raise(ERR_BAD_HEADER, "const subtype");
 }
 
-no_ignore static xl_error
+no_ignore static ubik_error
 _load_load(
-        struct xl_dagc_load *node,
-        struct xl_stream *sp,
-        struct xl_value **values,
+        struct ubik_dagc_load *node,
+        struct ubik_stream *sp,
+        struct ubik_value **values,
         size_t n_values)
 {
-        xl_error err;
-        xl_word value_index;
-        struct xl_value *uri_val;
+        ubik_error err;
+        ubik_word value_index;
+        struct ubik_value *uri_val;
 
         READ_INTO(value_index, sp);
         value_index = ntohw(value_index);
         if (value_index >= n_values)
-                return xl_raise(ERR_OUT_OF_BOUNDS, "load value index");
+                return ubik_raise(ERR_OUT_OF_BOUNDS, "load value index");
         uri_val = values[value_index];
 
-        node->loc = calloc(1, sizeof(struct xl_uri));
-        err = xl_uri_from_value(node->loc, uri_val);
+        node->loc = calloc(1, sizeof(struct ubik_uri));
+        err = ubik_uri_from_value(node->loc, uri_val);
         if (err != OK)
                 return err;
 
-        err = xl_take(node->loc);
+        err = ubik_take(node->loc);
         if (err != OK)
                 return err;
 
         return err;
 }
 
-no_ignore static xl_error
+no_ignore static ubik_error
 _load_store(
-        struct xl_dagc_store *node,
-        struct xl_stream *sp,
-        struct xl_value **values,
+        struct ubik_dagc_store *node,
+        struct ubik_stream *sp,
+        struct ubik_value **values,
         size_t n_values)
 {
-        xl_error err;
-        xl_word value_index;
-        xl_word node_index;
-        struct xl_value *uri_val;
+        ubik_error err;
+        ubik_word value_index;
+        ubik_word node_index;
+        struct ubik_value *uri_val;
 
         READ_INTO(node_index, sp);
         node_index = ntohw(node_index);
-        node->value = (struct xl_dagc_node *) ((uintptr_t) node_index);
+        node->value = (struct ubik_dagc_node *) ((uintptr_t) node_index);
 
         READ_INTO(value_index, sp);
         value_index = ntohw(value_index);
         if (value_index >= n_values)
-                return xl_raise(ERR_OUT_OF_BOUNDS, "store value index");
+                return ubik_raise(ERR_OUT_OF_BOUNDS, "store value index");
         uri_val = values[value_index];
 
-        node->loc = calloc(1, sizeof(struct xl_uri));
-        err = xl_uri_from_value(node->loc, uri_val);
+        node->loc = calloc(1, sizeof(struct ubik_uri));
+        err = ubik_uri_from_value(node->loc, uri_val);
         if (err != OK)
                 return err;
 
-        err = xl_take(node->loc);
+        err = ubik_take(node->loc);
         if (err != OK)
                 return err;
 
         return err;
 }
 
-no_ignore static xl_error
+no_ignore static ubik_error
 _load_input(
-        struct xl_dagc_input *node,
-        struct xl_stream *sp)
+        struct ubik_dagc_input *node,
+        struct ubik_stream *sp)
 {
-        xl_word arg_num;
+        ubik_word arg_num;
 
         READ_INTO(arg_num, sp);
         node->arg_num = ntohw(arg_num);
@@ -247,52 +247,52 @@ _load_input(
         return OK;
 }
 
-no_ignore static xl_error
-_load_cond(struct xl_dagc_cond *node, struct xl_stream *sp)
+no_ignore static ubik_error
+_load_cond(struct ubik_dagc_cond *node, struct ubik_stream *sp)
 {
         uint64_t node_index;
 
         READ_INTO(node_index, sp);
         node_index = ntohw(node_index);
-        node->condition = (struct xl_dagc_node *) ((uintptr_t) node_index);
+        node->condition = (struct ubik_dagc_node *) ((uintptr_t) node_index);
 
         READ_INTO(node_index, sp);
         node_index = ntohw(node_index);
-        node->if_true = (struct xl_dagc_node *) ((uintptr_t) node_index);
+        node->if_true = (struct ubik_dagc_node *) ((uintptr_t) node_index);
 
         READ_INTO(node_index, sp);
         node_index = ntohw(node_index);
-        node->if_false = (struct xl_dagc_node *) ((uintptr_t) node_index);
+        node->if_false = (struct ubik_dagc_node *) ((uintptr_t) node_index);
 
         return OK;
 }
 
-no_ignore static xl_error
-_load_ref(struct xl_dagc_ref *node, struct xl_stream *sp)
+no_ignore static ubik_error
+_load_ref(struct ubik_dagc_ref *node, struct ubik_stream *sp)
 {
         uint64_t node_index;
 
         READ_INTO(node_index, sp);
         node_index = ntohw(node_index);
-        node->referrent = (struct xl_dagc_node *) ((uintptr_t) node_index);
+        node->referrent = (struct ubik_dagc_node *) ((uintptr_t) node_index);
 
         return OK;
 }
 
-no_ignore static xl_error
+no_ignore static ubik_error
 _load_node(
-        struct xl_dagc_node *node,
-        struct xl_stream *sp,
-        struct xl_value **values,
+        struct ubik_dagc_node *node,
+        struct ubik_stream *sp,
+        struct ubik_value **values,
         size_t n_values)
 {
-        xl_error err;
-        xl_word node_type;
-        xl_word node_id;
+        ubik_error err;
+        ubik_word node_type;
+        ubik_word node_id;
         uint8_t terminal;
-        union xl_dagc_any_node *n;
+        union ubik_dagc_any_node *n;
 
-        n = (union xl_dagc_any_node *) node;
+        n = (union ubik_dagc_any_node *) node;
 
         READ_INTO(node_type, sp);
         node_type = ntohw(node_type);
@@ -302,8 +302,8 @@ _load_node(
 
         READ_INTO(terminal, sp);
 
-        if (xl_stream_drop(sp, 3) != 3)
-                return xl_raise(ERR_NO_DATA, "node padding bytes");
+        if (ubik_stream_drop(sp, 3) != 3)
+                return ubik_raise(ERR_NO_DATA, "node padding bytes");
 
         switch (node_type)
         {
@@ -329,7 +329,7 @@ _load_node(
                 err = _load_ref(&n->as_ref, sp);
                 break;
         default:
-                return xl_raise(ERR_UNKNOWN_TYPE, "load node");
+                return ubik_raise(ERR_UNKNOWN_TYPE, "load node");
         }
 
         if (err != OK)
@@ -342,22 +342,22 @@ _load_node(
         return OK;
 }
 
-no_ignore static xl_error
+no_ignore static ubik_error
 _set_node_pointers(
-        struct xl_dagc_node *node,
-        struct xl_dagc_node **all_nodes,
+        struct ubik_dagc_node *node,
+        struct ubik_dagc_node **all_nodes,
         size_t n_nodes)
 {
-        union xl_dagc_any_node *n;
-        n = (union xl_dagc_any_node *) node;
+        union ubik_dagc_any_node *n;
+        n = (union ubik_dagc_any_node *) node;
 
         switch (node->node_type)
         {
         case DAGC_NODE_APPLY:
                 if ((uintptr_t) n->as_apply.func >= n_nodes)
-                        return xl_raise(ERR_OUT_OF_BOUNDS, "apply func idx");
+                        return ubik_raise(ERR_OUT_OF_BOUNDS, "apply func idx");
                 if ((uintptr_t) n->as_apply.arg >= n_nodes)
-                        return xl_raise(ERR_OUT_OF_BOUNDS, "apply arg idx");
+                        return ubik_raise(ERR_OUT_OF_BOUNDS, "apply arg idx");
 
                 n->as_apply.func = all_nodes[(uintptr_t) n->as_apply.func];
                 n->as_apply.arg = all_nodes[(uintptr_t) n->as_apply.arg];
@@ -365,11 +365,11 @@ _set_node_pointers(
 
         case DAGC_NODE_COND:
                 if ((uintptr_t) n->as_cond.condition >= n_nodes)
-                        return xl_raise(ERR_OUT_OF_BOUNDS, "cond condition idx");
+                        return ubik_raise(ERR_OUT_OF_BOUNDS, "cond condition idx");
                 if ((uintptr_t) n->as_cond.if_true >= n_nodes)
-                        return xl_raise(ERR_OUT_OF_BOUNDS, "cond true idx");
+                        return ubik_raise(ERR_OUT_OF_BOUNDS, "cond true idx");
                 if ((uintptr_t) n->as_cond.if_false >= n_nodes)
-                        return xl_raise(ERR_OUT_OF_BOUNDS, "cond false idx");
+                        return ubik_raise(ERR_OUT_OF_BOUNDS, "cond false idx");
 
                 n->as_cond.condition =
                         all_nodes[(uintptr_t) n->as_cond.condition];
@@ -381,13 +381,13 @@ _set_node_pointers(
 
         case DAGC_NODE_STORE:
                 if ((uintptr_t) n->as_store.value >= n_nodes)
-                        return xl_raise(ERR_OUT_OF_BOUNDS, "store value idx");
+                        return ubik_raise(ERR_OUT_OF_BOUNDS, "store value idx");
                 n->as_store.value = all_nodes[(uintptr_t) n->as_store.value];
                 break;
 
         case DAGC_NODE_REF:
                 if ((uintptr_t) n->as_ref.referrent >= n_nodes)
-                        return xl_raise(ERR_OUT_OF_BOUNDS, "ref idx");
+                        return ubik_raise(ERR_OUT_OF_BOUNDS, "ref idx");
                 n->as_ref.referrent =
                         all_nodes[(uintptr_t) n->as_ref.referrent];
                 break;
@@ -397,23 +397,23 @@ _set_node_pointers(
         case DAGC_NODE_INPUT:
                 break;
         default:
-                return xl_raise(ERR_UNKNOWN_TYPE, "set node pointers");
+                return ubik_raise(ERR_UNKNOWN_TYPE, "set node pointers");
         }
         return OK;
 }
 
-no_ignore static xl_error
+no_ignore static ubik_error
 _set_value_graph_pointers(
-        struct xl_value *value,
-        struct xl_dagc **all_graphs,
+        struct ubik_value *value,
+        struct ubik_dagc **all_graphs,
         size_t n_graphs)
 {
-        xl_error err;
+        ubik_error err;
 
         if (value->tag & TAG_LEFT_GRAPH)
         {
                 if (value->left.w >= n_graphs)
-                        return xl_raise(ERR_OUT_OF_BOUNDS, "bad graph index");
+                        return ubik_raise(ERR_OUT_OF_BOUNDS, "bad graph index");
                 value->left.g = all_graphs[value->left.w];
         }
         else if (value->tag & TAG_LEFT_NODE)
@@ -427,7 +427,7 @@ _set_value_graph_pointers(
         if (value->tag & TAG_RIGHT_GRAPH)
         {
                 if (value->right.w >= n_graphs)
-                        return xl_raise(ERR_OUT_OF_BOUNDS, "bad graph index");
+                        return ubik_raise(ERR_OUT_OF_BOUNDS, "bad graph index");
                 value->right.g = all_graphs[value->right.w];
         }
         else if (value->tag & TAG_RIGHT_NODE)
@@ -441,21 +441,21 @@ _set_value_graph_pointers(
         return OK;
 }
 
-no_ignore static xl_error
+no_ignore static ubik_error
 _set_node_graph_pointers(
-        struct xl_dagc *graph,
-        struct xl_dagc **all_graphs,
+        struct ubik_dagc *graph,
+        struct ubik_dagc **all_graphs,
         size_t n_graphs)
 {
-        struct xl_dagc_const *n;
+        struct ubik_dagc_const *n;
         size_t graph_i;
         size_t i;
-        xl_error err;
+        ubik_error err;
 
         for (i = 0; i < graph->n; i++)
         {
                 /* C is fun. */
-                n = (struct xl_dagc_const *) graph->nodes[i];
+                n = (struct ubik_dagc_const *) graph->nodes[i];
                 if (n->head.node_type != DAGC_NODE_CONST)
                         continue;
                 graph_i = (uintptr_t) n->value.graph;
@@ -463,7 +463,7 @@ _set_node_graph_pointers(
                         continue;
                 n->value.graph = all_graphs[graph_i];
 
-                err = xl_take(n->value.graph);
+                err = ubik_take(n->value.graph);
                 if (err != OK)
                         return err;
         }
@@ -471,19 +471,19 @@ _set_node_graph_pointers(
         return OK;
 }
 
-no_ignore static xl_error
+no_ignore static ubik_error
 _load_graph(
-        struct xl_dagc **graph,
-        struct xl_stream *sp,
-        struct xl_value **values,
+        struct ubik_dagc **graph,
+        struct ubik_stream *sp,
+        struct ubik_value **values,
         size_t n_values)
 {
-        xl_word n_nodes;
-        xl_word result_idx;
-        xl_word identity_idx;
+        ubik_word n_nodes;
+        ubik_word result_idx;
+        ubik_word identity_idx;
         size_t i;
-        xl_error err;
-        xl_tag tag;
+        ubik_error err;
+        ubik_tag tag;
 
         READ_INTO(tag, sp);
         tag = ntohs(tag);
@@ -492,10 +492,10 @@ _load_graph(
         n_nodes = ntohw(n_nodes);
 
         if (n_nodes == 0)
-                return xl_raise(
+                return ubik_raise(
                         ERR_BAD_GRAPH, "graphs must have at least 1 node");
 
-        err = xl_dagc_new(graph, n_nodes);
+        err = ubik_dagc_new(graph, n_nodes);
         if (err != OK)
                 return err;
 
@@ -515,10 +515,10 @@ _load_graph(
          * 4G nodes in the graph, which means this thing is going to need
          * terabytes of memory. Good luck. */
         if (n_nodes > (uint64_t) UINTPTR_MAX)
-                return xl_raise(ERR_NO_MEMORY, "n_nodes too big");
+                return ubik_raise(ERR_NO_MEMORY, "n_nodes too big");
 
         if (result_idx >= n_nodes)
-                return xl_raise(ERR_BAD_HEADER, "result_idx > n_nodes");
+                return ubik_raise(ERR_BAD_HEADER, "result_idx > n_nodes");
 
         /* First we go through and read all available node information; when
          * this process is done everything has been loaded from the files but
@@ -534,7 +534,7 @@ _load_graph(
         }
         (*graph)->result = (*graph)->nodes[result_idx];
         if (!(*graph)->result->is_terminal)
-                return xl_raise(ERR_BAD_GRAPH, "result node is not terminal");
+                return ubik_raise(ERR_BAD_GRAPH, "result node is not terminal");
 
         /* Now replace indeces with pointers; now that we've loaded all of them
          * we know what the appropriate pointers are. */
@@ -546,22 +546,22 @@ _load_graph(
                         return err;
         }
 
-        err = xl_dagc_init(*graph);
+        err = ubik_dagc_init(*graph);
         if (err != OK)
                 return err;
 
         if (identity_idx != 0xFFFFFFFFFFFFFFFF)
         {
                 if (identity_idx >= n_values)
-                        return xl_raise(
+                        return ubik_raise(
                                 ERR_BAD_HEADER, "identity_idx > n_values");
-                (*graph)->identity = calloc(1, sizeof(struct xl_uri));
-                err = xl_uri_from_value(
+                (*graph)->identity = calloc(1, sizeof(struct ubik_uri));
+                err = ubik_uri_from_value(
                         (*graph)->identity, values[identity_idx]);
                 if (err != OK)
                         return err;
 
-                err = xl_take((*graph)->identity);
+                err = ubik_take((*graph)->identity);
                 if (err != OK)
                         return err;
         }
@@ -572,15 +572,15 @@ _load_graph(
         return OK;
 }
 
-no_ignore xl_error
-ubik_load(struct xl_dagc ***graphs, size_t *ret_n_graphs, struct xl_stream *sp)
+no_ignore ubik_error
+ubik_load(struct ubik_dagc ***graphs, size_t *ret_n_graphs, struct ubik_stream *sp)
 {
 
         char header[4];
         uint32_t version;
-        struct xl_value **values;
-        xl_word n_graphs, n_values;
-        xl_error err;
+        struct ubik_value **values;
+        ubik_word n_graphs, n_values;
+        ubik_error err;
         size_t i;
 
         values = NULL;
@@ -588,7 +588,7 @@ ubik_load(struct xl_dagc ***graphs, size_t *ret_n_graphs, struct xl_stream *sp)
         READ_INTO(header, sp);
         if (strncmp(header, "expl", 4) != 0)
         {
-                err = xl_raise(ERR_BAD_HEADER, NULL);
+                err = ubik_raise(ERR_BAD_HEADER, NULL);
                 goto error;
         }
 
@@ -596,7 +596,7 @@ ubik_load(struct xl_dagc ***graphs, size_t *ret_n_graphs, struct xl_stream *sp)
         version = ntohl(version);
         if (version != CURRENT_ENCODING_VERSION)
         {
-                err = xl_raise(ERR_UNSUPPORTED_VERSION, NULL);
+                err = ubik_raise(ERR_UNSUPPORTED_VERSION, NULL);
                 goto error;
         }
 
@@ -604,33 +604,33 @@ ubik_load(struct xl_dagc ***graphs, size_t *ret_n_graphs, struct xl_stream *sp)
         n_graphs = ntohw(n_graphs);
         if (n_graphs == 0)
         {
-                err = xl_raise(ERR_BAD_HEADER, "must have at least one graph");
+                err = ubik_raise(ERR_BAD_HEADER, "must have at least one graph");
                 goto error;
         }
 
         *ret_n_graphs = n_graphs;
-        *graphs = calloc(n_graphs, sizeof(struct xl_dagc *));
+        *graphs = calloc(n_graphs, sizeof(struct ubik_dagc *));
         if (*graphs == NULL)
         {
-                err = xl_raise(ERR_NO_MEMORY, "graph list alloc");
+                err = ubik_raise(ERR_NO_MEMORY, "graph list alloc");
                 goto error;
         }
 
         READ_INTO(n_values, sp);
         n_values = ntohw(n_values);
-        values = calloc(n_values, sizeof(struct xl_value *));
+        values = calloc(n_values, sizeof(struct ubik_value *));
         if (values == NULL)
         {
-                err = xl_raise(ERR_NO_MEMORY, "value list alloc");
+                err = ubik_raise(ERR_NO_MEMORY, "value list alloc");
                 goto error;
         }
 
         for (i = 0; i < n_values; i++)
         {
-                err = xl_value_new(&values[i]);
+                err = ubik_value_new(&values[i]);
                 if (err != OK)
                         goto error;
-                err = xl_value_load(values[i], sp);
+                err = ubik_value_load(values[i], sp);
                 if (err != OK)
                         goto error;
         }
@@ -657,7 +657,7 @@ ubik_load(struct xl_dagc ***graphs, size_t *ret_n_graphs, struct xl_stream *sp)
                 if (err != OK)
                         goto error;
 
-                err = xl_release(values[i]);
+                err = ubik_release(values[i]);
                 if (err != OK)
                         goto error;
         }

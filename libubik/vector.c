@@ -22,8 +22,8 @@
 #include "ubik/util.h"
 #include "ubik/vector.h"
 
-no_ignore xl_error
-ubik_vector_ensure_size(struct xl_vector *v, size_t size)
+no_ignore ubik_error
+ubik_vector_ensure_size(struct ubik_vector *v, size_t size)
 {
         size_t new_cap;
         void **new_elems;
@@ -35,7 +35,7 @@ ubik_vector_ensure_size(struct xl_vector *v, size_t size)
         {
                 v->elems = calloc(size_max(8, size), sizeof(void *));
                 if (v->elems == NULL)
-                        return xl_raise(ERR_NO_MEMORY, "vector alloc");
+                        return ubik_raise(ERR_NO_MEMORY, "vector alloc");
                 v->cap = 8;
                 return OK;
         }
@@ -43,7 +43,7 @@ ubik_vector_ensure_size(struct xl_vector *v, size_t size)
         new_cap = size_max(v->cap * 2, size);
         new_elems = realloc(v->elems, new_cap * sizeof(void *));
         if (new_elems == NULL)
-                return xl_raise(ERR_NO_MEMORY, "vector alloc");
+                return ubik_raise(ERR_NO_MEMORY, "vector alloc");
         v->elems = new_elems;
 
         /* Zero out the new elements (if only there were a crealloc */
@@ -53,12 +53,12 @@ ubik_vector_ensure_size(struct xl_vector *v, size_t size)
         return OK;
 }
 
-no_ignore xl_error
-ubik_vector_append(struct xl_vector *v, void *elem)
+no_ignore ubik_error
+ubik_vector_append(struct ubik_vector *v, void *elem)
 {
-        xl_error err;
+        ubik_error err;
 
-        err = xl_vector_ensure_size(v, v->n + 1);
+        err = ubik_vector_ensure_size(v, v->n + 1);
         if (err != OK)
                 return err;
 
@@ -67,7 +67,7 @@ ubik_vector_append(struct xl_vector *v, void *elem)
 }
 
 void
-ubik_vector_free(struct xl_vector *v)
+ubik_vector_free(struct ubik_vector *v)
 {
         if (v != NULL && v->elems != NULL)
                 free(v->elems);

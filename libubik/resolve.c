@@ -29,46 +29,46 @@
 #include "ubik/streamutil.h"
 #include "ubik/util.h"
 
-no_ignore xl_error
+no_ignore ubik_error
 assign_all_initial_scopes(
-        struct xl_resolve_context *ctx,
-        struct xl_ast *ast,
-        struct xl_resolve_scope *parent,
+        struct ubik_resolve_context *ctx,
+        struct ubik_ast *ast,
+        struct ubik_resolve_scope *parent,
         bool is_root);
 
-no_ignore xl_error
+no_ignore ubik_error
 update_scopes_with_bindings(
-        struct xl_resolve_context *ctx,
-        struct xl_ast *ast);
+        struct ubik_resolve_context *ctx,
+        struct ubik_ast *ast);
 
-no_ignore xl_error
+no_ignore ubik_error
 update_scopes_with_args(
-        struct xl_resolve_context *ctx,
-        struct xl_ast *ast);
+        struct ubik_resolve_context *ctx,
+        struct ubik_ast *ast);
 
-no_ignore xl_error
+no_ignore ubik_error
 update_names_with_resolution_types(
-        struct xl_resolve_context *ctx,
-        struct xl_ast *ast);
+        struct ubik_resolve_context *ctx,
+        struct ubik_ast *ast);
 
-no_ignore xl_error
+no_ignore ubik_error
 ubik_resolve_context_missing_name(
-        struct xl_resolve_context *ctx,
+        struct ubik_resolve_context *ctx,
         char *name,
-        struct xl_ast_loc loc);
+        struct ubik_ast_loc loc);
 
 
-no_ignore static xl_error
+no_ignore static ubik_error
 assign_initial_scopes(
-        struct xl_resolve_context *ctx,
-        struct xl_ast_expr *expr,
-        struct xl_resolve_scope *parent)
+        struct ubik_resolve_context *ctx,
+        struct ubik_ast_expr *expr,
+        struct ubik_resolve_scope *parent)
 {
-        struct xl_ast *subast;
-        struct xl_ast_expr *subexprs[XL_MAX_SUBEXPRS];
+        struct ubik_ast *subast;
+        struct ubik_ast_expr *subexprs[XL_MAX_SUBEXPRS];
         size_t n_subexprs;
         size_t i;
-        xl_error err;
+        ubik_error err;
 
         switch (expr->expr_type)
         {
@@ -79,10 +79,10 @@ assign_initial_scopes(
                 break;
 
         case EXPR_LAMBDA:
-                expr->scope = calloc(1, sizeof(struct xl_resolve_scope));
+                expr->scope = calloc(1, sizeof(struct ubik_resolve_scope));
                 if (expr->scope == NULL)
-                        return xl_raise(ERR_NO_MEMORY, "expr scope alloc");
-                err = xl_vector_append(&ctx->scope_allocs, expr->scope);
+                        return ubik_raise(ERR_NO_MEMORY, "expr scope alloc");
+                err = ubik_vector_append(&ctx->scope_allocs, expr->scope);
                 if (err != OK)
                 {
                         free(expr->scope);
@@ -95,10 +95,10 @@ assign_initial_scopes(
 
         case EXPR_BLOCK:
         case EXPR_CONSTRUCTOR:
-                expr->scope = calloc(1, sizeof(struct xl_resolve_scope));
+                expr->scope = calloc(1, sizeof(struct ubik_resolve_scope));
                 if (expr->scope == NULL)
-                        return xl_raise(ERR_NO_MEMORY, "expr scope alloc");
-                err = xl_vector_append(&ctx->scope_allocs, expr->scope);
+                        return ubik_raise(ERR_NO_MEMORY, "expr scope alloc");
+                err = ubik_vector_append(&ctx->scope_allocs, expr->scope);
                 if (err != OK)
                 {
                         free(expr->scope);
@@ -110,11 +110,11 @@ assign_initial_scopes(
                 break;
 
         default:
-                return xl_raise(
+                return ubik_raise(
                         ERR_BAD_TYPE, "bad expr type in initial scopes");
         }
 
-        err = xl_ast_subexprs(&subast, subexprs, &n_subexprs, expr);
+        err = ubik_ast_subexprs(&subast, subexprs, &n_subexprs, expr);
         if (err != OK)
                 return err;
 
@@ -134,21 +134,21 @@ assign_initial_scopes(
         return OK;
 }
 
-no_ignore xl_error
+no_ignore ubik_error
 assign_all_initial_scopes(
-        struct xl_resolve_context *ctx,
-        struct xl_ast *ast,
-        struct xl_resolve_scope *parent,
+        struct ubik_resolve_context *ctx,
+        struct ubik_ast *ast,
+        struct ubik_resolve_scope *parent,
         bool is_root)
 {
         size_t i;
-        struct xl_ast_binding *bind;
-        xl_error err;
+        struct ubik_ast_binding *bind;
+        ubik_error err;
 
-        ast->scope = calloc(1, sizeof(struct xl_resolve_scope));
+        ast->scope = calloc(1, sizeof(struct ubik_resolve_scope));
         if (ast->scope == NULL)
-                return xl_raise(ERR_NO_MEMORY, "ast scope alloc");
-        err = xl_vector_append(&ctx->scope_allocs, ast->scope);
+                return ubik_raise(ERR_NO_MEMORY, "ast scope alloc");
+        err = ubik_vector_append(&ctx->scope_allocs, ast->scope);
         if (err != OK)
         {
                 free(ast->scope);
@@ -176,18 +176,18 @@ assign_all_initial_scopes(
         return OK;
 }
 
-no_ignore static xl_error
+no_ignore static ubik_error
 find_blocks_and_bind(
-        struct xl_resolve_context *ctx,
-        struct xl_ast_expr *expr)
+        struct ubik_resolve_context *ctx,
+        struct ubik_ast_expr *expr)
 {
-        struct xl_ast *subast;
-        struct xl_ast_expr *subexprs[XL_MAX_SUBEXPRS];
+        struct ubik_ast *subast;
+        struct ubik_ast_expr *subexprs[XL_MAX_SUBEXPRS];
         size_t n_subexprs;
         size_t i;
-        xl_error err;
+        ubik_error err;
 
-        err = xl_ast_subexprs(&subast, subexprs, &n_subexprs, expr);
+        err = ubik_ast_subexprs(&subast, subexprs, &n_subexprs, expr);
         if (err != OK)
                 return err;
 
@@ -207,23 +207,23 @@ find_blocks_and_bind(
         return OK;
 }
 
-no_ignore xl_error
+no_ignore ubik_error
 update_scopes_with_bindings(
-        struct xl_resolve_context *ctx,
-        struct xl_ast *ast)
+        struct ubik_resolve_context *ctx,
+        struct ubik_ast *ast)
 {
         size_t i;
-        struct xl_ast_binding *bind;
-        struct xl_resolve_name *name;
-        xl_error err;
+        struct ubik_ast_binding *bind;
+        struct ubik_resolve_name *name;
+        ubik_error err;
 
         for (i = 0; i < ast->bindings.n; i++)
         {
                 bind = ast->bindings.elems[i];
-                name = calloc(1, sizeof(struct xl_resolve_name));
+                name = calloc(1, sizeof(struct ubik_resolve_name));
                 if (name == NULL)
-                        return xl_raise(ERR_NO_MEMORY, "bind to scope alloc");
-                err = xl_vector_append(&ctx->allocs, name);
+                        return ubik_raise(ERR_NO_MEMORY, "bind to scope alloc");
+                err = ubik_vector_append(&ctx->allocs, name);
                 if (err != OK)
                 {
                         free(name);
@@ -235,7 +235,7 @@ update_scopes_with_bindings(
                         ? RESOLVE_GLOBAL
                         : RESOLVE_LOCAL;
 
-                err = xl_vector_append(&ast->scope->names, name);
+                err = ubik_vector_append(&ast->scope->names, name);
                 if (err != OK)
                         return err;
 
@@ -254,28 +254,28 @@ update_scopes_with_bindings(
         return OK;
 }
 
-no_ignore static xl_error
+no_ignore static ubik_error
 find_lambdas_and_bind(
-        struct xl_resolve_context *ctx,
-        struct xl_ast_expr *expr)
+        struct ubik_resolve_context *ctx,
+        struct ubik_ast_expr *expr)
 {
-        struct xl_ast_arg_list *args;
-        struct xl_resolve_name *name;
-        struct xl_ast *subast;
-        struct xl_ast_expr *subexprs[XL_MAX_SUBEXPRS];
+        struct ubik_ast_arg_list *args;
+        struct ubik_resolve_name *name;
+        struct ubik_ast *subast;
+        struct ubik_ast_expr *subexprs[XL_MAX_SUBEXPRS];
         size_t n_subexprs;
         size_t i;
-        xl_error err;
+        ubik_error err;
 
         if (expr->expr_type == EXPR_LAMBDA)
         {
                 args = expr->lambda.args;
                 while (args->name != NULL)
                 {
-                        name = calloc(1, sizeof(struct xl_resolve_name));
+                        name = calloc(1, sizeof(struct ubik_resolve_name));
                         if (name == NULL)
-                                return xl_raise(ERR_NO_MEMORY, "args to scope");
-                        err = xl_vector_append(&ctx->allocs, name);
+                                return ubik_raise(ERR_NO_MEMORY, "args to scope");
+                        err = ubik_vector_append(&ctx->allocs, name);
                         if (err != OK)
                         {
                                 free(name);
@@ -284,7 +284,7 @@ find_lambdas_and_bind(
                         name->name = args->name;
                         name->type = RESOLVE_LOCAL;
 
-                        err = xl_vector_append(&expr->scope->names, name);
+                        err = ubik_vector_append(&expr->scope->names, name);
                         if (err != OK)
                                 return err;
 
@@ -292,7 +292,7 @@ find_lambdas_and_bind(
                 }
         }
 
-        err = xl_ast_subexprs(&subast, subexprs, &n_subexprs, expr);
+        err = ubik_ast_subexprs(&subast, subexprs, &n_subexprs, expr);
         if (err != OK)
                 return err;
 
@@ -312,14 +312,14 @@ find_lambdas_and_bind(
         return OK;
 }
 
-no_ignore xl_error
+no_ignore ubik_error
 update_scopes_with_args(
-        struct xl_resolve_context *ctx,
-        struct xl_ast *ast)
+        struct ubik_resolve_context *ctx,
+        struct ubik_ast *ast)
 {
         size_t i;
-        struct xl_ast_binding *bind;
-        xl_error err;
+        struct ubik_ast_binding *bind;
+        ubik_error err;
 
         for (i = 0; i < ast->bindings.n; i++)
         {
@@ -339,29 +339,29 @@ update_scopes_with_args(
         return OK;
 }
 
-no_ignore xl_error
+no_ignore ubik_error
 find_name_resolution_types(
-        struct xl_resolve_context *ctx,
-        struct xl_ast_expr *expr)
+        struct ubik_resolve_context *ctx,
+        struct ubik_ast_expr *expr)
 {
         bool found;
         char *name;
         size_t i;
         size_t n_subexprs;
-        enum xl_resolve_boundary_type highest_bdry;
-        struct xl_ast *subast;
-        struct xl_ast_expr *subexprs[XL_MAX_SUBEXPRS];
-        struct xl_resolve_name_loc *name_loc;
-        struct xl_resolve_scope *scope;
-        struct xl_resolve_name *check_name;
-        xl_error err;
+        enum ubik_resolve_boundary_type highest_bdry;
+        struct ubik_ast *subast;
+        struct ubik_ast_expr *subexprs[XL_MAX_SUBEXPRS];
+        struct ubik_resolve_name_loc *name_loc;
+        struct ubik_resolve_scope *scope;
+        struct ubik_resolve_name *check_name;
+        ubik_error err;
 
         if (expr->expr_type == EXPR_ATOM && expr->atom->atom_type == ATOM_NAME)
         {
-                name_loc = calloc(1, sizeof(struct xl_resolve_name_loc));
+                name_loc = calloc(1, sizeof(struct ubik_resolve_name_loc));
                 if (name_loc == NULL)
-                        return xl_raise(ERR_NO_MEMORY, "name res type");
-                err = xl_vector_append(&ctx->allocs, name_loc);
+                        return ubik_raise(ERR_NO_MEMORY, "name res type");
+                err = ubik_vector_append(&ctx->allocs, name_loc);
                 if (err != OK)
                 {
                         free(name_loc);
@@ -391,7 +391,7 @@ find_name_resolution_types(
 
                 if (!found)
                 {
-                        err = xl_resolve_context_missing_name(
+                        err = ubik_resolve_context_missing_name(
                                 ctx, name, expr->loc);
                         if (err != OK)
                                 return err;
@@ -411,7 +411,7 @@ find_name_resolution_types(
                 }
         }
 
-        err = xl_ast_subexprs(&subast, subexprs, &n_subexprs, expr);
+        err = ubik_ast_subexprs(&subast, subexprs, &n_subexprs, expr);
         if (err != OK)
                 return err;
 
@@ -431,14 +431,14 @@ find_name_resolution_types(
         return OK;
 }
 
-no_ignore xl_error
+no_ignore ubik_error
 update_names_with_resolution_types(
-        struct xl_resolve_context *ctx,
-        struct xl_ast *ast)
+        struct ubik_resolve_context *ctx,
+        struct ubik_ast *ast)
 {
         size_t i;
-        struct xl_ast_binding *bind;
-        xl_error err;
+        struct ubik_ast_binding *bind;
+        ubik_error err;
 
         for (i = 0; i < ast->bindings.n; i++)
         {
@@ -458,20 +458,20 @@ update_names_with_resolution_types(
         return OK;
 }
 
-no_ignore static xl_error
-add_uri_to_scope(void *ctx_v, struct xl_env *env, struct xl_uri *uri)
+no_ignore static ubik_error
+add_uri_to_scope(void *ctx_v, struct ubik_env *env, struct ubik_uri *uri)
 {
-        struct xl_resolve_context *ctx;
-        struct xl_resolve_name *name;
-        xl_error err;
+        struct ubik_resolve_context *ctx;
+        struct ubik_resolve_name *name;
+        ubik_error err;
         unused(env);
 
         ctx = ctx_v;
 
-        name = calloc(1, sizeof(struct xl_resolve_name));
+        name = calloc(1, sizeof(struct ubik_resolve_name));
         if (name == NULL)
-                return xl_raise(ERR_NO_MEMORY, "add uri to scope");
-        err = xl_vector_append(&ctx->allocs, name);
+                return ubik_raise(ERR_NO_MEMORY, "add uri to scope");
+        err = ubik_vector_append(&ctx->allocs, name);
         if (err != OK)
         {
                 free(name);
@@ -479,7 +479,7 @@ add_uri_to_scope(void *ctx_v, struct xl_env *env, struct xl_uri *uri)
         }
 
         name->name = strdup(uri->name);
-        err = xl_vector_append(&ctx->allocs, name->name);
+        err = ubik_vector_append(&ctx->allocs, name->name);
         if (err != OK)
         {
                 free(name->name);
@@ -488,28 +488,28 @@ add_uri_to_scope(void *ctx_v, struct xl_env *env, struct xl_uri *uri)
         }
 
         name->type = RESOLVE_GLOBAL;
-        return xl_vector_append(&ctx->native_scope->names, name);
+        return ubik_vector_append(&ctx->native_scope->names, name);
 }
 
-no_ignore static xl_error
-create_native_scope(struct xl_resolve_context *ctx)
+no_ignore static ubik_error
+create_native_scope(struct ubik_resolve_context *ctx)
 {
-        struct xl_env env = {0};
-        xl_error err;
+        struct ubik_env env = {0};
+        ubik_error err;
 
-        ctx->native_scope = calloc(1, sizeof(struct xl_resolve_scope));
+        ctx->native_scope = calloc(1, sizeof(struct ubik_resolve_scope));
         if (ctx->native_scope == NULL)
-                return xl_raise(ERR_NO_MEMORY, "native scope alloc");
+                return ubik_raise(ERR_NO_MEMORY, "native scope alloc");
 
-        err = xl_natives_register(&env);
+        err = ubik_natives_register(&env);
         if (err != OK)
                 return err;
 
-        err = xl_env_iterate(add_uri_to_scope, &env, ctx);
+        err = ubik_env_iterate(add_uri_to_scope, &env, ctx);
         if (err != OK)
                 return err;
 
-        err = xl_env_free(&env);
+        err = ubik_env_free(&env);
         if (err != OK)
                 return err;
 
@@ -517,17 +517,17 @@ create_native_scope(struct xl_resolve_context *ctx)
 }
 
 static void
-_print_line_in_stream(struct xl_stream *stream, size_t line)
+_print_line_in_stream(struct ubik_stream *stream, size_t line)
 {
         #define lis_buf_len 512
         char buf[lis_buf_len];
         char *explain;
-        xl_error err;
+        ubik_error err;
 
-        err = xl_streamutil_get_line(buf, stream, line, lis_buf_len);
+        err = ubik_streamutil_get_line(buf, stream, line, lis_buf_len);
         if (err != OK)
         {
-                explain = xl_error_explain(err);
+                explain = ubik_error_explain(err);
                 printf("couldn't print line in file: %s\n", explain);
                 return;
         }
@@ -543,15 +543,15 @@ _show_char_in_line(size_t column)
         printf("^\n");
 }
 
-no_ignore xl_error
+no_ignore ubik_error
 ubik_resolve(
-        struct xl_ast *ast,
+        struct ubik_ast *ast,
         char *source_name,
-        struct xl_stream *stream,
-        struct xl_resolve_context *ctx)
+        struct ubik_stream *stream,
+        struct ubik_resolve_context *ctx)
 {
-        struct xl_resolve_error *resolv_err;
-        xl_error err;
+        struct ubik_resolve_error *resolv_err;
+        ubik_error err;
         size_t i;
 
         err = create_native_scope(ctx);
@@ -574,7 +574,7 @@ ubik_resolve(
         if (err != OK)
                 return err;
 
-        err = xl_reduce_closures(ctx, ast);
+        err = ubik_reduce_closures(ctx, ast);
         if (err != OK)
                 return err;
 
@@ -599,29 +599,29 @@ ubik_resolve(
                                 _show_char_in_line(resolv_err->loc.col_start);
                         }
                 }
-                return xl_raise(ERR_BAD_VALUE, "couldn't resolve some names");
+                return ubik_raise(ERR_BAD_VALUE, "couldn't resolve some names");
         }
         return OK;
 }
 
-no_ignore xl_error
+no_ignore ubik_error
 ubik_resolve_context_missing_name(
-        struct xl_resolve_context *ctx,
+        struct ubik_resolve_context *ctx,
         char *name,
-        struct xl_ast_loc loc)
+        struct ubik_ast_loc loc)
 {
-        struct xl_resolve_error *resolv_err;
-        xl_error err;
+        struct ubik_resolve_error *resolv_err;
+        ubik_error err;
 
-        resolv_err = calloc(1, sizeof(struct xl_resolve_error));
+        resolv_err = calloc(1, sizeof(struct ubik_resolve_error));
         if (resolv_err == NULL)
-                return xl_raise(ERR_NO_MEMORY, "resolve error alloc");
+                return ubik_raise(ERR_NO_MEMORY, "resolve error alloc");
 
         resolv_err->err_type = RESOLVE_ERR_NAME_NOT_FOUND;
         resolv_err->name = name;
         resolv_err->loc = loc;
 
-        err = xl_vector_append(&ctx->errors, resolv_err);
+        err = ubik_vector_append(&ctx->errors, resolv_err);
         if (err != OK)
         {
                 free(resolv_err);
@@ -631,27 +631,27 @@ ubik_resolve_context_missing_name(
 }
 
 void
-ubik_resolve_context_free(struct xl_resolve_context *ctx)
+ubik_resolve_context_free(struct ubik_resolve_context *ctx)
 {
-        struct xl_resolve_scope *scope;
+        struct ubik_resolve_scope *scope;
         size_t i;
 
-        xl_vector_free(&ctx->native_scope->names);
+        ubik_vector_free(&ctx->native_scope->names);
         free(ctx->native_scope);
 
         for (i = 0; i < ctx->scope_allocs.n; i++)
         {
                 scope = ctx->scope_allocs.elems[i];
-                xl_vector_free(&scope->names);
+                ubik_vector_free(&scope->names);
                 free(scope);
         }
-        xl_vector_free(&ctx->scope_allocs);
+        ubik_vector_free(&ctx->scope_allocs);
 
         for (i = 0; i < ctx->allocs.n; i++)
                 free(ctx->allocs.elems[i]);
-        xl_vector_free(&ctx->allocs);
+        ubik_vector_free(&ctx->allocs);
 
         for (i = 0; i < ctx->errors.n; i++)
                 free(ctx->errors.elems[i]);
-        xl_vector_free(&ctx->errors);
+        ubik_vector_free(&ctx->errors);
 }

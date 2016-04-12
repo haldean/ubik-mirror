@@ -24,16 +24,16 @@
 test_t
 buffer()
 {
-        struct xl_stream s;
+        struct ubik_stream s;
         char c[20];
         size_t n;
 
-        assert(xl_stream_buffer(&s) == OK);
+        assert(ubik_stream_buffer(&s) == OK);
 
-        n = xl_stream_write(&s, (char[]){0, 1, 2, 3, 4}, 5);
+        n = ubik_stream_write(&s, (char[]){0, 1, 2, 3, 4}, 5);
         assert(n == 5);
 
-        n = xl_stream_read(c, &s, 5);
+        n = ubik_stream_read(c, &s, 5);
         assert(n == 5);
 
         assert(c[0] == 0);
@@ -42,10 +42,10 @@ buffer()
         assert(c[3] == 3);
         assert(c[4] == 4);
 
-        n = xl_stream_read(c, &s, 5);
+        n = ubik_stream_read(c, &s, 5);
         assert(n == 0);
 
-        xl_stream_close(&s);
+        ubik_stream_close(&s);
         return ok;
 }
 

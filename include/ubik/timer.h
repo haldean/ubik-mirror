@@ -19,13 +19,13 @@
 
 #include "ubik/ubik.h"
 
-struct xl_timer;
+struct ubik_timer;
 
-no_ignore xl_error
-ubik_timer_new(struct xl_timer **t);
+no_ignore ubik_error
+ubik_timer_new(struct ubik_timer **t);
 
-no_ignore xl_error
-ubik_timer_start(struct xl_timer *t);
+no_ignore ubik_error
+ubik_timer_start(struct ubik_timer *t);
 
-no_ignore xl_error
-ubik_timer_elapsed(int64_t *microsec, struct xl_timer *t);
+no_ignore ubik_error
+ubik_timer_elapsed(int64_t *microsec, struct ubik_timer *t);

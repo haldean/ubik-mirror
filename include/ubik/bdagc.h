@@ -21,26 +21,26 @@
 #include "ubik/dagc.h"
 #include "ubik/ubik.h"
 
-struct xl_graph_builder
+struct ubik_graph_builder
 {
-        struct xl_dagc_node **nodes;
+        struct ubik_dagc_node **nodes;
         size_t n_nodes;
         size_t cap_nodes;
 
-        struct xl_dagc_node *result;
+        struct ubik_dagc_node *result;
 };
 
-no_ignore xl_error
-ubik_bdagc_init(struct xl_graph_builder *b);
+no_ignore ubik_error
+ubik_bdagc_init(struct ubik_graph_builder *b);
 
 /* Adds a node to the graph. */
-no_ignore xl_error
+no_ignore ubik_error
 ubik_bdagc_push_node(
-        struct xl_graph_builder *b,
-        struct xl_dagc_node *node);
+        struct ubik_graph_builder *b,
+        struct ubik_dagc_node *node);
 
 /* Builds the graph. */
-no_ignore xl_error
+no_ignore ubik_error
 ubik_bdagc_build(
-        struct xl_dagc **graph,
-        struct xl_graph_builder *b);
+        struct ubik_dagc **graph,
+        struct ubik_graph_builder *b);

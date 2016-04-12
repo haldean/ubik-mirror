@@ -25,15 +25,15 @@
 
 ubik_error
 ubik_error_new(
-        const xl_word code,
+        const ubik_word code,
         const char *tag,
         const char *file,
         const uint32_t lineno,
         const char *function)
 {
-        struct xl_error *res;
+        struct ubik_error *res;
 
-        res = calloc(1, sizeof(struct xl_error));
+        res = calloc(1, sizeof(struct ubik_error));
         res->error_code = code;
         res->tag = tag;
         res->file = file;
@@ -43,13 +43,13 @@ ubik_error_new(
 }
 
 char *
-ubik_error_explain(xl_error err)
+ubik_error_explain(ubik_error err)
 {
         char *res;
         char *err_word_expl;
         int aspr_res;
 
-        err_word_expl = xl_word_explain(err->error_code);
+        err_word_expl = ubik_word_explain(err->error_code);
         aspr_res = asprintf(&res, "error %s at %s:%u: %s",
                  err_word_expl, err->file, err->lineno, err->tag);
 

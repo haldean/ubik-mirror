@@ -22,13 +22,13 @@
 #include "ubik/ast.h"
 #include "ubik/uri.h"
 
-struct xl_gen_requires
+struct ubik_gen_requires
 {
-        struct xl_uri *dependency;
-        struct xl_gen_requires *next;
+        struct ubik_uri *dependency;
+        struct ubik_gen_requires *next;
 };
 
-enum xl_load_reason
+enum ubik_load_reason
 {
         LOAD_MAIN = 1,
         LOAD_IMPORTED,
@@ -36,8 +36,8 @@ enum xl_load_reason
 };
 
 /* Frees a requirement list. */
-no_ignore xl_error
-ubik_gen_requires_free(struct xl_gen_requires *);
+no_ignore ubik_error
+ubik_gen_requires_free(struct ubik_gen_requires *);
 
 /* Compiles a single compilation unit down to a series of graphs.
  *
@@ -48,11 +48,11 @@ ubik_gen_requires_free(struct xl_gen_requires *);
  * we're being compiled (some things behave differently if they're imported or
  * they're the main event), and uri_source is the source prefix to put on all of
  * the URIs for all the bindings in the AST. */
-no_ignore xl_error
+no_ignore ubik_error
 ubik_compile_unit(
-        struct xl_dagc ***graphs,
+        struct ubik_dagc ***graphs,
         size_t *n_graphs,
-        struct xl_gen_requires **requires,
-        struct xl_ast *ast,
-        enum xl_load_reason load_reason,
+        struct ubik_gen_requires **requires,
+        struct ubik_ast *ast,
+        enum ubik_load_reason load_reason,
         char *uri_source);

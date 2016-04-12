@@ -33,7 +33,7 @@
 #define TOKEN(x) { yylval->token = x; return x; }
 #define TSTRING(token) { \
         yylval->string = strdup(yytext); \
-        if (xl_vector_append(&ctx->allocs, yylval->string) != OK) return 0; \
+        if (ubik_vector_append(&ctx->allocs, yylval->string) != OK) return 0; \
         return token; \
 }
 
@@ -43,7 +43,7 @@
         yyget_lloc(yyscanner)->last_column = yycolumn + yyleng - 1; \
         yycolumn += yyleng; } while (0);
 
-char *read_string_literal(struct xl_parse_context *ctx, yyscan_t scanner);
+char *read_string_literal(struct ubik_parse_context *ctx, yyscan_t scanner);
 
 %}
 
@@ -93,7 +93,7 @@ NAME [a-z_][a-zA-Z0-9/_\-']*
 %%
 
 char *
-read_string_literal(struct xl_parse_context *ctx, yyscan_t scanner)
+read_string_literal(struct ubik_parse_context *ctx, yyscan_t scanner)
 {
         char *res;
         char *temp;
@@ -158,7 +158,7 @@ read_string_literal(struct xl_parse_context *ctx, yyscan_t scanner)
                 free(res);
                 return NULL;
         }
-        if (xl_vector_append(&ctx->allocs, temp) != OK)
+        if (ubik_vector_append(&ctx->allocs, temp) != OK)
         {
                 free(temp);
                 return NULL;

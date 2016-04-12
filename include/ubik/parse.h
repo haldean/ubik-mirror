@@ -24,17 +24,17 @@
 #include "ubik/stream.h"
 #include "ubik/vector.h"
 
-struct xl_parse_context
+struct ubik_parse_context
 {
-        struct xl_ast *ast;
+        struct ubik_ast *ast;
 
-        struct xl_ast_loc *err_loc;
+        struct ubik_ast_loc *err_loc;
         char *err_msg;
 
         /* we keep track of everything allocated during parsing so that we can
          * clean up if the parse fails halfway through. */
-        struct xl_vector allocs;
+        struct ubik_vector allocs;
 };
 
-no_ignore xl_error
-ubik_parse(struct xl_ast **ast, char *source_name, struct xl_stream *stream);
+no_ignore ubik_error
+ubik_parse(struct ubik_ast **ast, char *source_name, struct ubik_stream *stream);

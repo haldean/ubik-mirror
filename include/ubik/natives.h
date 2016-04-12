@@ -19,6 +19,6 @@
 
 #include "ubik/ubik.h"
 
-no_ignore xl_error
-ubik_natives_register(struct xl_env *env);
+no_ignore ubik_error
+ubik_natives_register(struct ubik_env *env);
 

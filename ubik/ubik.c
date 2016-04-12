@@ -35,7 +35,7 @@
 #define CHECK_ERR(msg) \
         do { if (err != OK) \
         { \
-                char *expl = xl_error_explain(err); \
+                char *expl = ubik_error_explain(err); \
                 printf(msg ": %s\n", expl); \
                 free(err); free(expl); \
                 goto teardown; \
@@ -44,15 +44,15 @@
 ubik_error
 test_file(char *fname, bool debug, bool timing)
 {
-        struct xl_stream stream;
-        struct xl_stream sstdout;
-        struct xl_dagc **graphs;
-        struct xl_env env;
-        struct xl_scheduler *s;
-        struct xl_value *expected, *actual;
+        struct ubik_stream stream;
+        struct ubik_stream sstdout;
+        struct ubik_dagc **graphs;
+        struct ubik_env env;
+        struct ubik_scheduler *s;
+        struct ubik_value *expected, *actual;
         size_t n_graphs, i, modinit_i;
-        xl_error err, teardown_err;
-        struct xl_timer *timer;
+        ubik_error err, teardown_err;
+        struct ubik_timer *timer;
         int64_t elapsed;
         bool pushed_modinit;
 
@@ -63,44 +63,44 @@ test_file(char *fname, bool debug, bool timing)
 
         if (timing)
         {
-                err = xl_timer_new(&timer);
+                err = ubik_timer_new(&timer);
                 CHECK_ERR("couldn't create timer");
-                err = xl_timer_start(timer);
+                err = ubik_timer_start(timer);
                 CHECK_ERR("couldn't start timer");
         }
 
-        err = xl_start();
+        err = ubik_start();
         CHECK_ERR("couldn't start ubik");
 
-        err = xl_stream_rfile(&stream, fname);
+        err = ubik_stream_rfile(&stream, fname);
         CHECK_ERR("couldn't open file");
 
-        err = xl_stream_wfilep(&sstdout, stdout);
+        err = ubik_stream_wfilep(&sstdout, stdout);
         CHECK_ERR("couldn't open stdout");
 
-        err = xl_load(&graphs, &n_graphs, &stream);
+        err = ubik_load(&graphs, &n_graphs, &stream);
         CHECK_ERR("couldn't load file");
 
-        xl_assert(n_graphs != 0);
+        ubik_assert(n_graphs != 0);
 
         if (timing)
         {
-                err = xl_timer_elapsed(&elapsed, timer);
+                err = ubik_timer_elapsed(&elapsed, timer);
                 CHECK_ERR("couldn't read timer");
                 printf("\ttime from start to loaded:    %" PRId64 " usec\n", elapsed);
         }
 
         if (debug)
         {
-                err = xl_value_new(&expected);
+                err = ubik_value_new(&expected);
                 CHECK_ERR("couldn't create expected value");
 
-                err = xl_value_load(expected, &stream);
+                err = ubik_value_load(expected, &stream);
                 if (err != OK && err->error_code == ERR_NO_DATA)
                 {
                         /* No expected result for this run, we'll just run it and make
                          * sure we don't crash. */
-                        err = xl_release(expected);
+                        err = ubik_release(expected);
                         CHECK_ERR("couldn't release expected");
                         expected = NULL;
                 }
@@ -108,10 +108,10 @@ test_file(char *fname, bool debug, bool timing)
                         CHECK_ERR("couldn't load expected");
         }
 
-        err = xl_env_init(&env);
+        err = ubik_env_init(&env);
         CHECK_ERR("couldn't create environment");
 
-        err = xl_schedule_new(&s);
+        err = ubik_schedule_new(&s);
         CHECK_ERR("couldn't create scheduler");
 
         modinit_i = 0;
@@ -120,24 +120,24 @@ test_file(char *fname, bool debug, bool timing)
         {
                 if (graphs[i]->tag & TAG_GRAPH_MODINIT)
                 {
-                        err = xl_schedule_push(s, graphs[i], &env, NULL);
+                        err = ubik_schedule_push(s, graphs[i], &env, NULL);
                         CHECK_ERR("couldn't push graph into scheduler");
 
                         modinit_i = i;
                         pushed_modinit = true;
                 }
         }
-        xl_assert(pushed_modinit);
+        ubik_assert(pushed_modinit);
 
-        err = xl_schedule_run(s);
+        err = ubik_schedule_run(s);
         CHECK_ERR("couldn't run scheduler");
 
-        err = xl_env_free(&env);
+        err = ubik_env_free(&env);
         CHECK_ERR("couldn't free environment");
 
         if (timing)
         {
-                err = xl_timer_elapsed(&elapsed, timer);
+                err = ubik_timer_elapsed(&elapsed, timer);
                 CHECK_ERR("couldn't read timer");
                 printf("\ttime from start to evaluated: %" PRId64 " usec\n", elapsed);
         }
@@ -146,16 +146,16 @@ test_file(char *fname, bool debug, bool timing)
         {
                 actual = graphs[modinit_i]->result->known.tree;
 
-                if (actual == NULL || !xl_value_eq(expected, actual))
+                if (actual == NULL || !ubik_value_eq(expected, actual))
                 {
                         printf("fail: %s\n\texpected:  ", fname);
-                        err = xl_value_print(&sstdout, expected);
+                        err = ubik_value_print(&sstdout, expected);
                         CHECK_ERR("couldn't print expected");
 
                         printf("\n\t  actual:  ");
                         if (actual != NULL)
                         {
-                                err = xl_value_print(&sstdout, actual);
+                                err = ubik_value_print(&sstdout, actual);
                                 CHECK_ERR("couldn't print actual");
                         }
                         else
@@ -163,7 +163,7 @@ test_file(char *fname, bool debug, bool timing)
                                 printf("not evaluated");
                         }
                         printf("\n");
-                        err = xl_raise(ERR_TEST_FAILED, NULL);
+                        err = ubik_raise(ERR_TEST_FAILED, NULL);
                         goto teardown;
                 }
         }
@@ -174,10 +174,10 @@ teardown:
 
         if (s != NULL)
         {
-                teardown_err = xl_schedule_free(s);
+                teardown_err = ubik_schedule_free(s);
                 if (teardown_err != OK)
                 {
-                        char *explain = xl_error_explain(teardown_err);
+                        char *explain = ubik_error_explain(teardown_err);
                         printf("scheduler free failed: %s\n", explain);
                         free(explain);
                         free(teardown_err);
@@ -191,10 +191,10 @@ teardown:
                 {
                         if (graphs[i] == NULL)
                                 continue;
-                        teardown_err = xl_release(graphs[i]);
+                        teardown_err = ubik_release(graphs[i]);
                         if (teardown_err != OK)
                         {
-                                char *explain = xl_error_explain(teardown_err);
+                                char *explain = ubik_error_explain(teardown_err);
                                 printf("graph release failed: %s\n", explain);
                                 free(explain);
                                 free(teardown_err);
@@ -204,16 +204,16 @@ teardown:
                 free(graphs);
         }
 
-        teardown_err = xl_teardown();
+        teardown_err = ubik_teardown();
         if (teardown_err != OK)
         {
-                char *explain = xl_error_explain(teardown_err);
+                char *explain = ubik_error_explain(teardown_err);
                 printf("teardown failed: %s\n", explain);
                 free(explain);
                 free(teardown_err);
         }
 
-        xl_stream_close(&stream);
+        ubik_stream_close(&stream);
 
         if (err == OK)
                 printf("ok:   %s\n", fname);

@@ -27,27 +27,27 @@
 #include "ubik/schedule.h"
 #include "ubik/util.h"
 
-struct xl_scheduler
+struct ubik_scheduler
 {
-        struct xl_exec_unit *wait;
-        struct xl_exec_unit *ready;
+        struct ubik_exec_unit *wait;
+        struct ubik_exec_unit *ready;
 };
 
 /* Creates a scheduler. */
-no_ignore xl_error
-ubik_schedule_new(struct xl_scheduler **s)
+no_ignore ubik_error
+ubik_schedule_new(struct ubik_scheduler **s)
 {
-        *s = calloc(1, sizeof(struct xl_scheduler));
+        *s = calloc(1, sizeof(struct ubik_scheduler));
         if (*s == NULL)
-                return xl_raise(ERR_NO_MEMORY, "schedule alloc");
+                return ubik_raise(ERR_NO_MEMORY, "schedule alloc");
         return OK;
 }
 
 /* Destroys a scheduler. */
-no_ignore xl_error
-ubik_schedule_free(struct xl_scheduler *s)
+no_ignore ubik_error
+ubik_schedule_free(struct ubik_scheduler *s)
 {
-        struct xl_exec_unit *to_free;
+        struct ubik_exec_unit *to_free;
 
         while (s->wait != NULL)
         {
@@ -67,11 +67,11 @@ ubik_schedule_free(struct xl_scheduler *s)
 }
 
 /* Initializes the flags of a given node. */
-no_ignore static xl_error
-_set_initial_ready(struct xl_dagc_node *n)
+no_ignore static ubik_error
+_set_initial_ready(struct ubik_dagc_node *n)
 {
-        struct xl_dagc_node *d1, *d2, *d3;
-        xl_error err;
+        struct ubik_dagc_node *d1, *d2, *d3;
+        ubik_error err;
 
         /* Input nodes are special; they're only ready once their values
          * have been filled in, even though they have no dependencies.
@@ -80,7 +80,7 @@ _set_initial_ready(struct xl_dagc_node *n)
         if (n->node_type == DAGC_NODE_INPUT)
                 return OK;
 
-        err = xl_dagc_get_deps(&d1, &d2, &d3, n);
+        err = ubik_dagc_get_deps(&d1, &d2, &d3, n);
         if (err != OK)
                 return err;
 
@@ -108,17 +108,17 @@ _set_initial_ready(struct xl_dagc_node *n)
         return OK;
 }
 
-no_ignore static xl_error
+no_ignore static ubik_error
 _enqueue(
-        struct xl_scheduler *s,
-        struct xl_dagc *graph,
-        struct xl_env *env,
-        struct xl_exec_notify *notify,
-        struct xl_dagc_node *node)
+        struct ubik_scheduler *s,
+        struct ubik_dagc *graph,
+        struct ubik_env *env,
+        struct ubik_exec_notify *notify,
+        struct ubik_dagc_node *node)
 {
-        struct xl_exec_unit *u;
-        xl_error err;
-        struct xl_exec_unit *test;
+        struct ubik_exec_unit *u;
+        ubik_error err;
+        struct ubik_exec_unit *test;
 
         test = s->wait;
         while (test != NULL)
@@ -136,9 +136,9 @@ _enqueue(
                 test = test->next;
         }
 
-        u = calloc(1, sizeof(struct xl_exec_unit));
+        u = calloc(1, sizeof(struct ubik_exec_unit));
         if (u == NULL)
-                return xl_raise(ERR_NO_MEMORY, "exec unit alloc");
+                return ubik_raise(ERR_NO_MEMORY, "exec unit alloc");
         u->node = node;
         u->notify = notify;
         u->env = env;
@@ -151,25 +151,25 @@ _enqueue(
         u->next = s->wait;
         s->wait = u;
 
-        err = xl_take(graph);
+        err = ubik_take(graph);
         if (err != OK)
                 return err;
 
         return OK;
 }
 
-no_ignore static xl_error
+no_ignore static ubik_error
 _eval_native_dagc(
-        struct xl_scheduler *s,
-        struct xl_dagc_native *ngraph,
-        struct xl_env *env,
-        struct xl_exec_notify *notify)
+        struct ubik_scheduler *s,
+        struct ubik_dagc_native *ngraph,
+        struct ubik_env *env,
+        struct ubik_exec_notify *notify)
 {
-        xl_error err;
-        struct xl_dagc *graph;
-        struct xl_exec_unit unit;
+        ubik_error err;
+        struct ubik_dagc *graph;
+        struct ubik_exec_unit unit;
 
-        graph = (struct xl_dagc *) ngraph;
+        graph = (struct ubik_dagc *) ngraph;
         err = ngraph->evaluator(env, graph);
         if (err != OK)
                 return err;
@@ -193,26 +193,26 @@ _eval_native_dagc(
         return OK;
 }
 
-no_ignore static xl_error
+no_ignore static ubik_error
 _push_dep_tree(
-        struct xl_scheduler *s,
-        struct xl_dagc *graph,
-        struct xl_dagc_node *node,
-        struct xl_env *env,
-        struct xl_exec_notify *notify);
+        struct ubik_scheduler *s,
+        struct ubik_dagc *graph,
+        struct ubik_dagc_node *node,
+        struct ubik_env *env,
+        struct ubik_exec_notify *notify);
 
 /* Enqueues the nodes on which the provided node is waiting. */
-no_ignore static xl_error
+no_ignore static ubik_error
 _push_deps(
-        struct xl_scheduler *s,
-        struct xl_dagc *graph,
-        struct xl_dagc_node *node,
-        struct xl_env *env)
+        struct ubik_scheduler *s,
+        struct ubik_dagc *graph,
+        struct ubik_dagc_node *node,
+        struct ubik_env *env)
 {
-        struct xl_dagc_node *d1, *d2, *d3;
-        xl_error err;
+        struct ubik_dagc_node *d1, *d2, *d3;
+        ubik_error err;
 
-        err = xl_dagc_get_deps(&d1, &d2, &d3, node);
+        err = ubik_dagc_get_deps(&d1, &d2, &d3, node);
         if (err != OK)
                 return err;
 
@@ -240,15 +240,15 @@ _push_deps(
 }
 
 /* Enqueues a node and all applicable dependencies. */
-no_ignore static xl_error
+no_ignore static ubik_error
 _push_dep_tree(
-        struct xl_scheduler *s,
-        struct xl_dagc *graph,
-        struct xl_dagc_node *node,
-        struct xl_env *env,
-        struct xl_exec_notify *notify)
+        struct ubik_scheduler *s,
+        struct ubik_dagc *graph,
+        struct ubik_dagc_node *node,
+        struct ubik_env *env,
+        struct ubik_exec_notify *notify)
 {
-        xl_error err;
+        ubik_error err;
 
         err = _enqueue(s, graph, env, notify, node);
         if (err != OK)
@@ -262,21 +262,21 @@ _push_dep_tree(
 }
 
 /* Pushes a graph into the scheduler for execution. */
-no_ignore xl_error
+no_ignore ubik_error
 ubik_schedule_push(
-        struct xl_scheduler *s,
-        struct xl_dagc *graph,
-        struct xl_env *env,
-        struct xl_exec_notify *notify)
+        struct ubik_scheduler *s,
+        struct ubik_dagc *graph,
+        struct ubik_env *env,
+        struct ubik_exec_notify *notify)
 {
-        xl_error err;
-        struct xl_dagc_node *n;
+        ubik_error err;
+        struct ubik_dagc_node *n;
         size_t i;
 
         /* Native graphs get to cheat and skip all this biz. */
         if (graph->tag & TAG_GRAPH_NATIVE)
                 return _eval_native_dagc(
-                        s, (struct xl_dagc_native *) graph, env, notify);
+                        s, (struct ubik_dagc_native *) graph, env, notify);
 
         for (i = 0; i < graph->n; i++)
         {
@@ -298,24 +298,24 @@ ubik_schedule_push(
 }
 
 /* Marks an execution unit complete. */
-no_ignore xl_error
+no_ignore ubik_error
 ubik_schedule_complete(
-        struct xl_scheduler *s,
-        struct xl_exec_unit *e)
+        struct ubik_scheduler *s,
+        struct ubik_exec_unit *e)
 {
-        struct xl_dagc_node **parents;
-        struct xl_dagc_node *d1, *d2, *d3;
+        struct ubik_dagc_node **parents;
+        struct ubik_dagc_node *d1, *d2, *d3;
         size_t n_parents;
         size_t i;
-        xl_error err;
+        ubik_error err;
 
-        err = xl_dagc_get_parents(&parents, &n_parents, e->graph, e->node);
+        err = ubik_dagc_get_parents(&parents, &n_parents, e->graph, e->node);
         if (err != OK)
                 return err;
 
         for (i = 0; i < n_parents; i++)
         {
-                err = xl_dagc_get_deps(&d1, &d2, &d3, parents[i]);
+                err = ubik_dagc_get_deps(&d1, &d2, &d3, parents[i]);
                 if (err != OK)
                         return err;
 
@@ -335,7 +335,7 @@ ubik_schedule_complete(
                 free(e->notify);
         }
 
-        err = xl_release(e->graph);
+        err = ubik_release(e->graph);
         if (err != OK)
                 return err;
         free(e);
@@ -344,17 +344,17 @@ ubik_schedule_complete(
 
 ubik_error
 _notify_node(
-        struct xl_exec_unit *waiting,
-        struct xl_scheduler *s,
-        struct xl_exec_unit *complete)
+        struct ubik_exec_unit *waiting,
+        struct ubik_scheduler *s,
+        struct ubik_exec_unit *complete)
 {
         void *old;
         void *old_type;
-        xl_error err;
+        ubik_error err;
 
 #ifdef XL_SCHEDULE_DEBUG
         printf("notifying %s on completion of %s\n",
-               xl_node_explain(waiting->node), xl_node_explain(complete->node));
+               ubik_node_explain(waiting->node), ubik_node_explain(complete->node));
 #endif
 
         /* We save these off here because we need to free them, but freeing them
@@ -364,69 +364,69 @@ _notify_node(
         old_type = waiting->node->known_type;
 
         waiting->node->known.any = complete->node->known.any;
-        err = xl_take(waiting->node->known.any);
+        err = ubik_take(waiting->node->known.any);
         if (err != OK)
                 return err;
 
         waiting->node->known_type = complete->node->known_type;
-        err = xl_take(waiting->node->known_type);
+        err = ubik_take(waiting->node->known_type);
         if (err != OK)
                 return err;
 
-        err = xl_env_free(complete->env);
+        err = ubik_env_free(complete->env);
         if (err != OK)
                 return err;
         free(complete->env);
 
-        err = xl_release(old);
+        err = ubik_release(old);
         if (err != OK)
                 return err;
 
-        err = xl_release(old_type);
+        err = ubik_release(old_type);
         if (err != OK)
                 return err;
 
-        err = xl_release(complete->graph);
+        err = ubik_release(complete->graph);
         if (err != OK)
                 return err;
 
         waiting->node->flags = XL_DAGC_FLAG_COMPLETE;
-        err = xl_schedule_complete(s, waiting);
+        err = ubik_schedule_complete(s, waiting);
         if (err != OK)
                 return err;
 
         return OK;
 }
 
-no_ignore static xl_error
+no_ignore static ubik_error
 _collapse_graph(
-        struct xl_scheduler *s,
-        struct xl_exec_unit *e)
+        struct ubik_scheduler *s,
+        struct ubik_exec_unit *e)
 {
-        struct xl_exec_notify *notify;
-        struct xl_env *child_env;
-        xl_error err;
+        struct ubik_exec_notify *notify;
+        struct ubik_env *child_env;
+        ubik_error err;
 
-        notify = calloc(1, sizeof(struct xl_exec_notify));
+        notify = calloc(1, sizeof(struct ubik_exec_notify));
         if (notify == NULL)
-                return xl_raise(ERR_NO_MEMORY, "exec notify");
-        notify->notify = (xl_exec_notify_func) _notify_node;
+                return ubik_raise(ERR_NO_MEMORY, "exec notify");
+        notify->notify = (ubik_exec_notify_func) _notify_node;
         notify->arg = e;
 
         e->node->flags = XL_DAGC_FLAG_WAIT_EVAL;
 
         /* Create a child environment to execute the function in. */
-        child_env = calloc(1, sizeof(struct xl_env));
-        err = xl_env_make_child(child_env, e->env);
+        child_env = calloc(1, sizeof(struct ubik_env));
+        err = ubik_env_make_child(child_env, e->env);
         if (err != OK)
                 return err;
 
         /* Take a reference here that will be released in _notify_node */
-        err = xl_take(e->node->known.graph);
+        err = ubik_take(e->node->known.graph);
         if (err != OK)
                 return err;
 
-        err = xl_schedule_push(s, e->node->known.graph, child_env, notify);
+        err = ubik_schedule_push(s, e->node->known.graph, child_env, notify);
         if (err != OK)
                 return err;
 
@@ -434,19 +434,19 @@ _collapse_graph(
 }
 
 no_ignore static bool
-_is_ready(struct xl_exec_unit *e)
+_is_ready(struct ubik_exec_unit *e)
 {
         return !(e->node->flags & XL_DAGC_WAIT_MASK);
 }
 
-no_ignore static xl_error
-_dump_exec_unit(struct xl_exec_unit *u)
+no_ignore static ubik_error
+_dump_exec_unit(struct ubik_exec_unit *u)
 {
-        struct xl_dagc_node *d1, *d2, *d3;
+        struct ubik_dagc_node *d1, *d2, *d3;
         char *buf;
-        xl_error err;
+        ubik_error err;
 
-        buf = xl_node_explain(u->node);
+        buf = ubik_node_explain(u->node);
         printf("\t%s\n", buf);
         free(buf);
         printf("\t\tenv @%hx ", (short)((uintptr_t) u->env));
@@ -459,38 +459,38 @@ _dump_exec_unit(struct xl_exec_unit *u)
                 !!(u->node->flags & XL_DAGC_FLAG_WAIT_EVAL),
                 !!(u->node->flags & XL_DAGC_FLAG_WAIT_DATA));
 
-        err = xl_dagc_get_deps(&d1, &d2, &d3, u->node);
+        err = ubik_dagc_get_deps(&d1, &d2, &d3, u->node);
         if (err != OK)
                 return err;
 
         if (d1 != NULL)
         {
-                buf = xl_node_explain(d1);
+                buf = ubik_node_explain(d1);
                 printf("\t\td1: %s\n", buf);
                 free(buf);
         }
 
         if (d2 != NULL)
         {
-                buf = xl_node_explain(d2);
+                buf = ubik_node_explain(d2);
                 printf("\t\td2: %s\n", buf);
                 free(buf);
         }
 
         if (d3 != NULL)
         {
-                buf = xl_node_explain(d3);
+                buf = ubik_node_explain(d3);
                 printf("\t\td3: %s\n", buf);
                 free(buf);
         }
         return OK;
 }
 
-no_ignore xl_error
-ubik_schedule_dump(struct xl_scheduler *s)
+no_ignore ubik_error
+ubik_schedule_dump(struct ubik_scheduler *s)
 {
-        struct xl_exec_unit *u;
-        xl_error err;
+        struct ubik_exec_unit *u;
+        ubik_error err;
 
         printf("scheduler dump\nwaiting jobs:\n");
         u = s->wait;
@@ -516,12 +516,12 @@ ubik_schedule_dump(struct xl_scheduler *s)
 }
 
 /* Runs a single pass of the scheduler. */
-no_ignore static xl_error
-_run_single_pass(struct xl_scheduler *s)
+no_ignore static ubik_error
+_run_single_pass(struct ubik_scheduler *s)
 {
-        struct xl_exec_unit *u, *t;
-        struct xl_exec_unit *prev;
-        xl_error err;
+        struct ubik_exec_unit *u, *t;
+        struct ubik_exec_unit *prev;
+        ubik_error err;
 
         /* This proceeds in two phases; first, we move everything that is ready
          * to be executed from the wait pile to the ready pile, then we execute
@@ -536,7 +536,7 @@ _run_single_pass(struct xl_scheduler *s)
                 {
 #ifdef XL_SCHEDULE_DEBUG
                         printf("moving %s from waiting to ready\n",
-                               xl_node_explain(u->node));
+                               ubik_node_explain(u->node));
 #endif
                         u->next = s->ready;
                         s->ready = u;
@@ -556,14 +556,14 @@ _run_single_pass(struct xl_scheduler *s)
         /* If the ready pile is still empty, then we're deadlocked. */
         if (s->ready == NULL)
         {
-                err = xl_schedule_dump(s);
+                err = ubik_schedule_dump(s);
                 if (err != OK)
                         return err;
-                return xl_raise(ERR_DEADLOCK, "all jobs are waiting");
+                return ubik_raise(ERR_DEADLOCK, "all jobs are waiting");
         }
 
 #ifdef XL_SCHEDULE_STEP
-        err = xl_schedule_dump(s);
+        err = ubik_schedule_dump(s);
         if (err != OK)
                 return err;
 #endif
@@ -573,7 +573,7 @@ _run_single_pass(struct xl_scheduler *s)
         u = s->ready;
         while (u != NULL)
         {
-                err = xl_dagc_node_eval(u->env, u->node);
+                err = ubik_dagc_node_eval(u->env, u->node);
                 if (err != OK)
                         return err;
 
@@ -585,7 +585,7 @@ _run_single_pass(struct xl_scheduler *s)
                 {
 #ifdef XL_SCHEDULE_DEBUG
                         printf("collapsing %s\n",
-                               xl_node_explain(u->node));
+                               ubik_node_explain(u->node));
 #endif
                         /* Here, we collapse the graph and don't mark the things
                          * depending on the node as ready; when we finish
@@ -599,9 +599,9 @@ _run_single_pass(struct xl_scheduler *s)
                 {
 #ifdef XL_SCHEDULE_DEBUG
                         printf("marking %s complete\n",
-                               xl_node_explain(u->node));
+                               ubik_node_explain(u->node));
 #endif
-                        err = xl_schedule_complete(s, u);
+                        err = ubik_schedule_complete(s, u);
                         if (err != OK)
                                 return err;
                 }
@@ -609,7 +609,7 @@ _run_single_pass(struct xl_scheduler *s)
                 {
 #ifdef XL_SCHEDULE_DEBUG
                         printf("moving %s back to waiting\n",
-                               xl_node_explain(u->node));
+                               ubik_node_explain(u->node));
 #endif
                         u->next = s->wait;
                         s->wait = u;
@@ -618,7 +618,7 @@ _run_single_pass(struct xl_scheduler *s)
                         if (err != OK)
                                 return err;
                 }
-                else return xl_raise(
+                else return ubik_raise(
                         ERR_BAD_HEADER,
                         "eval'ed node is not complete or waiting");
 
@@ -629,10 +629,10 @@ _run_single_pass(struct xl_scheduler *s)
 }
 
 /* Runs all queued jobs on the scheduler. */
-no_ignore xl_error
-ubik_schedule_run(struct xl_scheduler *s)
+no_ignore ubik_error
+ubik_schedule_run(struct ubik_scheduler *s)
 {
-        xl_error err;
+        ubik_error err;
 
         while (s->wait != NULL || s->ready != NULL)
         {

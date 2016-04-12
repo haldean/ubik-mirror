@@ -35,19 +35,19 @@
  * workaround for the lack of type propagation available in the current
  * compiler. It is used specifically for generating lambda type signatures so we
  * can assign required types to input nodes. */
-no_ignore static xl_error
+no_ignore static ubik_error
 _assign_nodes(
-        struct xl_graph_builder *builder,
-        struct xl_ast_expr *expr,
-        struct xl_ast_arg_list *args_in_scope);
+        struct ubik_graph_builder *builder,
+        struct ubik_ast_expr *expr,
+        struct ubik_ast_arg_list *args_in_scope);
 
 /* Returns true if the given name is in the arg list, and sets input_node to the
  * input node corresponding to the argument in the list. */
 bool
 _name_in_arg_list(
-        struct xl_dagc_node **input_node,
+        struct ubik_dagc_node **input_node,
         char *name,
-        struct xl_ast_arg_list *arg_list)
+        struct ubik_ast_arg_list *arg_list)
 {
         while (arg_list != NULL && arg_list->name != NULL)
         {
@@ -61,14 +61,14 @@ _name_in_arg_list(
         return false;
 }
 
-no_ignore static xl_error
+no_ignore static ubik_error
 _assign_atom_node(
-        union xl_dagc_any_node *n,
-        struct xl_ast_expr *expr,
-        struct xl_ast_arg_list *args_in_scope)
+        union ubik_dagc_any_node *n,
+        struct ubik_ast_expr *expr,
+        struct ubik_ast_arg_list *args_in_scope)
 {
-        struct xl_dagc_node *referrent;
-        xl_error err;
+        struct ubik_dagc_node *referrent;
+        ubik_error err;
 
         switch (expr->atom->atom_type)
         {
@@ -77,14 +77,14 @@ _assign_atom_node(
                 /* TODO: node IDs? */
                 n->node.id = 0;
 
-                err = xl_value_new(&n->as_const.type);
+                err = ubik_value_new(&n->as_const.type);
                 if (err != OK)
                         return err;
-                err = xl_type_word(n->as_const.type);
+                err = ubik_type_word(n->as_const.type);
                 if (err != OK)
                         return err;
 
-                err = xl_value_new(&n->as_const.value.tree);
+                err = ubik_value_new(&n->as_const.value.tree);
                 if (err != OK)
                         return err;
                 n->as_const.value.tree->tag |= TAG_LEFT_WORD | TAG_RIGHT_WORD;
@@ -95,14 +95,14 @@ _assign_atom_node(
                 n->node.node_type = DAGC_NODE_CONST;
                 n->node.id = 0;
 
-                err = xl_value_new(&n->as_const.type);
+                err = ubik_value_new(&n->as_const.type);
                 if (err != OK)
                         return err;
-                err = xl_type_float(n->as_const.type);
+                err = ubik_type_float(n->as_const.type);
                 if (err != OK)
                         return err;
 
-                err = xl_value_new(&n->as_const.value.tree);
+                err = ubik_value_new(&n->as_const.value.tree);
                 if (err != OK)
                         return err;
                 n->as_const.value.tree->tag |= TAG_LEFT_WORD | TAG_RIGHT_WORD;
@@ -122,13 +122,13 @@ _assign_atom_node(
                 n->node.node_type = DAGC_NODE_LOAD;
                 n->node.id = 0;
 
-                n->as_load.loc = calloc(1, sizeof(struct xl_uri));
+                n->as_load.loc = calloc(1, sizeof(struct ubik_uri));
 
-                err = xl_uri_unknown(n->as_load.loc, expr->atom->str);
+                err = ubik_uri_unknown(n->as_load.loc, expr->atom->str);
                 if (err != OK)
                         return err;
 
-                err = xl_take(n->as_load.loc);
+                err = ubik_take(n->as_load.loc);
                 if (err != OK)
                         return err;
                 return OK;
@@ -137,49 +137,49 @@ _assign_atom_node(
                 n->node.node_type = DAGC_NODE_LOAD;
                 n->node.id = 0;
 
-                n->as_load.loc = calloc(1, sizeof(struct xl_uri));
+                n->as_load.loc = calloc(1, sizeof(struct ubik_uri));
 
-                err = xl_uri_package(
+                err = ubik_uri_package(
                         n->as_load.loc,
                         expr->atom->qualified.head,
                         expr->atom->qualified.tail);
                 if (err != OK)
                         return err;
 
-                err = xl_take(n->as_load.loc);
+                err = ubik_take(n->as_load.loc);
                 if (err != OK)
                         return err;
                 return OK;
 
         case ATOM_TYPE_NAME:
-                return xl_raise(ERR_NOT_IMPLEMENTED, "expr type constructor");
+                return ubik_raise(ERR_NOT_IMPLEMENTED, "expr type constructor");
 
         case ATOM_STRING:
                 n->node.node_type = DAGC_NODE_CONST;
                 n->node.id = 0;
 
-                err = xl_value_new(&n->as_const.type);
+                err = ubik_value_new(&n->as_const.type);
                 if (err != OK)
                         return err;
-                err = xl_type_string(n->as_const.type);
+                err = ubik_type_string(n->as_const.type);
                 if (err != OK)
                         return err;
 
-                err = xl_value_new(&n->as_const.value.tree);
+                err = ubik_value_new(&n->as_const.value.tree);
                 if (err != OK)
                         return err;
-                err = xl_value_pack_string(
+                err = ubik_value_pack_string(
                         n->as_const.value.tree, expr->atom->str,
                         strlen(expr->atom->str));
                 return OK;
         }
-        return xl_raise(ERR_UNKNOWN_TYPE, "compile atom type");
+        return ubik_raise(ERR_UNKNOWN_TYPE, "compile atom type");
 }
 
-no_ignore static xl_error
+no_ignore static ubik_error
 _assign_apply_node(
-        union xl_dagc_any_node *n,
-        struct xl_ast_expr *expr)
+        union ubik_dagc_any_node *n,
+        struct ubik_ast_expr *expr)
 {
         n->node.node_type = DAGC_NODE_APPLY;
         /* TODO */
@@ -191,10 +191,10 @@ _assign_apply_node(
         return OK;
 }
 
-no_ignore static xl_error
+no_ignore static ubik_error
 _assign_conditional_node(
-        union xl_dagc_any_node *n,
-        struct xl_ast_expr *expr)
+        union ubik_dagc_any_node *n,
+        struct ubik_ast_expr *expr)
 {
         n->node.node_type = DAGC_NODE_COND;
         /* TODO */
@@ -207,21 +207,21 @@ _assign_conditional_node(
         return OK;
 }
 
-no_ignore static xl_error
+no_ignore static ubik_error
 _assign_block(
-        union xl_dagc_any_node *n,
-        struct xl_ast_expr *expr)
+        union ubik_dagc_any_node *n,
+        struct ubik_ast_expr *expr)
 {
-        struct xl_dagc **graphs;
+        struct ubik_dagc **graphs;
         size_t n_graphs;
         size_t i;
-        struct xl_gen_requires *requires;
-        struct xl_dagc *modinit;
-        xl_error err;
+        struct ubik_gen_requires *requires;
+        struct ubik_dagc *modinit;
+        ubik_error err;
 
-        xl_assert(expr->block->immediate != NULL);
+        ubik_assert(expr->block->immediate != NULL);
 
-        err = xl_compile_unit(
+        err = ubik_compile_unit(
                 &graphs, &n_graphs, &requires,
                 expr->block, LOAD_BLOCK, NULL);
         if (err != OK)
@@ -234,14 +234,14 @@ _assign_block(
                         modinit = graphs[i];
                         break;
                 }
-        xl_assert(modinit != NULL);
+        ubik_assert(modinit != NULL);
 
         n->node.node_type = DAGC_NODE_CONST;
         /* TODO */
         n->node.id = 0;
         n->as_const.value.graph = modinit;
         /* TODO: type inference from type of immediate value*/
-        err = xl_value_new(&n->as_const.type);
+        err = ubik_value_new(&n->as_const.type);
         if (err != OK)
                 return err;
         n->as_const.type->tag |= TAG_LEFT_WORD | TAG_RIGHT_WORD;
@@ -249,40 +249,40 @@ _assign_block(
         return OK;
 }
 
-no_ignore static xl_error
+no_ignore static ubik_error
 _assign_lambda(
-        union xl_dagc_any_node *n,
-        struct xl_ast_expr *expr)
+        union ubik_dagc_any_node *n,
+        struct ubik_ast_expr *expr)
 {
-        struct xl_graph_builder builder;
-        struct xl_dagc *subgraph;
-        struct xl_ast_arg_list *t;
-        struct xl_dagc_input *input_node;
+        struct ubik_graph_builder builder;
+        struct ubik_dagc *subgraph;
+        struct ubik_ast_arg_list *t;
+        struct ubik_dagc_input *input_node;
         size_t i;
-        xl_error err;
+        ubik_error err;
 
-        err = xl_bdagc_init(&builder);
+        err = ubik_bdagc_init(&builder);
         if (err != OK)
                 return err;
 
-        xl_assert(expr->lambda.args != NULL);
+        ubik_assert(expr->lambda.args != NULL);
         t = expr->lambda.args;
         i = 0;
         while (t->name != NULL)
         {
-                input_node = calloc(1, sizeof(struct xl_dagc_input));
+                input_node = calloc(1, sizeof(struct ubik_dagc_input));
                 if (input_node == NULL)
-                        return xl_raise(ERR_NO_MEMORY, "input node alloc");
+                        return ubik_raise(ERR_NO_MEMORY, "input node alloc");
                 input_node->head.node_type = DAGC_NODE_INPUT;
                 /* TODO */
                 input_node->head.id = 0;
                 input_node->arg_num = i++;
 
-                err = xl_bdagc_push_node(
-                        &builder, (struct xl_dagc_node *) input_node);
+                err = ubik_bdagc_push_node(
+                        &builder, (struct ubik_dagc_node *) input_node);
                 if (err != OK)
                         return err;
-                t->gen = (struct xl_dagc_node *) input_node;
+                t->gen = (struct ubik_dagc_node *) input_node;
 
                 t = t->next;
         }
@@ -295,18 +295,18 @@ _assign_lambda(
         builder.result = expr->lambda.body->gen;
         builder.result->is_terminal = true;
 
-        err = xl_bdagc_build(&subgraph, &builder);
+        err = ubik_bdagc_build(&subgraph, &builder);
         if (err != OK)
                 return err;
         subgraph->tag |= TAG_GRAPH_UNRESOLVED;
 
         /* we let the node take the reference that we get by default. */
-        xl_assert(subgraph->refcount == 1);
+        ubik_assert(subgraph->refcount == 1);
 
         n->node.node_type = DAGC_NODE_CONST;
         n->node.id = 0;
         n->as_const.value.graph = subgraph;
-        err = xl_value_new(&n->as_const.type);
+        err = ubik_value_new(&n->as_const.type);
         if (err != OK)
                 return err;
         n->as_const.type->tag |= TAG_LEFT_WORD | TAG_RIGHT_WORD;
@@ -314,16 +314,16 @@ _assign_lambda(
         return OK;
 }
 
-no_ignore static xl_error
+no_ignore static ubik_error
 _assign_nodes(
-        struct xl_graph_builder *builder,
-        struct xl_ast_expr *expr,
-        struct xl_ast_arg_list *args_in_scope)
+        struct ubik_graph_builder *builder,
+        struct ubik_ast_expr *expr,
+        struct ubik_ast_arg_list *args_in_scope)
 {
-        union xl_dagc_any_node *n;
-        xl_error err;
+        union ubik_dagc_any_node *n;
+        ubik_error err;
 
-        n = calloc(1, sizeof(union xl_dagc_any_node));
+        n = calloc(1, sizeof(union ubik_dagc_any_node));
 
         switch (expr->expr_type)
         {
@@ -384,10 +384,10 @@ _assign_nodes(
 
         case EXPR_CONSTRUCTOR:
         default:
-                return xl_raise(ERR_UNKNOWN_TYPE, "compile assign node");
+                return ubik_raise(ERR_UNKNOWN_TYPE, "compile assign node");
         }
 
-        err = xl_bdagc_push_node(builder, &n->node);
+        err = ubik_bdagc_push_node(builder, &n->node);
         if (err != OK)
                 return err;
         expr->gen = &n->node;
@@ -395,21 +395,21 @@ _assign_nodes(
         return OK;
 }
 
-no_ignore static xl_error
+no_ignore static ubik_error
 ubik_compile_binding(
-        struct xl_dagc **graphs,
+        struct ubik_dagc **graphs,
         size_t n_graphs,
-        struct xl_ast_binding *binding,
-        struct xl_env *local_env)
+        struct ubik_ast_binding *binding,
+        struct ubik_env *local_env)
 {
-        struct xl_uri *uri;
-        struct xl_graph_builder builder;
-        struct xl_value *type;
-        union xl_value_or_graph ins_value;
+        struct ubik_uri *uri;
+        struct ubik_graph_builder builder;
+        struct ubik_value *type;
+        union ubik_value_or_graph ins_value;
 
-        xl_error err;
+        ubik_error err;
 
-        err = xl_bdagc_init(&builder);
+        err = ubik_bdagc_init(&builder);
         if (err != OK)
                 return err;
 
@@ -420,24 +420,24 @@ ubik_compile_binding(
         builder.result = binding->expr->gen;
         builder.result->is_terminal = true;
 
-        err = xl_bdagc_build(&graphs[n_graphs], &builder);
+        err = ubik_bdagc_build(&graphs[n_graphs], &builder);
         if (err != OK)
                 return err;
         graphs[n_graphs]->tag |= TAG_GRAPH_UNRESOLVED;
 
-        uri = calloc(1, sizeof(struct xl_uri));
+        uri = calloc(1, sizeof(struct ubik_uri));
         if (uri == NULL)
-                return xl_raise(ERR_NO_MEMORY, "uri alloc");
-        err = xl_uri_user(uri, binding->name);
+                return ubik_raise(ERR_NO_MEMORY, "uri alloc");
+        err = ubik_uri_user(uri, binding->name);
         if (err != OK)
                 return err;
-        err = xl_take(uri);
+        err = ubik_take(uri);
         if (err != OK)
                 return err;
         graphs[n_graphs]->identity = uri;
 
         /* TODO: add binding type here */
-        err = xl_value_new(&type);
+        err = ubik_value_new(&type);
         if (err != OK)
                 return err;
         type->tag |= TAG_LEFT_WORD | TAG_RIGHT_WORD;
@@ -446,12 +446,12 @@ ubik_compile_binding(
 
         ins_value.graph = graphs[n_graphs];
 
-        err = xl_env_set(
+        err = ubik_env_set(
                 local_env, uri, ins_value, type);
         if (err != OK)
                 return err;
 
-        err = xl_release(type);
+        err = ubik_release(type);
         if (err != OK)
                 return err;
 
@@ -461,31 +461,31 @@ ubik_compile_binding(
 /* Returns a fully-resolved URI, adding it to the requires list if necessary.
  * The returned URI has one reference allocated for the caller, and one
  * reference allocated for the requires list if appropriate. */
-no_ignore static xl_error
+no_ignore static ubik_error
 ubik_resolve_uri(
-        struct xl_uri **resolved,
-        struct xl_uri *uri,
-        struct xl_env *env,
-        struct xl_gen_requires **requires)
+        struct ubik_uri **resolved,
+        struct ubik_uri *uri,
+        struct ubik_env *env,
+        struct ubik_gen_requires **requires)
 {
-        struct xl_uri *r;
-        struct xl_gen_requires *new_req;
+        struct ubik_uri *r;
+        struct ubik_gen_requires *new_req;
         bool is_present;
-        xl_error err;
+        ubik_error err;
 
         if (uri->scope == SCOPE_PACKAGE)
         {
-                new_req = calloc(1, sizeof(struct xl_gen_requires));
+                new_req = calloc(1, sizeof(struct ubik_gen_requires));
                 new_req->dependency = uri;
                 new_req->next = *requires;
 
                 /* one ref for the *resolved pointer... */
-                err = xl_take(uri);
+                err = ubik_take(uri);
                 if (err != OK)
                         return err;
 
                 /* ...and one for the *requires pointer */
-                err = xl_take(uri);
+                err = ubik_take(uri);
                 if (err != OK)
                         return err;
 
@@ -494,17 +494,17 @@ ubik_resolve_uri(
                 return OK;
         }
 
-        r = calloc(1, sizeof(struct xl_uri));
+        r = calloc(1, sizeof(struct ubik_uri));
 
         /* prefer user-defined to native, so that users can shadow. */
-        err = xl_uri_user(r, uri->name);
+        err = ubik_uri_user(r, uri->name);
         if (err != OK)
                 return err;
-        err = xl_take(r);
+        err = ubik_take(r);
         if (err != OK)
                 return err;
 
-        err = xl_env_present(&is_present, env, r);
+        err = ubik_env_present(&is_present, env, r);
         if (err != OK)
                 return err;
         if (is_present)
@@ -512,20 +512,20 @@ ubik_resolve_uri(
                 *resolved = r;
                 return OK;
         }
-        err = xl_release(r);
+        err = ubik_release(r);
         if (err != OK)
                 return err;
 
-        r = calloc(1, sizeof(struct xl_uri));
+        r = calloc(1, sizeof(struct ubik_uri));
 
-        err = xl_uri_native(r, uri->name);
+        err = ubik_uri_native(r, uri->name);
         if (err != OK)
                 return err;
-        err = xl_take(r);
+        err = ubik_take(r);
         if (err != OK)
                 return err;
 
-        err = xl_env_present(&is_present, env, r);
+        err = ubik_env_present(&is_present, env, r);
         if (err != OK)
                 return err;
         if (is_present)
@@ -533,26 +533,26 @@ ubik_resolve_uri(
                 *resolved = r;
                 return OK;
         }
-        err = xl_release(r);
+        err = ubik_release(r);
         if (err != OK)
                 return err;
 
-        return xl_raise(ERR_ABSENT, "couldn't resolve uri");
+        return ubik_raise(ERR_ABSENT, "couldn't resolve uri");
 }
 
-no_ignore static xl_error
+no_ignore static ubik_error
 ubik_resolve_uris(
-        struct xl_dagc *graph,
-        struct xl_env *local_env,
-        struct xl_gen_requires **requires,
+        struct ubik_dagc *graph,
+        struct ubik_env *local_env,
+        struct ubik_gen_requires **requires,
         char *uri_source)
 {
         size_t i;
-        xl_error err;
-        struct xl_dagc_load *load;
-        struct xl_dagc_const *cons;
-        struct xl_uri *new_uri;
-        xl_tag t;
+        ubik_error err;
+        struct ubik_dagc_load *load;
+        struct ubik_dagc_const *cons;
+        struct ubik_uri *new_uri;
+        ubik_tag t;
 
         /* Mark the graph resolved here, so that self-references do not cause us
          * to go into an infinite loop. */
@@ -562,13 +562,13 @@ ubik_resolve_uris(
         {
                 if (graph->nodes[i]->node_type == DAGC_NODE_CONST)
                 {
-                        cons = (struct xl_dagc_const *) graph->nodes[i];
+                        cons = (struct ubik_dagc_const *) graph->nodes[i];
                         t = *cons->value.tag;
                         if ((t & TAG_TYPE_MASK) != TAG_GRAPH)
                                 continue;
                         if (!(t & TAG_GRAPH_UNRESOLVED))
                                 continue;
-                        err = xl_resolve_uris(
+                        err = ubik_resolve_uris(
                                 cons->value.graph, local_env, requires,
                                 uri_source);
                         if (err != OK)
@@ -578,18 +578,18 @@ ubik_resolve_uris(
 
                 if (graph->nodes[i]->node_type != DAGC_NODE_LOAD)
                         continue;
-                load = (struct xl_dagc_load *) graph->nodes[i];
+                load = (struct ubik_dagc_load *) graph->nodes[i];
 
                 new_uri = NULL;
-                err = xl_resolve_uri(&new_uri, load->loc, local_env, requires);
+                err = ubik_resolve_uri(&new_uri, load->loc, local_env, requires);
                 if (err != OK)
                         return err;
 
-                err = xl_release(load->loc);
+                err = ubik_release(load->loc);
                 if (err != OK)
                         return err;
 
-                /* The URI comes back from xl_resolve_uri with a reference */
+                /* The URI comes back from ubik_resolve_uri with a reference */
                 load->loc = new_uri;
         }
 
@@ -598,32 +598,32 @@ ubik_resolve_uris(
 
 struct modinit_iterator
 {
-        struct xl_graph_builder *builder;
+        struct ubik_graph_builder *builder;
         char *uri_source;
 
-        struct xl_dagc_node **free_nodes;
+        struct ubik_dagc_node **free_nodes;
         size_t next_node;
 };
 
-no_ignore static xl_error
+no_ignore static ubik_error
 _add_modinit_setter(
         void *viter,
-        struct xl_env *env,
-        struct xl_uri *uri)
+        struct ubik_env *env,
+        struct ubik_uri *uri)
 {
-        union xl_value_or_graph value;
-        struct xl_value *type;
-        struct xl_dagc_store *store_node;
-        struct xl_dagc_const *const_node;
-        struct xl_graph_builder *builder;
+        union ubik_value_or_graph value;
+        struct ubik_value *type;
+        struct ubik_dagc_store *store_node;
+        struct ubik_dagc_const *const_node;
+        struct ubik_graph_builder *builder;
         struct modinit_iterator *iter;
-        struct xl_uri *store_uri;
-        xl_error err;
+        struct ubik_uri *store_uri;
+        ubik_error err;
 
         iter = (struct modinit_iterator *) viter;
         builder = iter->builder;
 
-        err = xl_env_get(&value, &type, env, uri);
+        err = ubik_env_get(&value, &type, env, uri);
         if (err != OK)
                 return err;
 
@@ -633,33 +633,33 @@ _add_modinit_setter(
         }
         else
         {
-                store_uri = calloc(1, sizeof(struct xl_uri));
+                store_uri = calloc(1, sizeof(struct ubik_uri));
                 if (store_uri == NULL)
-                        return xl_raise(ERR_NO_MEMORY, "uri alloc");
-                err = xl_uri_package(store_uri, iter->uri_source, uri->name);
+                        return ubik_raise(ERR_NO_MEMORY, "uri alloc");
+                err = ubik_uri_package(store_uri, iter->uri_source, uri->name);
                 if (err != OK)
                         return err;
         }
 
-        const_node = calloc(1, sizeof(struct xl_dagc_const));
+        const_node = calloc(1, sizeof(struct ubik_dagc_const));
         if (const_node == NULL)
-                return xl_raise(ERR_NO_MEMORY, "modinit node alloc");
+                return ubik_raise(ERR_NO_MEMORY, "modinit node alloc");
 
         const_node->head.node_type = DAGC_NODE_CONST;
         const_node->head.id = 0;
         const_node->type = type;
         const_node->value = value;
 
-        err = xl_take(value.any);
+        err = ubik_take(value.any);
         if (err != OK)
                 return err;
-        err = xl_take(type);
+        err = ubik_take(type);
         if (err != OK)
                 return err;
 
-        store_node = calloc(1, sizeof(struct xl_dagc_store));
+        store_node = calloc(1, sizeof(struct ubik_dagc_store));
         if (store_node == NULL)
-                return xl_raise(ERR_NO_MEMORY, "modinit node alloc");
+                return ubik_raise(ERR_NO_MEMORY, "modinit node alloc");
 
         store_node->head.node_type = DAGC_NODE_STORE;
         store_node->head.id = 0;
@@ -667,14 +667,14 @@ _add_modinit_setter(
         store_node->loc = store_uri;
         store_node->value = &const_node->head;
 
-        err = xl_take(store_uri);
+        err = ubik_take(store_uri);
         if (err != OK)
                 return err;
 
-        err = xl_bdagc_push_node(builder, &const_node->head);
+        err = ubik_bdagc_push_node(builder, &const_node->head);
         if (err != OK)
                 return err;
-        err = xl_bdagc_push_node(builder, &store_node->head);
+        err = ubik_bdagc_push_node(builder, &store_node->head);
         if (err != OK)
                 return err;
 
@@ -684,30 +684,30 @@ _add_modinit_setter(
         return OK;
 }
 
-no_ignore static xl_error
+no_ignore static ubik_error
 ubik_create_modinit(
-        struct xl_dagc **modinit,
-        struct xl_ast *ast,
-        struct xl_env *local_env,
-        enum xl_load_reason load_reason,
+        struct ubik_dagc **modinit,
+        struct ubik_ast *ast,
+        struct ubik_env *local_env,
+        enum ubik_load_reason load_reason,
         char *uri_source)
 {
         struct modinit_iterator iter;
-        struct xl_graph_builder builder;
-        xl_error err;
+        struct ubik_graph_builder builder;
+        ubik_error err;
         size_t i;
 
-        err = xl_bdagc_init(&builder);
+        err = ubik_bdagc_init(&builder);
         if (err != OK)
                 return err;
 
         iter.builder = &builder;
         iter.uri_source = uri_source;
         iter.free_nodes = calloc(
-                2 * local_env->n, sizeof(struct xl_dagc_node *));
+                2 * local_env->n, sizeof(struct ubik_dagc_node *));
         iter.next_node = 0;
 
-        err = xl_env_iterate(_add_modinit_setter, local_env, &iter);
+        err = ubik_env_iterate(_add_modinit_setter, local_env, &iter);
         if (err != OK)
                 return err;
 
@@ -729,22 +729,22 @@ ubik_create_modinit(
         }
         else
         {
-                return xl_raise(ERR_NO_DATA, "nothing to bind in modinit");
+                return ubik_raise(ERR_NO_DATA, "nothing to bind in modinit");
         }
 
-        err = xl_bdagc_build(modinit, &builder);
+        err = ubik_bdagc_build(modinit, &builder);
         if (err != OK)
                 return err;
 
         (*modinit)->tag |= TAG_GRAPH_UNRESOLVED | TAG_GRAPH_MODINIT;
-        (*modinit)->identity = calloc(1, sizeof(struct xl_uri));
+        (*modinit)->identity = calloc(1, sizeof(struct ubik_uri));
         if (uri_source == NULL)
-                err = xl_uri_user((*modinit)->identity, "__modinit");
+                err = ubik_uri_user((*modinit)->identity, "__modinit");
         else
-                err = xl_uri_package((*modinit)->identity, uri_source, "__modinit");
+                err = ubik_uri_package((*modinit)->identity, uri_source, "__modinit");
         if (err != OK)
                 return err;
-        err = xl_take((*modinit)->identity);
+        err = ubik_take((*modinit)->identity);
         if (err != OK)
                 return err;
 
@@ -755,26 +755,26 @@ ubik_create_modinit(
         return OK;
 }
 
-no_ignore xl_error
+no_ignore ubik_error
 ubik_compile_unit(
-        struct xl_dagc ***graphs,
+        struct ubik_dagc ***graphs,
         size_t *n_graphs,
-        struct xl_gen_requires **requires,
-        struct xl_ast *ast,
-        enum xl_load_reason load_reason,
+        struct ubik_gen_requires **requires,
+        struct ubik_ast *ast,
+        enum ubik_load_reason load_reason,
         char *uri_source)
 {
         size_t i;
-        xl_error err;
-        struct xl_env local_env;
+        ubik_error err;
+        struct ubik_env local_env;
 
-        err = xl_env_init(&local_env);
+        err = ubik_env_init(&local_env);
         if (err != OK)
                 return err;
 
-        *graphs = calloc(ast->bindings.n + 1, sizeof(struct xl_dagc *));
+        *graphs = calloc(ast->bindings.n + 1, sizeof(struct ubik_dagc *));
         if (*graphs == NULL)
-                return xl_raise(ERR_NO_MEMORY, "compile graph alloc");
+                return ubik_raise(ERR_NO_MEMORY, "compile graph alloc");
 
         /* We start writing at the first graph, not the zeroth, so
          * that the zeroth graph can be the modinit. */
@@ -782,14 +782,14 @@ ubik_compile_unit(
 
         for (i = 0; i < ast->bindings.n; i++)
         {
-                err = xl_compile_binding(
+                err = ubik_compile_binding(
                         *graphs, (*n_graphs)++, ast->bindings.elems[i],
                         &local_env);
                 if (err != OK)
                         return err;
         }
 
-        err = xl_create_modinit(
+        err = ubik_create_modinit(
                 &(*graphs)[0], ast, &local_env, load_reason, uri_source);
         if (err != OK)
         {
@@ -800,31 +800,31 @@ ubik_compile_unit(
 
         for (i = 0; i < *n_graphs; i++)
         {
-                err = xl_resolve_uris(
+                err = ubik_resolve_uris(
                         (*graphs)[i], &local_env, requires, uri_source);
                 if (err != OK)
                         return err;
         }
 
-        err = xl_env_free(&local_env);
+        err = ubik_env_free(&local_env);
         if (err != OK)
                 return err;
 
         return OK;
 }
 
-no_ignore xl_error
-ubik_gen_requires_free(struct xl_gen_requires *req)
+no_ignore ubik_error
+ubik_gen_requires_free(struct ubik_gen_requires *req)
 {
-        struct xl_gen_requires *to_free;
-        xl_error err;
+        struct ubik_gen_requires *to_free;
+        ubik_error err;
 
         while (req != NULL)
         {
                 to_free = req;
                 req = to_free->next;
 
-                err = xl_release(to_free->dependency);
+                err = ubik_release(to_free->dependency);
                 if (err != OK)
                         return err;
                 free(to_free);

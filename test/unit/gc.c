@@ -28,29 +28,29 @@ gc()
         #define N_TEST_GC_VALUES 10000
 
         size_t i;
-        struct xl_value *vals[N_TEST_GC_VALUES];
-        struct xl_gc_info gc_stats;
+        struct ubik_value *vals[N_TEST_GC_VALUES];
+        struct ubik_gc_info gc_stats;
 
-        xl_gc_free_all();
-        xl_gc_start();
+        ubik_gc_free_all();
+        ubik_gc_start();
 
         for (i = 0; i < N_TEST_GC_VALUES; i++)
         {
-                assert(xl_value_new(&vals[i]) == 0);
+                assert(ubik_value_new(&vals[i]) == 0);
         }
         for (i = 0; i < N_TEST_GC_VALUES; i++)
         {
-                assert(xl_release(vals[i]) == 0);
+                assert(ubik_release(vals[i]) == 0);
         }
 
-        xl_gc_get_stats(&gc_stats);
+        ubik_gc_get_stats(&gc_stats);
         #ifdef XL_GC_DEBUG
                 assert(gc_stats.n_val_allocs == N_TEST_GC_VALUES);
                 assert(gc_stats.n_val_frees == N_TEST_GC_VALUES);
         #endif
 
-        xl_gc_free_all();
-        xl_gc_start();
+        ubik_gc_free_all();
+        ubik_gc_start();
 
         return ok;
 }

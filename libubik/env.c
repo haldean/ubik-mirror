@@ -29,42 +29,42 @@
 #define ENV_INIT_CAP 8
 #define ENV_CAP_SCALE 2
 
-static struct xl_env root;
+static struct ubik_env root;
 
-struct xl_env *
+struct ubik_env *
 ubik_env_get_root()
 {
         return &root;
 }
 
-no_ignore xl_error
-ubik_env_init(struct xl_env *env)
+no_ignore ubik_error
+ubik_env_init(struct ubik_env *env)
 {
         env->bindings = NULL;
         env->n = 0;
         env->cap = 0;
-        env->parent = xl_env_get_root();
+        env->parent = ubik_env_get_root();
         env->watches = NULL;
         return OK;
 }
 
-no_ignore xl_error
-ubik_env_make_child(struct xl_env *child, struct xl_env *parent)
+no_ignore ubik_error
+ubik_env_make_child(struct ubik_env *child, struct ubik_env *parent)
 {
-        xl_error err;
-        err = xl_env_init(child);
+        ubik_error err;
+        err = ubik_env_init(child);
         if (err != OK)
                 return err;
         child->parent = parent;
         return OK;
 }
 
-no_ignore xl_error
-ubik_env_free(struct xl_env *env)
+no_ignore ubik_error
+ubik_env_free(struct ubik_env *env)
 {
-        xl_error err;
+        ubik_error err;
         size_t i;
-        struct xl_env_watch_list *to_free;
+        struct ubik_env_watch_list *to_free;
 
         if (likely(env->bindings != NULL))
         {
@@ -72,13 +72,13 @@ ubik_env_free(struct xl_env *env)
                 {
                         if (env->bindings[i].value.any == NULL)
                                 continue;
-                        err = xl_release(env->bindings[i].uri);
+                        err = ubik_release(env->bindings[i].uri);
                         if (err != OK)
                                 return err;
-                        err = xl_release(env->bindings[i].type);
+                        err = ubik_release(env->bindings[i].type);
                         if (err != OK)
                                 return err;
-                        err = xl_release(env->bindings[i].value.any);
+                        err = ubik_release(env->bindings[i].value.any);
                         if (err != OK)
                                 return err;
                 }
@@ -101,18 +101,18 @@ ubik_env_free(struct xl_env *env)
         env->bindings = NULL;
 
         env->watches = NULL;
-        if (env != xl_env_get_root())
-                env->parent = xl_env_get_root();
+        if (env != ubik_env_get_root())
+                env->parent = ubik_env_get_root();
         return OK;
 }
 
-no_ignore xl_error
+no_ignore ubik_error
 ubik_env_iterate(
-        xl_env_cb callback,
-        struct xl_env *env,
+        ubik_env_cb callback,
+        struct ubik_env *env,
         void *callback_arg)
 {
-        xl_error err;
+        ubik_error err;
         size_t i;
 
         for (i = 0; i < env->cap; i++)
@@ -127,12 +127,12 @@ ubik_env_iterate(
         return OK;
 }
 
-no_ignore xl_error
+no_ignore ubik_error
 ubik_env_get(
-        union xl_value_or_graph *value,
-        struct xl_value **type,
-        struct xl_env *env,
-        struct xl_uri *uri)
+        union ubik_value_or_graph *value,
+        struct ubik_value **type,
+        struct ubik_env *env,
+        struct ubik_uri *uri)
 {
         size_t i;
         size_t probed;
@@ -151,7 +151,7 @@ ubik_env_get(
                                 break;
                         if (env->bindings[i].uri->hash != uri->hash)
                                 continue;
-                        if (xl_uri_eq(uri, env->bindings[i].uri))
+                        if (ubik_uri_eq(uri, env->bindings[i].uri))
                         {
                                 if (value != NULL)
                                 {
@@ -167,21 +167,21 @@ ubik_env_get(
         if (found)
                 return OK;
 
-        xl_assert(env->parent != env);
+        ubik_assert(env->parent != env);
         if (env->parent == NULL)
-                return xl_raise(ERR_ABSENT, "xl_get");
-        return xl_env_get(value, type, env->parent, uri);
+                return ubik_raise(ERR_ABSENT, "ubik_get");
+        return ubik_env_get(value, type, env->parent, uri);
 }
 
-no_ignore xl_error
+no_ignore ubik_error
 ubik_env_present(
         bool *is_present,
-        struct xl_env *env,
-        struct xl_uri *uri)
+        struct ubik_env *env,
+        struct ubik_uri *uri)
 {
-        xl_error err;
+        ubik_error err;
 
-        err = xl_env_get(NULL, NULL, env, uri);
+        err = ubik_env_get(NULL, NULL, env, uri);
         if (err == OK)
                 *is_present = true;
         else if (err->error_code == ERR_ABSENT)
@@ -202,42 +202,42 @@ ubik_env_present(
  * The overwrite parameter controls whether existing data will be
  * overwritten. True means that it will be, false means that it
  * will not. */
-no_ignore static xl_error
+no_ignore static ubik_error
 _insert(
-        struct xl_binding *binds,
+        struct ubik_binding *binds,
         size_t cap,
-        struct xl_binding *insert,
+        struct ubik_binding *insert,
         bool overwrite)
 {
         size_t i;
         size_t probed;
-        xl_error err;
+        ubik_error err;
 
         i = insert->uri->hash % cap;
         for (probed = 0; probed < cap; probed++)
         {
                 if (binds[i].uri == NULL)
                         break;
-                if (xl_uri_eq(binds[i].uri, insert->uri))
+                if (ubik_uri_eq(binds[i].uri, insert->uri))
                         break;
                 i = (i + 1) % cap;
         }
         if (unlikely(probed == cap))
-                return xl_raise(ERR_FULL, "env insert");
+                return ubik_raise(ERR_FULL, "env insert");
 
         /* There was already a value at this key, we need to release our
          * reference on it. */
         if (unlikely(binds[i].value.any != NULL))
         {
                 if (!overwrite)
-                        return xl_raise(ERR_PRESENT, "env overwrite");
-                err = xl_release(binds[i].value.any);
+                        return ubik_raise(ERR_PRESENT, "env overwrite");
+                err = ubik_release(binds[i].value.any);
                 if (err != OK)
                         return err;
-                err = xl_release(binds[i].uri);
+                err = ubik_release(binds[i].uri);
                 if (err != OK)
                         return err;
-                err = xl_release(binds[i].type);
+                err = ubik_release(binds[i].type);
                 if (err != OK)
                         return err;
         }
@@ -254,23 +254,23 @@ _insert(
  * frees the old array and updates the env struct to reference the new
  * array. If an error occurs during rebalancing, the environment remains
  * unmodified and a nonzero error code is returned. */
-static xl_error
-_resize_rebalance(struct xl_env *env)
+static ubik_error
+_resize_rebalance(struct ubik_env *env)
 {
-        struct xl_binding *new_binds;
+        struct ubik_binding *new_binds;
         size_t new_cap;
         size_t i;
         size_t reinserted;
-        xl_error err;
+        ubik_error err;
 
         if (env->cap == 0)
                 new_cap = ENV_INIT_CAP;
         else
                 new_cap = ENV_CAP_SCALE * env->cap;
 
-        new_binds = calloc(new_cap, sizeof(struct xl_binding));
+        new_binds = calloc(new_cap, sizeof(struct ubik_binding));
         if (new_binds == NULL)
-                return xl_raise(ERR_NO_MEMORY, "env resize");
+                return ubik_raise(ERR_NO_MEMORY, "env resize");
 
         err = OK;
         for (i = 0, reinserted = 0; i < env->cap && reinserted < env->n; i++)
@@ -296,17 +296,17 @@ _resize_rebalance(struct xl_env *env)
         return OK;
 }
 
-no_ignore static xl_error
+no_ignore static ubik_error
 _set(
-        struct xl_env *env,
-        struct xl_uri *uri,
-        union xl_value_or_graph value,
-        struct xl_value *type,
+        struct ubik_env *env,
+        struct ubik_uri *uri,
+        union ubik_value_or_graph value,
+        struct ubik_value *type,
         bool overwrite)
 {
-        struct xl_binding new_binding;
-        struct xl_env_watch_list *watch, *to_free;
-        xl_error err, ignore;
+        struct ubik_binding new_binding;
+        struct ubik_env_watch_list *watch, *to_free;
+        ubik_error err, ignore;
 
         err = OK;
         if (unlikely(env->cap == 0))
@@ -325,13 +325,13 @@ _set(
          * itself can result in a GC. We want to make sure that this doesn't get
          * GCed if we are going to keep this thing, so we take a reference now
          * and release it if the insert fails later. */
-        err = xl_take(value.any);
+        err = ubik_take(value.any);
         if (err != OK)
                 return err;
-        err = xl_take(type);
+        err = ubik_take(type);
         if (err != OK)
                 return err;
-        err = xl_take(uri);
+        err = ubik_take(uri);
         if (err != OK)
                 return err;
 
@@ -344,11 +344,11 @@ _set(
                  *
                  * (I like that it takes this much effort to ignore an
                  * unignorable parameter) */
-                ignore = xl_release(value.any);
+                ignore = ubik_release(value.any);
                 unused(ignore);
-                ignore = xl_release(type);
+                ignore = ubik_release(type);
                 unused(ignore);
-                ignore = xl_release(uri);
+                ignore = ubik_release(uri);
                 unused(ignore);
 
                 return err;
@@ -358,7 +358,7 @@ _set(
         watch = env->watches;
         while (watch != NULL)
         {
-                if (xl_uri_eq(watch->watch->uri, uri))
+                if (ubik_uri_eq(watch->watch->uri, uri))
                 {
                         err = watch->watch->cb(
                                 watch->watch->arg,
@@ -395,39 +395,39 @@ _set(
         return OK;
 }
 
-no_ignore xl_error
+no_ignore ubik_error
 ubik_env_set(
-        struct xl_env *env,
-        struct xl_uri *uri,
-        union xl_value_or_graph value,
-        struct xl_value *type)
+        struct ubik_env *env,
+        struct ubik_uri *uri,
+        union ubik_value_or_graph value,
+        struct ubik_value *type)
 {
         return _set(env, uri, value, type, false);
 }
 
-no_ignore xl_error
+no_ignore ubik_error
 ubik_env_overwrite(
-        struct xl_env *env,
-        struct xl_uri *uri,
-        union xl_value_or_graph value,
-        struct xl_value *type)
+        struct ubik_env *env,
+        struct ubik_uri *uri,
+        union ubik_value_or_graph value,
+        struct ubik_value *type)
 {
         return _set(env, uri, value, type, true);
 }
 
-no_ignore xl_error
+no_ignore ubik_error
 ubik_env_watch(
-        xl_env_cb callback,
-        struct xl_env *env,
-        struct xl_uri *uri,
+        ubik_env_cb callback,
+        struct ubik_env *env,
+        struct ubik_uri *uri,
         void *callback_arg)
 {
-        struct xl_env_watch *watcher;
-        struct xl_env_watch_list *watchlist;
+        struct ubik_env_watch *watcher;
+        struct ubik_env_watch_list *watchlist;
 
-        watcher = calloc(1, sizeof(struct xl_env_watch));
+        watcher = calloc(1, sizeof(struct ubik_env_watch));
         if (watcher == NULL)
-                return xl_raise(ERR_NO_MEMORY, "env watch alloc");
+                return ubik_raise(ERR_NO_MEMORY, "env watch alloc");
 
         watcher->uri = uri;
         watcher->cb = callback;
@@ -437,9 +437,9 @@ ubik_env_watch(
 
         while (env != NULL)
         {
-                watchlist = calloc(1, sizeof(struct xl_env_watch_list));
+                watchlist = calloc(1, sizeof(struct ubik_env_watch_list));
                 if (watchlist == NULL)
-                        return xl_raise(ERR_NO_MEMORY, "env watchlist alloc");
+                        return ubik_raise(ERR_NO_MEMORY, "env watchlist alloc");
 
                 watchlist->watch = watcher;
                 watchlist->prev = env->watches;

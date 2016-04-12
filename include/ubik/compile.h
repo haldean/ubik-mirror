@@ -22,7 +22,7 @@
 #include "ubik/ast.h"
 
 
-struct xl_compilation_env
+struct ubik_compilation_env
 {
         char *scratch_dir;
 
@@ -30,24 +30,24 @@ struct xl_compilation_env
         size_t n_include_dirs;
 };
 
-no_ignore xl_error
-ubik_compile_env_default(struct xl_compilation_env *cenv);
+no_ignore ubik_error
+ubik_compile_env_default(struct ubik_compilation_env *cenv);
 
-no_ignore xl_error
-ubik_compile_env_free(struct xl_compilation_env *cenv);
+no_ignore ubik_error
+ubik_compile_env_free(struct ubik_compilation_env *cenv);
 
-no_ignore xl_error
+no_ignore ubik_error
 ubik_compile(
-        struct xl_dagc ***graphs,
+        struct ubik_dagc ***graphs,
         size_t *n_graphs,
         char *source_name,
-        struct xl_stream *in_stream,
-        struct xl_compilation_env *cenv);
+        struct ubik_stream *in_stream,
+        struct ubik_compilation_env *cenv);
 
-no_ignore xl_error
+no_ignore ubik_error
 ubik_compile_ast(
-        struct xl_dagc ***graphs,
+        struct ubik_dagc ***graphs,
         size_t *n_graphs,
-        struct xl_ast *ast,
-        struct xl_compilation_env *cenv);
+        struct ubik_ast *ast,
+        struct ubik_compilation_env *cenv);
 

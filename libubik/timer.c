@@ -25,33 +25,33 @@
 
 #ifdef _POSIX_TIMERS
 
-struct xl_timer
+struct ubik_timer
 {
         struct timespec start_time;
 };
 
-no_ignore xl_error
-ubik_timer_new(struct xl_timer **t)
+no_ignore ubik_error
+ubik_timer_new(struct ubik_timer **t)
 {
-        *t = calloc(1, sizeof(struct xl_timer));
+        *t = calloc(1, sizeof(struct ubik_timer));
         if (*t == NULL)
-                return xl_raise(ERR_NO_MEMORY, "timer new");
+                return ubik_raise(ERR_NO_MEMORY, "timer new");
         return OK;
 }
 
-no_ignore xl_error
-ubik_timer_start(struct xl_timer *t)
+no_ignore ubik_error
+ubik_timer_start(struct ubik_timer *t)
 {
         int res;
 
         res = clock_gettime(CLOCK_MONOTONIC, &t->start_time);
         if (res != 0)
-                return xl_raise(ERR_UNEXPECTED_FAILURE, "timer start");
+                return ubik_raise(ERR_UNEXPECTED_FAILURE, "timer start");
         return OK;
 }
 
-no_ignore xl_error
-ubik_timer_elapsed(int64_t *microsec, struct xl_timer *t)
+no_ignore ubik_error
+ubik_timer_elapsed(int64_t *microsec, struct ubik_timer *t)
 {
         int ret;
         struct timespec now;
@@ -59,7 +59,7 @@ ubik_timer_elapsed(int64_t *microsec, struct xl_timer *t)
 
         ret = clock_gettime(CLOCK_MONOTONIC, &now);
         if (ret != 0)
-                return xl_raise(ERR_UNEXPECTED_FAILURE, "timer elapsed");
+                return ubik_raise(ERR_UNEXPECTED_FAILURE, "timer elapsed");
 
         res = (now.tv_sec - t->start_time.tv_sec) * 1000000;
         res += (now.tv_nsec - t->start_time.tv_nsec) / 1000;

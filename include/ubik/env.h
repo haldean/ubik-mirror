@@ -27,24 +27,24 @@
 #include <stdlib.h>
 
 
-typedef xl_error (*xl_env_cb)(
+typedef ubik_error (*ubik_env_cb)(
         void *arg,
-        struct xl_env *env,
-        struct xl_uri *uri);
+        struct ubik_env *env,
+        struct ubik_uri *uri);
 
 /* An association between a URI and a value */
-struct xl_binding
+struct ubik_binding
 {
-        struct xl_uri           *uri;
-        union xl_value_or_graph value;
-        struct xl_value         *type;
+        struct ubik_uri           *uri;
+        union ubik_value_or_graph value;
+        struct ubik_value         *type;
 };
 
-struct xl_env_watch
+struct ubik_env_watch
 {
-        struct xl_uri *uri;
-        struct xl_env *target_env;
-        xl_env_cb cb;
+        struct ubik_uri *uri;
+        struct ubik_env *target_env;
+        ubik_env_cb cb;
         void *arg;
 
         /* Fired is set to true once the watcher has fired once; if this is
@@ -52,41 +52,41 @@ struct xl_env_watch
         bool fired;
 
         /* The number of environments on which this watch was placed. */
-        xl_word refcount;
+        ubik_word refcount;
 };
 
-struct xl_env_watch_list
+struct ubik_env_watch_list
 {
-        struct xl_env_watch *watch;
+        struct ubik_env_watch *watch;
 
-        struct xl_env_watch_list *prev;
-        struct xl_env_watch_list *next;
+        struct ubik_env_watch_list *prev;
+        struct ubik_env_watch_list *next;
 };
 
 /* A hash mapping from URI to value. */
-struct xl_env
+struct ubik_env
 {
-        struct xl_binding *bindings;
+        struct ubik_binding *bindings;
         size_t n;
         size_t cap;
-        struct xl_env *parent;
+        struct ubik_env *parent;
 
-        struct xl_env_watch_list *watches;
+        struct ubik_env_watch_list *watches;
 };
 
 /* Initializes a new environment struct. */
-no_ignore xl_error
-ubik_env_init(struct xl_env *env);
+no_ignore ubik_error
+ubik_env_init(struct ubik_env *env);
 
 /* Creates a child environment from the given env. */
-no_ignore xl_error
-ubik_env_make_child(struct xl_env *child, struct xl_env *parent);
+no_ignore ubik_error
+ubik_env_make_child(struct ubik_env *child, struct ubik_env *parent);
 
 /* Returns the root environment.
  *
  * This environment is the parent of any environment that isn't
  * explicitly created as a child. */
-struct xl_env *
+struct ubik_env *
 ubik_env_get_root();
 
 /* Frees memory associated with the environment struct.
@@ -94,10 +94,10 @@ ubik_env_get_root();
  * Returns OK if successful. If this method returns an error code,
  * there is no guarantee that the environment is in a usable
  * state. If OK is returned, the environment can still be used
- * with xl_get and xl_set after calling xl_env_free; this is a
+ * with ubik_get and ubik_set after calling ubik_env_free; this is a
  * clear operation that does not destroy the env. */
-no_ignore xl_error
-ubik_env_free(struct xl_env *env);
+no_ignore ubik_error
+ubik_env_free(struct ubik_env *env);
 
 /* Finds the value associated wth the given URI in the environment.
  *
@@ -105,12 +105,12 @@ ubik_env_free(struct xl_env *env);
  * set to the pointer to the assigned value. If the value is not
  * found, ERR_ABSENT is returned and the out pointer is unchanged.
  * */
-no_ignore xl_error
+no_ignore ubik_error
 ubik_env_get(
-        union xl_value_or_graph *value,
-        struct xl_value **type,
-        struct xl_env *env,
-        struct xl_uri *uri);
+        union ubik_value_or_graph *value,
+        struct ubik_value **type,
+        struct ubik_env *env,
+        struct ubik_uri *uri);
 
 /* Inserts the given value in at the given URI, overwriting an
  * existing value if present.
@@ -119,12 +119,12 @@ ubik_env_get(
  * later modifications to the passed-in URI will not change the
  * bindings but modifications to the value will modify the value
  * stored in the environment. */
-no_ignore xl_error
+no_ignore ubik_error
 ubik_env_overwrite(
-        struct xl_env *env,
-        struct xl_uri *uri,
-        union xl_value_or_graph value,
-        struct xl_value *type);
+        struct ubik_env *env,
+        struct ubik_uri *uri,
+        union ubik_value_or_graph value,
+        struct ubik_value *type);
 
 /* Inserts the given value in at the given URI if the URI is
  * not already defined.
@@ -136,35 +136,35 @@ ubik_env_overwrite(
  * later modifications to the passed-in URI will not change the
  * bindings but modifications to the value will modify the value
  * stored in the environment. */
-no_ignore xl_error
+no_ignore ubik_error
 ubik_env_set(
-        struct xl_env *env,
-        struct xl_uri *uri,
-        union xl_value_or_graph value,
-        struct xl_value *type);
+        struct ubik_env *env,
+        struct ubik_uri *uri,
+        union ubik_value_or_graph value,
+        struct ubik_value *type);
 
 /* Returns true if the provided URI is present in the environment. */
-no_ignore xl_error
+no_ignore ubik_error
 ubik_env_present(
         bool *is_present,
-        struct xl_env *env,
-        struct xl_uri *uri);
+        struct ubik_env *env,
+        struct ubik_uri *uri);
 
 /* Calls the provided callback function once for every item. */
-no_ignore xl_error
+no_ignore ubik_error
 ubik_env_iterate(
-        xl_env_cb callback,
-        struct xl_env *env,
+        ubik_env_cb callback,
+        struct ubik_env *env,
         void *callback_arg);
 
 /* Calls the provided callback function when a URI is inserted or modified.
  *
  * Note that a watch is only ever triggered once; after being triggered it is
  * removed from the list of watchers. */
-no_ignore xl_error
+no_ignore ubik_error
 ubik_env_watch(
-        xl_env_cb callback,
-        struct xl_env *env,
-        struct xl_uri *uri,
+        ubik_env_cb callback,
+        struct ubik_env *env,
+        struct ubik_uri *uri,
         void *callback_arg);
 

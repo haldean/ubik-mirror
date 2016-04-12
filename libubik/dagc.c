@@ -26,11 +26,11 @@
 #include "ubik/ubik.h"
 #include "ubik/util.h"
 
-no_ignore xl_error
-ubik_dagc_new(struct xl_dagc **graph, size_t n_nodes)
+no_ignore ubik_error
+ubik_dagc_new(struct ubik_dagc **graph, size_t n_nodes)
 {
-        return xl_dagc_alloc(
-                graph, n_nodes, sizeof(struct xl_dagc), NULL);
+        return ubik_dagc_alloc(
+                graph, n_nodes, sizeof(struct ubik_dagc), NULL);
 }
 
 /* Gets the dependencies of a node.
@@ -39,25 +39,25 @@ ubik_dagc_new(struct xl_dagc **graph, size_t n_nodes)
  * with valid pointers. For nodes with one dependency, d1 will be
  * filled in with a pointer and d2 will be set to NULL. For nodes
  * with no dependencies, both will be NULL. */
-no_ignore xl_error
+no_ignore ubik_error
 ubik_dagc_get_deps(
-                struct xl_dagc_node **d1,
-                struct xl_dagc_node **d2,
-                struct xl_dagc_node **d3,
-                struct xl_dagc_node *n)
+                struct ubik_dagc_node **d1,
+                struct ubik_dagc_node **d2,
+                struct ubik_dagc_node **d3,
+                struct ubik_dagc_node *n)
 {
         switch (n->node_type)
         {
         case DAGC_NODE_APPLY:
-                *d1 = ((struct xl_dagc_apply *) n)->func;
-                *d2 = ((struct xl_dagc_apply *) n)->arg;
+                *d1 = ((struct ubik_dagc_apply *) n)->func;
+                *d2 = ((struct ubik_dagc_apply *) n)->arg;
                 *d3 = NULL;
                 return OK;
 
         case DAGC_NODE_COND:
-                *d1 = ((struct xl_dagc_cond *) n)->condition;
-                *d2 = ((struct xl_dagc_cond *) n)->if_true;
-                *d3 = ((struct xl_dagc_cond *) n)->if_false;
+                *d1 = ((struct ubik_dagc_cond *) n)->condition;
+                *d2 = ((struct ubik_dagc_cond *) n)->if_true;
+                *d3 = ((struct ubik_dagc_cond *) n)->if_false;
                 return OK;
 
         case DAGC_NODE_LOAD:
@@ -67,13 +67,13 @@ ubik_dagc_get_deps(
                 return OK;
 
         case DAGC_NODE_REF:
-                *d1 = ((struct xl_dagc_ref *) n)->referrent;
+                *d1 = ((struct ubik_dagc_ref *) n)->referrent;
                 *d2 = NULL;
                 *d3 = NULL;
                 return OK;
 
         case DAGC_NODE_STORE:
-                *d1 = ((struct xl_dagc_store *) n)->value;
+                *d1 = ((struct ubik_dagc_store *) n)->value;
                 *d2 = NULL;
                 *d3 = NULL;
                 return OK;
@@ -86,7 +86,7 @@ ubik_dagc_get_deps(
                 *d3 = NULL;
                 return OK;
         }
-        return xl_raise(ERR_UNKNOWN_TYPE, "get deps");
+        return ubik_raise(ERR_UNKNOWN_TYPE, "get deps");
 }
 
 static int
@@ -102,12 +102,12 @@ _cmp_adjacency(const void *v1, const void *v2)
         return 0;
 }
 
-no_ignore static xl_error
+no_ignore static ubik_error
 _find_adjacency(
         size_t *i,
-        struct xl_dagc_adjacency *adjacencies,
+        struct ubik_dagc_adjacency *adjacencies,
         size_t n,
-        struct xl_dagc_node *child)
+        struct ubik_dagc_node *child)
 {
         uintptr_t cptr, aptr;
         size_t min, max;
@@ -127,15 +127,15 @@ _find_adjacency(
                 if (aptr < cptr)
                         min = *i + 1;
         }
-        return xl_raise(ERR_ABSENT, "find adjacency");
+        return ubik_raise(ERR_ABSENT, "find adjacency");
 }
 
-no_ignore static xl_error
+no_ignore static ubik_error
 _increment_n_parents(
-        struct xl_dagc *graph,
-        struct xl_dagc_node *child)
+        struct ubik_dagc *graph,
+        struct ubik_dagc_node *child)
 {
-        xl_error err;
+        ubik_error err;
         size_t i;
 
         i = graph->n;
@@ -143,21 +143,21 @@ _increment_n_parents(
         if (err != OK)
                 return err;
         if (unlikely(i >= graph->n))
-                return xl_raise(ERR_UNEXPECTED_FAILURE,
+                return ubik_raise(ERR_UNEXPECTED_FAILURE,
                                 "find adjacent result bogus");
         graph->adjacency[i].n_parents++;
         return OK;
 }
 
-no_ignore static xl_error
+no_ignore static ubik_error
 _add_parent(
-        struct xl_dagc *graph,
-        struct xl_dagc_node *parent,
-        struct xl_dagc_node *child)
+        struct ubik_dagc *graph,
+        struct ubik_dagc_node *parent,
+        struct ubik_dagc_node *child)
 {
-        struct xl_dagc_adjacency *adj;
+        struct ubik_dagc_adjacency *adj;
         size_t adj_i, parent_i;
-        xl_error err;
+        ubik_error err;
 
         adj_i = graph->n;
         err = _find_adjacency(
@@ -165,7 +165,7 @@ _add_parent(
         if (err != OK)
                 return err;
         if (unlikely(adj_i >= graph->n))
-                return xl_raise(ERR_UNEXPECTED_FAILURE,
+                return ubik_raise(ERR_UNEXPECTED_FAILURE,
                                 "find adjacent result bogus");
         adj = &graph->adjacency[adj_i];
         /* Find the first NULL parent entry. */
@@ -173,19 +173,19 @@ _add_parent(
              adj->parents[parent_i] && parent_i < adj->n_parents;
              parent_i++);
         if (adj->parents[parent_i] != NULL)
-                return xl_raise(ERR_UNEXPECTED_FAILURE,
+                return ubik_raise(ERR_UNEXPECTED_FAILURE,
                                 "all parents full already");
         adj->parents[parent_i] = parent;
         return OK;
 }
 
-no_ignore xl_error
-ubik_dagc_init(struct xl_dagc *graph)
+no_ignore ubik_error
+ubik_dagc_init(struct ubik_dagc *graph)
 {
-        struct xl_dagc_node *p, *d1, *d2, *d3;
-        struct xl_dagc_adjacency *adj;
+        struct ubik_dagc_node *p, *d1, *d2, *d3;
+        struct ubik_dagc_adjacency *adj;
         size_t i, next_in, next_out;
-        xl_error err;
+        ubik_error err;
 
         graph->tag = TAG_GRAPH;
         graph->refcount = 1;
@@ -193,7 +193,7 @@ ubik_dagc_init(struct xl_dagc *graph)
         /* Adjacency is stored as a sorted list of adjacency
          * lists; the first element in each list is the child and
          * the remaining elements are parents. */
-        graph->adjacency = calloc(graph->n, sizeof(struct xl_dagc_adjacency));
+        graph->adjacency = calloc(graph->n, sizeof(struct ubik_dagc_adjacency));
 
         for (i = 0; i < graph->n; i++)
         {
@@ -203,13 +203,13 @@ ubik_dagc_init(struct xl_dagc *graph)
         }
 
         qsort(graph->adjacency, graph->n,
-              sizeof(struct xl_dagc_adjacency), _cmp_adjacency);
+              sizeof(struct ubik_dagc_adjacency), _cmp_adjacency);
 
         /* First go through and count how many parents each one has. */
         for (i = 0; i < graph->n; i++)
         {
                 p = graph->nodes[i];
-                err = xl_dagc_get_deps(&d1, &d2, &d3, p);
+                err = ubik_dagc_get_deps(&d1, &d2, &d3, p);
                 if (err != OK)
                         return err;
 
@@ -238,14 +238,14 @@ ubik_dagc_init(struct xl_dagc *graph)
         {
                 adj = &graph->adjacency[i];
                 adj->parents = calloc(
-                        adj->n_parents, sizeof(struct xl_dagc_node *));
+                        adj->n_parents, sizeof(struct ubik_dagc_node *));
         }
 
         /* Finally fill in the actual parent arrays. */
         for (i = 0; i < graph->n; i++)
         {
                 p = graph->nodes[i];
-                err = xl_dagc_get_deps(&d1, &d2, &d3, p);
+                err = ubik_dagc_get_deps(&d1, &d2, &d3, p);
                 if (err != OK)
                         return err;
 
@@ -282,18 +282,18 @@ ubik_dagc_init(struct xl_dagc *graph)
         }
 
         /* Then populate the input and terminal lists. */
-        graph->inputs = calloc(graph->in_arity, sizeof(struct xl_dagc_node *));
+        graph->inputs = calloc(graph->in_arity, sizeof(struct ubik_dagc_node *));
         graph->terminals =
-                calloc(graph->out_arity, sizeof(struct xl_dagc_node *));
+                calloc(graph->out_arity, sizeof(struct ubik_dagc_node *));
         for (i = 0, next_out = 0; i < graph->n; i++)
         {
                 p = graph->nodes[i];
                 if (p->node_type == DAGC_NODE_INPUT)
                 {
-                        next_in = ((struct xl_dagc_input *) p)->arg_num;
-                        xl_assert(next_in < graph->in_arity);
+                        next_in = ((struct ubik_dagc_input *) p)->arg_num;
+                        ubik_assert(next_in < graph->in_arity);
                         if (graph->inputs[next_in] != NULL)
-                                return xl_raise(
+                                return ubik_raise(
                                         ERR_BAD_GRAPH,
                                         "multiple inputs with same arg num");
                         graph->inputs[next_in] = p;
@@ -305,68 +305,68 @@ ubik_dagc_init(struct xl_dagc *graph)
         return OK;
 }
 
-no_ignore xl_error
+no_ignore ubik_error
 ubik_dagc_get_parents(
-        struct xl_dagc_node ***parents,
+        struct ubik_dagc_node ***parents,
         size_t *n_parents,
-        struct xl_dagc *graph,
-        struct xl_dagc_node *child)
+        struct ubik_dagc *graph,
+        struct ubik_dagc_node *child)
 {
         size_t i;
-        xl_error err;
+        ubik_error err;
 
         i = graph->n;
         err = _find_adjacency(&i, graph->adjacency, graph->n, child);
         if (err != OK)
                 return err;
         if (unlikely(i >= graph->n))
-                return xl_raise(ERR_UNEXPECTED_FAILURE, NULL);
+                return ubik_raise(ERR_UNEXPECTED_FAILURE, NULL);
 
         *parents = graph->adjacency[i].parents;
         *n_parents = graph->adjacency[i].n_parents;
         return OK;
 }
 
-no_ignore xl_error
+no_ignore ubik_error
 ubik_dagc_node_sizeof(
         size_t *size,
-        struct xl_dagc_node *node)
+        struct ubik_dagc_node *node)
 {
         switch (node->node_type)
         {
         case DAGC_NODE_APPLY:
-                *size = sizeof(struct xl_dagc_apply);
+                *size = sizeof(struct ubik_dagc_apply);
                 return OK;
         case DAGC_NODE_COND:
-                *size = sizeof(struct xl_dagc_cond);
+                *size = sizeof(struct ubik_dagc_cond);
                 return OK;
         case DAGC_NODE_CONST:
-                *size = sizeof(struct xl_dagc_const);
+                *size = sizeof(struct ubik_dagc_const);
                 return OK;
         case DAGC_NODE_INPUT:
-                *size = sizeof(struct xl_dagc_input);
+                *size = sizeof(struct ubik_dagc_input);
                 return OK;
         case DAGC_NODE_LOAD:
-                *size = sizeof(struct xl_dagc_load);
+                *size = sizeof(struct ubik_dagc_load);
                 return OK;
         case DAGC_NODE_NATIVE:
-                *size = sizeof(struct xl_dagc_native);
+                *size = sizeof(struct ubik_dagc_native);
                 return OK;
         case DAGC_NODE_REF:
-                *size = sizeof(struct xl_dagc_ref);
+                *size = sizeof(struct ubik_dagc_ref);
                 return OK;
         case DAGC_NODE_STORE:
-                *size = sizeof(struct xl_dagc_store);
+                *size = sizeof(struct ubik_dagc_store);
                 return OK;
         }
-        return xl_raise(ERR_UNKNOWN_TYPE, "unknown node type in size");
+        return ubik_raise(ERR_UNKNOWN_TYPE, "unknown node type in size");
 }
 
-no_ignore static xl_error
+no_ignore static ubik_error
 _replace_ref(
-        struct xl_dagc_node **ref,
-        struct xl_dagc_node **proto,
-        struct xl_dagc_node **copied,
+        struct ubik_dagc_node **ref,
+        struct ubik_dagc_node **proto,
+        struct ubik_dagc_node **copied,
         size_t n)
 {
         size_t i;
@@ -381,20 +381,20 @@ _replace_ref(
                         return OK;
                 }
         }
-        return xl_raise(ERR_ABSENT, "replace ref");
+        return ubik_raise(ERR_ABSENT, "replace ref");
 }
 
-no_ignore xl_error
+no_ignore ubik_error
 ubik_dagc_replace_node_refs(
-        struct xl_dagc_node *node,
-        struct xl_dagc_node **proto,
-        struct xl_dagc_node **copied,
+        struct ubik_dagc_node *node,
+        struct ubik_dagc_node **proto,
+        struct ubik_dagc_node **copied,
         size_t n_nodes)
 {
-        union xl_dagc_any_node *n;
-        xl_error err;
+        union ubik_dagc_any_node *n;
+        ubik_error err;
 
-        n = (union xl_dagc_any_node *) node;
+        n = (union ubik_dagc_any_node *) node;
 
         switch (node->node_type)
         {
@@ -429,26 +429,26 @@ ubik_dagc_replace_node_refs(
         case DAGC_NODE_NATIVE:
                 return OK;
         }
-        return xl_raise(ERR_UNKNOWN_TYPE, "replace node refs");
+        return ubik_raise(ERR_UNKNOWN_TYPE, "replace node refs");
 }
 
-no_ignore static xl_error
-_increment_value_refs(struct xl_dagc_node *node)
+no_ignore static ubik_error
+_increment_value_refs(struct ubik_dagc_node *node)
 {
-        struct xl_dagc_load *l;
-        struct xl_dagc_store *s;
-        struct xl_dagc_const *c;
-        xl_error err;
+        struct ubik_dagc_load *l;
+        struct ubik_dagc_store *s;
+        struct ubik_dagc_const *c;
+        ubik_error err;
 
         if (node->known.any != NULL)
         {
-                err = xl_take(node->known.any);
+                err = ubik_take(node->known.any);
                 if (err != OK)
                         return err;
         }
         if (node->known_type != NULL)
         {
-                err = xl_take(node->known_type);
+                err = ubik_take(node->known_type);
                 if (err != OK)
                         return err;
         }
@@ -463,39 +463,39 @@ _increment_value_refs(struct xl_dagc_node *node)
                 return OK;
 
         case DAGC_NODE_LOAD:
-                l = (struct xl_dagc_load *) node;
-                return xl_take(l->loc);
+                l = (struct ubik_dagc_load *) node;
+                return ubik_take(l->loc);
 
         case DAGC_NODE_STORE:
-                s = (struct xl_dagc_store *) node;
-                return xl_take(s->loc);
+                s = (struct ubik_dagc_store *) node;
+                return ubik_take(s->loc);
 
         case DAGC_NODE_CONST:
-                c = (struct xl_dagc_const *) node;
-                err = xl_take(c->type);
+                c = (struct ubik_dagc_const *) node;
+                err = ubik_take(c->type);
                 if (err != OK)
                         return err;
-                return xl_take(c->value.any);
+                return ubik_take(c->value.any);
         }
-        return xl_raise(ERR_UNKNOWN_TYPE, "inc value refs");
+        return ubik_raise(ERR_UNKNOWN_TYPE, "inc value refs");
 }
 
-no_ignore xl_error
+no_ignore ubik_error
 ubik_dagc_copy(
-        struct xl_dagc **res_ptr,
-        struct xl_dagc *proto)
+        struct ubik_dagc **res_ptr,
+        struct ubik_dagc *proto)
 {
-        struct xl_dagc_adjacency *adj;
-        struct xl_dagc *result;
+        struct ubik_dagc_adjacency *adj;
+        struct ubik_dagc *result;
         size_t i, j, size;
-        xl_error err;
+        ubik_error err;
 
         /* Start by making a direct copy, then replace all of the references. */
-        size = sizeof(struct xl_dagc);
+        size = sizeof(struct ubik_dagc);
         if (proto->tag & TAG_GRAPH_NATIVE)
-                size = sizeof(struct xl_dagc_native);
+                size = sizeof(struct ubik_dagc_native);
 
-        err = xl_dagc_alloc(&result, proto->n, size, proto);
+        err = ubik_dagc_alloc(&result, proto->n, size, proto);
         if (err != OK)
                 return err;
         *res_ptr = result;
@@ -503,11 +503,11 @@ ubik_dagc_copy(
         result->refcount = 0;
 
         memcpy(result->nodes[0], proto->nodes[0],
-               proto->n * sizeof(union xl_dagc_any_node));
+               proto->n * sizeof(union ubik_dagc_any_node));
 
         for (i = 0; i < result->n; i++)
         {
-                err = xl_dagc_replace_node_refs(
+                err = ubik_dagc_replace_node_refs(
                         result->nodes[i], proto->nodes, result->nodes,
                         result->n);
                 if (err != OK)
@@ -518,9 +518,9 @@ ubik_dagc_copy(
         }
 
         result->inputs =
-                calloc(result->in_arity, sizeof(struct xl_dagc_node *));
+                calloc(result->in_arity, sizeof(struct ubik_dagc_node *));
         result->terminals =
-                calloc(result->out_arity, sizeof(struct xl_dagc_node *));
+                calloc(result->out_arity, sizeof(struct ubik_dagc_node *));
         for (i = 0; i < result->in_arity; i++)
         {
                 result->inputs[i] = proto->inputs[i];
@@ -550,9 +550,9 @@ ubik_dagc_copy(
         }
 
         result->adjacency =
-                calloc(result->n, sizeof(struct xl_dagc_adjacency));
+                calloc(result->n, sizeof(struct ubik_dagc_adjacency));
         memcpy(result->adjacency, proto->adjacency,
-               result->n * sizeof(struct xl_dagc_adjacency));
+               result->n * sizeof(struct ubik_dagc_adjacency));
 
         for (i = 0; i < result->n; i++)
         {
@@ -563,9 +563,9 @@ ubik_dagc_copy(
                         return err;
 
                 adj->parents =
-                        calloc(adj->n_parents, sizeof(struct xl_dagc_node *));
+                        calloc(adj->n_parents, sizeof(struct ubik_dagc_node *));
                 memcpy(adj->parents, proto->adjacency[i].parents,
-                        adj->n_parents * sizeof(struct xl_dagc_node *));
+                        adj->n_parents * sizeof(struct ubik_dagc_node *));
                 for (j = 0; j < adj->n_parents; j++)
                 {
                         err = _replace_ref(
@@ -577,11 +577,11 @@ ubik_dagc_copy(
         }
 
         qsort(result->adjacency, result->n,
-              sizeof(struct xl_dagc_adjacency), _cmp_adjacency);
+              sizeof(struct ubik_dagc_adjacency), _cmp_adjacency);
 
         if (result->identity != NULL)
         {
-                err = xl_take(result->identity);
+                err = ubik_take(result->identity);
                 if (err != OK)
                         return err;
         }

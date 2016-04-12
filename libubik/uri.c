@@ -25,8 +25,8 @@
 #include "ubik/uri.h"
 #include "ubik/value.h"
 
-no_ignore static xl_error
-_set_hash(struct xl_uri *uri)
+no_ignore static ubik_error
+_set_hash(struct ubik_uri *uri)
 {
         size_t i;
 
@@ -41,16 +41,16 @@ _set_hash(struct xl_uri *uri)
         return OK;
 }
 
-no_ignore xl_error
+no_ignore ubik_error
 ubik_uri_unknown(
-        struct xl_uri *uri,
+        struct ubik_uri *uri,
         char *name)
 {
         char *name_buf;
 
         name_buf = strdup(name);
         if (name_buf == NULL)
-                return xl_raise(ERR_NO_MEMORY, "uri name copy");
+                return ubik_raise(ERR_NO_MEMORY, "uri name copy");
 
         uri->name = name_buf;
         uri->name_len = strlen(name_buf);
@@ -64,16 +64,16 @@ ubik_uri_unknown(
         return _set_hash(uri);
 }
 
-no_ignore xl_error
+no_ignore ubik_error
 ubik_uri_user(
-        struct xl_uri *uri,
+        struct ubik_uri *uri,
         char *name)
 {
         char *name_buf;
 
         name_buf = strdup(name);
         if (name_buf == NULL)
-                return xl_raise(ERR_NO_MEMORY, "uri name copy");
+                return ubik_raise(ERR_NO_MEMORY, "uri name copy");
 
         uri->name = name_buf;
         uri->name_len = strlen(name_buf);
@@ -87,9 +87,9 @@ ubik_uri_user(
         return _set_hash(uri);
 }
 
-no_ignore xl_error
+no_ignore ubik_error
 ubik_uri_package(
-        struct xl_uri *uri,
+        struct ubik_uri *uri,
         char *package,
         char *name)
 {
@@ -98,10 +98,10 @@ ubik_uri_package(
 
         name_buf = strdup(name);
         if (name_buf == NULL)
-                return xl_raise(ERR_NO_MEMORY, "uri name copy");
+                return ubik_raise(ERR_NO_MEMORY, "uri name copy");
         package_buf = strdup(package);
         if (package_buf == NULL)
-                return xl_raise(ERR_NO_MEMORY, "uri package copy");
+                return ubik_raise(ERR_NO_MEMORY, "uri package copy");
 
         uri->name = name_buf;
         uri->name_len = strlen(name_buf);
@@ -115,16 +115,16 @@ ubik_uri_package(
         return _set_hash(uri);
 }
 
-no_ignore xl_error
+no_ignore ubik_error
 ubik_uri_native(
-        struct xl_uri *uri,
+        struct ubik_uri *uri,
         char *name)
 {
         char *name_buf;
 
         name_buf = strdup(name);
         if (name_buf == NULL)
-                return xl_raise(ERR_NO_MEMORY, "uri name copy");
+                return ubik_raise(ERR_NO_MEMORY, "uri name copy");
 
         uri->name = name_buf;
         uri->name_len = strlen(name_buf);
@@ -139,7 +139,7 @@ ubik_uri_native(
 }
 
 bool
-ubik_uri_eq(struct xl_uri *u0, struct xl_uri *u1)
+ubik_uri_eq(struct ubik_uri *u0, struct ubik_uri *u1)
 {
         if (u0->hash != u1->hash)
                 return false;
@@ -163,22 +163,22 @@ ubik_uri_eq(struct xl_uri *u0, struct xl_uri *u1)
         return true;
 }
 
-no_ignore xl_error
-ubik_uri_from_value(struct xl_uri *uri, struct xl_value *uri_val)
+no_ignore ubik_error
+ubik_uri_from_value(struct ubik_uri *uri, struct ubik_value *uri_val)
 {
-        xl_error err;
-        struct xl_value *uri_right, *uri_left;
+        ubik_error err;
+        struct ubik_value *uri_right, *uri_left;
 
         if ((uri_val->tag & ~TAG_TYPE_MASK) != (TAG_LEFT_NODE | TAG_RIGHT_NODE))
-                return xl_raise(ERR_BAD_TAG, "bad tag for URI root");
+                return ubik_raise(ERR_BAD_TAG, "bad tag for URI root");
 
         uri_left = uri_val->left.t;
         if ((uri_left->tag & ~TAG_TYPE_MASK) != (TAG_LEFT_WORD | TAG_RIGHT_WORD))
-                return xl_raise(ERR_BAD_TAG, "bad tag for URI root");
+                return ubik_raise(ERR_BAD_TAG, "bad tag for URI root");
 
         uri_right = uri_val->right.t;
         if ((uri_right->tag & ~TAG_TYPE_MASK) != (TAG_LEFT_NODE | TAG_RIGHT_NODE))
-                return xl_raise(ERR_BAD_TAG, "bad tag for URI right");
+                return ubik_raise(ERR_BAD_TAG, "bad tag for URI right");
 
         /* URIs have the following structure:
          *      LL     version
@@ -189,11 +189,11 @@ ubik_uri_from_value(struct xl_uri *uri, struct xl_value *uri_val)
         uri->version = uri_left->left.w;
         uri->scope = uri_left->right.w;
 
-        err = xl_string_read(&uri->name, &uri->name_len, uri_right->left.t);
+        err = ubik_string_read(&uri->name, &uri->name_len, uri_right->left.t);
         if (err != OK)
                 return err;
 
-        err = xl_string_read(&uri->source, &uri->source_len, uri_right->right.t);
+        err = ubik_string_read(&uri->source, &uri->source_len, uri_right->right.t);
         if (err != OK)
                 return err;
 
@@ -201,7 +201,7 @@ ubik_uri_from_value(struct xl_uri *uri, struct xl_value *uri_val)
         uri->refcount = 0;
 
         uri->as_value = uri_val;
-        err = xl_take(uri->as_value);
+        err = ubik_take(uri->as_value);
         if (err != OK)
                 return err;
 
@@ -209,27 +209,27 @@ ubik_uri_from_value(struct xl_uri *uri, struct xl_value *uri_val)
         return err;
 }
 
-no_ignore xl_error
-ubik_uri_attach_value(struct xl_uri *uri)
+no_ignore ubik_error
+ubik_uri_attach_value(struct ubik_uri *uri)
 {
-        xl_error err;
-        struct xl_value *name;
-        struct xl_value *source;
+        ubik_error err;
+        struct ubik_value *name;
+        struct ubik_value *source;
 
         if (uri->as_value != NULL)
                 return OK;
 
-        err = xl_value_new(&name);
+        err = ubik_value_new(&name);
         if (err != OK)
                 return err;
-        err = xl_value_pack_string(name, uri->name, uri->name_len);
+        err = ubik_value_pack_string(name, uri->name, uri->name_len);
         if (err != OK)
                 return err;
 
-        err = xl_value_new(&source);
+        err = ubik_value_new(&source);
         if (err != OK)
                 return err;
-        err = xl_value_pack_string(source, uri->source, uri->source_len);
+        err = ubik_value_pack_string(source, uri->source, uri->source_len);
         if (err != OK)
                 return err;
 
@@ -238,10 +238,10 @@ ubik_uri_attach_value(struct xl_uri *uri)
         return OK;
 }
 
-no_ignore xl_error
-ubik_uri_parse(struct xl_uri *uri, char *str)
+no_ignore ubik_error
+ubik_uri_parse(struct ubik_uri *uri, char *str)
 {
-        xl_word scope;
+        ubik_word scope;
         size_t scope_len;
         size_t i;
         size_t len;
@@ -252,7 +252,7 @@ ubik_uri_parse(struct xl_uri *uri, char *str)
                 scope_len < len && str[scope_len] != ':';
                 scope_len++);
         if (str[scope_len] != ':')
-                return xl_raise(ERR_BAD_VALUE, "no scope terminator");
+                return ubik_raise(ERR_BAD_VALUE, "no scope terminator");
 
         if (strncmp(str, "userdef", scope_len) == 0)
                 scope = SCOPE_USER_DEFINED;
@@ -263,19 +263,19 @@ ubik_uri_parse(struct xl_uri *uri, char *str)
         else if (strncmp(str, "unknown", scope_len) == 0)
                 scope = SCOPE_UNKNOWN;
         else
-                return xl_raise(ERR_BAD_VALUE, "bad scope value");
+                return ubik_raise(ERR_BAD_VALUE, "bad scope value");
 
         i = scope_len;
         if (i > len - 3)
-                return xl_raise(ERR_BAD_VALUE, "nothing after scope");
+                return ubik_raise(ERR_BAD_VALUE, "nothing after scope");
         if (str[++i] != '/')
-                return xl_raise(ERR_BAD_VALUE, "no first slash");
+                return ubik_raise(ERR_BAD_VALUE, "no first slash");
         if (str[++i] != '/')
-                return xl_raise(ERR_BAD_VALUE, "no second slash");
+                return ubik_raise(ERR_BAD_VALUE, "no second slash");
         i++;
 
         if (str[i] != '/')
-                return xl_raise(ERR_NOT_IMPLEMENTED, "package URIs not supported");
+                return ubik_raise(ERR_NOT_IMPLEMENTED, "package URIs not supported");
         i++;
 
         uri->tag = TAG_URI;
@@ -292,13 +292,13 @@ ubik_uri_parse(struct xl_uri *uri, char *str)
 }
 
 char *
-ubik_uri_explain(struct xl_uri *uri)
+ubik_uri_explain(struct ubik_uri *uri)
 {
         int aspr_res;
         char *res;
         char *scope;
 
-        scope = xl_word_explain(uri->scope);
+        scope = ubik_word_explain(uri->scope);
         aspr_res = asprintf(&res, "%s://%s/%s", scope, uri->source, uri->name);
         free(scope);
         if (aspr_res < 0)

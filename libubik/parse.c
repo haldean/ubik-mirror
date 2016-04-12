@@ -29,23 +29,23 @@ extern void yylex_destroy(void *);
 extern void yyset_in(FILE *, void *);
 
 void
-ubik_parse_context_free(struct xl_parse_context *ctx)
+ubik_parse_context_free(struct ubik_parse_context *ctx)
 {
-        xl_vector_free(&ctx->allocs);
+        ubik_vector_free(&ctx->allocs);
 }
 
 static void
-_print_line_in_stream(struct xl_stream *stream, size_t line)
+_print_line_in_stream(struct ubik_stream *stream, size_t line)
 {
         #define lis_buf_len 512
         char buf[lis_buf_len];
         char *explain;
-        xl_error err;
+        ubik_error err;
 
-        err = xl_streamutil_get_line(buf, stream, line, lis_buf_len);
+        err = ubik_streamutil_get_line(buf, stream, line, lis_buf_len);
         if (err != OK)
         {
-                explain = xl_error_explain(err);
+                explain = ubik_error_explain(err);
                 printf("couldn't print line in file: %s\n", explain);
                 return;
         }
@@ -61,8 +61,8 @@ _show_char_in_line(size_t column)
         printf("^\n");
 }
 
-no_ignore xl_error
-ubik_parse(struct xl_ast **ast, char *source_name, struct xl_stream *stream)
+no_ignore ubik_error
+ubik_parse(struct ubik_ast **ast, char *source_name, struct ubik_stream *stream)
 {
         int status;
         yypstate *ps;
@@ -70,14 +70,14 @@ ubik_parse(struct xl_ast **ast, char *source_name, struct xl_stream *stream)
         YYSTYPE val;
         YYLTYPE loc = {0};
         int token;
-        local(parse_context) struct xl_parse_context ctx = {0};
+        local(parse_context) struct ubik_parse_context ctx = {0};
         size_t i;
 
         status = yylex_init(&scanner);
         if (status != 0)
-                return xl_raise(ERR_UNEXPECTED_FAILURE, "yylex_init failed");
+                return ubik_raise(ERR_UNEXPECTED_FAILURE, "yylex_init failed");
 
-        yyset_in(xl_stream_fp(stream), scanner);
+        yyset_in(ubik_stream_fp(stream), scanner);
 
         ps = yypstate_new();
         do
@@ -108,5 +108,5 @@ ubik_parse(struct xl_ast **ast, char *source_name, struct xl_stream *stream)
         }
         for (i = 0; i < ctx.allocs.n; i++)
                 free(ctx.allocs.elems[i]);
-        return xl_raise(ERR_BAD_VALUE, "could not parse input");
+        return ubik_raise(ERR_BAD_VALUE, "could not parse input");
 }

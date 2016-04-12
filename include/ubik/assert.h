@@ -25,15 +25,15 @@
         int
         break_on_assert();
 
-        #define xl_assert(x) do { \
+        #define ubik_assert(x) do { \
                 if (!(x)) { \
                         fprintf(stderr, \
                                 "assertion %s:%d failed: %s\n", \
                                 __FILE__, __LINE__, #x); \
                         break_on_assert(); \
-                        xl_trace_print(); \
+                        ubik_trace_print(); \
                         exit(EXIT_FAILURE); \
                 }} while (0)
 #else
-        #define xl_assert(x)
+        #define ubik_assert(x)
 #endif

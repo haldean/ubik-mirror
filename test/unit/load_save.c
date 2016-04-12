@@ -27,10 +27,10 @@
 test_t
 load_save()
 {
-        struct xl_stream s;
-        struct xl_value *u, *v;
+        struct ubik_stream s;
+        struct ubik_value *u, *v;
 
-        assert(xl_stream_buffer(&s) == OK);
+        assert(ubik_stream_buffer(&s) == OK);
 
         /*
          *              0
@@ -46,7 +46,7 @@ load_save()
          *        / \
          *       W   W
          */
-        u = calloc(6, sizeof(struct xl_value));
+        u = calloc(6, sizeof(struct ubik_value));
         u[0].tag = TAG_VALUE | TAG_LEFT_WORD | TAG_RIGHT_NODE;
         u[0].left.w = 0x1234567890123456;
         u[0].right.t = &u[1];
@@ -66,11 +66,11 @@ load_save()
         u[5].left.w = 0x0;
         u[5].right.w = 0xFFFFFFFFFFFFFFFF;
 
-        assert(xl_value_save(&s, u) == OK);
+        assert(ubik_value_save(&s, u) == OK);
 
-        v = calloc(1, sizeof(struct xl_value));
-        assert(xl_value_load(v, &s) == OK);
-        assert(xl_take(v) == OK);
+        v = calloc(1, sizeof(struct ubik_value));
+        assert(ubik_value_load(v, &s) == OK);
+        assert(ubik_take(v) == OK);
 
         /* make sure tags are correct. */
         assert(v->tag == u[0].tag);
@@ -108,9 +108,9 @@ load_save()
         /* 1.right */
         assert(v->right.t->right.w == u->right.t->right.w);
 
-        xl_stream_close(&s);
+        ubik_stream_close(&s);
         free(u);
-        assert(xl_release(v) == OK);
+        assert(ubik_release(v) == OK);
 
         return ok;
 }

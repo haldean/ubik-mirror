@@ -21,9 +21,9 @@
 
 /* Takes the line with index i from stream and copies it into the n-length
  * buffer res. */
-no_ignore xl_error
+no_ignore ubik_error
 ubik_streamutil_get_line(
         char *res,
-        struct xl_stream *stream,
+        struct ubik_stream *stream,
         size_t i,
         size_t n);

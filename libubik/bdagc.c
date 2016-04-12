@@ -23,8 +23,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-no_ignore xl_error
-ubik_bdagc_init(struct xl_graph_builder *b)
+no_ignore ubik_error
+ubik_bdagc_init(struct ubik_graph_builder *b)
 {
         b->nodes = NULL;
         b->n_nodes = 0;
@@ -34,21 +34,21 @@ ubik_bdagc_init(struct xl_graph_builder *b)
 }
 
 /* Adds a node to the graph. */
-no_ignore xl_error
+no_ignore ubik_error
 ubik_bdagc_push_node(
-        struct xl_graph_builder *b,
-        struct xl_dagc_node *node)
+        struct ubik_graph_builder *b,
+        struct ubik_dagc_node *node)
 {
         size_t new_cap;
-        struct xl_dagc_node **temp;
+        struct ubik_dagc_node **temp;
 
         if (b->n_nodes == b->cap_nodes)
         {
                 new_cap = b->cap_nodes == 0 ? 8 : b->cap_nodes * 2;
                 temp = realloc(
-                        b->nodes, new_cap * sizeof(struct xl_dagc_node *));
+                        b->nodes, new_cap * sizeof(struct ubik_dagc_node *));
                 if (temp == NULL)
-                        return xl_raise(ERR_NO_MEMORY, "bdagc push node");
+                        return ubik_raise(ERR_NO_MEMORY, "bdagc push node");
                 b->nodes = temp;
                 b->cap_nodes = new_cap;
         }
@@ -58,30 +58,30 @@ ubik_bdagc_push_node(
 }
 
 /* Builds the graph. */
-no_ignore xl_error
+no_ignore ubik_error
 ubik_bdagc_build(
-        struct xl_dagc **outgraph,
-        struct xl_graph_builder *b)
+        struct ubik_dagc **outgraph,
+        struct ubik_graph_builder *b)
 {
-        xl_error err;
+        ubik_error err;
         size_t i;
         size_t node_size;
-        struct xl_dagc *graph;
+        struct ubik_dagc *graph;
 
-        err = xl_dagc_alloc(&graph, b->n_nodes, sizeof(struct xl_dagc), NULL);
+        err = ubik_dagc_alloc(&graph, b->n_nodes, sizeof(struct ubik_dagc), NULL);
         if (err != OK)
                 return err;
 
-        xl_assert(b->result != NULL);
+        ubik_assert(b->result != NULL);
 
         for (i = 0; i < b->n_nodes; i++)
         {
-                err = xl_dagc_node_sizeof(&node_size, b->nodes[i]);
+                err = ubik_dagc_node_sizeof(&node_size, b->nodes[i]);
                 if (err != OK)
                         return err;
                 memcpy(graph->nodes[i], b->nodes[i], node_size);
 
-                err = xl_dagc_replace_node_refs(
+                err = ubik_dagc_replace_node_refs(
                         graph->nodes[i], b->nodes, graph->nodes, b->n_nodes);
                 if (err != OK)
                         return err;
@@ -90,7 +90,7 @@ ubik_bdagc_build(
                         graph->result = graph->nodes[i];
         }
 
-        err = xl_dagc_init(graph);
+        err = ubik_dagc_init(graph);
         if (err != OK)
                 return err;
 

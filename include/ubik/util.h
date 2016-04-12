@@ -34,11 +34,11 @@ size_min(size_t a, size_t b);
 
 /* Converts a word from host byte order to network byte order */
 ubik_word
-htonw(xl_word);
+htonw(ubik_word);
 
 /* Converts a word from network byte order to host byte order */
 ubik_word
-ntohw(xl_word);
+ntohw(ubik_word);
 
 /* Prints a stack trace to stderr. */
 void
@@ -46,6 +46,6 @@ ubik_trace_print(void);
 
 /* Converts a constant to its string value. */
 char *
-ubik_word_explain(xl_word);
+ubik_word_explain(ubik_word);
 
 #endif

@@ -34,7 +34,7 @@ split()
 
         in = "hello:world::this is your: new thing\n:   okay?";
         in_size = strlen(in);
-        assert(xl_string_split(&out, &out_size, in, in_size, ':') == OK);
+        assert(ubik_string_split(&out, &out_size, in, in_size, ':') == OK);
         assert(out_size == 6);
         assert(strcmp(out[0], "hello") == 0);
         assert(strcmp(out[1], "world") == 0);

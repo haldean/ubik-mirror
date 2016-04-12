@@ -25,11 +25,11 @@
 ubik_error
 ubik_start()
 {
-        xl_error err;
+        ubik_error err;
 
-        xl_gc_start();
+        ubik_gc_start();
 
-        err = xl_natives_register(xl_env_get_root());
+        err = ubik_natives_register(ubik_env_get_root());
         if (err != OK)
                 return err;
 
@@ -39,13 +39,13 @@ ubik_start()
 ubik_error
 ubik_teardown()
 {
-        xl_error err;
+        ubik_error err;
 
-        err = xl_env_free(xl_env_get_root());
+        err = ubik_env_free(ubik_env_get_root());
         if (err != OK)
                 return err;
 
-        xl_gc_teardown();
+        ubik_gc_teardown();
 
         return OK;
 }

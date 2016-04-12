@@ -22,10 +22,10 @@
 
 #define GET_LINE_BUF_SIZE 1024
 
-no_ignore xl_error
+no_ignore ubik_error
 ubik_streamutil_get_line(
         char *res,
-        struct xl_stream *stream,
+        struct ubik_stream *stream,
         size_t line_i,
         size_t n)
 {
@@ -35,18 +35,18 @@ ubik_streamutil_get_line(
         size_t n_lines_seen;
         size_t read;
 
-        xl_stream_reset(stream);
+        ubik_stream_reset(stream);
         n_lines_seen = 0;
 
         if (n <= 1)
-                return xl_raise(ERR_BAD_VALUE, "buffer too short");
+                return ubik_raise(ERR_BAD_VALUE, "buffer too short");
         bzero(res, n);
 
         for (;;)
         {
-                read = xl_stream_read(buf, stream, GET_LINE_BUF_SIZE - 1);
+                read = ubik_stream_read(buf, stream, GET_LINE_BUF_SIZE - 1);
                 if (read == 0)
-                        return xl_raise(ERR_NO_DATA, "line does not exist");
+                        return ubik_raise(ERR_NO_DATA, "line does not exist");
                 buf[read] = '\0';
 
                 for (i = 0; i < GET_LINE_BUF_SIZE - 1; i++)
@@ -70,10 +70,10 @@ line_found:
                                 return OK;
                         res[res_i++] = buf[i];
                         if (res_i - 1 == n)
-                                return xl_raise(
+                                return ubik_raise(
                                         ERR_FULL, "not enough space in buffer");
                 }
-                read = xl_stream_read(buf, stream, GET_LINE_BUF_SIZE - 1);
+                read = ubik_stream_read(buf, stream, GET_LINE_BUF_SIZE - 1);
                 if (read == 0)
                 {
                         return OK;

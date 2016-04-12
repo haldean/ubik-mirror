@@ -25,20 +25,20 @@
 #include "ubik/util.h"
 #include "ubik/value.h"
 
-no_ignore static xl_error
-_eval_apply(struct xl_env *env, struct xl_dagc_apply *node)
+no_ignore static ubik_error
+_eval_apply(struct ubik_env *env, struct ubik_dagc_apply *node)
 {
-        xl_error err;
-        struct xl_dagc_input *input;
-        struct xl_dagc *result;
-        struct xl_dagc *proto;
+        ubik_error err;
+        struct ubik_dagc_input *input;
+        struct ubik_dagc *result;
+        struct ubik_dagc *proto;
         size_t i;
 
         unused(env);
 
         if ((*node->func->known.tag & TAG_TYPE_MASK) != TAG_GRAPH)
         {
-                err = xl_type_match_polyfunc(
+                err = ubik_type_match_polyfunc(
                         &proto, node->func->known.tree, node->arg->known_type);
                 if (err != OK)
                         return err;
@@ -49,19 +49,19 @@ _eval_apply(struct xl_env *env, struct xl_dagc_apply *node)
         }
 
         if (proto->in_arity == 0)
-                return xl_raise(ERR_BAD_TYPE, "apply: graph has no inputs");
+                return ubik_raise(ERR_BAD_TYPE, "apply: graph has no inputs");
 
-        err = xl_dagc_copy(&result, proto);
+        err = ubik_dagc_copy(&result, proto);
         if (err != OK)
                 return err;
         node->head.known.graph = result;
 
-        err = xl_take(result);
+        err = ubik_take(result);
         if (err != OK)
                 return err;
 
         /* Take an input node off the front, shift the remaining ones left. */
-        input = (struct xl_dagc_input *) result->inputs[0];
+        input = (struct ubik_dagc_input *) result->inputs[0];
         result->in_arity--;
         for (i = 0; i < result->in_arity; i++)
                 result->inputs[i] = result->inputs[i + 1];
@@ -69,19 +69,19 @@ _eval_apply(struct xl_env *env, struct xl_dagc_apply *node)
         input->head.flags = XL_DAGC_FLAG_COMPLETE;
 
         input->head.known_type = node->arg->known_type;
-        err = xl_take(input->head.known_type);
+        err = ubik_take(input->head.known_type);
         if (err != OK)
                 return err;
 
         input->head.known = node->arg->known;
-        err = xl_take(input->head.known.any);
+        err = ubik_take(input->head.known.any);
         if (err != OK)
                 return err;
 
-        err = xl_value_new(&node->head.known_type);
+        err = ubik_value_new(&node->head.known_type);
         if (err != OK)
                 return err;
-        err = xl_type_func_apply(node->head.known_type, node->func->known_type);
+        err = ubik_type_func_apply(node->head.known_type, node->func->known_type);
         if (err != OK)
                 return err;
 
@@ -89,22 +89,22 @@ _eval_apply(struct xl_env *env, struct xl_dagc_apply *node)
         return OK;
 }
 
-no_ignore static xl_error
-_eval_const(struct xl_env *env, struct xl_dagc_const *node)
+no_ignore static ubik_error
+_eval_const(struct ubik_env *env, struct ubik_dagc_const *node)
 {
-        xl_error err;
+        ubik_error err;
         unused(env);
 
         /* We end up having two references for a single value from a single
          * node; this is so we don't have to worry about whether things are
          * populated when we eventually free the graph. */
         node->head.known_type = node->type;
-        err = xl_take(node->type);
+        err = ubik_take(node->type);
         if (err != OK)
                 return err;
 
         node->head.known = node->value;
-        err = xl_take(node->head.known.any);
+        err = ubik_take(node->head.known.any);
         if (err != OK)
                 return err;
 
@@ -112,19 +112,19 @@ _eval_const(struct xl_env *env, struct xl_dagc_const *node)
         return OK;
 }
 
-no_ignore static xl_error
-_eval_ref(struct xl_env *env, struct xl_dagc_ref *node)
+no_ignore static ubik_error
+_eval_ref(struct ubik_env *env, struct ubik_dagc_ref *node)
 {
-        xl_error err;
+        ubik_error err;
         unused(env);
 
         node->head.known_type = node->referrent->known_type;
-        err = xl_take(node->head.known_type);
+        err = ubik_take(node->head.known_type);
         if (err != OK)
                 return err;
 
         node->head.known.any = node->referrent->known.any;
-        err = xl_take(node->head.known.any);
+        err = ubik_take(node->head.known.any);
         if (err != OK)
                 return err;
 
@@ -132,29 +132,29 @@ _eval_ref(struct xl_env *env, struct xl_dagc_ref *node)
         return OK;
 }
 
-no_ignore static xl_error
+no_ignore static ubik_error
 _mark_load_complete(
         void *node_void,
-        struct xl_env *env,
-        struct xl_uri *uri)
+        struct ubik_env *env,
+        struct ubik_uri *uri)
 {
-        struct xl_dagc_node *node;
+        struct ubik_dagc_node *node;
         unused(env);
         unused(uri);
 
-        node = (struct xl_dagc_node *) node_void;
+        node = (struct ubik_dagc_node *) node_void;
         node->flags &= ~XL_DAGC_FLAG_WAIT_DATA;
         return OK;
 }
 
-no_ignore static xl_error
-_eval_load(struct xl_env *env, struct xl_dagc_load *node)
+no_ignore static ubik_error
+_eval_load(struct ubik_env *env, struct ubik_dagc_load *node)
 {
-        union xl_value_or_graph value;
-        struct xl_value *type;
-        xl_error err;
+        union ubik_value_or_graph value;
+        struct ubik_value *type;
+        ubik_error err;
 
-        err = xl_env_get(&value, &type, env, node->loc);
+        err = ubik_env_get(&value, &type, env, node->loc);
         if (err != OK)
         {
                 /* native funcs never reappear; they're gone forever. */
@@ -165,7 +165,7 @@ _eval_load(struct xl_env *env, struct xl_dagc_load *node)
                 {
                         free(err);
                         node->head.flags |= XL_DAGC_FLAG_WAIT_DATA;
-                        err = xl_env_watch(
+                        err = ubik_env_watch(
                                 _mark_load_complete, env, node->loc, node);
                         if (err != OK)
                                 return err;
@@ -174,11 +174,11 @@ _eval_load(struct xl_env *env, struct xl_dagc_load *node)
                 return err;
         }
 
-        err = xl_take(value.any);
+        err = ubik_take(value.any);
         if (err != OK)
                 return err;
 
-        err = xl_take(type);
+        err = ubik_take(type);
         if (err != OK)
                 return err;
 
@@ -189,16 +189,16 @@ _eval_load(struct xl_env *env, struct xl_dagc_load *node)
         return OK;
 }
 
-no_ignore static xl_error
-_eval_cond(struct xl_env *env, struct xl_dagc_cond *cond)
+no_ignore static ubik_error
+_eval_cond(struct ubik_env *env, struct ubik_dagc_cond *cond)
 {
-        struct xl_dagc_node *res;
-        xl_error err;
+        struct ubik_dagc_node *res;
+        ubik_error err;
         bool condition;
 
         unused(env);
 
-        err = xl_value_as_bool(&condition, cond->condition->known.tree);
+        err = ubik_value_as_bool(&condition, cond->condition->known.tree);
         if (err != OK)
                 return err;
 
@@ -219,10 +219,10 @@ _eval_cond(struct xl_env *env, struct xl_dagc_cond *cond)
         cond->head.known_type = res->known_type;
         cond->head.known = res->known;
 
-        err = xl_take(cond->head.known_type);
+        err = ubik_take(cond->head.known_type);
         if (err != OK)
                 return err;
-        err = xl_take(cond->head.known.any);
+        err = ubik_take(cond->head.known.any);
         if (err != OK)
                 return err;
 
@@ -230,29 +230,29 @@ _eval_cond(struct xl_env *env, struct xl_dagc_cond *cond)
         return OK;
 }
 
-no_ignore static xl_error
-_eval_store(struct xl_env *env, struct xl_dagc_store *node)
+no_ignore static ubik_error
+_eval_store(struct ubik_env *env, struct ubik_dagc_store *node)
 {
-        xl_error err;
+        ubik_error err;
 
         node->head.known_type = node->value->known_type;
         node->head.known = node->value->known;
 
-        err = xl_take(node->head.known.any);
+        err = ubik_take(node->head.known.any);
         if (err != OK)
                 return err;
 
-        err = xl_take(node->head.known_type);
+        err = ubik_take(node->head.known_type);
         if (err != OK)
                 return err;
 
         node->head.flags |= XL_DAGC_FLAG_COMPLETE;
-        return xl_env_set(
+        return ubik_env_set(
                 env, node->loc, node->value->known, node->value->known_type);
 }
 
-no_ignore static xl_error
-_eval_input(struct xl_env *env, struct xl_dagc_input *node)
+no_ignore static ubik_error
+_eval_input(struct ubik_env *env, struct ubik_dagc_input *node)
 {
         unused(env);
         unused(node);
@@ -261,42 +261,42 @@ _eval_input(struct xl_env *env, struct xl_dagc_input *node)
         return OK;
 }
 
-no_ignore xl_error
+no_ignore ubik_error
 ubik_dagc_node_eval(
-        struct xl_env *env,
-        struct xl_dagc_node *node)
+        struct ubik_env *env,
+        struct ubik_dagc_node *node)
 {
-        xl_error err;
+        ubik_error err;
 
-        xl_assert(!(node->flags & XL_DAGC_WAIT_MASK));
+        ubik_assert(!(node->flags & XL_DAGC_WAIT_MASK));
 
         switch (node->node_type)
         {
         case DAGC_NODE_APPLY:
-                err = _eval_apply(env, (struct xl_dagc_apply *) node);
+                err = _eval_apply(env, (struct ubik_dagc_apply *) node);
                 break;
         case DAGC_NODE_CONST:
-                err = _eval_const(env, (struct xl_dagc_const *) node);
+                err = _eval_const(env, (struct ubik_dagc_const *) node);
                 break;
         case DAGC_NODE_LOAD:
-                err = _eval_load(env, (struct xl_dagc_load *) node);
+                err = _eval_load(env, (struct ubik_dagc_load *) node);
                 break;
         case DAGC_NODE_STORE:
-                err = _eval_store(env, (struct xl_dagc_store *) node);
+                err = _eval_store(env, (struct ubik_dagc_store *) node);
                 break;
         case DAGC_NODE_INPUT:
-                err = _eval_input(env, (struct xl_dagc_input *) node);
+                err = _eval_input(env, (struct ubik_dagc_input *) node);
                 break;
         case DAGC_NODE_COND:
-                err = _eval_cond(env, (struct xl_dagc_cond *) node);
+                err = _eval_cond(env, (struct ubik_dagc_cond *) node);
                 break;
         case DAGC_NODE_REF:
-                err = _eval_ref(env, (struct xl_dagc_ref *) node);
+                err = _eval_ref(env, (struct ubik_dagc_ref *) node);
                 break;
         case DAGC_NODE_NATIVE:
-                return xl_raise(ERR_BAD_TYPE, "node_eval: can't eval native");
+                return ubik_raise(ERR_BAD_TYPE, "node_eval: can't eval native");
         default:
-                return xl_raise(ERR_UNKNOWN_TYPE, "node_eval");
+                return ubik_raise(ERR_UNKNOWN_TYPE, "node_eval");
         }
 
         if (err != OK)

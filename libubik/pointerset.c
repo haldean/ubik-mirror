@@ -24,8 +24,8 @@
 
 #include "ubik/pointerset.h"
 
-no_ignore static xl_error
-_pointer_set_grow(struct xl_vector *set)
+no_ignore static ubik_error
+_pointer_set_grow(struct ubik_vector *set)
 {
         size_t new_cap;
         void **new_elems;
@@ -34,7 +34,7 @@ _pointer_set_grow(struct xl_vector *set)
         {
                 set->elems = calloc(8, sizeof(void *));
                 if (set->elems == NULL)
-                        return xl_raise(ERR_NO_MEMORY, "pointer set alloc");
+                        return ubik_raise(ERR_NO_MEMORY, "pointer set alloc");
                 set->cap = 8;
                 return OK;
         }
@@ -42,7 +42,7 @@ _pointer_set_grow(struct xl_vector *set)
         new_cap = set->cap * 2;
         new_elems = realloc(set->elems, new_cap * sizeof(void *));
         if (new_elems == NULL)
-                return xl_raise(ERR_NO_MEMORY, "pointer set alloc");
+                return ubik_raise(ERR_NO_MEMORY, "pointer set alloc");
         set->elems = new_elems;
 
         /* Zero out the new elements (if only there were a crealloc */
@@ -55,8 +55,8 @@ _pointer_set_grow(struct xl_vector *set)
 /* Finds the logical index of the given item, even if the item is not itself
  * present. If the item is not present, the returned index is the index at which
  * the item should be inserted. */
-no_ignore static xl_error
-_pointer_set_index(size_t *index, struct xl_vector *set, void *item)
+no_ignore static ubik_error
+_pointer_set_index(size_t *index, struct ubik_vector *set, void *item)
 {
         size_t start;
         size_t end;
@@ -90,11 +90,11 @@ _pointer_set_index(size_t *index, struct xl_vector *set, void *item)
         return OK;
 }
 
-no_ignore xl_error
-ubik_pointer_set_add(bool *added, struct xl_vector *set, void *item)
+no_ignore ubik_error
+ubik_pointer_set_add(bool *added, struct ubik_vector *set, void *item)
 {
         size_t insert_at;
-        xl_error err;
+        ubik_error err;
 
         err = _pointer_set_index(&insert_at, set, item);
         if (err != OK)
@@ -127,11 +127,11 @@ ubik_pointer_set_add(bool *added, struct xl_vector *set, void *item)
         return OK;
 }
 
-no_ignore xl_error
-ubik_pointer_set_present(bool *present, struct xl_vector *set, void *item)
+no_ignore ubik_error
+ubik_pointer_set_present(bool *present, struct ubik_vector *set, void *item)
 {
         size_t index;
-        xl_error err;
+        ubik_error err;
 
         if (set->cap == 0)
         {
@@ -146,26 +146,26 @@ ubik_pointer_set_present(bool *present, struct xl_vector *set, void *item)
         return OK;
 }
 
-no_ignore xl_error
-ubik_pointer_set_find(size_t *ret_index, struct xl_vector *set, void *item)
+no_ignore ubik_error
+ubik_pointer_set_find(size_t *ret_index, struct ubik_vector *set, void *item)
 {
         size_t index;
-        xl_error err;
+        ubik_error err;
 
         if (set->cap == 0)
-                return xl_raise(ERR_ABSENT, "pointer set find");
+                return ubik_raise(ERR_ABSENT, "pointer set find");
 
         err = _pointer_set_index(&index, set, item);
         if (err != OK)
                 return err;
         if (index >= set->n || set->elems[index] != item)
-                return xl_raise(ERR_ABSENT, "pointer set find");
+                return ubik_raise(ERR_ABSENT, "pointer set find");
         *ret_index = index;
         return OK;
 }
 
 void
-ubik_pointer_set_free(struct xl_vector *set)
+ubik_pointer_set_free(struct ubik_vector *set)
 {
         free(set->elems);
         bzero(set, sizeof(*set));

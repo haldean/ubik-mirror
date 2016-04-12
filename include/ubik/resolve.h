@@ -22,7 +22,7 @@
 #include "ubik/ast.h"
 #include "ubik/vector.h"
 
-enum xl_resolve_type
+enum ubik_resolve_type
 {
         /* if a name resolves locally, then the name should be accessed by using
          * a ref node to the appropriate node for the name. */
@@ -35,16 +35,16 @@ enum xl_resolve_type
         RESOLVE_CLOSURE,
 };
 
-struct xl_resolve_name
+struct ubik_resolve_name
 {
         char *name;
-        enum xl_resolve_type type;
-        struct xl_dagc_node *node;
+        enum ubik_resolve_type type;
+        struct ubik_dagc_node *node;
 };
 
-struct xl_resolve_name_loc
+struct ubik_resolve_name_loc
 {
-        enum xl_resolve_type type;
+        enum ubik_resolve_type type;
 };
 
 /* Scope boundaries are used to determine whether something is
@@ -57,52 +57,52 @@ struct xl_resolve_name_loc
  * close over its parents' values. If a scope has a BOUNDARY_GLOBAL boundary
  * type, its members can be accessed using load nodes instead of ref nodes and
  * thus they don't have to be closed over. */
-enum xl_resolve_boundary_type
+enum ubik_resolve_boundary_type
 {
         BOUNDARY_BLOCK = 1,
         BOUNDARY_GLOBAL,
         BOUNDARY_FUNCTION,
 };
 
-struct xl_resolve_scope
+struct ubik_resolve_scope
 {
-        /* members of are struct xl_resolve_name pointers */
-        struct xl_vector names;
+        /* members of are struct ubik_resolve_name pointers */
+        struct ubik_vector names;
 
-        struct xl_resolve_scope *parent;
-        enum xl_resolve_boundary_type boundary;
+        struct ubik_resolve_scope *parent;
+        enum ubik_resolve_boundary_type boundary;
 
         /* This thing is complicated. There's a long explanation in closure.c
          * about what it means. Go read that. */
         bool needs_closure_appl;
 };
 
-enum xl_resolve_error_type
+enum ubik_resolve_error_type
 {
         RESOLVE_ERR_NAME_NOT_FOUND = 1,
 };
 
-struct xl_resolve_error
+struct ubik_resolve_error
 {
-        enum xl_resolve_error_type err_type;
+        enum ubik_resolve_error_type err_type;
         char *name;
-        struct xl_ast_loc loc;
+        struct ubik_ast_loc loc;
 };
 
-struct xl_resolve_context
+struct ubik_resolve_context
 {
-        struct xl_resolve_scope *native_scope;
-        struct xl_vector scope_allocs;
-        struct xl_vector allocs;
-        struct xl_vector errors;
+        struct ubik_resolve_scope *native_scope;
+        struct ubik_vector scope_allocs;
+        struct ubik_vector allocs;
+        struct ubik_vector errors;
 };
 
-no_ignore xl_error
+no_ignore ubik_error
 ubik_resolve(
-        struct xl_ast *ast,
+        struct ubik_ast *ast,
         char *source_name,
-        struct xl_stream *stream,
-        struct xl_resolve_context *ctx);
+        struct ubik_stream *stream,
+        struct ubik_resolve_context *ctx);
 
 void
-ubik_resolve_context_free(struct xl_resolve_context *ctx);
+ubik_resolve_context_free(struct ubik_resolve_context *ctx);

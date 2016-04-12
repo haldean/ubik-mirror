@@ -21,7 +21,7 @@
 #include <stdint.h>
 #include "ubik/ubik.h"
 
-struct xl_vector
+struct ubik_vector
 {
         void **elems;
         size_t n;
@@ -29,13 +29,13 @@ struct xl_vector
 };
 
 /* Ensures that the vector has the capacity to hold at least the given size. */
-no_ignore xl_error
-ubik_vector_ensure_size(struct xl_vector *, size_t size);
+no_ignore ubik_error
+ubik_vector_ensure_size(struct ubik_vector *, size_t size);
 
 /* Appends an element onto the list. */
-no_ignore xl_error
-ubik_vector_append(struct xl_vector *, void *elem);
+no_ignore ubik_error
+ubik_vector_append(struct ubik_vector *, void *elem);
 
 /* Frees all memory associated with a vector. */
 void
-ubik_vector_free(struct xl_vector *);
+ubik_vector_free(struct ubik_vector *);

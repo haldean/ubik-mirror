@@ -19,7 +19,7 @@
 
 #include "ubik/ubik.h"
 
-struct xl_gc_info
+struct ubik_gc_info
 {
 #ifdef XL_GC_DEBUG
         uint64_t n_val_allocs;
@@ -31,7 +31,7 @@ struct xl_gc_info
 
 /* Initialize the garbage collector.
  *
- * This must be called before xl_new can be called. Calling this
+ * This must be called before ubik_new can be called. Calling this
  * drops all existing GC state, and thus don't call it more than
  * once unless you /really/ know what you're doing. */
 void
@@ -40,14 +40,14 @@ ubik_gc_start();
 /* Teardown the garbage collector.
  *
  * Frees all memory known to the garbage collector. After calling
- * this, ou must call xl_gc_start again if you want to use the
+ * this, ou must call ubik_gc_start again if you want to use the
  * runtime again. */
 void
 ubik_gc_teardown();
 
 /* Get garbage collector stats. */
 void
-ubik_gc_get_stats(struct xl_gc_info *stats);
+ubik_gc_get_stats(struct ubik_gc_info *stats);
 
 /* Free everything the garbage collector knows about.
  *

@@ -40,15 +40,15 @@ typedef struct
 #define ok (test_t){.msg = NULL, .line = __LINE__}
 
 #define run_single(test) int main() { \
-        xl_error err = xl_start(); \
+        ubik_error err = ubik_start(); \
         if (err != OK) { \
-                printf("couldn't start ubik: %s\n", xl_error_explain(err)); \
+                printf("couldn't start ubik: %s\n", ubik_error_explain(err)); \
                 return 1; \
         } \
         init(); run(test); \
-        err = xl_teardown(); \
+        err = ubik_teardown(); \
         if (err != OK) { \
-                printf("couldn't close ubik: %s\n", xl_error_explain(err)); \
+                printf("couldn't close ubik: %s\n", ubik_error_explain(err)); \
                 return 1; \
         } \
         finish(); }

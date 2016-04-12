@@ -23,7 +23,7 @@
 #include "ubik/string.h"
 
 
-no_ignore xl_error
+no_ignore ubik_error
 ubik_string_split(
         char ***out_p,
         size_t *n_out_p,
@@ -50,7 +50,7 @@ ubik_string_split(
         {
                 for (j = next_start; j < n_in && in[j] != delim; j++);
                 if (in[j] != delim && i != n_out - 1)
-                        return xl_raise(
+                        return ubik_raise(
                                 ERR_UNEXPECTED_FAILURE, "string split delim");
                 out[i] = calloc(j - next_start + 1, sizeof(char));
                 memcpy(out[i], &in[next_start], j - next_start);
@@ -63,7 +63,7 @@ ubik_string_split(
 }
 
 /* Joins two NULL-terminated path segments into a single path. */
-no_ignore xl_error
+no_ignore ubik_error
 ubik_string_path_concat(
         char **out_p,
         char *first,

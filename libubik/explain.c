@@ -27,19 +27,19 @@
 #include "ubik/util.h"
 
 char *
-ubik_node_explain(struct xl_dagc_node *node)
+ubik_node_explain(struct ubik_dagc_node *node)
 {
-        union xl_dagc_any_node *n;
+        union ubik_dagc_any_node *n;
         char *res;
         char *node_type;
         char *id;
         char *uri;
         int aspr_res;
 
-        node_type = xl_word_explain(node->node_type);
-        id = xl_word_explain(node->id);
+        node_type = ubik_word_explain(node->node_type);
+        id = ubik_word_explain(node->id);
 
-        n = (union xl_dagc_any_node *) node;
+        n = (union ubik_dagc_any_node *) node;
 
         if (node->node_type == DAGC_NODE_CONST)
         {
@@ -63,7 +63,7 @@ ubik_node_explain(struct xl_dagc_node *node)
         }
         else if (node->node_type == DAGC_NODE_LOAD)
         {
-                uri = xl_uri_explain(n->as_load.loc);
+                uri = ubik_uri_explain(n->as_load.loc);
                 aspr_res = asprintf(
                         &res, "%s %s @%hx uri %s",
                         node_type, id, (short)((uintptr_t) n), uri);
@@ -71,7 +71,7 @@ ubik_node_explain(struct xl_dagc_node *node)
         }
         else if (node->node_type == DAGC_NODE_STORE)
         {
-                uri = xl_uri_explain(n->as_store.loc);
+                uri = ubik_uri_explain(n->as_store.loc);
                 aspr_res = asprintf(
                         &res, "%s %s @%hx uri %s",
                         node_type, id, (short)((uintptr_t) n), uri);

@@ -42,15 +42,15 @@
 
 #ifdef DEF_BINARY
 
-no_ignore static xl_error
-_op_name(struct xl_env *env)
+no_ignore static ubik_error
+_op_name(struct ubik_env *env)
 {
-        xl_error err;
+        ubik_error err;
 
-        struct xl_dagc *ngraph;
-        struct xl_uri *uri;
-        struct xl_value *type;
-        union xl_value_or_graph ins;
+        struct ubik_dagc *ngraph;
+        struct ubik_uri *uri;
+        struct ubik_value *type;
+        union ubik_value_or_graph ins;
 
         ngraph = NULL;
         err = _create_op(&ngraph, 2, DEF_OP_EVAL);
@@ -62,24 +62,24 @@ _op_name(struct xl_env *env)
                 return err;
 
         ngraph->identity = uri;
-        err = xl_take(uri);
+        err = ubik_take(uri);
         if (err != OK)
                 return err;
 
-        err = xl_value_new(&type);
+        err = ubik_value_new(&type);
         if (err != OK)
                 return err;
         /* TODO: set type here */
 
         ins.graph = ngraph;
-        err = xl_env_set(env, uri, ins, type);
+        err = ubik_env_set(env, uri, ins, type);
         if (err != OK)
                 return err;
 
-        err = xl_release(type);
+        err = ubik_release(type);
         if (err != OK)
                 return err;
-        err = xl_release(ngraph);
+        err = ubik_release(ngraph);
         if (err != OK)
                 return err;
 
@@ -88,15 +88,15 @@ _op_name(struct xl_env *env)
 
 #elif defined(DEF_UNARY)
 
-no_ignore static xl_error
-_op_name(struct xl_env *env)
+no_ignore static ubik_error
+_op_name(struct ubik_env *env)
 {
-        xl_error err;
+        ubik_error err;
 
-        struct xl_dagc *ngraph;
-        struct xl_uri *uri;
-        struct xl_value *type;
-        union xl_value_or_graph ins;
+        struct ubik_dagc *ngraph;
+        struct ubik_uri *uri;
+        struct ubik_value *type;
+        union ubik_value_or_graph ins;
 
         ngraph = NULL;
         err = _create_op(&ngraph, 1, DEF_OP_EVAL);
@@ -108,24 +108,24 @@ _op_name(struct xl_env *env)
                 return err;
 
         ngraph->identity = uri;
-        err = xl_take(uri);
+        err = ubik_take(uri);
         if (err != OK)
                 return err;
 
-        err = xl_value_new(&type);
+        err = ubik_value_new(&type);
         if (err != OK)
                 return err;
         /* TODO: set type here */
 
         ins.graph = ngraph;
-        err = xl_env_set(env, uri, ins, type);
+        err = ubik_env_set(env, uri, ins, type);
         if (err != OK)
                 return err;
 
-        err = xl_release(type);
+        err = ubik_release(type);
         if (err != OK)
                 return err;
-        err = xl_release(ngraph);
+        err = ubik_release(ngraph);
         if (err != OK)
                 return err;
 
