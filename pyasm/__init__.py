@@ -1,4 +1,4 @@
-# Python DSL for encoding Expel DAGCs.
+# Python DSL for encoding Ubik DAGCs.
 
 import struct
 import sys

@@ -1,26 +1,26 @@
-Expel
+Ubik
 =====
 
 *This document is a work-in-progress, and everything in it is subject to
 change.*
 
-Expel will eventually be a programming language. Expel aims to be a
+Ubik will eventually be a programming language. Ubik aims to be a
 programming language that approximates the combination of the.
 conciseness of Haskell, the simplicity of Lisp, the productivity of
-Python and the deployability of Go. Expel is what I wish I could write
-everything in, but first I have to write Expel.
+Python and the deployability of Go. Ubik is what I wish I could write
+everything in, but first I have to write Ubik.
 
-Expel will have strict, static typing with full type inference. Expel
+Ubik will have strict, static typing with full type inference. Ubik
 will be homoiconic, and provide language-level features that allow users
 to control order-of-evaluation; in doing so, it will obviate the need
-for macros. Expel will draw heavily from Python's view of
-everything-as-namespace. Expel will, at first, be interpreted, but
-eventually will be compiled into LLVM IR (or similar). Expel will not
-have a null value or type. Expel will have no mutable state.
+for macros. Ubik will draw heavily from Python's view of
+everything-as-namespace. Ubik will, at first, be interpreted, but
+eventually will be compiled into LLVM IR (or similar). Ubik will not
+have a null value or type. Ubik will have no mutable state.
 
-## Expel in examples
+## Ubik in examples
 
-Syntactically, Expel borrows heavily from Haskell and Hoon. As in Hoon,
+Syntactically, Ubik borrows heavily from Haskell and Hoon. As in Hoon,
 punctuation is used in lieu of keywords, allowing any alphabetic symbol
 to be a valid user operator. Of course, there are also symbols provided
 by the standard library; these, however, need not be imported.
@@ -56,7 +56,7 @@ the first line of the block.
 
 The `{` (pronounced "new-block") operator introduces a new scoping
 block. This allows for what other languages call `with` or `let`; in
-Expel, to create symbols of limited scope, you create a binding within a
+Ubik, to create symbols of limited scope, you create a binding within a
 scope block. Note that in this example, the type signature of `f` is
 inferred.
 
@@ -160,8 +160,8 @@ required to be a member of `Addable` as well.
 
 ### Record types
 
-Expel has record types, which are structured types containing multiple
-typed and named fields. Unlike many other functional languages, Expel
+Ubik has record types, which are structured types containing multiple
+typed and named fields. Unlike many other functional languages, Ubik
 seeks to avoid polluting the record's enclosing namespace by accessing
 child fields using the member operator instead of creating accessor
 functions for each.
@@ -192,7 +192,7 @@ input.
 
 ### Conditionals
 
-There is only one explicit control-flow construct in Expel: a simple
+There is only one explicit control-flow construct in Ubik: a simple
 conditional statement. You can create a conditional statement using the
 `=>` (pronounced "implies") and `/>` (pronounced "opposes") operator,
 like so:
@@ -217,7 +217,7 @@ substituted for the function call.
 As an example, examine the case of the member operator. While some
 uses of the member operator are language built-ins, the usage of the
 member operator to access a field in a record is implemented in native
-Expel as a CTPA. Record types are all instances of a `Record`
+Ubik as a CTPA. Record types are all instances of a `Record`
 typeclass:
 
     _ Record
@@ -225,7 +225,7 @@ typeclass:
 
 `Symbol` is a type provided by the prelude that represents a symbol in
 the AST of the program. Note the `!` (pronounced "eager") operator after
-the `Symbol` type; this tells Expel that this is an unevaluated
+the `Symbol` type; this tells Ubik that this is an unevaluated
 expression tree instead of an actual value. It is a compile-time error
 to pass this function anything but a symbol as its first argument.
 
@@ -266,16 +266,16 @@ function during compilation, which results in the error being thrown.
 
 ## Input, output and external state
 
-Expel has to deal with a problem common to all side-effect-free
+Ubik has to deal with a problem common to all side-effect-free
 languages: how does such a system mutate the state of the system it runs
 on? Modern computing systems are state modification machines; no real
 programming language can ignore this. However, the advantages of
 stateless computing are innumerable: repeatability, parallelization and
 understandability shouldn't be compromised wherever possible.
 
-To this goal, the Expel runtime provides a view into state outside the
+To this goal, the Ubik runtime provides a view into state outside the
 system that enforces repeatability and a weak form of immutability,
-while falling short on the ability to parallelize in some cases. Expel
+while falling short on the ability to parallelize in some cases. Ubik
 programs declare what external state sources they need access to; this
 could be a file, a random number generator, or an interface to a
 physical device. The runtime provides a monadic view to these state
@@ -288,7 +288,7 @@ when first loaded; for random number generators this is achieved through
 a randomly-chosen initial starting seed for the lifetime of the runtime.
 
 Writing external state to a state sink is harder, especially when
-coupled with the desire for immutability. Expel solves this by only
+coupled with the desire for immutability. Ubik solves this by only
 allowing one handle to each state sink to be created over the lifetime
 of the runtime. This is equivalent to saying that a file may only be
 opened for writing once over the lifetime of the program. It is also
@@ -304,7 +304,7 @@ mutability and allow us to avoid the trap that many other languages fall
 into, in which everything but that which interacts with the outside world is
 fully repeatable.
 
-## All Expel operators
+## All Ubik operators
 
 ### `:`
 Pronounced "bind name", creates a binding with a name.

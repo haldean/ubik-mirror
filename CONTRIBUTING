@@ -1,15 +1,15 @@
-Contributing to Expel ==================================================
+Contributing to Ubik ==================================================
 Haldean Brown                                      First draft: Mar 2016
                                                   Last updated: Mar 2016
 
-To contribute to Expel, please send a patch generated using git
+To contribute to Ubik, please send a patch generated using git
 format-patch to ubik@haldean.org. By sending the patches you agree to
-license your patch to the Expel project under the terms of the GNU
+license your patch to the Ubik project under the terms of the GNU
 Public License, version 2.
 
-Contributors to the Expel project --------------------------------------
+Contributors to the Ubik project --------------------------------------
 
-The following people have contributed to the Expel project:
+The following people have contributed to the Ubik project:
 
         Haldean Brown (haldean.org)
         Xianhang Zhang (bumblebeelabs.com)

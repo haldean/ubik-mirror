@@ -60,7 +60,7 @@ typedef long double xl_float;
  * loaded. */
 #define TAG_GRAPH_MODINIT     0x0004
 
-/* The maximum Expel bytecode version that this library supports. */
+/* The maximum Ubik bytecode version that this library supports. */
 #define CURRENT_ENCODING_VERSION 1
 
 /* Private data structures referenced by public data structures. */
@@ -96,7 +96,7 @@ union xl_atom
         xl_float f;
 };
 
-/* The base type of all data in Expel; it's a cons cell. */
+/* The base type of all data in Ubik; it's a cons cell. */
 struct xl_value
 {
         /* A bitset of the TAG_ constants. One each of the
