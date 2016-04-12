@@ -273,7 +273,9 @@ xl_dagc_alloc(
 no_ignore xl_error
 xl_value_new(struct xl_value **v)
 {
+#if XL_GC_DEBUG && XL_GC_DEBUG_V
         xl_error err;
+#endif
 
         xl_assert(gc_stats != NULL);
 
