@@ -17,8 +17,8 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include "expel/ast.h"
-#include "expel/resolve.h"
+#include "ubik/ast.h"
+#include "ubik/resolve.h"
 
 #include <inttypes.h>
 #include <stdio.h>

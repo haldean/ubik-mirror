@@ -17,14 +17,14 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include "expel/assert.h"
-#include "expel/dagc.h"
-#include "expel/env.h"
-#include "expel/expel.h"
-#include "expel/natives.h"
-#include "expel/types.h"
-#include "expel/util.h"
-#include "expel/value.h"
+#include "ubik/assert.h"
+#include "ubik/dagc.h"
+#include "ubik/env.h"
+#include "ubik/expel.h"
+#include "ubik/natives.h"
+#include "ubik/types.h"
+#include "ubik/util.h"
+#include "ubik/value.h"
 
 #include <inttypes.h>
 #include <string.h>
@@ -136,7 +136,7 @@ _native_unsigned_add(struct xl_env *env, struct xl_dagc *graph)
 #define DEF_OP uadd
 #define DEF_OP_EVAL _native_unsigned_add
 #define DEF_OP_URI "uadd"
-#include "expel/def-native.h"
+#include "ubik/def-native.h"
 
 static xl_error
 _native_unsigned_subtract(struct xl_env *env, struct xl_dagc *graph)
@@ -174,7 +174,7 @@ _native_unsigned_subtract(struct xl_env *env, struct xl_dagc *graph)
 #define DEF_ARG_TYPE xl_type_word
 #define DEF_OP_EVAL _native_unsigned_subtract
 #define DEF_OP_URI "usub"
-#include "expel/def-native.h"
+#include "ubik/def-native.h"
 
 static xl_error
 _native_concat(struct xl_env *env, struct xl_dagc *graph)
@@ -226,7 +226,7 @@ _native_concat(struct xl_env *env, struct xl_dagc *graph)
 #define DEF_ARG_TYPE xl_type_string
 #define DEF_OP_EVAL _native_concat
 #define DEF_OP_URI "concat"
-#include "expel/def-native.h"
+#include "ubik/def-native.h"
 
 static xl_error
 _native_emit(struct xl_env *env, struct xl_dagc *graph)
@@ -261,7 +261,7 @@ _native_emit(struct xl_env *env, struct xl_dagc *graph)
 #define DEF_ARG_TYPE xl_type_string
 #define DEF_OP_EVAL _native_emit
 #define DEF_OP_URI "emit"
-#include "expel/def-native.h"
+#include "ubik/def-native.h"
 
 static xl_error
 _native_eq(struct xl_env *env, struct xl_dagc *graph)
@@ -335,7 +335,7 @@ _native_eq(struct xl_env *env, struct xl_dagc *graph)
 #define DEF_ARG_TYPE xl_type_word
 #define DEF_OP_EVAL _native_eq
 #define DEF_OP_URI "eq"
-#include "expel/def-native.h"
+#include "ubik/def-native.h"
 
 no_ignore static xl_error
 _native_humanize_float(struct xl_env *env, struct xl_dagc *graph)

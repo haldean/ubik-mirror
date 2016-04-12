@@ -23,10 +23,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "expel/expel.h"
-#include "expel/stream.h"
-#include "expel/util.h"
-#include "expel/value.h"
+#include "ubik/expel.h"
+#include "ubik/stream.h"
+#include "ubik/util.h"
+#include "ubik/value.h"
 
 bool
 xl_value_eq(struct xl_value *v1, struct xl_value *v2)

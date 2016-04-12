@@ -18,8 +18,8 @@
  */
 
 #include <stdlib.h>
-#include "expel/parse.h"
-#include "expel/streamutil.h"
+#include "ubik/parse.h"
+#include "ubik/streamutil.h"
 #include "grammar.h"
 
 /* autotools doesn't yet support flex headers, so we have to declare these

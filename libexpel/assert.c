@@ -17,7 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include "expel/assert.h"
+#include "ubik/assert.h"
 
 int
 break_on_assert()

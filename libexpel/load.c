@@ -17,12 +17,12 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include "expel/assert.h"
-#include "expel/dagc.h"
-#include "expel/env.h"
-#include "expel/expel.h"
-#include "expel/stream.h"
-#include "expel/util.h"
+#include "ubik/assert.h"
+#include "ubik/dagc.h"
+#include "ubik/env.h"
+#include "ubik/expel.h"
+#include "ubik/stream.h"
+#include "ubik/util.h"
 
 #include <arpa/inet.h>
 #include <stdlib.h>

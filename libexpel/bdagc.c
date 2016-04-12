@@ -17,8 +17,8 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include "expel/assert.h"
-#include "expel/bdagc.h"
+#include "ubik/assert.h"
+#include "ubik/bdagc.h"
 
 #include <stdlib.h>
 #include <string.h>

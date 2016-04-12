@@ -21,11 +21,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "expel/assert.h"
-#include "expel/dagc.h"
-#include "expel/env.h"
-#include "expel/schedule.h"
-#include "expel/util.h"
+#include "ubik/assert.h"
+#include "ubik/dagc.h"
+#include "ubik/env.h"
+#include "ubik/schedule.h"
+#include "ubik/util.h"
 
 struct xl_scheduler
 {

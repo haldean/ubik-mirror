@@ -28,16 +28,16 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "expel/assert.h"
-#include "expel/dagc.h"
-#include "expel/expel.h"
-#include "expel/gc.h"
-#include "expel/pointerset.h"
-#include "expel/stream.h"
-#include "expel/uri.h"
-#include "expel/util.h"
-#include "expel/vector.h"
-#include "expel/value.h"
+#include "ubik/assert.h"
+#include "ubik/dagc.h"
+#include "ubik/expel.h"
+#include "ubik/gc.h"
+#include "ubik/pointerset.h"
+#include "ubik/stream.h"
+#include "ubik/uri.h"
+#include "ubik/util.h"
+#include "ubik/vector.h"
+#include "ubik/value.h"
 
 static struct xl_gc_info *gc_stats;
 

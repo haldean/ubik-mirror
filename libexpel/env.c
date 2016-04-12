@@ -20,10 +20,10 @@
 #include <math.h>
 #include <string.h>
 
-#include "expel/assert.h"
-#include "expel/expel.h"
-#include "expel/env.h"
-#include "expel/util.h"
+#include "ubik/assert.h"
+#include "ubik/expel.h"
+#include "ubik/env.h"
+#include "ubik/util.h"
 
 #define ENV_MAX_LOAD 0.5
 #define ENV_INIT_CAP 8

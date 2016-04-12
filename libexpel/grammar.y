@@ -19,10 +19,10 @@
 
 %{
 
-#include "expel/expel.h"
-#include "expel/ast.h"
-#include "expel/parse.h"
-#include "expel/util.h"
+#include "ubik/expel.h"
+#include "ubik/ast.h"
+#include "ubik/parse.h"
+#include "ubik/util.h"
 
 #include <stdio.h>
 #include <stdlib.h>

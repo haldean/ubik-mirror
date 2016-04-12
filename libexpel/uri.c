@@ -20,10 +20,10 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "expel/assert.h"
-#include "expel/expel.h"
-#include "expel/uri.h"
-#include "expel/value.h"
+#include "ubik/assert.h"
+#include "ubik/expel.h"
+#include "ubik/uri.h"
+#include "ubik/value.h"
 
 no_ignore static xl_error
 _set_hash(struct xl_uri *uri)

@@ -21,13 +21,13 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "expel/ast.h"
-#include "expel/closure.h"
-#include "expel/env.h"
-#include "expel/natives.h"
-#include "expel/resolve.h"
-#include "expel/streamutil.h"
-#include "expel/util.h"
+#include "ubik/ast.h"
+#include "ubik/closure.h"
+#include "ubik/env.h"
+#include "ubik/natives.h"
+#include "ubik/resolve.h"
+#include "ubik/streamutil.h"
+#include "ubik/util.h"
 
 no_ignore xl_error
 assign_all_initial_scopes(

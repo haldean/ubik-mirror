@@ -17,13 +17,13 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include "expel/assert.h"
-#include "expel/dagc.h"
-#include "expel/env.h"
-#include "expel/expel.h"
-#include "expel/types.h"
-#include "expel/util.h"
-#include "expel/value.h"
+#include "ubik/assert.h"
+#include "ubik/dagc.h"
+#include "ubik/env.h"
+#include "ubik/expel.h"
+#include "ubik/types.h"
+#include "ubik/util.h"
+#include "ubik/value.h"
 
 no_ignore static xl_error
 _eval_apply(struct xl_env *env, struct xl_dagc_apply *node)

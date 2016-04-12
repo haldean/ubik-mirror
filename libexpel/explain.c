@@ -21,10 +21,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "expel/dagc.h"
-#include "expel/expel.h"
-#include "expel/uri.h"
-#include "expel/util.h"
+#include "ubik/dagc.h"
+#include "ubik/expel.h"
+#include "ubik/uri.h"
+#include "ubik/util.h"
 
 char *
 xl_node_explain(struct xl_dagc_node *node)

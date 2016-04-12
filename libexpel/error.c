@@ -20,8 +20,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "expel/expel.h"
-#include "expel/util.h"
+#include "ubik/expel.h"
+#include "ubik/util.h"
 
 xl_error
 xl_error_new(

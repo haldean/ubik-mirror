@@ -21,10 +21,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "expel/assert.h"
-#include "expel/dagc.h"
-#include "expel/expel.h"
-#include "expel/util.h"
+#include "ubik/assert.h"
+#include "ubik/dagc.h"
+#include "ubik/expel.h"
+#include "ubik/util.h"
 
 no_ignore xl_error
 xl_dagc_new(struct xl_dagc **graph, size_t n_nodes)

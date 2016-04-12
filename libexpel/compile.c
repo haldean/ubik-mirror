@@ -22,12 +22,12 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "expel/compile.h"
-#include "expel/gen.h"
-#include "expel/parse.h"
-#include "expel/resolve.h"
-#include "expel/string.h"
-#include "expel/util.h"
+#include "ubik/compile.h"
+#include "ubik/gen.h"
+#include "ubik/parse.h"
+#include "ubik/resolve.h"
+#include "ubik/string.h"
+#include "ubik/util.h"
 
 
 no_ignore xl_error

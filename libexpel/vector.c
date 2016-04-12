@@ -19,8 +19,8 @@
 
 #include <stdlib.h>
 #include <strings.h>
-#include "expel/util.h"
-#include "expel/vector.h"
+#include "ubik/util.h"
+#include "ubik/vector.h"
 
 no_ignore xl_error
 xl_vector_ensure_size(struct xl_vector *v, size_t size)

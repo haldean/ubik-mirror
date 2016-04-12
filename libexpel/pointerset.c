@@ -22,7 +22,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "expel/pointerset.h"
+#include "ubik/pointerset.h"
 
 no_ignore static xl_error
 _pointer_set_grow(struct xl_vector *set)

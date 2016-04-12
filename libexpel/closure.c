@@ -19,10 +19,10 @@
 
 #include <string.h>
 
-#include "expel/assert.h"
-#include "expel/ast.h"
-#include "expel/closure.h"
-#include "expel/resolve.h"
+#include "ubik/assert.h"
+#include "ubik/ast.h"
+#include "ubik/closure.h"
+#include "ubik/resolve.h"
 
 /* A brief digression into the algorithm at play here.
  *

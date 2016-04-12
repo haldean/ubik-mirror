@@ -18,7 +18,7 @@
  */
 
 #include <strings.h>
-#include "expel/streamutil.h"
+#include "ubik/streamutil.h"
 
 #define GET_LINE_BUF_SIZE 1024
 

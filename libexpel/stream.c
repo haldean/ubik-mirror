@@ -21,8 +21,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "expel/stream.h"
-#include "expel/util.h"
+#include "ubik/stream.h"
+#include "ubik/util.h"
 
 /* Opens a stream for reading from the given file. */
 no_ignore xl_error
