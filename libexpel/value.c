@@ -161,6 +161,26 @@ xl_value_pack_string(struct xl_value *dest, char *src, size_t n)
         return OK;
 }
 
+static xl_error
+_print_ascii_word(struct xl_stream *out, xl_word word)
+{
+        size_t written;
+        size_t buflen;
+        size_t i;
+        char *buf;
+
+        buf = xl_word_explain(word);
+        buflen = strlen(buf);
+        for (i = 0; i < buflen; i++)
+                if (buf[i] < ' ' || buf[i] > 'z')
+                        return OK;
+        written = xl_stream_write(out, buf, buflen);
+        if (written != buflen)
+                return xl_raise(ERR_WRITE_FAILED, "print value");
+        free(buf);
+        return OK;
+}
+
 no_ignore xl_error
 xl_value_print(struct xl_stream *out, struct xl_value *v)
 {
@@ -179,10 +199,13 @@ xl_value_print(struct xl_stream *out, struct xl_value *v)
 
         if (v->tag & TAG_LEFT_WORD)
         {
-                n = snprintf(buf, 64, "0x%" PRIX64, v->left.w);
+                n = snprintf(buf, 64, "0x%" PRIX64 "/", v->left.w);
                 written = xl_stream_write(out, buf, n);
                 if (written != n)
                         return xl_raise(ERR_WRITE_FAILED, "print value");
+                err = _print_ascii_word(out, v->left.w);
+                if (err != OK)
+                        return err;
         }
         else if (v->tag & TAG_LEFT_NODE)
         {
@@ -199,10 +222,13 @@ xl_value_print(struct xl_stream *out, struct xl_value *v)
 
         if (v->tag & TAG_RIGHT_WORD)
         {
-                n = snprintf(buf, 64, "0x%" PRIX64, v->right.w);
+                n = snprintf(buf, 64, "0x%" PRIX64 "/", v->right.w);
                 written = xl_stream_write(out, buf, n);
                 if (written != n)
                         return xl_raise(ERR_WRITE_FAILED, "print value");
+                err = _print_ascii_word(out, v->right.w);
+                if (err != OK)
+                        return err;
         }
         else if (v->tag & TAG_RIGHT_NODE)
         {
