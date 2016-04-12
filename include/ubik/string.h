@@ -23,7 +23,7 @@
 /* Splits a NULL-terminated string into multiple smaller NULL-terminated
  * strings, each separated by the delim character. */
 no_ignore xl_error
-xl_string_split(
+ubik_string_split(
         char ***out,
         size_t *n_out,
         char *in,
@@ -32,7 +32,7 @@ xl_string_split(
 
 /* Joins two NULL-terminated path segments into a single path. */
 no_ignore xl_error
-xl_string_path_concat(
+ubik_string_path_concat(
         char **out,
         char *first,
         char *second);

@@ -31,16 +31,16 @@ struct xl_graph_builder
 };
 
 no_ignore xl_error
-xl_bdagc_init(struct xl_graph_builder *b);
+ubik_bdagc_init(struct xl_graph_builder *b);
 
 /* Adds a node to the graph. */
 no_ignore xl_error
-xl_bdagc_push_node(
+ubik_bdagc_push_node(
         struct xl_graph_builder *b,
         struct xl_dagc_node *node);
 
 /* Builds the graph. */
 no_ignore xl_error
-xl_bdagc_build(
+ubik_bdagc_build(
         struct xl_dagc **graph,
         struct xl_graph_builder *b);

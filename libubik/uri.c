@@ -42,7 +42,7 @@ _set_hash(struct xl_uri *uri)
 }
 
 no_ignore xl_error
-xl_uri_unknown(
+ubik_uri_unknown(
         struct xl_uri *uri,
         char *name)
 {
@@ -65,7 +65,7 @@ xl_uri_unknown(
 }
 
 no_ignore xl_error
-xl_uri_user(
+ubik_uri_user(
         struct xl_uri *uri,
         char *name)
 {
@@ -88,7 +88,7 @@ xl_uri_user(
 }
 
 no_ignore xl_error
-xl_uri_package(
+ubik_uri_package(
         struct xl_uri *uri,
         char *package,
         char *name)
@@ -116,7 +116,7 @@ xl_uri_package(
 }
 
 no_ignore xl_error
-xl_uri_native(
+ubik_uri_native(
         struct xl_uri *uri,
         char *name)
 {
@@ -139,7 +139,7 @@ xl_uri_native(
 }
 
 bool
-xl_uri_eq(struct xl_uri *u0, struct xl_uri *u1)
+ubik_uri_eq(struct xl_uri *u0, struct xl_uri *u1)
 {
         if (u0->hash != u1->hash)
                 return false;
@@ -164,7 +164,7 @@ xl_uri_eq(struct xl_uri *u0, struct xl_uri *u1)
 }
 
 no_ignore xl_error
-xl_uri_from_value(struct xl_uri *uri, struct xl_value *uri_val)
+ubik_uri_from_value(struct xl_uri *uri, struct xl_value *uri_val)
 {
         xl_error err;
         struct xl_value *uri_right, *uri_left;
@@ -210,7 +210,7 @@ xl_uri_from_value(struct xl_uri *uri, struct xl_value *uri_val)
 }
 
 no_ignore xl_error
-xl_uri_attach_value(struct xl_uri *uri)
+ubik_uri_attach_value(struct xl_uri *uri)
 {
         xl_error err;
         struct xl_value *name;
@@ -239,7 +239,7 @@ xl_uri_attach_value(struct xl_uri *uri)
 }
 
 no_ignore xl_error
-xl_uri_parse(struct xl_uri *uri, char *str)
+ubik_uri_parse(struct xl_uri *uri, char *str)
 {
         xl_word scope;
         size_t scope_len;
@@ -292,7 +292,7 @@ xl_uri_parse(struct xl_uri *uri, char *str)
 }
 
 char *
-xl_uri_explain(struct xl_uri *uri)
+ubik_uri_explain(struct xl_uri *uri)
 {
         int aspr_res;
         char *res;

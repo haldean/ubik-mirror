@@ -91,7 +91,7 @@ _pointer_set_index(size_t *index, struct xl_vector *set, void *item)
 }
 
 no_ignore xl_error
-xl_pointer_set_add(bool *added, struct xl_vector *set, void *item)
+ubik_pointer_set_add(bool *added, struct xl_vector *set, void *item)
 {
         size_t insert_at;
         xl_error err;
@@ -128,7 +128,7 @@ xl_pointer_set_add(bool *added, struct xl_vector *set, void *item)
 }
 
 no_ignore xl_error
-xl_pointer_set_present(bool *present, struct xl_vector *set, void *item)
+ubik_pointer_set_present(bool *present, struct xl_vector *set, void *item)
 {
         size_t index;
         xl_error err;
@@ -147,7 +147,7 @@ xl_pointer_set_present(bool *present, struct xl_vector *set, void *item)
 }
 
 no_ignore xl_error
-xl_pointer_set_find(size_t *ret_index, struct xl_vector *set, void *item)
+ubik_pointer_set_find(size_t *ret_index, struct xl_vector *set, void *item)
 {
         size_t index;
         xl_error err;
@@ -165,7 +165,7 @@ xl_pointer_set_find(size_t *ret_index, struct xl_vector *set, void *item)
 }
 
 void
-xl_pointer_set_free(struct xl_vector *set)
+ubik_pointer_set_free(struct xl_vector *set)
 {
         free(set->elems);
         bzero(set, sizeof(*set));

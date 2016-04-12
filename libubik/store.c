@@ -110,7 +110,7 @@ _store_value(
 }
 
 no_ignore xl_error
-xl_value_save(struct xl_stream *sp, struct xl_value *in)
+ubik_value_save(struct xl_stream *sp, struct xl_value *in)
 {
         return _store_value(sp, in, NULL);
 }
@@ -535,7 +535,7 @@ _store_graph(
 }
 
 no_ignore xl_error
-xl_save(struct xl_stream *sp, struct xl_dagc **in_graphs, size_t n_in_graphs)
+ubik_save(struct xl_stream *sp, struct xl_dagc **in_graphs, size_t n_in_graphs)
 {
         local(vector) struct xl_vector graphs = {0};
         local(vector) struct xl_vector values = {0};

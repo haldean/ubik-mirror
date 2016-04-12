@@ -41,38 +41,38 @@ struct xl_stream {
 
 /* Opens a stream for reading from the given file. */
 no_ignore xl_error
-xl_stream_rfile(struct xl_stream *sp, char *file);
+ubik_stream_rfile(struct xl_stream *sp, char *file);
 
 /* Opens a stream for writing to the given file. */
 no_ignore xl_error
-xl_stream_wfile(struct xl_stream *sp, char *file);
+ubik_stream_wfile(struct xl_stream *sp, char *file);
 
 /* Opens a stream for reading from the given file pointer. */
 no_ignore xl_error
-xl_stream_rfilep(struct xl_stream *sp, FILE *file);
+ubik_stream_rfilep(struct xl_stream *sp, FILE *file);
 
 /* Opens a stream for writing to the given file pointer. */
 no_ignore xl_error
-xl_stream_wfilep(struct xl_stream *sp, FILE *file);
+ubik_stream_wfilep(struct xl_stream *sp, FILE *file);
 
 /* Opens a stream backed by an in-memory buffer. */
 no_ignore xl_error
-xl_stream_buffer(struct xl_stream *sp);
+ubik_stream_buffer(struct xl_stream *sp);
 
 /* Attempts to read the specified number of bytes from the stream, returning the
  * number of bytes read. */
 no_ignore size_t
-xl_stream_read(void *dst, struct xl_stream *src, size_t len);
+ubik_stream_read(void *dst, struct xl_stream *src, size_t len);
 
 /* Attempts to write the specified number of bytes to the stream, returning the
  * number of bytes written. */
 no_ignore size_t
-xl_stream_write(struct xl_stream *dst, void *src, size_t len);
+ubik_stream_write(struct xl_stream *dst, void *src, size_t len);
 
 /* Drops a number of bytes from the stream, returning the number of bytes
  * dropped successfully. */
 no_ignore size_t
-xl_stream_drop(struct xl_stream *src, size_t len);
+ubik_stream_drop(struct xl_stream *src, size_t len);
 
 /* Gets a file pointer representing the contents of the stream.
  *
@@ -80,16 +80,16 @@ xl_stream_drop(struct xl_stream *src, size_t len);
  * assumptions about the location of the read/write heads in this stream;
  * instead, you should seek it to wherever you need the stream head to be. */
 FILE *
-xl_stream_fp(struct xl_stream *sp);
+ubik_stream_fp(struct xl_stream *sp);
 
 /* Resets a stream to the start.
  *
  * In some cases this may be equivalent to closing and reopening the stream. */
 void
-xl_stream_reset(struct xl_stream *sp);
+ubik_stream_reset(struct xl_stream *sp);
 
 /* Closes a stream. */
 void
-xl_stream_close(struct xl_stream *sp);
+ubik_stream_close(struct xl_stream *sp);
 
 #endif

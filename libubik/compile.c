@@ -31,7 +31,7 @@
 
 
 no_ignore xl_error
-xl_compile_env_default(struct xl_compilation_env *cenv)
+ubik_compile_env_default(struct xl_compilation_env *cenv)
 {
         char *scratch_dir;
         char *include_dirs;
@@ -68,7 +68,7 @@ xl_compile_env_default(struct xl_compilation_env *cenv)
 }
 
 no_ignore xl_error
-xl_compile_env_free(struct xl_compilation_env *cenv)
+ubik_compile_env_free(struct xl_compilation_env *cenv)
 {
         size_t i;
 
@@ -82,7 +82,7 @@ xl_compile_env_free(struct xl_compilation_env *cenv)
 }
 
 no_ignore xl_error
-xl_compile(
+ubik_compile(
         struct xl_dagc ***graphs,
         size_t *n_graphs,
         char *source_name,
@@ -220,7 +220,7 @@ _add_requirement(
 }
 
 no_ignore xl_error
-xl_compile_ast(
+ubik_compile_ast(
         struct xl_dagc ***graphs,
         size_t *n_graphs,
         struct xl_ast *ast,

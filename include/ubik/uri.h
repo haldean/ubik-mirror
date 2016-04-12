@@ -44,48 +44,48 @@ struct xl_uri {
 
 /* Creates a URI for a resource of unknown scope. */
 no_ignore xl_error
-xl_uri_unknown(
+ubik_uri_unknown(
         struct xl_uri *uri,
         char *name);
 
 /* Creates a URI for a local resource. */
 no_ignore xl_error
-xl_uri_user(
+ubik_uri_user(
         struct xl_uri *uri,
         char *name);
 
 /* Creates a URI for a package-scoped resource. */
 no_ignore xl_error
-xl_uri_package(
+ubik_uri_package(
         struct xl_uri *uri,
         char *package,
         char *name);
 
 /* Creates a URI for a global, runtime-provided resource. */
 no_ignore xl_error
-xl_uri_native(
+ubik_uri_native(
         struct xl_uri *uri,
         char *name);
 
 /* Creates a URI struct from a value-encoded URI. */
 no_ignore xl_error
-xl_uri_from_value(struct xl_uri *uri, struct xl_value *uri_val);
+ubik_uri_from_value(struct xl_uri *uri, struct xl_value *uri_val);
 
 /* Returns true if the provided URIs are equal. */
 bool
-xl_uri_eq(struct xl_uri *u0, struct xl_uri *u1);
+ubik_uri_eq(struct xl_uri *u0, struct xl_uri *u1);
 
 /* Generates a value representation for the URI and stores it in the URI's
  * as_value field. If the field is already initialized, this function is a
  * no-op. */
 no_ignore xl_error
-xl_uri_attach_value(struct xl_uri *uri);
+ubik_uri_attach_value(struct xl_uri *uri);
 
 /* Parses a URI string into a URI struct. Returns struct has no references;
  * caller must take a reference to it. */
 no_ignore xl_error
-xl_uri_parse(struct xl_uri *uri, char *str);
+ubik_uri_parse(struct xl_uri *uri, char *str);
 
 /* Creates a string representation of a URI. */
 char *
-xl_uri_explain(struct xl_uri *uri);
+ubik_uri_explain(struct xl_uri *uri);

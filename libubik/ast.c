@@ -29,7 +29,7 @@
 
 /* Allocates a new AST. */
 no_ignore xl_error
-xl_ast_new(struct xl_ast **ast)
+ubik_ast_new(struct xl_ast **ast)
 {
         check_alloc(*ast, 1, struct xl_ast);
         return OK;
@@ -241,7 +241,7 @@ _free_import_list(struct xl_ast_import_list *import_list)
 }
 
 no_ignore xl_error
-xl_ast_free(struct xl_ast *ast)
+ubik_ast_free(struct xl_ast *ast)
 {
         size_t i;
         xl_error err;
@@ -281,19 +281,19 @@ xl_ast_free(struct xl_ast *ast)
 }
 
 no_ignore xl_error
-xl_ast_bind(struct xl_ast *ast, struct xl_ast_binding *bind)
+ubik_ast_bind(struct xl_ast *ast, struct xl_ast_binding *bind)
 {
         return xl_vector_append(&ast->bindings, bind);
 }
 
 no_ignore xl_error
-xl_ast_add_type(struct xl_ast *ast, struct xl_ast_type *type)
+ubik_ast_add_type(struct xl_ast *ast, struct xl_ast_type *type)
 {
         return xl_vector_append(&ast->types, type);
 }
 
 no_ignore xl_error
-xl_ast_atom_new_qualified(
+ubik_ast_atom_new_qualified(
         struct xl_ast_atom **atom,
         char *name)
 {
@@ -337,7 +337,7 @@ xl_ast_atom_new_qualified(
 }
 
 no_ignore xl_error
-xl_ast_import(
+ubik_ast_import(
         struct xl_ast *ast,
         struct xl_ast_import_list *import_list)
 {
@@ -347,7 +347,7 @@ xl_ast_import(
 }
 
 no_ignore xl_error
-xl_ast_subexprs(
+ubik_ast_subexprs(
         struct xl_ast **subast,
         struct xl_ast_expr **subexprs,
         size_t *n_subexprs,
@@ -392,7 +392,7 @@ xl_ast_subexprs(
 }
 
 void
-xl_ast_merge_loc(
+ubik_ast_merge_loc(
         struct xl_ast_loc *res,
         struct xl_ast_loc *l1,
         struct xl_ast_loc *l2)

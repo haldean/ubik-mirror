@@ -26,7 +26,7 @@
 
 /* Opens a stream for reading from the given file. */
 no_ignore xl_error
-xl_stream_rfile(struct xl_stream *sp, char *file)
+ubik_stream_rfile(struct xl_stream *sp, char *file)
 {
         sp->stream_type = STREAM_TYPE_FILE_R;
         sp->file = fopen(file, "r");
@@ -35,7 +35,7 @@ xl_stream_rfile(struct xl_stream *sp, char *file)
 
 /* Opens a stream for writing to the given file. */
 no_ignore xl_error
-xl_stream_wfile(struct xl_stream *sp, char *file)
+ubik_stream_wfile(struct xl_stream *sp, char *file)
 {
         sp->stream_type = STREAM_TYPE_FILE_W;
         sp->file = fopen(file, "w");
@@ -43,7 +43,7 @@ xl_stream_wfile(struct xl_stream *sp, char *file)
 }
 
 no_ignore xl_error
-xl_stream_rfilep(struct xl_stream *sp, FILE *file)
+ubik_stream_rfilep(struct xl_stream *sp, FILE *file)
 {
         sp->stream_type = STREAM_TYPE_FILE_R;
         sp->file = file;
@@ -51,7 +51,7 @@ xl_stream_rfilep(struct xl_stream *sp, FILE *file)
 }
 
 no_ignore xl_error
-xl_stream_wfilep(struct xl_stream *sp, FILE *file)
+ubik_stream_wfilep(struct xl_stream *sp, FILE *file)
 {
         sp->stream_type = STREAM_TYPE_FILE_W;
         sp->file = file;
@@ -60,7 +60,7 @@ xl_stream_wfilep(struct xl_stream *sp, FILE *file)
 
 /* Opens a stream backed by an in-memory buffer. */
 no_ignore xl_error
-xl_stream_buffer(struct xl_stream *sp)
+ubik_stream_buffer(struct xl_stream *sp)
 {
         sp->stream_type = STREAM_TYPE_BUFFER;
         sp->buffer = calloc(1, sizeof(struct _xl_buf));
@@ -70,7 +70,7 @@ xl_stream_buffer(struct xl_stream *sp)
 /* Attempts to read the specified number of bytes from the stream, returning the
  * number of bytes read. */
 no_ignore size_t
-xl_stream_read(void *dst, struct xl_stream *src, size_t len)
+ubik_stream_read(void *dst, struct xl_stream *src, size_t len)
 {
         size_t n;
         switch (src->stream_type)
@@ -89,7 +89,7 @@ xl_stream_read(void *dst, struct xl_stream *src, size_t len)
 }
 
 no_ignore size_t
-xl_stream_drop(struct xl_stream *src, size_t len)
+ubik_stream_drop(struct xl_stream *src, size_t len)
 {
         size_t n;
         switch (src->stream_type)
@@ -136,7 +136,7 @@ _buf_realloc(struct _xl_buf *buf, size_t req_len)
 /* Attempts to write the specified number of bytes to the stream, returning the
  * number of bytes written. */
 size_t
-xl_stream_write(struct xl_stream *dst, void *src, size_t len)
+ubik_stream_write(struct xl_stream *dst, void *src, size_t len)
 {
         size_t written;
         xl_error err;
@@ -166,7 +166,7 @@ xl_stream_write(struct xl_stream *dst, void *src, size_t len)
 
 /* Closes a stream. */
 void
-xl_stream_close(struct xl_stream *sp)
+ubik_stream_close(struct xl_stream *sp)
 {
         switch (sp->stream_type)
         {
@@ -183,7 +183,7 @@ xl_stream_close(struct xl_stream *sp)
 }
 
 FILE *
-xl_stream_fp(struct xl_stream *sp)
+ubik_stream_fp(struct xl_stream *sp)
 {
         switch (sp->stream_type)
         {
@@ -205,7 +205,7 @@ xl_stream_fp(struct xl_stream *sp)
 }
 
 void
-xl_stream_reset(struct xl_stream *sp)
+ubik_stream_reset(struct xl_stream *sp)
 {
         switch (sp->stream_type)
         {

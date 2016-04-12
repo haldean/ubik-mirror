@@ -27,7 +27,7 @@
 #include "ubik/util.h"
 
 no_ignore xl_error
-xl_dagc_new(struct xl_dagc **graph, size_t n_nodes)
+ubik_dagc_new(struct xl_dagc **graph, size_t n_nodes)
 {
         return xl_dagc_alloc(
                 graph, n_nodes, sizeof(struct xl_dagc), NULL);
@@ -40,7 +40,7 @@ xl_dagc_new(struct xl_dagc **graph, size_t n_nodes)
  * filled in with a pointer and d2 will be set to NULL. For nodes
  * with no dependencies, both will be NULL. */
 no_ignore xl_error
-xl_dagc_get_deps(
+ubik_dagc_get_deps(
                 struct xl_dagc_node **d1,
                 struct xl_dagc_node **d2,
                 struct xl_dagc_node **d3,
@@ -180,7 +180,7 @@ _add_parent(
 }
 
 no_ignore xl_error
-xl_dagc_init(struct xl_dagc *graph)
+ubik_dagc_init(struct xl_dagc *graph)
 {
         struct xl_dagc_node *p, *d1, *d2, *d3;
         struct xl_dagc_adjacency *adj;
@@ -306,7 +306,7 @@ xl_dagc_init(struct xl_dagc *graph)
 }
 
 no_ignore xl_error
-xl_dagc_get_parents(
+ubik_dagc_get_parents(
         struct xl_dagc_node ***parents,
         size_t *n_parents,
         struct xl_dagc *graph,
@@ -328,7 +328,7 @@ xl_dagc_get_parents(
 }
 
 no_ignore xl_error
-xl_dagc_node_sizeof(
+ubik_dagc_node_sizeof(
         size_t *size,
         struct xl_dagc_node *node)
 {
@@ -385,7 +385,7 @@ _replace_ref(
 }
 
 no_ignore xl_error
-xl_dagc_replace_node_refs(
+ubik_dagc_replace_node_refs(
         struct xl_dagc_node *node,
         struct xl_dagc_node **proto,
         struct xl_dagc_node **copied,
@@ -481,7 +481,7 @@ _increment_value_refs(struct xl_dagc_node *node)
 }
 
 no_ignore xl_error
-xl_dagc_copy(
+ubik_dagc_copy(
         struct xl_dagc **res_ptr,
         struct xl_dagc *proto)
 {

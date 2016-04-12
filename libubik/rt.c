@@ -22,8 +22,8 @@
 #include "ubik/gc.h"
 #include "ubik/natives.h"
 
-xl_error
-xl_start()
+ubik_error
+ubik_start()
 {
         xl_error err;
 
@@ -36,8 +36,8 @@ xl_start()
         return OK;
 }
 
-xl_error
-xl_teardown()
+ubik_error
+ubik_teardown()
 {
         xl_error err;
 

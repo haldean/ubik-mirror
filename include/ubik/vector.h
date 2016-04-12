@@ -30,12 +30,12 @@ struct xl_vector
 
 /* Ensures that the vector has the capacity to hold at least the given size. */
 no_ignore xl_error
-xl_vector_ensure_size(struct xl_vector *, size_t size);
+ubik_vector_ensure_size(struct xl_vector *, size_t size);
 
 /* Appends an element onto the list. */
 no_ignore xl_error
-xl_vector_append(struct xl_vector *, void *elem);
+ubik_vector_append(struct xl_vector *, void *elem);
 
 /* Frees all memory associated with a vector. */
 void
-xl_vector_free(struct xl_vector *);
+ubik_vector_free(struct xl_vector *);

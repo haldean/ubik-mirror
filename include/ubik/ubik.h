@@ -190,13 +190,13 @@ struct xl_dagc
  *
  * Returns OK on success. */
 no_ignore xl_error
-xl_start();
+ubik_start();
 
 /* Stops the ubik runtime.
  *
  * Returns OK on success. */
 no_ignore xl_error
-xl_teardown();
+ubik_teardown();
 
 /* Creates a new value.
  *
@@ -204,13 +204,13 @@ xl_teardown();
  * not need to take the result. This may result in an allocation
  * but is not guaranteed to; xl_values are allocated in pages. */
 no_ignore xl_error
-xl_value_new(struct xl_value **v);
+ubik_value_new(struct xl_value **v);
 
 /* Takes a reference to the given tree or graph.
  *
  * Returns OK on success, or a nonzero error code on failure. */
 no_ignore xl_error
-xl_take(void *v);
+ubik_take(void *v);
 
 /* Releases a reference to the given tree or graph.
  *
@@ -220,19 +220,19 @@ xl_take(void *v);
  * graph and the releaser was the last owner of the graph, this
  * will free the graph. */
 no_ignore xl_error
-xl_release(void *v);
+ubik_release(void *v);
 
 /* Loads an ubik bytecode blob from a stream.
  *
  * Returns OK on success, or a nonzero error word. */
 no_ignore xl_error
-xl_load(struct xl_dagc ***out, size_t *n_graphs, struct xl_stream *sp);
+ubik_load(struct xl_dagc ***out, size_t *n_graphs, struct xl_stream *sp);
 
 /* Saves a list of graphs and all accessible subgraphs to a stream.
  *
  * Returns OK on success, or a nonzero error word. */
 no_ignore xl_error
-xl_save(struct xl_stream *sp, struct xl_dagc **graphs, size_t n);
+ubik_save(struct xl_stream *sp, struct xl_dagc **graphs, size_t n);
 
 /* Loads a tree from a stream.
  *
@@ -244,7 +244,7 @@ xl_save(struct xl_stream *sp, struct xl_dagc **graphs, size_t n);
  * The returned tree is not taken; it is up to the caller to take the
  * tree. Returns OK on success, or a nonzero error word. */
 no_ignore xl_error
-xl_value_load(struct xl_value *out, struct xl_stream *sp);
+ubik_value_load(struct xl_value *out, struct xl_stream *sp);
 
 /* Saves a tree to a stream.
  *
@@ -254,14 +254,14 @@ xl_value_load(struct xl_value *out, struct xl_stream *sp);
  *
  * Returns OK on success, or a nonzero error word. */
 no_ignore xl_error
-xl_value_save(struct xl_stream *sp, struct xl_value *in);
+ubik_value_save(struct xl_stream *sp, struct xl_value *in);
 
 /* Allocates a graph object.
  *
  * All graph objects must be allocated on the heap; call into this
  * method to allocate a graph of a given size. */
 no_ignore xl_error
-xl_dagc_new(struct xl_dagc **g, size_t n);
+ubik_dagc_new(struct xl_dagc **g, size_t n);
 
 /* Initializes derived quantities on graphs.
  *
@@ -273,17 +273,17 @@ xl_dagc_new(struct xl_dagc **g, size_t n);
  * of graph structs do not need to take a reference to the graph
  * after initialization. */
 no_ignore xl_error
-xl_dagc_init(struct xl_dagc *graph);
+ubik_dagc_init(struct xl_dagc *graph);
 
 /* Creates a string representation of a node.
  *
  * Useful for debugging, but not much else. */
 char *
-xl_node_explain(struct xl_dagc_node *n);
+ubik_node_explain(struct xl_dagc_node *n);
 
 /* Create an error object. */
-xl_error
-xl_error_new(
+ubik_error
+ubik_error_new(
         const xl_word code,
         const char *tag,
         const char *file,
@@ -292,7 +292,7 @@ xl_error_new(
 
 /* Creates a string representation of an error object. */
 char *
-xl_error_explain(xl_error err);
+ubik_error_explain(xl_error err);
 
 /* Raise an error with the current file and line populated. */
 #define xl_raise(code, tag) \

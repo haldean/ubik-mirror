@@ -37,7 +37,7 @@ enum xl_load_reason
 
 /* Frees a requirement list. */
 no_ignore xl_error
-xl_gen_requires_free(struct xl_gen_requires *);
+ubik_gen_requires_free(struct xl_gen_requires *);
 
 /* Compiles a single compilation unit down to a series of graphs.
  *
@@ -49,7 +49,7 @@ xl_gen_requires_free(struct xl_gen_requires *);
  * they're the main event), and uri_source is the source prefix to put on all of
  * the URIs for all the bindings in the AST. */
 no_ignore xl_error
-xl_compile_unit(
+ubik_compile_unit(
         struct xl_dagc ***graphs,
         size_t *n_graphs,
         struct xl_gen_requires **requires,

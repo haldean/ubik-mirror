@@ -23,7 +23,7 @@
 #include "ubik/vector.h"
 
 no_ignore xl_error
-xl_vector_ensure_size(struct xl_vector *v, size_t size)
+ubik_vector_ensure_size(struct xl_vector *v, size_t size)
 {
         size_t new_cap;
         void **new_elems;
@@ -54,7 +54,7 @@ xl_vector_ensure_size(struct xl_vector *v, size_t size)
 }
 
 no_ignore xl_error
-xl_vector_append(struct xl_vector *v, void *elem)
+ubik_vector_append(struct xl_vector *v, void *elem)
 {
         xl_error err;
 
@@ -67,7 +67,7 @@ xl_vector_append(struct xl_vector *v, void *elem)
 }
 
 void
-xl_vector_free(struct xl_vector *v)
+ubik_vector_free(struct xl_vector *v)
 {
         if (v != NULL && v->elems != NULL)
                 free(v->elems);

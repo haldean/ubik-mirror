@@ -39,7 +39,7 @@ size_min(size_t a, size_t b)
         return a < b ? a : b;
 }
 
-xl_word
+ubik_word
 htonw(xl_word w)
 {
 #ifdef __BYTE_ORDER__
@@ -62,7 +62,7 @@ htonw(xl_word w)
 #endif
 }
 
-xl_word
+ubik_word
 ntohw(xl_word w)
 {
 #ifdef __BYTE_ORDER__
@@ -87,7 +87,7 @@ ntohw(xl_word w)
 
 /* Obtain a backtrace and print it to stdout. */
 void
-xl_trace_print(void)
+ubik_trace_print(void)
 {
         void *array[40];
         size_t size;
@@ -97,7 +97,7 @@ xl_trace_print(void)
 }
 
 char *
-xl_word_explain(xl_word word)
+ubik_word_explain(xl_word word)
 {
         size_t i;
         char *res;

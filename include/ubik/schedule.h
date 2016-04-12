@@ -57,15 +57,15 @@ struct xl_exec_unit
 
 /* Creates a scheduler. */
 no_ignore xl_error
-xl_schedule_new(struct xl_scheduler **s);
+ubik_schedule_new(struct xl_scheduler **s);
 
 /* Destroys a scheduler. */
 no_ignore xl_error
-xl_schedule_free(struct xl_scheduler *s);
+ubik_schedule_free(struct xl_scheduler *s);
 
 /* Pushes a graph into the scheduler for execution. */
 no_ignore xl_error
-xl_schedule_push(
+ubik_schedule_push(
         struct xl_scheduler *s,
         struct xl_dagc *graph,
         struct xl_env *env,
@@ -73,12 +73,12 @@ xl_schedule_push(
 
 /* Marks an execution unit complete. */
 no_ignore xl_error
-xl_schedule_complete(struct xl_scheduler *s, struct xl_exec_unit *e);
+ubik_schedule_complete(struct xl_scheduler *s, struct xl_exec_unit *e);
 
 /* Runs all queued jobs on the scheduler. */
 no_ignore xl_error
-xl_schedule_run(struct xl_scheduler *s);
+ubik_schedule_run(struct xl_scheduler *s);
 
 /* Dumps information about what's scheduled to stdout. */
 no_ignore xl_error
-xl_schedule_dump(struct xl_scheduler *s);
+ubik_schedule_dump(struct xl_scheduler *s);

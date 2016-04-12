@@ -37,4 +37,4 @@ struct xl_parse_context
 };
 
 no_ignore xl_error
-xl_parse(struct xl_ast **ast, char *source_name, struct xl_stream *stream);
+ubik_parse(struct xl_ast **ast, char *source_name, struct xl_stream *stream);

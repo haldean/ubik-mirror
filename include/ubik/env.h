@@ -76,18 +76,18 @@ struct xl_env
 
 /* Initializes a new environment struct. */
 no_ignore xl_error
-xl_env_init(struct xl_env *env);
+ubik_env_init(struct xl_env *env);
 
 /* Creates a child environment from the given env. */
 no_ignore xl_error
-xl_env_make_child(struct xl_env *child, struct xl_env *parent);
+ubik_env_make_child(struct xl_env *child, struct xl_env *parent);
 
 /* Returns the root environment.
  *
  * This environment is the parent of any environment that isn't
  * explicitly created as a child. */
 struct xl_env *
-xl_env_get_root();
+ubik_env_get_root();
 
 /* Frees memory associated with the environment struct.
  *
@@ -97,7 +97,7 @@ xl_env_get_root();
  * with xl_get and xl_set after calling xl_env_free; this is a
  * clear operation that does not destroy the env. */
 no_ignore xl_error
-xl_env_free(struct xl_env *env);
+ubik_env_free(struct xl_env *env);
 
 /* Finds the value associated wth the given URI in the environment.
  *
@@ -106,7 +106,7 @@ xl_env_free(struct xl_env *env);
  * found, ERR_ABSENT is returned and the out pointer is unchanged.
  * */
 no_ignore xl_error
-xl_env_get(
+ubik_env_get(
         union xl_value_or_graph *value,
         struct xl_value **type,
         struct xl_env *env,
@@ -120,7 +120,7 @@ xl_env_get(
  * bindings but modifications to the value will modify the value
  * stored in the environment. */
 no_ignore xl_error
-xl_env_overwrite(
+ubik_env_overwrite(
         struct xl_env *env,
         struct xl_uri *uri,
         union xl_value_or_graph value,
@@ -137,7 +137,7 @@ xl_env_overwrite(
  * bindings but modifications to the value will modify the value
  * stored in the environment. */
 no_ignore xl_error
-xl_env_set(
+ubik_env_set(
         struct xl_env *env,
         struct xl_uri *uri,
         union xl_value_or_graph value,
@@ -145,14 +145,14 @@ xl_env_set(
 
 /* Returns true if the provided URI is present in the environment. */
 no_ignore xl_error
-xl_env_present(
+ubik_env_present(
         bool *is_present,
         struct xl_env *env,
         struct xl_uri *uri);
 
 /* Calls the provided callback function once for every item. */
 no_ignore xl_error
-xl_env_iterate(
+ubik_env_iterate(
         xl_env_cb callback,
         struct xl_env *env,
         void *callback_arg);
@@ -162,7 +162,7 @@ xl_env_iterate(
  * Note that a watch is only ever triggered once; after being triggered it is
  * removed from the list of watchers. */
 no_ignore xl_error
-xl_env_watch(
+ubik_env_watch(
         xl_env_cb callback,
         struct xl_env *env,
         struct xl_uri *uri,

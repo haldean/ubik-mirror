@@ -26,7 +26,7 @@
 #include <string.h>
 
 bool
-xl_type_satisfied(
+ubik_type_satisfied(
         struct xl_value *constraint,
         struct xl_value *type)
 {
@@ -35,7 +35,7 @@ xl_type_satisfied(
 }
 
 char *
-xl_type_explain(struct xl_value *type)
+ubik_type_explain(struct xl_value *type)
 {
         char *res;
         if (type->left.w == BASE_TYPE_WORD && type->right.w == 0)
@@ -62,7 +62,7 @@ xl_type_explain(struct xl_value *type)
 }
 
 no_ignore xl_error
-xl_type_func_apply(
+ubik_type_func_apply(
         struct xl_value *result,
         struct xl_value *func_type)
 {
@@ -75,7 +75,7 @@ xl_type_func_apply(
 }
 
 no_ignore xl_error
-xl_type_match_polyfunc(
+ubik_type_match_polyfunc(
         struct xl_dagc **result,
         struct xl_value *def,
         struct xl_value *arg_type)
@@ -107,7 +107,7 @@ xl_type_match_polyfunc(
 }
 
 bool
-xl_type_is_prim_word(struct xl_value *value)
+ubik_type_is_prim_word(struct xl_value *value)
 {
         return value->left.w == BASE_TYPE_WORD
                 || value->left.w == BASE_TYPE_SWORD
@@ -116,7 +116,7 @@ xl_type_is_prim_word(struct xl_value *value)
 }
 
 no_ignore xl_error
-xl_type_word(struct xl_value *value)
+ubik_type_word(struct xl_value *value)
 {
         value->tag |= TAG_LEFT_WORD | TAG_RIGHT_WORD;
         value->left.w = BASE_TYPE_WORD;
@@ -125,7 +125,7 @@ xl_type_word(struct xl_value *value)
 }
 
 no_ignore xl_error
-xl_type_string(struct xl_value *value)
+ubik_type_string(struct xl_value *value)
 {
         value->tag |= TAG_LEFT_WORD | TAG_RIGHT_WORD;
         value->left.w = BASE_TYPE_PACKED;
@@ -134,7 +134,7 @@ xl_type_string(struct xl_value *value)
 }
 
 no_ignore xl_error
-xl_type_bool(struct xl_value *value)
+ubik_type_bool(struct xl_value *value)
 {
         value->tag |= TAG_LEFT_WORD | TAG_RIGHT_WORD;
         value->left.w = BASE_TYPE_BOOL;
@@ -143,7 +143,7 @@ xl_type_bool(struct xl_value *value)
 }
 
 no_ignore xl_error
-xl_type_float(struct xl_value *value)
+ubik_type_float(struct xl_value *value)
 {
         value->tag |= TAG_LEFT_WORD | TAG_RIGHT_WORD;
         value->left.w = BASE_TYPE_FLOAT;
@@ -152,7 +152,7 @@ xl_type_float(struct xl_value *value)
 }
 
 no_ignore xl_error
-xl_type_tuple(
+ubik_type_tuple(
         struct xl_value *product,
         struct xl_value **field_types,
         size_t n_field_types)
@@ -182,7 +182,7 @@ xl_type_tuple(
 }
 
 no_ignore xl_error
-xl_type_builtin_from_name(
+ubik_type_builtin_from_name(
         struct xl_value *value,
         char *name)
 {

@@ -29,7 +29,7 @@
 #include "ubik/value.h"
 
 bool
-xl_value_eq(struct xl_value *v1, struct xl_value *v2)
+ubik_value_eq(struct xl_value *v1, struct xl_value *v2)
 {
         if (v1->tag != v2->tag)
                 return false;
@@ -58,7 +58,7 @@ xl_value_eq(struct xl_value *v1, struct xl_value *v2)
 }
 
 no_ignore xl_error
-xl_packed_read(uint8_t **dest, size_t *n, struct xl_value *src)
+ubik_packed_read(uint8_t **dest, size_t *n, struct xl_value *src)
 {
         size_t i, n_bytes, n_copy;
         xl_word p;
@@ -106,7 +106,7 @@ xl_packed_read(uint8_t **dest, size_t *n, struct xl_value *src)
 }
 
 no_ignore xl_error
-xl_string_read(char **dest, size_t *n, struct xl_value *src)
+ubik_string_read(char **dest, size_t *n, struct xl_value *src)
 {
         xl_error err;
         err = xl_packed_read((uint8_t **) dest, n, src);
@@ -116,7 +116,7 @@ xl_string_read(char **dest, size_t *n, struct xl_value *src)
 }
 
 no_ignore xl_error
-xl_value_pack_string(struct xl_value *dest, char *src, size_t n)
+ubik_value_pack_string(struct xl_value *dest, char *src, size_t n)
 {
         size_t i, t;
         struct xl_value *v;
@@ -182,7 +182,7 @@ _print_ascii_word(struct xl_stream *out, xl_word word)
 }
 
 no_ignore xl_error
-xl_value_print(struct xl_stream *out, struct xl_value *v)
+ubik_value_print(struct xl_stream *out, struct xl_value *v)
 {
         size_t written;
         size_t n;
@@ -246,7 +246,7 @@ xl_value_print(struct xl_stream *out, struct xl_value *v)
 }
 
 no_ignore xl_error
-xl_value_as_bool(bool *res, struct xl_value *v)
+ubik_value_as_bool(bool *res, struct xl_value *v)
 {
         xl_word left;
         if (!(v->tag & TAG_LEFT_WORD))

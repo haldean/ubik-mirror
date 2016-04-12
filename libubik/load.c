@@ -34,7 +34,7 @@
                 return xl_raise(ERR_NO_DATA, #x);
 
 no_ignore xl_error
-xl_value_load(struct xl_value *out, struct xl_stream *sp)
+ubik_value_load(struct xl_value *out, struct xl_stream *sp)
 {
         xl_tag tag;
         xl_error err;
@@ -573,7 +573,7 @@ _load_graph(
 }
 
 no_ignore xl_error
-xl_load(struct xl_dagc ***graphs, size_t *ret_n_graphs, struct xl_stream *sp)
+ubik_load(struct xl_dagc ***graphs, size_t *ret_n_graphs, struct xl_stream *sp)
 {
 
         char header[4];

@@ -265,7 +265,7 @@ _print_ast(struct xl_ast *ast, int indent)
 }
 
 no_ignore xl_error
-xl_ast_print(struct xl_ast *ast)
+ubik_ast_print(struct xl_ast *ast)
 {
         return _print_ast(ast, 0);
 }

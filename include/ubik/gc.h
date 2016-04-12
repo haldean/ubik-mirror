@@ -35,7 +35,7 @@ struct xl_gc_info
  * drops all existing GC state, and thus don't call it more than
  * once unless you /really/ know what you're doing. */
 void
-xl_gc_start();
+ubik_gc_start();
 
 /* Teardown the garbage collector.
  *
@@ -43,16 +43,16 @@ xl_gc_start();
  * this, ou must call xl_gc_start again if you want to use the
  * runtime again. */
 void
-xl_gc_teardown();
+ubik_gc_teardown();
 
 /* Get garbage collector stats. */
 void
-xl_gc_get_stats(struct xl_gc_info *stats);
+ubik_gc_get_stats(struct xl_gc_info *stats);
 
 /* Free everything the garbage collector knows about.
  *
  * This will seriously fuck with the runtime, because pretty much
  * every pointer becomes invalid. You have been warned. */
 void
-xl_gc_free_all();
+ubik_gc_free_all();
 

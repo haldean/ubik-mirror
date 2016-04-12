@@ -154,7 +154,7 @@ union xl_dagc_any_node
  * copy_from into the graph before allocating all of the
  * substructures of the graph. */
 no_ignore xl_error
-xl_dagc_alloc(
+ubik_dagc_alloc(
         struct xl_dagc **graph,
         size_t n_nodes,
         size_t size,
@@ -165,7 +165,7 @@ xl_dagc_alloc(
  * For nodes with N dependencies, d1 through dN will be filled in
  * and the result will be NULL. */
 no_ignore xl_error
-xl_dagc_get_deps(
+ubik_dagc_get_deps(
         struct xl_dagc_node **d1,
         struct xl_dagc_node **d2,
         struct xl_dagc_node **d3,
@@ -178,7 +178,7 @@ xl_dagc_get_deps(
  * This is useful when copying graphs or inserting nodes into
  * graphs. */
 no_ignore xl_error
-xl_dagc_replace_node_refs(
+ubik_dagc_replace_node_refs(
         struct xl_dagc_node *node,
         struct xl_dagc_node **proto,
         struct xl_dagc_node **new,
@@ -198,7 +198,7 @@ xl_dagc_replace_node_refs(
  * to a list of pointers. So we're asking you to pass us a
  * pointer to a pointer of pointers. I'm sorry. */
 no_ignore xl_error
-xl_dagc_get_parents(
+ubik_dagc_get_parents(
         struct xl_dagc_node ***parents,
         size_t *n_parents,
         struct xl_dagc *graph,
@@ -206,13 +206,13 @@ xl_dagc_get_parents(
 
 /* Evaluates a node and marks it as complete. */
 no_ignore xl_error
-xl_dagc_node_eval(
+ubik_dagc_node_eval(
         struct xl_env *env,
         struct xl_dagc_node *node);
 
 /* Returns the size of the node structure in bytes. */
 no_ignore xl_error
-xl_dagc_node_sizeof(
+ubik_dagc_node_sizeof(
         size_t *size,
         struct xl_dagc_node *node);
 
@@ -222,7 +222,7 @@ xl_dagc_node_sizeof(
  * them. This copies all information, including adjacency, and
  * updates all internal references between nodes. */
 no_ignore xl_error
-xl_dagc_copy(
+ubik_dagc_copy(
         struct xl_dagc **result,
         struct xl_dagc *proto);
 

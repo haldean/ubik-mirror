@@ -24,7 +24,7 @@
 
 
 no_ignore xl_error
-xl_string_split(
+ubik_string_split(
         char ***out_p,
         size_t *n_out_p,
         char *in,
@@ -64,7 +64,7 @@ xl_string_split(
 
 /* Joins two NULL-terminated path segments into a single path. */
 no_ignore xl_error
-xl_string_path_concat(
+ubik_string_path_concat(
         char **out_p,
         char *first,
         char *second)

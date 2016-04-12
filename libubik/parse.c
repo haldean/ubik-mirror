@@ -29,7 +29,7 @@ extern void yylex_destroy(void *);
 extern void yyset_in(FILE *, void *);
 
 void
-xl_parse_context_free(struct xl_parse_context *ctx)
+ubik_parse_context_free(struct xl_parse_context *ctx)
 {
         xl_vector_free(&ctx->allocs);
 }
@@ -62,7 +62,7 @@ _show_char_in_line(size_t column)
 }
 
 no_ignore xl_error
-xl_parse(struct xl_ast **ast, char *source_name, struct xl_stream *stream)
+ubik_parse(struct xl_ast **ast, char *source_name, struct xl_stream *stream)
 {
         int status;
         yypstate *ps;

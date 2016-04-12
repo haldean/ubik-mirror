@@ -24,7 +24,7 @@
 #include <string.h>
 
 no_ignore xl_error
-xl_bdagc_init(struct xl_graph_builder *b)
+ubik_bdagc_init(struct xl_graph_builder *b)
 {
         b->nodes = NULL;
         b->n_nodes = 0;
@@ -35,7 +35,7 @@ xl_bdagc_init(struct xl_graph_builder *b)
 
 /* Adds a node to the graph. */
 no_ignore xl_error
-xl_bdagc_push_node(
+ubik_bdagc_push_node(
         struct xl_graph_builder *b,
         struct xl_dagc_node *node)
 {
@@ -59,7 +59,7 @@ xl_bdagc_push_node(
 
 /* Builds the graph. */
 no_ignore xl_error
-xl_bdagc_build(
+ubik_bdagc_build(
         struct xl_dagc **outgraph,
         struct xl_graph_builder *b)
 {

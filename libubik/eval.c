@@ -262,7 +262,7 @@ _eval_input(struct xl_env *env, struct xl_dagc_input *node)
 }
 
 no_ignore xl_error
-xl_dagc_node_eval(
+ubik_dagc_node_eval(
         struct xl_env *env,
         struct xl_dagc_node *node)
 {

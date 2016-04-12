@@ -396,7 +396,7 @@ _assign_nodes(
 }
 
 no_ignore static xl_error
-xl_compile_binding(
+ubik_compile_binding(
         struct xl_dagc **graphs,
         size_t n_graphs,
         struct xl_ast_binding *binding,
@@ -462,7 +462,7 @@ xl_compile_binding(
  * The returned URI has one reference allocated for the caller, and one
  * reference allocated for the requires list if appropriate. */
 no_ignore static xl_error
-xl_resolve_uri(
+ubik_resolve_uri(
         struct xl_uri **resolved,
         struct xl_uri *uri,
         struct xl_env *env,
@@ -541,7 +541,7 @@ xl_resolve_uri(
 }
 
 no_ignore static xl_error
-xl_resolve_uris(
+ubik_resolve_uris(
         struct xl_dagc *graph,
         struct xl_env *local_env,
         struct xl_gen_requires **requires,
@@ -685,7 +685,7 @@ _add_modinit_setter(
 }
 
 no_ignore static xl_error
-xl_create_modinit(
+ubik_create_modinit(
         struct xl_dagc **modinit,
         struct xl_ast *ast,
         struct xl_env *local_env,
@@ -756,7 +756,7 @@ xl_create_modinit(
 }
 
 no_ignore xl_error
-xl_compile_unit(
+ubik_compile_unit(
         struct xl_dagc ***graphs,
         size_t *n_graphs,
         struct xl_gen_requires **requires,
@@ -814,7 +814,7 @@ xl_compile_unit(
 }
 
 no_ignore xl_error
-xl_gen_requires_free(struct xl_gen_requires *req)
+ubik_gen_requires_free(struct xl_gen_requires *req)
 {
         struct xl_gen_requires *to_free;
         xl_error err;

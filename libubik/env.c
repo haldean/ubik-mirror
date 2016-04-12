@@ -32,13 +32,13 @@
 static struct xl_env root;
 
 struct xl_env *
-xl_env_get_root()
+ubik_env_get_root()
 {
         return &root;
 }
 
 no_ignore xl_error
-xl_env_init(struct xl_env *env)
+ubik_env_init(struct xl_env *env)
 {
         env->bindings = NULL;
         env->n = 0;
@@ -49,7 +49,7 @@ xl_env_init(struct xl_env *env)
 }
 
 no_ignore xl_error
-xl_env_make_child(struct xl_env *child, struct xl_env *parent)
+ubik_env_make_child(struct xl_env *child, struct xl_env *parent)
 {
         xl_error err;
         err = xl_env_init(child);
@@ -60,7 +60,7 @@ xl_env_make_child(struct xl_env *child, struct xl_env *parent)
 }
 
 no_ignore xl_error
-xl_env_free(struct xl_env *env)
+ubik_env_free(struct xl_env *env)
 {
         xl_error err;
         size_t i;
@@ -107,7 +107,7 @@ xl_env_free(struct xl_env *env)
 }
 
 no_ignore xl_error
-xl_env_iterate(
+ubik_env_iterate(
         xl_env_cb callback,
         struct xl_env *env,
         void *callback_arg)
@@ -128,7 +128,7 @@ xl_env_iterate(
 }
 
 no_ignore xl_error
-xl_env_get(
+ubik_env_get(
         union xl_value_or_graph *value,
         struct xl_value **type,
         struct xl_env *env,
@@ -174,7 +174,7 @@ xl_env_get(
 }
 
 no_ignore xl_error
-xl_env_present(
+ubik_env_present(
         bool *is_present,
         struct xl_env *env,
         struct xl_uri *uri)
@@ -396,7 +396,7 @@ _set(
 }
 
 no_ignore xl_error
-xl_env_set(
+ubik_env_set(
         struct xl_env *env,
         struct xl_uri *uri,
         union xl_value_or_graph value,
@@ -406,7 +406,7 @@ xl_env_set(
 }
 
 no_ignore xl_error
-xl_env_overwrite(
+ubik_env_overwrite(
         struct xl_env *env,
         struct xl_uri *uri,
         union xl_value_or_graph value,
@@ -416,7 +416,7 @@ xl_env_overwrite(
 }
 
 no_ignore xl_error
-xl_env_watch(
+ubik_env_watch(
         xl_env_cb callback,
         struct xl_env *env,
         struct xl_uri *uri,

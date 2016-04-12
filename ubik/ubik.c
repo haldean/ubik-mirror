@@ -41,7 +41,7 @@
                 goto teardown; \
         } } while(0)
 
-xl_error
+ubik_error
 test_file(char *fname, bool debug, bool timing)
 {
         struct xl_stream stream;

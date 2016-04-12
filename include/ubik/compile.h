@@ -31,13 +31,13 @@ struct xl_compilation_env
 };
 
 no_ignore xl_error
-xl_compile_env_default(struct xl_compilation_env *cenv);
+ubik_compile_env_default(struct xl_compilation_env *cenv);
 
 no_ignore xl_error
-xl_compile_env_free(struct xl_compilation_env *cenv);
+ubik_compile_env_free(struct xl_compilation_env *cenv);
 
 no_ignore xl_error
-xl_compile(
+ubik_compile(
         struct xl_dagc ***graphs,
         size_t *n_graphs,
         char *source_name,
@@ -45,7 +45,7 @@ xl_compile(
         struct xl_compilation_env *cenv);
 
 no_ignore xl_error
-xl_compile_ast(
+ubik_compile_ast(
         struct xl_dagc ***graphs,
         size_t *n_graphs,
         struct xl_ast *ast,

@@ -52,13 +52,13 @@
  * present in the set, no mutation occurs on the pointer set and bool is set to
  * false. */
 no_ignore xl_error
-xl_pointer_set_add(bool *added, struct xl_vector *, void *item);
+ubik_pointer_set_add(bool *added, struct xl_vector *, void *item);
 
 /* Sets present to true or false if the item is or is not in the set. */
 no_ignore xl_error
-xl_pointer_set_present(bool *present, struct xl_vector *, void *item);
+ubik_pointer_set_present(bool *present, struct xl_vector *, void *item);
 
 /* Sets index to the index of the given item. If the item does not exist in the
  * set, raises ERR_ABSENT. */
 no_ignore xl_error
-xl_pointer_set_find(size_t *index, struct xl_vector *, void *item);
+ubik_pointer_set_find(size_t *index, struct xl_vector *, void *item);

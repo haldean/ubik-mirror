@@ -51,7 +51,7 @@ static struct xl_uri *graph_trace = NULL;
 static char *graph_trace_str = NULL;
 
 void
-xl_gc_start()
+ubik_gc_start()
 {
         char *trace_uri_str;
         char *buf;
@@ -103,7 +103,7 @@ xl_gc_start()
 }
 
 void
-xl_gc_teardown()
+ubik_gc_teardown()
 {
         xl_error err;
 
@@ -202,18 +202,18 @@ xl_gc_teardown()
 }
 
 void
-xl_gc_get_stats(struct xl_gc_info *stats)
+ubik_gc_get_stats(struct xl_gc_info *stats)
 {
         memcpy(stats, gc_stats, sizeof(struct xl_gc_info));
 }
 
 void
-xl_gc_free_all()
+ubik_gc_free_all()
 {
 }
 
 no_ignore xl_error
-xl_dagc_alloc(
+ubik_dagc_alloc(
         struct xl_dagc **graph,
         size_t n_nodes,
         size_t size,
@@ -271,7 +271,7 @@ xl_dagc_alloc(
 
 /* Creates a new value. */
 no_ignore xl_error
-xl_value_new(struct xl_value **v)
+ubik_value_new(struct xl_value **v)
 {
 #if XL_GC_DEBUG && XL_GC_DEBUG_V
         xl_error err;
@@ -300,7 +300,7 @@ xl_value_new(struct xl_value **v)
 
 /* Takes a reference to the given tree. */
 no_ignore xl_error
-xl_take(void *p)
+ubik_take(void *p)
 {
         struct xl_value *v;
         struct xl_dagc *g;
@@ -575,7 +575,7 @@ _release_uri(struct xl_uri *u)
 }
 
 no_ignore xl_error
-xl_release(void *v)
+ubik_release(void *v)
 {
         xl_tag tag;
         tag = *((xl_tag *) v);

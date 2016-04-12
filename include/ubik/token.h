@@ -31,4 +31,4 @@ struct xl_token
 typedef xl_error (*xl_token_cb)(struct xl_token t);
 
 no_ignore xl_error
-xl_tokenize(xl_token_cb callback, struct xl_stream *stream);
+ubik_tokenize(xl_token_cb callback, struct xl_stream *stream);

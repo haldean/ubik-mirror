@@ -23,8 +23,8 @@
 #include "ubik/ubik.h"
 #include "ubik/util.h"
 
-xl_error
-xl_error_new(
+ubik_error
+ubik_error_new(
         const xl_word code,
         const char *tag,
         const char *file,
@@ -43,7 +43,7 @@ xl_error_new(
 }
 
 char *
-xl_error_explain(xl_error err)
+ubik_error_explain(xl_error err)
 {
         char *res;
         char *err_word_expl;

@@ -27,7 +27,7 @@
 #include "ubik/util.h"
 
 char *
-xl_node_explain(struct xl_dagc_node *node)
+ubik_node_explain(struct xl_dagc_node *node)
 {
         union xl_dagc_any_node *n;
         char *res;

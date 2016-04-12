@@ -198,47 +198,47 @@ struct xl_ast
 
 /* Allocates a new AST. */
 no_ignore xl_error
-xl_ast_new(struct xl_ast **ast);
+ubik_ast_new(struct xl_ast **ast);
 
 no_ignore xl_error
-xl_ast_free(struct xl_ast *ast);
+ubik_ast_free(struct xl_ast *ast);
 
 void
-xl_ast_error_loc_free(struct xl_ast_loc *err_loc);
+ubik_ast_error_loc_free(struct xl_ast_loc *err_loc);
 
 /* Prints the AST to stdout. */
 no_ignore xl_error
-xl_ast_print(struct xl_ast *ast);
+ubik_ast_print(struct xl_ast *ast);
 
 no_ignore xl_error
-xl_ast_bind(
+ubik_ast_bind(
         struct xl_ast *ast,
         struct xl_ast_binding *bind);
 
 no_ignore xl_error
-xl_ast_add_type(
+ubik_ast_add_type(
         struct xl_ast *ast,
         struct xl_ast_type *type);
 
 no_ignore xl_error
-xl_ast_atom_new_qualified(
+ubik_ast_atom_new_qualified(
         struct xl_ast_atom **atom,
         char *name);
 
 no_ignore xl_error
-xl_ast_import(
+ubik_ast_import(
         struct xl_ast *ast,
         struct xl_ast_import_list *import_list);
 
 no_ignore xl_error
-xl_ast_subexprs(
+ubik_ast_subexprs(
         struct xl_ast **subast,
         struct xl_ast_expr **subexprs,
         size_t *n_subexprs,
         struct xl_ast_expr *expr);
 
 void
-xl_ast_merge_loc(
+ubik_ast_merge_loc(
         struct xl_ast_loc *res,
         struct xl_ast_loc *l1,
         struct xl_ast_loc *l2);

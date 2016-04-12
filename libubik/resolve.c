@@ -52,7 +52,7 @@ update_names_with_resolution_types(
         struct xl_ast *ast);
 
 no_ignore xl_error
-xl_resolve_context_missing_name(
+ubik_resolve_context_missing_name(
         struct xl_resolve_context *ctx,
         char *name,
         struct xl_ast_loc loc);
@@ -544,7 +544,7 @@ _show_char_in_line(size_t column)
 }
 
 no_ignore xl_error
-xl_resolve(
+ubik_resolve(
         struct xl_ast *ast,
         char *source_name,
         struct xl_stream *stream,
@@ -605,7 +605,7 @@ xl_resolve(
 }
 
 no_ignore xl_error
-xl_resolve_context_missing_name(
+ubik_resolve_context_missing_name(
         struct xl_resolve_context *ctx,
         char *name,
         struct xl_ast_loc loc)
@@ -631,7 +631,7 @@ xl_resolve_context_missing_name(
 }
 
 void
-xl_resolve_context_free(struct xl_resolve_context *ctx)
+ubik_resolve_context_free(struct xl_resolve_context *ctx)
 {
         struct xl_resolve_scope *scope;
         size_t i;

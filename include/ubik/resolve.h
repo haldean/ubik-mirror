@@ -98,11 +98,11 @@ struct xl_resolve_context
 };
 
 no_ignore xl_error
-xl_resolve(
+ubik_resolve(
         struct xl_ast *ast,
         char *source_name,
         struct xl_stream *stream,
         struct xl_resolve_context *ctx);
 
 void
-xl_resolve_context_free(struct xl_resolve_context *ctx);
+ubik_resolve_context_free(struct xl_resolve_context *ctx);

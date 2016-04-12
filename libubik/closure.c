@@ -363,7 +363,7 @@ traverse_ast(
 }
 
 no_ignore xl_error
-xl_reduce_closures(
+ubik_reduce_closures(
         struct xl_resolve_context *ctx,
         struct xl_ast *ast)
 {

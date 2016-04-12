@@ -23,7 +23,7 @@
 #define GET_LINE_BUF_SIZE 1024
 
 no_ignore xl_error
-xl_streamutil_get_line(
+ubik_streamutil_get_line(
         char *res,
         struct xl_stream *stream,
         size_t line_i,

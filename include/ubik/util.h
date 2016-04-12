@@ -33,19 +33,19 @@ size_t
 size_min(size_t a, size_t b);
 
 /* Converts a word from host byte order to network byte order */
-xl_word
+ubik_word
 htonw(xl_word);
 
 /* Converts a word from network byte order to host byte order */
-xl_word
+ubik_word
 ntohw(xl_word);
 
 /* Prints a stack trace to stderr. */
 void
-xl_trace_print(void);
+ubik_trace_print(void);
 
 /* Converts a constant to its string value. */
 char *
-xl_word_explain(xl_word);
+ubik_word_explain(xl_word);
 
 #endif

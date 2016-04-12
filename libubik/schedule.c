@@ -35,7 +35,7 @@ struct xl_scheduler
 
 /* Creates a scheduler. */
 no_ignore xl_error
-xl_schedule_new(struct xl_scheduler **s)
+ubik_schedule_new(struct xl_scheduler **s)
 {
         *s = calloc(1, sizeof(struct xl_scheduler));
         if (*s == NULL)
@@ -45,7 +45,7 @@ xl_schedule_new(struct xl_scheduler **s)
 
 /* Destroys a scheduler. */
 no_ignore xl_error
-xl_schedule_free(struct xl_scheduler *s)
+ubik_schedule_free(struct xl_scheduler *s)
 {
         struct xl_exec_unit *to_free;
 
@@ -263,7 +263,7 @@ _push_dep_tree(
 
 /* Pushes a graph into the scheduler for execution. */
 no_ignore xl_error
-xl_schedule_push(
+ubik_schedule_push(
         struct xl_scheduler *s,
         struct xl_dagc *graph,
         struct xl_env *env,
@@ -299,7 +299,7 @@ xl_schedule_push(
 
 /* Marks an execution unit complete. */
 no_ignore xl_error
-xl_schedule_complete(
+ubik_schedule_complete(
         struct xl_scheduler *s,
         struct xl_exec_unit *e)
 {
@@ -342,7 +342,7 @@ xl_schedule_complete(
         return OK;
 }
 
-xl_error
+ubik_error
 _notify_node(
         struct xl_exec_unit *waiting,
         struct xl_scheduler *s,
@@ -487,7 +487,7 @@ _dump_exec_unit(struct xl_exec_unit *u)
 }
 
 no_ignore xl_error
-xl_schedule_dump(struct xl_scheduler *s)
+ubik_schedule_dump(struct xl_scheduler *s)
 {
         struct xl_exec_unit *u;
         xl_error err;
@@ -630,7 +630,7 @@ _run_single_pass(struct xl_scheduler *s)
 
 /* Runs all queued jobs on the scheduler. */
 no_ignore xl_error
-xl_schedule_run(struct xl_scheduler *s)
+ubik_schedule_run(struct xl_scheduler *s)
 {
         xl_error err;
 

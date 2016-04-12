@@ -31,7 +31,7 @@ struct xl_timer
 };
 
 no_ignore xl_error
-xl_timer_new(struct xl_timer **t)
+ubik_timer_new(struct xl_timer **t)
 {
         *t = calloc(1, sizeof(struct xl_timer));
         if (*t == NULL)
@@ -40,7 +40,7 @@ xl_timer_new(struct xl_timer **t)
 }
 
 no_ignore xl_error
-xl_timer_start(struct xl_timer *t)
+ubik_timer_start(struct xl_timer *t)
 {
         int res;
 
@@ -51,7 +51,7 @@ xl_timer_start(struct xl_timer *t)
 }
 
 no_ignore xl_error
-xl_timer_elapsed(int64_t *microsec, struct xl_timer *t)
+ubik_timer_elapsed(int64_t *microsec, struct xl_timer *t)
 {
         int ret;
         struct timespec now;
