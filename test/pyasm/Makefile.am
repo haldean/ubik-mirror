@@ -3,5 +3,5 @@ XFAIL_TESTS = mult.xlb
 TEST_EXTENSIONS = .xlb
 XLB_LOG_COMPILER = $(top_srcdir)/ubik/ubik
 
-.xlpy.xlb:
+.upy.ub:
 	PYTHONPATH=$(top_srcdir) $(PYTHON) $< $@
