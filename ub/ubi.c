@@ -25,10 +25,11 @@
 #include "ubik/ast.h"
 #include "ubik/compile.h"
 #include "ubik/env.h"
-#include "ubik/ubik.h"
+#include "ubik/infer.h"
 #include "ubik/parse.h"
 #include "ubik/resolve.h"
 #include "ubik/schedule.h"
+#include "ubik/ubik.h"
 #include "ubik/value.h"
 
 #define c(x) \
@@ -69,6 +70,8 @@ main(int argc, char *argv[])
         parse_err = ubik_parse(&ast, "(stdin)", &sstdin);
         if (parse_err == OK)
                 parse_err = ubik_resolve(ast, "(stdin)", &sstdin, &rctx);
+        if (parse_err == OK)
+                parse_err = ubik_infer_types(ast, "(stdin)", &sstdin);
         if (argc > 1 && strcmp(argv[1], "emit-ast") == 0)
                 err = ubik_ast_print(ast);
         c(parse_err);

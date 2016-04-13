@@ -1,0 +1,9 @@
+: this-one-is-okay
+    ^ Word
+    = 10
+
+: this-one-is-bad
+    = this-one-is-okay
+
+: this-one-is-also-bad
+    = this-one-is-okay
