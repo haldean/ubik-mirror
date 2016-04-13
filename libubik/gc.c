@@ -62,7 +62,7 @@ ubik_gc_start()
         gc_stats = calloc(1, sizeof(struct ubik_gc_info));
         ubik_assert(gc_stats != NULL);
 
-        trace_uri_str = getenv("EXPEL_TRACE_GRAPH");
+        trace_uri_str = getenv("UBIK_TRACE_GRAPH");
         if (trace_uri_str != NULL)
         {
                 graph_trace = calloc(1, sizeof(struct ubik_uri));

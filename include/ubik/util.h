@@ -17,8 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#ifndef EXPEL_UTIL_H__
-#define EXPEL_UTIL_H__
+#pragma once
 
 #define unused(x) (void)(x)
 #define likely(x) __builtin_expect((x), 1)
@@ -47,5 +46,3 @@ ubik_trace_print(void);
 /* Converts a constant to its string value. */
 char *
 ubik_word_explain(ubik_word);
-
-#endif

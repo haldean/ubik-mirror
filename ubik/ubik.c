@@ -231,10 +231,10 @@ main(int argc, char *argv[])
         char *timing_opt;
         bool timing;
 
-        debug_opt = getenv("EXPEL_DEBUG");
+        debug_opt = getenv("UBIK_DEBUG");
         debug = debug_opt != NULL && strlen(debug_opt) > 0;
 
-        timing_opt = getenv("EXPEL_TIMING");
+        timing_opt = getenv("UBIK_TIMING");
         timing = timing_opt != NULL && strlen(timing_opt) > 0;
 
         n_failures = 0;

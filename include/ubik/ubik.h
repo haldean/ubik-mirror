@@ -17,8 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#ifndef EXPEL_EXPEL_H
-#define EXPEL_EXPEL_H
+#pragma once
 
 #include <stddef.h>
 #include <stdint.h>
@@ -299,5 +298,3 @@ ubik_error_explain(ubik_error err);
         ubik_error_new((code), (tag), __FILE__, __LINE__, __FUNCTION__)
 
 #define local(type) __attribute__((cleanup(ubik_ ## type ## _free)))
-
-#endif

@@ -17,8 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#ifndef EXPEL_STREAM_H
-#define EXPEL_STREAM_H
+#pragma once
 
 #include <stdio.h>
 
@@ -91,5 +90,3 @@ ubik_stream_reset(struct ubik_stream *sp);
 /* Closes a stream. */
 void
 ubik_stream_close(struct ubik_stream *sp);
-
-#endif

@@ -17,8 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#ifndef EXPEL_DAGC_H
-#define EXPEL_DAGC_H
+#pragma once
 
 #include "ubik/ubik.h"
 
@@ -225,5 +224,3 @@ no_ignore ubik_error
 ubik_dagc_copy(
         struct ubik_dagc **result,
         struct ubik_dagc *proto);
-
-#endif
