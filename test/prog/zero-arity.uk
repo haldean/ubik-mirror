@@ -1,6 +1,7 @@
 # test for zero-arity lambdas
 
 : sixty-six
-        = \ -> 66
+    ^ Word
+    = \ -> 66
 
 != emit (concat (humanize sixty-six) "\n")

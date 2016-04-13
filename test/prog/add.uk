@@ -1,6 +1,7 @@
 # ubik hello world, with a function call for kicks
 
 : add-two-numbers
+  ^ Word
   = uadd 2 64
 
 != emit (concat (humanize add-two-numbers) "\nhello world!\n")

@@ -3,4 +3,5 @@
     = 8
 
 : one-more
+    ^ Integer
     = hello-world

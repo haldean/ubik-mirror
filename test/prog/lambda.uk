@@ -9,5 +9,6 @@
         ^ String -> String -> String -> String
         = \ s1 s2 s3 -> concat s1 (concat s2 s3)
 
-: x = humanize (add-7 10)
+: x ^ String = humanize (add-7 10)
+
 != emit (concat (three-string-concat x x x) "\n")
