@@ -54,15 +54,14 @@ infer_expr_type(
         return OK;
 }
 
-no_ignore ubik_error
-ubik_infer_types(
+no_ignore static ubik_error
+infer_ast(
+        struct infer_context *ctx,
         struct ubik_ast *ast,
-        char *source_name,
-        struct ubik_stream *stream)
+        bool require_types)
 {
         size_t i;
         struct infer_err *ierr;
-        struct infer_context ctx = {0};
         ubik_error err;
 
         for (i = 0; i < ast->bindings.n; i++)
@@ -79,20 +78,37 @@ ubik_infer_types(
                         ierr->entity_name = bind->name;
                         ierr->loc = bind->loc;
 
-                        err = ubik_vector_append(&ctx.errors, ierr);
+                        err = ubik_vector_append(&ctx->errors, ierr);
                 }
 
-                err = infer_expr_type(&ctx, bind->expr, bind->type_expr);
+                err = infer_expr_type(ctx, bind->expr, bind->type_expr);
                 if (err != OK)
                         return err;
         }
 
         if (ast->immediate != NULL)
         {
-                err = infer_expr_type(&ctx, ast->immediate, NULL);
+                err = infer_expr_type(ctx, ast->immediate, NULL);
                 if (err != OK)
                         return err;
         }
+
+}
+
+no_ignore ubik_error
+ubik_infer_types(
+        struct ubik_ast *ast,
+        char *source_name,
+        struct ubik_stream *stream)
+{
+        size_t i;
+        struct infer_err *ierr;
+        struct infer_context ctx = {0};
+        ubik_error err;
+
+        err = infer_ast(&ctx, ast, true);
+        if (err != OK)
+                return err;
 
         if (ctx.errors.n != 0)
         {
