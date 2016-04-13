@@ -49,10 +49,3 @@ ubik_gc_teardown();
 void
 ubik_gc_get_stats(struct ubik_gc_info *stats);
 
-/* Free everything the garbage collector knows about.
- *
- * This will seriously fuck with the runtime, because pretty much
- * every pointer becomes invalid. You have been warned. */
-void
-ubik_gc_free_all();
-

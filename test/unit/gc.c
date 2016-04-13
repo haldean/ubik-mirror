@@ -31,7 +31,6 @@ gc()
         struct ubik_value *vals[N_TEST_GC_VALUES];
         struct ubik_gc_info gc_stats;
 
-        ubik_gc_free_all();
         ubik_gc_start();
 
         for (i = 0; i < N_TEST_GC_VALUES; i++)
@@ -48,9 +47,6 @@ gc()
                 assert(gc_stats.n_val_allocs == N_TEST_GC_VALUES);
                 assert(gc_stats.n_val_frees == N_TEST_GC_VALUES);
         #endif
-
-        ubik_gc_free_all();
-        ubik_gc_start();
 
         return ok;
 }

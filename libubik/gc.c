@@ -188,7 +188,6 @@ ubik_gc_teardown()
         ubik_vector_free(&value_alloc);
         ubik_vector_free(&value_freed);
 
-        ubik_gc_free_all();
         free(gc_stats);
         gc_stats = NULL;
 
@@ -205,11 +204,6 @@ void
 ubik_gc_get_stats(struct ubik_gc_info *stats)
 {
         memcpy(stats, gc_stats, sizeof(struct ubik_gc_info));
-}
-
-void
-ubik_gc_free_all()
-{
 }
 
 no_ignore ubik_error
