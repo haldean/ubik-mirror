@@ -23,7 +23,7 @@ to stay.
 
 There are unit tests and "integration tests"; unit tests are haphazard
 but the integration tests (in the form of pyasm scripts in
-test/pyasm/*.xlpy) are pretty comprehensive. You can run all of the
+test/pyasm/*.upy) are pretty comprehensive. You can run all of the
 tests by running `make check`.
 
 To build and test ubik, run the following commands:
@@ -379,8 +379,8 @@ Compilation ------------------------------------------------------------
 The compiler for Ubik is distributed as part of the Ubik library; a
 compiler executable can be built using:
 
-        $ make dist/ubic
-        $ dist/ubic path/to/file.xl out.xlb
+        $ make
+        $ ub/ubic path/to/file.uk out.ub
 
 The process of creating an executable is divided into two phases, not
 unlike compilation for C and other native languages: compilation and

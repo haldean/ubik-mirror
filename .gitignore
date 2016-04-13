@@ -7,8 +7,8 @@ build
 *.pyc
 *.o
 *.a
-/*.xl
-/*.xlb
+/*.uk
+/*.ub
 test/afl-out
 a.out
 

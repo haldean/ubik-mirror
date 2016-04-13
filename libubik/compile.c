@@ -46,7 +46,7 @@ ubik_compile_env_default(struct ubik_compilation_env *cenv)
         strcat(scratch_dir, "/ubik-build");
         cenv->scratch_dir = scratch_dir;
 
-        include_dirs = getenv("EXPEL_INCLUDE");
+        include_dirs = getenv("UBIK_INCLUDE");
         if (include_dirs == NULL)
         {
                 cenv->include_dirs = NULL;
@@ -129,7 +129,7 @@ _open_stream_for_requirement(
 
         test_basename = calloc(strlen(package_name) + 4, sizeof(char));
         strcpy(test_basename, package_name);
-        strcat(test_basename, ".xl");
+        strcat(test_basename, ".uk");
 
         for (i = 0; i < cenv->n_include_dirs; i++)
         {
