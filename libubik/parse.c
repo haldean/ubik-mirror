@@ -34,33 +34,6 @@ ubik_parse_context_free(struct ubik_parse_context *ctx)
         ubik_vector_free(&ctx->allocs);
 }
 
-static void
-_print_line_in_stream(struct ubik_stream *stream, size_t line)
-{
-        #define lis_buf_len 512
-        char buf[lis_buf_len];
-        char *explain;
-        ubik_error err;
-
-        err = ubik_streamutil_get_line(buf, stream, line, lis_buf_len);
-        if (err != OK)
-        {
-                explain = ubik_error_explain(err);
-                printf("couldn't print line in file: %s\n", explain);
-                return;
-        }
-        printf("%s\n", buf);
-}
-
-static void
-_show_char_in_line(size_t column)
-{
-        size_t i;
-        for (i = 0; i < column - 1; i++)
-                putchar(' ');
-        printf("^\n");
-}
-
 no_ignore ubik_error
 ubik_parse(struct ubik_ast **ast, char *source_name, struct ubik_stream *stream)
 {
@@ -101,8 +74,10 @@ ubik_parse(struct ubik_ast **ast, char *source_name, struct ubik_stream *stream)
                         "\x1b[37m%s:%lu:%lu:\x1b[31m error:\x1b[0m %s\n",
                         source_name, ctx.err_loc->line_start,
                         ctx.err_loc->col_start, ctx.err_msg);
-                _print_line_in_stream(stream, ctx.err_loc->line_start - 1);
-                _show_char_in_line(ctx.err_loc->col_start);
+                ubik_streamutil_print_line_char(
+                        stream,
+                        ctx.err_loc->line_start - 1,
+                        ctx.err_loc->col_start);
                 free(ctx.err_loc);
                 free(ctx.err_msg);
         }

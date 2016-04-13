@@ -82,3 +82,28 @@ line_found:
         }
 }
 
+void
+ubik_streamutil_print_line_char(
+        struct ubik_stream *stream,
+        size_t line,
+        size_t column)
+{
+        #define PRINT_BUF_LEN 512
+        char buf[PRINT_BUF_LEN];
+        char *explain;
+        size_t i;
+        ubik_error err;
+
+        err = ubik_streamutil_get_line(buf, stream, line, PRINT_BUF_LEN);
+        if (err != OK)
+        {
+                explain = ubik_error_explain(err);
+                printf("couldn't print line in file: %s\n", explain);
+                return;
+        }
+        printf("%s\n", buf);
+
+        for (i = 0; i < column - 1; i++)
+                putchar(' ');
+        printf("^\n");
+}

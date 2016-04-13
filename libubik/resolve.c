@@ -516,33 +516,6 @@ create_native_scope(struct ubik_resolve_context *ctx)
         return OK;
 }
 
-static void
-_print_line_in_stream(struct ubik_stream *stream, size_t line)
-{
-        #define lis_buf_len 512
-        char buf[lis_buf_len];
-        char *explain;
-        ubik_error err;
-
-        err = ubik_streamutil_get_line(buf, stream, line, lis_buf_len);
-        if (err != OK)
-        {
-                explain = ubik_error_explain(err);
-                printf("couldn't print line in file: %s\n", explain);
-                return;
-        }
-        printf("%s\n", buf);
-}
-
-static void
-_show_char_in_line(size_t column)
-{
-        size_t i;
-        for (i = 0; i < column - 1; i++)
-                putchar(' ');
-        printf("^\n");
-}
-
 no_ignore ubik_error
 ubik_resolve(
         struct ubik_ast *ast,
@@ -593,10 +566,10 @@ ubik_resolve(
                                         resolv_err->loc.line_start,
                                         resolv_err->loc.col_start,
                                         resolv_err->name);
-                                _print_line_in_stream(
+                                ubik_streamutil_print_line_char(
                                         stream,
-                                        resolv_err->loc.line_start - 1);
-                                _show_char_in_line(resolv_err->loc.col_start);
+                                        resolv_err->loc.line_start - 1,
+                                        resolv_err->loc.col_start);
                         }
                 }
                 return ubik_raise(ERR_BAD_VALUE, "couldn't resolve some names");

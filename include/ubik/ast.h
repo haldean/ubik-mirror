@@ -53,6 +53,8 @@ enum atom_type
 };
 
 struct ubik_ast;
+struct ubik_ast_expr;
+struct ubik_ast_type_expr;
 struct ubik_resolve_scope;
 struct ubik_resolve_name_loc;
 
@@ -124,10 +126,11 @@ struct ubik_ast_expr
                 struct ubik_ast *block;
         };
         enum expr_type expr_type;
+        struct ubik_ast_loc loc;
 
         struct ubik_resolve_scope *scope;
         struct ubik_dagc_node *gen;
-        struct ubik_ast_loc loc;
+        struct ubik_ast_type_expr *type;
 };
 
 struct ubik_ast_type_expr

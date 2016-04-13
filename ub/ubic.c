@@ -80,12 +80,14 @@ main(int argc, char *argv[])
 
         c(ubik_compile_env_default(&env));
         c(ubik_compile(&graphs, &n_graphs, source_name, &in, &env));
-        c(ubik_compile_env_free(&env));
         c(ubik_save(&out, graphs, n_graphs));
 
 teardown:
         ubik_stream_close(&in);
         ubik_stream_close(&out);
+
+        if (ubik_compile_env_free(&env) != OK)
+                printf("error when freeing compile env\n");
 
         for (i = 0; i < n_graphs; i++)
         {

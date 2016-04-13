@@ -1,5 +1,5 @@
 /*
- * streamutil.h: generally useful stream helpers
+ * infer.h: local type inferrence
  * Copyright (C) 2016, Haldean Brown
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,19 +17,13 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include "ubik/stream.h"
+#include "ubik/ast.h"
+#include "ubik/ubik.h"
+#include "ubik/vector.h"
 
-/* Takes the line with index i from stream and copies it into the n-length
- * buffer res. */
+/* Attaches type objects to all expressions within an AST. */
 no_ignore ubik_error
-ubik_streamutil_get_line(
-        char *res,
-        struct ubik_stream *stream,
-        size_t i,
-        size_t n);
-
-void
-ubik_streamutil_print_line_char(
-        struct ubik_stream *stream,
-        size_t line,
-        size_t column);
+ubik_infer_types(
+        struct ubik_ast *ast,
+        char *source_name,
+        struct ubik_stream *stream);

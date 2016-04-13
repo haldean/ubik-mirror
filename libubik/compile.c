@@ -24,6 +24,7 @@
 
 #include "ubik/compile.h"
 #include "ubik/gen.h"
+#include "ubik/infer.h"
 #include "ubik/parse.h"
 #include "ubik/resolve.h"
 #include "ubik/string.h"
@@ -99,6 +100,10 @@ ubik_compile(
                 return err;
 
         err = ubik_resolve(ast, source_name, in_stream, &ctx);
+        if (err != OK)
+                goto free_ast;
+
+        err = ubik_infer_types(ast, source_name, in_stream);
         if (err != OK)
                 goto free_ast;
 
