@@ -68,7 +68,7 @@ infer_ast(
         {
                 struct ubik_ast_binding *bind;
                 bind = ast->bindings.elems[i];
-                if (bind->type_expr == NULL)
+                if (bind->type_expr == NULL && require_types)
                 {
                         ierr = calloc(1, sizeof(struct infer_err));
                         if (ierr == NULL)
@@ -93,6 +93,7 @@ infer_ast(
                         return err;
         }
 
+        return OK;
 }
 
 no_ignore ubik_error
