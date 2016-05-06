@@ -110,16 +110,16 @@ int yydebug = 1;
 
 %%
 
-prog:
-  blocks
+prog
+: blocks
         { ctx->ast = $1; }
 | blocks immediate
         { ctx->ast = $1;
           ctx->ast->immediate = $2; }
 ;
 
-blocks:
-  %empty
+blocks
+: %empty
         { alloc($$, 1, struct ubik_ast);
           load_loc($$->loc);
         }
@@ -140,8 +140,8 @@ blocks:
         }
 ;
 
-binding:
-  BIND NAME IS top_expr
+binding
+: BIND NAME IS top_expr
         { alloc($$, 1, struct ubik_ast_binding);
           $$->name = $2;
           $$->expr = $4;
@@ -161,16 +161,16 @@ binding:
         }
 ;
 
-immediate:
-  IMMEDIATE IS top_expr
+immediate
+: IMMEDIATE IS top_expr
         { $$ = $3;
           load_loc($$->loc);
           merge_loc($$, $$, $3);
         }
 ;
 
-imports:
-  USES NAME
+imports
+: USES NAME
         { alloc($$, 1, struct ubik_ast_import_list);
           $$->name = $2;
           load_loc($$->loc);
@@ -178,8 +178,8 @@ imports:
 ;
 
 /* Abstract Data Type parsing */
-adt_def:
-  TYPE TYPE_NAME type_params type_constraints adt_ctors
+adt_def
+: TYPE TYPE_NAME type_params type_constraints adt_ctors
         { alloc($$, 1, struct ubik_ast_type);
           $$->name = $2;
           $$->type = TYPE_ADT;
@@ -224,8 +224,8 @@ parameters
  * be subexpressions without first being wrapped in parentheses. Without the
  * parentheses around a top expression inside another expression, the grammar is
  * ambiguous. */
-top_expr:
-  expr
+top_expr
+: expr
         { $$ = $1; }
 | LAMBDA arg_list GOES_TO top_expr
         { alloc($$, 1, struct ubik_ast_expr);
@@ -250,8 +250,8 @@ top_expr:
         }
 ;
 
-expr:
-  expr atom
+expr
+: expr atom
         { struct ubik_ast_expr *tail;
           alloc(tail, 1, struct ubik_ast_expr);
           tail->expr_type = EXPR_ATOM;
@@ -300,8 +300,8 @@ expr:
         }
 ;
 
-arg_list:
-  %empty
+arg_list
+: %empty
         { alloc($$, 1, struct ubik_ast_arg_list);
           load_loc($$->loc);
         }
@@ -313,8 +313,8 @@ arg_list:
         }
 ;
 
-atom:
-  NAME
+atom
+: NAME
         { alloc($$, 1, struct ubik_ast_atom);
           $$->atom_type = ATOM_NAME;
           $$->str = $1;
@@ -350,8 +350,8 @@ atom:
         }
 ;
 
-type_expr:
-  type_atom
+type_expr
+: type_atom
         { $$ = $1; }
 | type_atom GOES_TO type_expr
         { alloc($$, 1, struct ubik_ast_type_expr);
