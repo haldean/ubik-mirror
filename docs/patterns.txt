@@ -1,0 +1,24 @@
+Pattern Matching in Ubik ===============================================
+Haldean Brown                                      First draft: May 2016
+                                                  Last updated: May 2016
+
+Pattern matching is the base conditional in Ubik; all other statements
+with conditional behavior are implemented in terms of matches. In Ubik,
+patterns are a syntactic literal (just like the literal "5" is a literal
+integer). Behind the scenes, matches are compiled down to simple
+predicate functions.
+
+Patterns are constructed using the pattern operator "~", like so:
+
+        ~ (Pair x y)
+
+This creates a pattern that matches anything created with the pair
+constructor, and also results in a local binding to x and y. When used
+in conjunction with the match operator "?", like so:
+
+        : fst
+            ^ Pair a b -> a
+            = \p -> ? p
+                ~ (Pair x y) => x
+        
+Patterns are restricted to unpacking Algebraic Data Types (ADTs). For
