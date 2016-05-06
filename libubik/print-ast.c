@@ -179,6 +179,9 @@ _print_type_expr(struct ubik_ast_type_expr *type_expr)
                         return err;
                 printf(")");
                 return OK;
+        case TYPE_EXPR_VAR:
+                printf("%s", type_expr->name);
+                return OK;
         }
         return ubik_raise(ERR_UNKNOWN_TYPE, "unknown type expr type");
 }
@@ -206,6 +209,12 @@ _print_type(struct ubik_ast_type *type, int indent)
                         m = m->next;
                         printf("\n");
                 }
+                break;
+
+        case TYPE_ADT:
+                _indent(indent + 4);
+                printf("not implemented\n");
+                break;
         }
 
         return OK;

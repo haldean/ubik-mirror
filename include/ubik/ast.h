@@ -39,7 +39,8 @@ enum expr_type
 enum type_expr_type
 {
         TYPE_EXPR_APPLY = 1,
-        TYPE_EXPR_ATOM
+        TYPE_EXPR_ATOM,
+        TYPE_EXPR_VAR,
 };
 
 enum atom_type
@@ -61,6 +62,7 @@ struct ubik_resolve_name_loc;
 enum type_type
 {
         TYPE_RECORD = 1,
+        TYPE_ADT,
 };
 
 struct ubik_ast_loc

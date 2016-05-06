@@ -85,7 +85,7 @@ The full grammar of ADTs is:
         : NAME type_params | %empty
 
     constraints
-        : GIVEN EXISTS TYPE_NAME names class_constraints
+        : GIVEN EXISTS TYPE_NAME names constraints
         | %empty
 
     names

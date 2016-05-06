@@ -62,7 +62,7 @@
 }
 
 %token <token> BIND TYPE IMPLIES GOES_TO LAMBDA IS OPEN_PAR CLOSE_PAR IMMEDIATE
-%token <token> USES MEMBER OPEN_SCOPE CLOSE_SCOPE OPPOSES
+%token <token> USES MEMBER OPEN_SCOPE CLOSE_SCOPE OPPOSES GIVEN EXISTS
 %token <integer> INTEGER
 %token <floating> NUMBER
 %token <string> NAME TYPE_NAME STRING QUALIFIED_NAME
@@ -74,8 +74,7 @@
 %type <atom> atom
 %type <arg_list> arg_list
 %type <imports> imports
-%type <type_def> typedef
-%type <member_list> member members
+%type <type_def> adt_def
 
 %define api.pure full
 %define api.push-pull push
@@ -134,7 +133,7 @@ blocks:
           $$ = $1;
           merge_loc($$, $$, $2);
         }
-| blocks typedef
+| blocks adt_def
         { wrap_err(ubik_ast_add_type($1, $2));
           $$ = $1;
           merge_loc($$, $$, $2);
@@ -178,40 +177,48 @@ imports:
         }
 ;
 
-typedef:
-  TYPE TYPE_NAME members
+/* Abstract Data Type parsing */
+adt_def:
+  TYPE TYPE_NAME type_params type_constraints adt_ctors
         { alloc($$, 1, struct ubik_ast_type);
           $$->name = $2;
-          $$->type = TYPE_RECORD;
-          $$->members = $3;
+          $$->type = TYPE_ADT;
 
           load_loc($$->loc);
-          merge_loc($$, $$, $3);
+          /* TODO: add locations */
         }
 ;
 
-members:
-  members member
-        { struct ubik_ast_member_list *t = $1;
-          while (t->next != NULL)
-                  t = t->next;
-          t->next = $2;
-          $$ = $1;
-          merge_loc($$, $$, $2);
-        }
-| member
+type_params
+: NAME type_params
+| %empty
 ;
 
-member:
-  MEMBER NAME TYPE type_expr
-        { alloc($$, 1, struct ubik_ast_member_list);
-          $$->name = $2;
-          $$->type = $4;
-
-          load_loc($$->loc);
-          merge_loc($$, $$, $4);
-        }
+type_constraints
+: GIVEN EXISTS TYPE_NAME names type_constraints
+| %empty
 ;
+
+names
+: NAME names
+| %empty
+;
+
+adt_ctors
+: adt_ctor adt_ctors
+| adt_ctor
+;
+
+adt_ctor
+: IS TYPE_NAME parameters
+;
+
+parameters
+: type_expr parameters
+| %empty
+;
+
+/* Expressions */
 
 /* top_expr is a "top expression" in the parse tree; these are things that can't
  * be subexpressions without first being wrapped in parentheses. Without the
@@ -355,10 +362,16 @@ type_expr:
         }
 ;
 
-type_atom:
-  TYPE_NAME
+type_atom
+: TYPE_NAME
         { alloc($$, 1, struct ubik_ast_type_expr);
           $$->type_expr_type = TYPE_EXPR_ATOM;
+          $$->name = $1;
+          load_loc($$->loc);
+        }
+| NAME
+        { alloc($$, 1, struct ubik_ast_type_expr);
+          $$->type_expr_type = TYPE_EXPR_VAR;
           $$->name = $1;
           load_loc($$->loc);
         }

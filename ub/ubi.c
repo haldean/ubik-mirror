@@ -73,7 +73,12 @@ main(int argc, char *argv[])
         if (parse_err == OK)
                 parse_err = ubik_infer_types(ast, "(stdin)", &sstdin);
         if (argc > 1 && strcmp(argv[1], "emit-ast") == 0)
-                err = ubik_ast_print(ast);
+        {
+                if (ast != NULL)
+                        err = ubik_ast_print(ast);
+                else
+                        printf("ast could not be parsed.\n");
+        }
         c(parse_err);
         c(err);
 

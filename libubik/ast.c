@@ -139,6 +139,7 @@ _free_type_expr(struct ubik_ast_type_expr *type_expr)
         switch (type_expr->type_expr_type)
         {
         case TYPE_EXPR_ATOM:
+        case TYPE_EXPR_VAR:
                 free(type_expr->name);
                 break;
 
@@ -213,6 +214,9 @@ _free_type(struct ubik_ast_type *type)
                 err = _free_member_list(type->members);
                 if (err != OK)
                         return err;
+                break;
+
+        case TYPE_ADT:
                 break;
 
         default:
