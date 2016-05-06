@@ -1,0 +1,107 @@
+Ubik Type Declarations =================================================
+Haldean Brown                                      First draft: May 2016
+                                                  Last updated: May 2016
+
+There are three varieties of type declaration currently supported by the
+Ubik specification:
+
+    1. Type aliases
+    2. Algebraic Data Types (ADTs)
+    3. Interfaces
+
+Type aliases -----------------------------------------------------------
+
+Type aliases are declared using the bind operator, much like a normal
+binding:
+
+    : RowId = Integer
+
+This establishes RowId as an alias for Integer. An alias is
+unidirectional; given the alias ": A = B", a value of type A can be used
+as a B, but a B cannot be used as an A.
+
+An alias automatically inherits all of the interface implementations of
+the aliased type. The inherited implementations can be overridden by
+specifying a more specific implementation of the interface (see section
+3).
+
+Algebraic Data Types ---------------------------------------------------
+
+Algebraic Data Types (ADTs) are specified using the type operator. At
+their simplest, ADTs are just like tuples:
+
+    ^ Row = Row RowId Key Value
+
+This specifies a new ADT called "Row" with a single constructor that
+takes a RowId, a Key, and a Value. Multiple constructors can be given:
+
+    ^ Solid
+        = Sphere Vector Double
+        = Box Vector Vector
+        = Cylinder Vector Vector Double
+
+There is no correspondence between the name of the type and the name of
+the constructors; for those coming from an OO-oriented language, each
+constructor can be thought of as concrete subclasses of the abstract
+ADT.
+
+To make things even more interesting, an ADT can take other types as
+parameters; this allows for things like strongly-typed containers or
+other applications in which generics are useful. For example, you could
+define a generic list type as:
+
+    ^ List t
+        = Cons t List
+        = Nil
+
+which is, coincidentally, exactly how Lists are defined. If you're
+looking for multiple parameters, you just specify multiple variables:
+
+    ^ Mapper a b = Func (a -> b) (List a)
+
+This defines a Mapper type with a Func constructor, which takes a
+function that maps one type to another, along with a list of the first
+type. If you want to get really fancy, you can place constraints on the
+types of the variables:
+
+    ^ EqualPair a b
+        | . Eq a
+        | . Eq b
+        = EqualPair a b
+
+In this example, the type can only be constructed if the two arguments
+to the constructor both implement the Eq interface.
+
+Interfaces -------------------------------------------------------------
+
+Interfaces are lists of methods that types can implement. Interfaces
+are often called "type classes" in other functional languages, but in my
+experience calling them "classes" only serves to confuse people who are
+used to object-oriented programming, where "class" is something more
+like a "record".
+
+Interfaces are specified using a combination of the interface and member
+operators:
+
+    _ Numberish
+        . add ^ a -> a -> a | Numberish a
+        . mult ^ a -> a -> a | Numberish a
+
+Once specified, you can implement the interface by specifying an
+implementation, again using the interface, implication and member
+operators:
+
+    _ Integer => Numberish
+        . add = \x, y -> iadd x y
+        . mult = \x, y -> imult x y
+
+    _ Float => Numberish
+        . add = fadd
+        . mult = fmult
+
+You can then define methods that accept any type that implements an
+interface:
+
+    : square
+        ^ x -> x | Numberish x
+        = \x -> mult x x
