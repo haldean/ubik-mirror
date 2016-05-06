@@ -205,10 +205,14 @@ _free_member_list(struct ubik_ast_member_list *member_list)
 no_ignore static ubik_error
 _free_type_params(struct ubik_ast_type_params *p)
 {
+        struct ubik_ast_type_params *to_free;
+
         while (p != NULL)
         {
                 free(p->name);
+                to_free = p;
                 p = p->next;
+                free(to_free);
         }
         return OK;
 }
@@ -216,6 +220,7 @@ _free_type_params(struct ubik_ast_type_params *p)
 no_ignore static ubik_error
 _free_type_constraints(struct ubik_ast_type_constraints *c)
 {
+        struct ubik_ast_type_constraints *to_free;
         ubik_error err;
 
         while (c != NULL)
@@ -224,7 +229,9 @@ _free_type_constraints(struct ubik_ast_type_constraints *c)
                 err = _free_type_params(c->params);
                 if (err != OK)
                         return err;
+                to_free = c;
                 c = c->next;
+                free(to_free);
         }
 
         return OK;
@@ -233,6 +240,7 @@ _free_type_constraints(struct ubik_ast_type_constraints *c)
 no_ignore static ubik_error
 _free_type_list(struct ubik_ast_type_list *l)
 {
+        struct ubik_ast_type_list *to_free;
         ubik_error err;
 
         while (l != NULL)
@@ -240,7 +248,9 @@ _free_type_list(struct ubik_ast_type_list *l)
                 err = _free_type_expr(l->type_expr);
                 if (err != OK)
                         return err;
+                to_free = l;
                 l = l->next;
+                free(to_free);
         }
 
         return OK;
@@ -249,6 +259,7 @@ _free_type_list(struct ubik_ast_type_list *l)
 no_ignore static ubik_error
 _free_adt_ctors(struct ubik_ast_adt_ctors *c)
 {
+        struct ubik_ast_adt_ctors *to_free;
         ubik_error err;
 
         while (c != NULL)
@@ -257,7 +268,9 @@ _free_adt_ctors(struct ubik_ast_adt_ctors *c)
                 err = _free_type_list(c->params);
                 if (err != OK)
                         return err;
+                to_free = c;
                 c = c->next;
+                free(to_free);
         }
 
         return OK;
