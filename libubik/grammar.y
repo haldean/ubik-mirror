@@ -398,11 +398,13 @@ type_atom
 : NAME
         { alloc($$, 1, struct ubik_ast_type_expr);
           $$->type_expr_type = TYPE_EXPR_VAR;
+          $$->name = $1;
           load_loc($$->loc);
         }
 | TYPE_NAME
         { alloc($$, 1, struct ubik_ast_type_expr);
           $$->type_expr_type = TYPE_EXPR_ATOM;
+          $$->name = $1;
           load_loc($$->loc);
         }
 ;
