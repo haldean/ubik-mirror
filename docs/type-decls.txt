@@ -25,6 +25,10 @@ the aliased type. The inherited implementations can be overridden by
 specifying a more specific implementation of the interface (see section
 3).
 
+The full grammar of type aliases is:
+
+    type_alias : TYPE_NAME IS type
+
 Algebraic Data Types ---------------------------------------------------
 
 Algebraic Data Types (ADTs) are specified using the type operator. At
@@ -62,15 +66,42 @@ looking for multiple parameters, you just specify multiple variables:
 This defines a Mapper type with a Func constructor, which takes a
 function that maps one type to another, along with a list of the first
 type. If you want to get really fancy, you can place constraints on the
-types of the variables:
+types of the variables using the given and exists operators:
 
     ^ EqualPair a b
-        | . Eq a
-        | . Eq b
+        | ' Eq a
+        | ' Eq b
         = EqualPair a b
 
-In this example, the type can only be constructed if the two arguments
-to the constructor both implement the Eq interface.
+In this example, the type can only be constructed if there are
+implementations of Eq for both of the two arguments.
+
+The full grammar of ADTs is:
+
+    adt_def
+        : TYPE TYPE_NAME type_params constraints ctors
+
+    type_params
+        : NAME type_params | %empty
+
+    constraints
+        : GIVEN EXISTS TYPE_NAME names class_constraints
+        | %empty
+
+    names
+        : NAME names
+        | %empty
+
+    ctors
+        : ctor ctors
+        | ctor
+
+    ctor
+        : IS TYPE_NAME parameters
+
+    parameters
+        : type parameters
+        | %empty
 
 Interfaces -------------------------------------------------------------
 
@@ -83,19 +114,18 @@ like a "record".
 Interfaces are specified using a combination of the interface and member
 operators:
 
-    _ Numberish
-        . add ^ a -> a -> a | Numberish a
-        . mult ^ a -> a -> a | Numberish a
+    _ Numberish a
+        . add ^ a -> a -> a
+        . mult ^ a -> a -> a
 
 Once specified, you can implement the interface by specifying an
-implementation, again using the interface, implication and member
-operators:
+implementation, using the exists and member operators:
 
-    _ Integer => Numberish
+    ' Numberish Integer
         . add = \x, y -> iadd x y
         . mult = \x, y -> imult x y
 
-    _ Float => Numberish
+    ' Numberish Float
         . add = fadd
         . mult = fmult
 
@@ -103,5 +133,61 @@ You can then define methods that accept any type that implements an
 interface:
 
     : square
-        ^ x -> x | Numberish x
+        ^ x -> x | ' Numberish x
         = \x -> mult x x
+
+Interfaces can also take parameters, because why not:
+
+    _ Evaluable x res
+        . eval ^ x -> res
+
+Implementations must explicitly specify concrete types for the type
+parameters of the interface being implemented:
+
+    _ Evaluable String (Maybe Integer)
+        . eval = \x -> read_string x
+
+Just like ADTs, constraints on the type variables can be specified:
+
+    _ NumberList x a
+        | ' Numberish a
+        . get ^ x -> Index -> a
+        . sum ^ x -> a
+
+You can then implement this with:
+
+    ' NumberList (List Integer) Integer
+        . get = list_get
+        . sum = reduce iadd 0
+
+The full grammar of interface definitions is:
+
+    interface_def
+        : INTERFACE TYPE_NAME type_params constraints members
+
+    type_params
+        : NAME type_params | %empty
+
+    constraints
+        : GIVEN EXISTS TYPE_NAME names class_constraints
+        | %empty
+
+    names
+        : NAME names
+        | %empty
+
+    members
+        : MEMBER NAME TYPE type members
+        | %empty
+
+The full grammar of interface implementations is:
+
+    impl_def
+        : EXISTS TYPE_NAME types members
+
+    types
+        : type types
+        | %empty
+
+    members
+        : MEMBER NAME IS expr
