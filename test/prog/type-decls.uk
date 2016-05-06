@@ -1,4 +1,6 @@
 ^ Expr a
+    | ' Num a
+    | ' Show a
     = Const a
     = Add a a
     = Mult a a

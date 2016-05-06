@@ -197,17 +197,39 @@ _print_type_expr(struct ubik_ast_type_expr *type_expr)
 }
 
 no_ignore static ubik_error
+_print_type_list(struct ubik_ast_type_list *t)
+{
+        ubik_error err;
+
+        while (t != NULL)
+        {
+                err = _print_type_expr(t->type_expr);
+                if (err != OK)
+                        return err;
+                t = t->next;
+                if (t != NULL)
+                        printf(" ");
+        }
+
+        return OK;
+}
+
+no_ignore static ubik_error
 _print_type(struct ubik_ast_type *type, int indent)
 {
         struct ubik_ast_member_list *m;
+        struct ubik_ast_type_params *p;
+        struct ubik_ast_type_constraints *c;
+        struct ubik_ast_adt_ctors *ctor;
         ubik_error err;
 
         _indent(indent);
-        printf("type %s\n", type->name);
+        printf("type %s", type->name);
 
         switch (type->type)
         {
         case TYPE_RECORD:
+                printf("\n");
                 m = type->members;
                 while (m != NULL)
                 {
@@ -222,8 +244,46 @@ _print_type(struct ubik_ast_type *type, int indent)
                 break;
 
         case TYPE_ADT:
+                p = type->adt.params;
+                while (p != NULL)
+                {
+                        printf(" %s", p->name);
+                        p = p->next;
+                        if (p != NULL)
+                                printf(" ");
+                }
+                printf("\n");
+
                 _indent(indent + 4);
-                printf("not implemented\n");
+                printf("|");
+                c = type->adt.constraints;
+                while (c != NULL)
+                {
+                        printf(" ' %s", c->interface);
+                        p = c->params;
+                        while (p != NULL)
+                        {
+                                printf(" %s", p->name);
+                                p = p->next;
+                                if (p != NULL)
+                                        printf(" ");
+                        }
+                        c = c->next;
+                }
+                printf("\n");
+
+                ctor = type->adt.ctors;
+                while (ctor != NULL)
+                {
+                        _indent(indent + 4);
+                        printf("= %s ", ctor->name);
+                        err = _print_type_list(ctor->params);
+                        if (err != OK)
+                                return err;
+                        ctor = ctor->next;
+                        printf("\n");
+                }
+
                 break;
 
         case TYPE_ALIAS:

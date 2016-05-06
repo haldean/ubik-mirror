@@ -137,12 +137,6 @@ struct ubik_ast_expr
         struct ubik_ast_type_expr *type;
 };
 
-struct ubik_ast_type_params
-{
-        struct ubik_ast_type_expr *type;
-        struct ubik_ast_type_params *next;
-};
-
 struct ubik_ast_type_expr
 {
         union
@@ -153,11 +147,6 @@ struct ubik_ast_type_expr
                         struct ubik_ast_type_expr *head;
                         struct ubik_ast_type_expr *tail;
                 } apply;
-                struct
-                {
-                        char *head;
-                        struct ubik_ast_type_params *params;
-                } inst;
         };
         enum type_expr_type type_expr_type;
         struct ubik_ast_loc loc;
@@ -186,12 +175,48 @@ struct ubik_ast_member_list
         struct ubik_ast_member_list *next;
 };
 
+struct ubik_ast_type_params
+{
+        char *name;
+        struct ubik_ast_loc loc;
+        struct ubik_ast_type_params *next;
+};
+
+struct ubik_ast_type_constraints
+{
+        char *interface;
+        struct ubik_ast_type_params *params;
+        struct ubik_ast_loc loc;
+        struct ubik_ast_type_constraints *next;
+};
+
+struct ubik_ast_type_list
+{
+        struct ubik_ast_type_expr *type_expr;
+        struct ubik_ast_loc loc;
+        struct ubik_ast_type_list *next;
+};
+
+struct ubik_ast_adt_ctors
+{
+        char *name;
+        struct ubik_ast_type_list *params;
+        struct ubik_ast_loc loc;
+        struct ubik_ast_adt_ctors *next;
+};
+
 struct ubik_ast_type
 {
         union
         {
                 struct ubik_ast_member_list *members;
                 struct ubik_ast_type_expr *aliases_to;
+                struct
+                {
+                        struct ubik_ast_type_params *params;
+                        struct ubik_ast_type_constraints *constraints;
+                        struct ubik_ast_adt_ctors *ctors;
+                } adt;
         };
         char *name;
         enum type_type type;

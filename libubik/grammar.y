@@ -58,8 +58,12 @@
         struct ubik_ast_import_list *imports;
 
         struct ubik_ast_type *type_def;
-        struct ubik_ast_type_params *type_params;
         struct ubik_ast_member_list *member_list;
+
+        struct ubik_ast_type_list *type_list;
+        struct ubik_ast_type_params *type_params;
+        struct ubik_ast_type_constraints *type_constraints;
+        struct ubik_ast_adt_ctors *adt_ctor;
 }
 
 %token <token> BIND TYPE IMPLIES GOES_TO LAMBDA IS OPEN_PAR CLOSE_PAR IMMEDIATE
@@ -74,9 +78,12 @@
 %type <type_expr> top_type_expr type_expr type_atom
 %type <atom> atom
 %type <arg_list> arg_list
-/*%type <type_params> type_inst_params*/
 %type <imports> imports
 %type <type_def> adt_def alias_def type_def
+%type <type_list> type_list
+%type <adt_ctor> adt_ctor adt_ctors
+%type <type_params> type_params
+%type <type_constraints> type_constraints
 
 %define api.pure full
 %define api.push-pull push
@@ -202,40 +209,72 @@ adt_def
         { alloc($$, 1, struct ubik_ast_type);
           $$->name = $2;
           $$->type = TYPE_ADT;
+          $$->adt.params = $3;
+          $$->adt.constraints = $4;
+          $$->adt.ctors = $5;
 
           load_loc($$->loc);
-          /* TODO: add locations */
+          merge_loc($$, $$, $5);
         }
 ;
 
 type_params
 : NAME type_params
+        { alloc($$, 1, struct ubik_ast_type_params);
+          $$->name = $1;
+          $$->next = $2;
+          load_loc($$->loc);
+        }
 | %empty
+        { $$ = NULL; }
 ;
 
 type_constraints
-: GIVEN EXISTS TYPE_NAME names type_constraints
+: GIVEN EXISTS TYPE_NAME type_params type_constraints
+        { alloc($$, 1, struct ubik_ast_type_constraints);
+          $$->interface = $3;
+          $$->params = $4;
+          $$->next = $5;
+          load_loc($$->loc);
+          merge_loc($$, $$, $4);
+        }
 | %empty
-;
-
-names
-: NAME names
-| %empty
+        { $$ = NULL; }
 ;
 
 adt_ctors
 : adt_ctor adt_ctors
+        { $$ = $1;
+          $$->next = $2;
+        }
 | adt_ctor
 ;
 
 adt_ctor
-: IS TYPE_NAME parameters
+: IS TYPE_NAME type_list
+        { alloc($$, 1, struct ubik_ast_adt_ctors);
+          $$->name = $2;
+          $$->params = $3;
+          load_loc($$->loc);
+          merge_loc($$, $$, $3);
+        }
 ;
 
-parameters
-: type_atom parameters
-| OPEN_PAR top_type_expr CLOSE_PAR parameters
+type_list
+: type_atom type_list
+        { alloc($$, 1, struct ubik_ast_type_list);
+          $$->type_expr = $1;
+          $$->next = $2;
+          load_loc($$->loc);
+        }
+| OPEN_PAR top_type_expr CLOSE_PAR type_list
+        { alloc($$, 1, struct ubik_ast_type_list);
+          $$->type_expr = $2;
+          $$->next = $4;
+          load_loc($$->loc);
+        }
 | %empty
+        { $$ = NULL; }
 ;
 
 /* Expressions */
