@@ -1,3 +1,7 @@
+" Vim syntax file
+" Language:	Ubik
+" Maintainer:	Haldean Brown <me@haldean.org>
+
 " check out :help group-name for the list of groups
 
 if exists("b:current_syntax")
@@ -7,6 +11,9 @@ endif
 syntax match ubikBind ":"
 syntax match ubikBind "\."
 syntax match ubikBind "!="
+syntax match ubikBind "_"
+syntax match ubikBind "|"
+syntax match ubikBind "'"
 highlight link ubikBind Delimiter
 
 syntax match ubikSubbind "\^"
@@ -26,6 +33,9 @@ highlight default link ubikComment Comment
 syntax match ubikNumber "\v<\d+>"
 syntax match ubikNumber "\v<\d+\.\d+>"
 highlight default link ubikNumber Number
+
+syntax keyword ubikTypes String Word
+highlight default link ubikTypes Type
 
 setlocal shiftwidth=4
 setlocal tabstop=4
