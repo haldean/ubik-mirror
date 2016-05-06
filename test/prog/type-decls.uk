@@ -1,0 +1,8 @@
+^ Expr a
+    = Const a
+    = Add a a
+    = Mult a a
+
+: WordExpr = Expr Word
+
+: ten-expr ^ WordExpr = Const 10

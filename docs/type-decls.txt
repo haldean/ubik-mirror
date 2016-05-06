@@ -145,7 +145,7 @@ Implementations must explicitly specify concrete types for the type
 parameters of the interface being implemented:
 
     _ Evaluable String (Maybe Integer)
-        . eval = \x -> read_string x
+        . eval = \x -> read-string x
 
 Just like ADTs, constraints on the type variables can be specified:
 
@@ -157,7 +157,7 @@ Just like ADTs, constraints on the type variables can be specified:
 You can then implement this with:
 
     ' NumberList (List Integer) Integer
-        . get = list_get
+        . get = list:get
         . sum = reduce iadd 0
 
 The full grammar of interface definitions is:
