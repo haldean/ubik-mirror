@@ -203,6 +203,67 @@ _free_member_list(struct ubik_ast_member_list *member_list)
 }
 
 no_ignore static ubik_error
+_free_type_params(struct ubik_ast_type_params *p)
+{
+        while (p != NULL)
+        {
+                free(p->name);
+                p = p->next;
+        }
+        return OK;
+}
+
+no_ignore static ubik_error
+_free_type_constraints(struct ubik_ast_type_constraints *c)
+{
+        ubik_error err;
+
+        while (c != NULL)
+        {
+                free(c->interface);
+                err = _free_type_params(c->params);
+                if (err != OK)
+                        return err;
+                c = c->next;
+        }
+
+        return OK;
+}
+
+no_ignore static ubik_error
+_free_type_list(struct ubik_ast_type_list *l)
+{
+        ubik_error err;
+
+        while (l != NULL)
+        {
+                err = _free_type_expr(l->type_expr);
+                if (err != OK)
+                        return err;
+                l = l->next;
+        }
+
+        return OK;
+}
+
+no_ignore static ubik_error
+_free_adt_ctors(struct ubik_ast_adt_ctors *c)
+{
+        ubik_error err;
+
+        while (c != NULL)
+        {
+                free(c->name);
+                err = _free_type_list(c->params);
+                if (err != OK)
+                        return err;
+                c = c->next;
+        }
+
+        return OK;
+}
+
+no_ignore static ubik_error
 _free_type(struct ubik_ast_type *type)
 {
         ubik_error err;
@@ -218,6 +279,15 @@ _free_type(struct ubik_ast_type *type)
                 break;
 
         case TYPE_ADT:
+                err = _free_type_params(type->adt.params);
+                if (err != OK)
+                        return err;
+                err = _free_type_constraints(type->adt.constraints);
+                if (err != OK)
+                        return err;
+                err = _free_adt_ctors(type->adt.ctors);
+                if (err != OK)
+                        return err;
                 break;
 
         case TYPE_ALIAS:
