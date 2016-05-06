@@ -52,12 +52,10 @@ ubik_streamutil_get_line(
 
                 for (i = 0; i < GET_LINE_BUF_SIZE - 1; i++)
                 {
+                        if (n_lines_seen == line_i)
+                                goto line_found;
                         if (buf[i] == '\n')
-                        {
                                 n_lines_seen++;
-                                if (n_lines_seen == line_i)
-                                        goto line_found;
-                        }
                 }
         }
 
@@ -65,7 +63,7 @@ line_found:
         res_i = 0;
         for (;;)
         {
-                for (i++; i < GET_LINE_BUF_SIZE - 1; i++)
+                for (; i < GET_LINE_BUF_SIZE - 1; i++)
                 {
                         if (buf[i] == '\n')
                                 return OK;
