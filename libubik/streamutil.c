@@ -18,6 +18,7 @@
  */
 
 #include <strings.h>
+#include <stdlib.h>
 #include "ubik/streamutil.h"
 
 #define GET_LINE_BUF_SIZE 1024
@@ -99,6 +100,8 @@ ubik_streamutil_print_line_char(
         {
                 explain = ubik_error_explain(err);
                 printf("couldn't print line in file: %s\n", explain);
+                free(err);
+                free(explain);
                 return;
         }
         printf("%s\n", buf);
