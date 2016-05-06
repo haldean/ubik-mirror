@@ -4,7 +4,7 @@ BUILT_SOURCES = grammar.h uri-value.h humanize-poly.h
 
 libubik_a_CFLAGS = -std=c11 -Werror -Wall -Wextra -fno-strict-aliasing -rdynamic -Wswitch-enum -fPIC
 libubik_a_CPPFLAGS = -I$(top_srcdir)/include/ -D_GNU_SOURCE #-D_FORTIFY_SOURCE=2
-AM_YFLAGS = -d --report=state -Wall -Werror
+AM_YFLAGS = -d --report=state -Wall #-Werror
 
 .tree.h:
 	$(PYTHON) ../res/buildtree/buildtree.py $< $@

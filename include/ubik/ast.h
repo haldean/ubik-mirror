@@ -41,6 +41,7 @@ enum type_expr_type
         TYPE_EXPR_APPLY = 1,
         TYPE_EXPR_ATOM,
         TYPE_EXPR_VAR,
+        TYPE_EXPR_ARROW,
 };
 
 enum atom_type
@@ -63,6 +64,7 @@ enum type_type
 {
         TYPE_RECORD = 1,
         TYPE_ADT,
+        TYPE_ALIAS,
 };
 
 struct ubik_ast_loc
@@ -135,6 +137,12 @@ struct ubik_ast_expr
         struct ubik_ast_type_expr *type;
 };
 
+struct ubik_ast_type_params
+{
+        struct ubik_ast_type_expr *type;
+        struct ubik_ast_type_params *next;
+};
+
 struct ubik_ast_type_expr
 {
         union
@@ -145,6 +153,11 @@ struct ubik_ast_type_expr
                         struct ubik_ast_type_expr *head;
                         struct ubik_ast_type_expr *tail;
                 } apply;
+                struct
+                {
+                        char *head;
+                        struct ubik_ast_type_params *params;
+                } inst;
         };
         enum type_expr_type type_expr_type;
         struct ubik_ast_loc loc;
@@ -178,6 +191,7 @@ struct ubik_ast_type
         union
         {
                 struct ubik_ast_member_list *members;
+                struct ubik_ast_type_expr *aliases_to;
         };
         char *name;
         enum type_type type;

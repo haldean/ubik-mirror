@@ -169,11 +169,21 @@ _print_type_expr(struct ubik_ast_type_expr *type_expr)
         case TYPE_EXPR_ATOM:
                 printf("%s", type_expr->name);
                 return OK;
-        case TYPE_EXPR_APPLY:
+        case TYPE_EXPR_ARROW:
                 err = _print_type_expr(type_expr->apply.head);
                 if (err != OK)
                         return err;
                 printf(" -> (");
+                err = _print_type_expr(type_expr->apply.tail);
+                if (err != OK)
+                        return err;
+                printf(")");
+                return OK;
+        case TYPE_EXPR_APPLY:
+                err = _print_type_expr(type_expr->apply.head);
+                if (err != OK)
+                        return err;
+                printf(" (");
                 err = _print_type_expr(type_expr->apply.tail);
                 if (err != OK)
                         return err;
@@ -215,6 +225,13 @@ _print_type(struct ubik_ast_type *type, int indent)
                 _indent(indent + 4);
                 printf("not implemented\n");
                 break;
+
+        case TYPE_ALIAS:
+                printf(" = ");
+                err = _print_type_expr(type->aliases_to);
+                if (err != OK)
+                        return err;
+                printf("\n");
         }
 
         return OK;

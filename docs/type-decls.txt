@@ -27,7 +27,7 @@ specifying a more specific implementation of the interface (see section
 
 The full grammar of type aliases is:
 
-    type_alias : TYPE_NAME IS type
+    type_alias : TYPE_NAME IS type_expr
 
 Algebraic Data Types ---------------------------------------------------
 
@@ -100,7 +100,8 @@ The full grammar of ADTs is:
         : IS TYPE_NAME parameters
 
     parameters
-        : type parameters
+        : type_atom parameters
+        | OPEN_PAR type_expr CLOSE_PAR
         | %empty
 
 Interfaces -------------------------------------------------------------
@@ -177,16 +178,17 @@ The full grammar of interface definitions is:
         | %empty
 
     members
-        : MEMBER NAME TYPE type members
+        : MEMBER NAME TYPE type_expr members
         | %empty
 
 The full grammar of interface implementations is:
 
     impl_def
-        : EXISTS TYPE_NAME types members
+        : EXISTS TYPE_NAME parameters members
 
-    types
-        : type types
+    parameters
+        : type_atom parameters
+        | OPEN_PAR type_expr CLOSE_PAR
         | %empty
 
     members

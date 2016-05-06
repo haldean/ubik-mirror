@@ -144,6 +144,7 @@ _free_type_expr(struct ubik_ast_type_expr *type_expr)
                 break;
 
         case TYPE_EXPR_APPLY:
+        case TYPE_EXPR_ARROW:
                 err = _free_type_expr(type_expr->apply.head);
                 if (err != OK)
                         return err;
@@ -217,6 +218,12 @@ _free_type(struct ubik_ast_type *type)
                 break;
 
         case TYPE_ADT:
+                break;
+
+        case TYPE_ALIAS:
+                err = _free_type_expr(type->aliases_to);
+                if (err != OK)
+                        return err;
                 break;
 
         default:

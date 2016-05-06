@@ -58,6 +58,7 @@
         struct ubik_ast_import_list *imports;
 
         struct ubik_ast_type *type_def;
+        struct ubik_ast_type_params *type_params;
         struct ubik_ast_member_list *member_list;
 }
 
@@ -70,11 +71,12 @@
 %type <ast> prog blocks
 %type <binding> binding
 %type <expr> expr immediate top_expr
-%type <type_expr> type_expr type_atom
+%type <type_expr> top_type_expr type_expr type_atom
 %type <atom> atom
 %type <arg_list> arg_list
+/*%type <type_params> type_inst_params*/
 %type <imports> imports
-%type <type_def> adt_def
+%type <type_def> adt_def alias_def type_def
 
 %define api.pure full
 %define api.push-pull push
@@ -133,11 +135,16 @@ blocks
           $$ = $1;
           merge_loc($$, $$, $2);
         }
-| blocks adt_def
+| blocks type_def
         { wrap_err(ubik_ast_add_type($1, $2));
           $$ = $1;
           merge_loc($$, $$, $2);
         }
+;
+
+type_def
+: adt_def
+| alias_def
 ;
 
 binding
@@ -149,7 +156,7 @@ binding
           load_loc($$->loc);
           merge_loc($$, $$, $4);
         }
-| BIND NAME TYPE type_expr IS top_expr
+| BIND NAME TYPE top_type_expr IS top_expr
         { alloc($$, 1, struct ubik_ast_binding);
           $$->name = $2;
           $$->expr = $6;
@@ -177,7 +184,19 @@ imports
         }
 ;
 
-/* Abstract Data Type parsing */
+/* Type aliases */
+alias_def
+: BIND TYPE_NAME IS top_type_expr
+        { alloc($$, 1, struct ubik_ast_type);
+          $$->name = $2;
+          $$->type = TYPE_ALIAS;
+          $$->aliases_to = $4;
+
+          load_loc($$->loc);
+          merge_loc($$, $$, $4);
+        }
+
+/* Abstract Data Types */
 adt_def
 : TYPE TYPE_NAME type_params type_constraints adt_ctors
         { alloc($$, 1, struct ubik_ast_type);
@@ -214,7 +233,8 @@ adt_ctor
 ;
 
 parameters
-: type_expr parameters
+: type_atom parameters
+| OPEN_PAR top_type_expr CLOSE_PAR parameters
 | %empty
 ;
 
@@ -350,29 +370,39 @@ atom
         }
 ;
 
-type_expr
-: type_atom
-        { $$ = $1; }
-| type_atom GOES_TO type_expr
+top_type_expr
+: type_expr
+| type_expr GOES_TO top_type_expr
         { alloc($$, 1, struct ubik_ast_type_expr);
-          $$->type_expr_type = TYPE_EXPR_APPLY;
+          $$->type_expr_type = TYPE_EXPR_ARROW;
           $$->apply.head = $1;
           $$->apply.tail = $3;
           merge_loc($$, $1, $3);
         }
 ;
 
-type_atom
-: TYPE_NAME
+type_expr
+: type_expr type_atom
         { alloc($$, 1, struct ubik_ast_type_expr);
-          $$->type_expr_type = TYPE_EXPR_ATOM;
-          $$->name = $1;
-          load_loc($$->loc);
+          $$->type_expr_type = TYPE_EXPR_APPLY;
+          $$->apply.head = $1;
+          $$->apply.tail = $2;
+          merge_loc($$, $1, $2);
         }
-| NAME
+| type_atom
+| OPEN_PAR top_type_expr CLOSE_PAR
+        { $$ = $2; }
+;
+
+type_atom
+: NAME
         { alloc($$, 1, struct ubik_ast_type_expr);
           $$->type_expr_type = TYPE_EXPR_VAR;
-          $$->name = $1;
+          load_loc($$->loc);
+        }
+| TYPE_NAME
+        { alloc($$, 1, struct ubik_ast_type_expr);
+          $$->type_expr_type = TYPE_EXPR_ATOM;
           load_loc($$->loc);
         }
 ;
