@@ -20,5 +20,5 @@ in conjunction with the match operator "?", like so:
             ^ Pair a b -> a
             = \p -> ? p
                 ~ (Pair x y) => x
-        
-Patterns are restricted to unpacking Algebraic Data Types (ADTs). For
+
+Patterns are restricted to unpacking Algebraic Data Types (ADTs).
