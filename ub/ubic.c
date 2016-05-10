@@ -91,6 +91,8 @@ teardown:
 
         for (i = 0; i < n_graphs; i++)
         {
+                if (graphs[i] == NULL)
+                        continue;
                 if (ubik_release(graphs[i]) != OK)
                         printf("error when releasing graph\n");
         }
