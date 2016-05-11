@@ -47,10 +47,21 @@ emit_graph(struct ubik_dagc *graph)
         size_t i;
         char *buf;
 
+        printf("    tag 0x%04X:", graph->tag);
+        if (graph->tag & TAG_GRAPH)
+                printf(" graph");
+        if (graph->tag & TAG_GRAPH_NATIVE)
+                printf(" native");
+        if (graph->tag & TAG_GRAPH_UNRESOLVED)
+                printf(" unresolved");
+        if (graph->tag & TAG_GRAPH_MODINIT)
+                printf(" modinit");
+        printf("\n    nodes\n");
+
         for (i = 0; i < graph->n; i++)
         {
                 buf = ubik_node_explain(graph->nodes[i]);
-                printf("\t% 6ld : %s\n", i, buf);
+                printf("    % 5ld : %s\n", i, buf);
                 free(buf);
         }
 
