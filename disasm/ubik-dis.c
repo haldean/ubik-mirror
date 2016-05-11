@@ -51,15 +51,20 @@ emit_graph(struct ubik_dagc *graph)
         if (graph->tag & TAG_GRAPH)
                 printf(" graph");
         if (graph->tag & TAG_GRAPH_NATIVE)
-                printf(" native");
+                printf(" | native");
         if (graph->tag & TAG_GRAPH_UNRESOLVED)
-                printf(" unresolved");
+                printf(" | unresolved");
         if (graph->tag & TAG_GRAPH_MODINIT)
-                printf(" modinit");
+                printf(" | modinit");
 
-        buf = ubik_uri_explain(graph->identity);
-        printf("\n    identity %s\n", buf);
-        free(buf);
+        if (graph->identity != NULL)
+        {
+                buf = ubik_uri_explain(graph->identity);
+                printf("\n    identity %s\n", buf);
+                free(buf);
+        }
+        else
+                printf("\n    identity unknown\n");
 
         printf("    nodes\n");
 

@@ -22,6 +22,7 @@
 #include <stdlib.h>
 
 #include "ubik/dagc.h"
+#include "ubik/types.h"
 #include "ubik/ubik.h"
 #include "ubik/uri.h"
 #include "ubik/util.h"
@@ -34,6 +35,7 @@ ubik_node_explain(struct ubik_dagc_node *node)
         char *node_type;
         char *id;
         char *uri;
+        char *buf;
         int aspr_res;
 
         node_type = ubik_word_explain(node->node_type);
@@ -43,23 +45,30 @@ ubik_node_explain(struct ubik_dagc_node *node)
 
         if (node->node_type == DAGC_NODE_CONST)
         {
+                buf = ubik_type_explain(n->as_const.type);
+
                 if (*n->as_const.value.tag ==
                         (TAG_VALUE | TAG_LEFT_WORD | TAG_RIGHT_WORD))
                 {
                         aspr_res = asprintf(
                                 &res,
-                                "%s %s @%hx = (0x%02" PRIX64 ", 0x%02" PRIX64 ")",
+                                "%s %s @%hx = (0x%02" PRIX64 ", 0x%02" PRIX64
+                                ") (type %s)",
                                 node_type, id, (short)((uintptr_t) n),
                                 n->as_const.value.tree->left.w,
-                                n->as_const.value.tree->right.w);
+                                n->as_const.value.tree->right.w,
+                                buf);
                 }
                 else
                 {
                         aspr_res = asprintf(
-                                &res, "%s %s @%hx tag = 0x%hx",
+                                &res, "%s %s @%hx tag = 0x%hx (type %s)",
                                 node_type, id, (short)((uintptr_t) n),
-                                *n->as_const.value.tag);
+                                *n->as_const.value.tag, buf);
                 }
+
+                if (buf != NULL)
+                        free(buf);
         }
         else if (node->node_type == DAGC_NODE_LOAD)
         {
