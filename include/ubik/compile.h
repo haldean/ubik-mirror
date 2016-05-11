@@ -18,8 +18,9 @@
  */
 
 #pragma once
-#include "ubik/ubik.h"
 #include "ubik/ast.h"
+#include "ubik/gen.h"
+#include "ubik/ubik.h"
 
 
 struct ubik_compilation_env
@@ -49,5 +50,6 @@ ubik_compile_ast(
         struct ubik_dagc ***graphs,
         size_t *n_graphs,
         struct ubik_ast *ast,
+        enum ubik_load_reason load_reason,
         struct ubik_compilation_env *cenv);
 

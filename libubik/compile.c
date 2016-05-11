@@ -23,7 +23,6 @@
 #include <unistd.h>
 
 #include "ubik/compile.h"
-#include "ubik/gen.h"
 #include "ubik/infer.h"
 #include "ubik/parse.h"
 #include "ubik/resolve.h"
@@ -83,12 +82,13 @@ ubik_compile_env_free(struct ubik_compilation_env *cenv)
 }
 
 no_ignore ubik_error
-ubik_compile(
+ubik_compile_stream(
         struct ubik_dagc ***graphs,
         size_t *n_graphs,
         char *source_name,
         struct ubik_stream *in_stream,
-        struct ubik_compilation_env *cenv)
+        struct ubik_compilation_env *cenv,
+        enum ubik_load_reason reason)
 {
         struct ubik_ast *ast;
         local(resolve_context) struct ubik_resolve_context ctx = {0};
@@ -99,7 +99,17 @@ ubik_compile(
         if (err != OK)
                 return err;
 
+        printf("parsed\n");
+        err = ubik_ast_print(ast);
+        if (err != OK)
+                goto free_ast;
+
         err = ubik_resolve(ast, source_name, in_stream, &ctx);
+        if (err != OK)
+                goto free_ast;
+
+        printf("\nresolved\n");
+        err = ubik_ast_print(ast);
         if (err != OK)
                 goto free_ast;
 
@@ -107,7 +117,17 @@ ubik_compile(
         if (err != OK)
                 goto free_ast;
 
-        err = ubik_compile_ast(graphs, n_graphs, ast, cenv);
+        printf("\ninferred\n");
+        err = ubik_ast_print(ast);
+        if (err != OK)
+                goto free_ast;
+
+        err = ubik_compile_ast(graphs, n_graphs, ast, reason, cenv);
+        if (err != OK)
+                goto free_ast;
+
+        printf("\ncompiled\n");
+        err = ubik_ast_print(ast);
         if (err != OK)
                 goto free_ast;
 
@@ -118,6 +138,18 @@ free_ast:
         if (free_err != OK)
                 return free_err;
         return OK;
+}
+
+no_ignore ubik_error
+ubik_compile(
+        struct ubik_dagc ***graphs,
+        size_t *n_graphs,
+        char *source_name,
+        struct ubik_stream *in_stream,
+        struct ubik_compilation_env *cenv)
+{
+        return ubik_compile_stream(
+                graphs, n_graphs, source_name, in_stream, cenv, LOAD_MAIN);
 }
 
 no_ignore static ubik_error
@@ -171,9 +203,7 @@ _add_requirement(
 {
         struct ubik_dagc **req_graphs;
         size_t n_req_graphs;
-        struct ubik_gen_requires *req_requires;
         struct ubik_stream package_stream;
-        struct ubik_ast *ast;
         struct ubik_dagc **buf;
         char *source_name;
         ubik_error err;
@@ -186,21 +216,11 @@ _add_requirement(
         if (err != OK)
                 return err;
 
-        err = ubik_parse(&ast, source_name, &package_stream);
-        free(source_name);
+        err = ubik_compile_stream(
+                &req_graphs, &n_req_graphs, source_name, &package_stream,
+                cenv, LOAD_IMPORTED);
         if (err != OK)
                 return err;
-
-        req_requires = NULL;
-        err = ubik_compile_unit(
-                &req_graphs, &n_req_graphs, &req_requires, ast, LOAD_IMPORTED,
-                dependency->source);
-        if (err != OK)
-                return err;
-        if (req_requires != NULL)
-                return ubik_raise(
-                        ERR_NOT_IMPLEMENTED,
-                        "only one level of imports allowed");
 
         buf = realloc(
                 *graphs,
@@ -214,10 +234,6 @@ _add_requirement(
         *graphs = buf;
         *n_graphs += n_req_graphs;
 
-        err = ubik_ast_free(ast);
-        if (err != OK)
-                return err;
-
         ubik_stream_close(&package_stream);
         free(req_graphs);
 
@@ -229,6 +245,7 @@ ubik_compile_ast(
         struct ubik_dagc ***graphs,
         size_t *n_graphs,
         struct ubik_ast *ast,
+        enum ubik_load_reason reason,
         struct ubik_compilation_env *cenv)
 {
         struct ubik_gen_requires *requires;
@@ -236,8 +253,7 @@ ubik_compile_ast(
         ubik_error err;
 
         requires = NULL;
-        err = ubik_compile_unit(
-                graphs, n_graphs, &requires, ast, LOAD_MAIN, NULL);
+        err = ubik_compile_unit(graphs, n_graphs, &requires, ast, reason, NULL);
         if (err != OK)
                 return err;
 

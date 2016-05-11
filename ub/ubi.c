@@ -82,7 +82,7 @@ main(int argc, char *argv[])
         c(parse_err);
         c(err);
 
-        c(ubik_compile_ast(&graphs, &n_graphs, ast, NULL));
+        c(ubik_compile_ast(&graphs, &n_graphs, ast, LOAD_MAIN, NULL));
 
         c(ubik_env_init(&env));
 
