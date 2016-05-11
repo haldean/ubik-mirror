@@ -42,10 +42,7 @@
         } } while(0)
 
 ubik_error
-emit_graph(
-        struct ubik_dagc *graph,
-        struct ubik_dagc **all_graphs,
-        size_t n_graphs)
+emit_graph(struct ubik_dagc *graph)
 {
         size_t i;
         char *buf;
@@ -53,9 +50,11 @@ emit_graph(
         for (i = 0; i < graph->n; i++)
         {
                 buf = ubik_node_explain(graph->nodes[i]);
-                printf("\t% 6d : %s\n", i, buf);
+                printf("\t% 6ld : %s\n", i, buf);
                 free(buf);
         }
+
+        return OK;
 }
 
 ubik_error
@@ -63,7 +62,6 @@ disasm_file(char *fname)
 {
         struct ubik_stream stream;
         struct ubik_dagc **graphs;
-        struct ubik_value *expected, *actual;
         size_t n_graphs, i;
         ubik_error err, teardown_err;
 
@@ -84,8 +82,8 @@ disasm_file(char *fname)
 
         for (i = 0; i < n_graphs; i++)
         {
-                printf("graph %ul\n", i);
-                err = emit_graph(graphs[i], graphs, n_graphs);
+                printf("graph %lu\n", i);
+                err = emit_graph(graphs[i]);
                 CHECK_ERR("couldn't emit graph", teardown);
         }
 
@@ -129,6 +127,12 @@ main(int argc, char *argv[])
 {
         uint32_t n_failures;
         int i;
+
+        if (argc == 1)
+        {
+                fprintf(stderr, "usage: %s path/to/bytecode.ukb\n", argv[0]);
+                return 1;
+        }
 
         n_failures = 0;
         for (i = 1; i < argc; i++)
