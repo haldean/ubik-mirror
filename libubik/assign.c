@@ -62,6 +62,8 @@ _find_name_in_scope(
         size_t i;
         bool found;
 
+        found = false;
+
         do
         {
                 for (i = 0; i < scope->names.n && !found; i++)
@@ -146,6 +148,7 @@ _assign_atom_node(
                         return OK;
                 }
 
+                referrent = NULL;
                 err = _find_name_in_scope(
                         &referrent, expr->scope, expr->atom->str);
                 if (err != OK)
