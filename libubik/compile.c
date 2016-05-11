@@ -87,6 +87,7 @@ ubik_compile_stream(
         size_t *n_graphs,
         char *source_name,
         struct ubik_stream *in_stream,
+        char *uri_source,
         struct ubik_compilation_env *cenv,
         enum ubik_load_reason reason)
 {
@@ -122,7 +123,7 @@ ubik_compile_stream(
         if (err != OK)
                 goto free_ast;
 
-        err = ubik_compile_ast(graphs, n_graphs, ast, reason, cenv);
+        err = ubik_compile_ast(graphs, n_graphs, ast, reason, uri_source, cenv);
         if (err != OK)
                 goto free_ast;
 
@@ -149,7 +150,8 @@ ubik_compile(
         struct ubik_compilation_env *cenv)
 {
         return ubik_compile_stream(
-                graphs, n_graphs, source_name, in_stream, cenv, LOAD_MAIN);
+                graphs, n_graphs, source_name, in_stream, NULL, cenv,
+                LOAD_MAIN);
 }
 
 no_ignore static ubik_error
@@ -218,7 +220,7 @@ _add_requirement(
 
         err = ubik_compile_stream(
                 &req_graphs, &n_req_graphs, source_name, &package_stream,
-                cenv, LOAD_IMPORTED);
+                dependency->source, cenv, LOAD_IMPORTED);
         if (err != OK)
                 return err;
 
@@ -236,6 +238,7 @@ _add_requirement(
 
         ubik_stream_close(&package_stream);
         free(req_graphs);
+        free(source_name);
 
         return OK;
 }
@@ -246,6 +249,7 @@ ubik_compile_ast(
         size_t *n_graphs,
         struct ubik_ast *ast,
         enum ubik_load_reason reason,
+        char *uri_source,
         struct ubik_compilation_env *cenv)
 {
         struct ubik_gen_requires *requires;
@@ -253,7 +257,8 @@ ubik_compile_ast(
         ubik_error err;
 
         requires = NULL;
-        err = ubik_compile_unit(graphs, n_graphs, &requires, ast, reason, NULL);
+        err = ubik_compile_unit(
+                graphs, n_graphs, &requires, ast, reason, uri_source);
         if (err != OK)
                 return err;
 

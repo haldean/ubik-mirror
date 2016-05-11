@@ -51,5 +51,6 @@ ubik_compile_ast(
         size_t *n_graphs,
         struct ubik_ast *ast,
         enum ubik_load_reason load_reason,
+        char *uri_source,
         struct ubik_compilation_env *cenv);
 
