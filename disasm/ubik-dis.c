@@ -56,12 +56,20 @@ emit_graph(struct ubik_dagc *graph)
                 printf(" unresolved");
         if (graph->tag & TAG_GRAPH_MODINIT)
                 printf(" modinit");
-        printf("\n    nodes\n");
+
+        buf = ubik_uri_explain(graph->identity);
+        printf("\n    identity %s\n", buf);
+        free(buf);
+
+        printf("    nodes\n");
 
         for (i = 0; i < graph->n; i++)
         {
                 buf = ubik_node_explain(graph->nodes[i]);
-                printf("    % 5ld : %s\n", i, buf);
+                printf("    % 5ld : %s", i, buf);
+                if (graph->nodes[i] == graph->result)
+                        printf(" result");
+                printf("\n");
                 free(buf);
         }
 
