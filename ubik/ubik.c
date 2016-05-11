@@ -1,5 +1,5 @@
 /*
- * pyasm.c: pyasm test runner
+ * ubik.c: ubik virtual machine
  * Copyright (C) 2015, Haldean Brown
  *
  * This program is free software; you can redistribute it and/or modify
@@ -32,13 +32,13 @@
 #include "ubik/util.h"
 #include "ubik/value.h"
 
-#define CHECK_ERR(msg) \
+#define CHECK_ERR(msg, label) \
         do { if (err != OK) \
         { \
                 char *expl = ubik_error_explain(err); \
                 printf(msg ": %s\n", expl); \
                 free(err); free(expl); \
-                goto teardown; \
+                goto label; \
         } } while(0)
 
 ubik_error
@@ -64,36 +64,36 @@ test_file(char *fname, bool debug, bool timing)
         if (timing)
         {
                 err = ubik_timer_new(&timer);
-                CHECK_ERR("couldn't create timer");
+                CHECK_ERR("couldn't create timer", teardown);
                 err = ubik_timer_start(timer);
-                CHECK_ERR("couldn't start timer");
+                CHECK_ERR("couldn't start timer", teardown);
         }
 
         err = ubik_start();
-        CHECK_ERR("couldn't start ubik");
+        CHECK_ERR("couldn't start ubik", teardown);
 
         err = ubik_stream_rfile(&stream, fname);
-        CHECK_ERR("couldn't open file");
+        CHECK_ERR("couldn't open file", teardown);
 
         err = ubik_stream_wfilep(&sstdout, stdout);
-        CHECK_ERR("couldn't open stdout");
+        CHECK_ERR("couldn't open stdout", teardown);
 
         err = ubik_load(&graphs, &n_graphs, &stream);
-        CHECK_ERR("couldn't load file");
+        CHECK_ERR("couldn't load file", teardown);
 
         ubik_assert(n_graphs != 0);
 
         if (timing)
         {
                 err = ubik_timer_elapsed(&elapsed, timer);
-                CHECK_ERR("couldn't read timer");
+                CHECK_ERR("couldn't read timer", teardown);
                 printf("\ttime from start to loaded:    %" PRId64 " usec\n", elapsed);
         }
 
         if (debug)
         {
                 err = ubik_value_new(&expected);
-                CHECK_ERR("couldn't create expected value");
+                CHECK_ERR("couldn't create expected value", teardown);
 
                 err = ubik_value_load(expected, &stream);
                 if (err != OK && err->error_code == ERR_NO_DATA)
@@ -101,18 +101,18 @@ test_file(char *fname, bool debug, bool timing)
                         /* No expected result for this run, we'll just run it and make
                          * sure we don't crash. */
                         err = ubik_release(expected);
-                        CHECK_ERR("couldn't release expected");
+                        CHECK_ERR("couldn't release expected", teardown);
                         expected = NULL;
                 }
                 else
-                        CHECK_ERR("couldn't load expected");
+                        CHECK_ERR("couldn't load expected", teardown);
         }
 
         err = ubik_env_init(&env);
-        CHECK_ERR("couldn't create environment");
+        CHECK_ERR("couldn't create environment", teardown);
 
         err = ubik_schedule_new(&s);
-        CHECK_ERR("couldn't create scheduler");
+        CHECK_ERR("couldn't create scheduler", teardown);
 
         modinit_i = 0;
         pushed_modinit = false;
@@ -121,7 +121,7 @@ test_file(char *fname, bool debug, bool timing)
                 if (graphs[i]->tag & TAG_GRAPH_MODINIT)
                 {
                         err = ubik_schedule_push(s, graphs[i], &env, NULL);
-                        CHECK_ERR("couldn't push graph into scheduler");
+                        CHECK_ERR("couldn't push graph into scheduler", teardown);
 
                         modinit_i = i;
                         pushed_modinit = true;
@@ -130,15 +130,15 @@ test_file(char *fname, bool debug, bool timing)
         ubik_assert(pushed_modinit);
 
         err = ubik_schedule_run(s);
-        CHECK_ERR("couldn't run scheduler");
+        CHECK_ERR("couldn't run scheduler", teardown);
 
         err = ubik_env_free(&env);
-        CHECK_ERR("couldn't free environment");
+        CHECK_ERR("couldn't free environment", teardown);
 
         if (timing)
         {
                 err = ubik_timer_elapsed(&elapsed, timer);
-                CHECK_ERR("couldn't read timer");
+                CHECK_ERR("couldn't read timer", teardown);
                 printf("\ttime from start to evaluated: %" PRId64 " usec\n", elapsed);
         }
 
@@ -150,13 +150,13 @@ test_file(char *fname, bool debug, bool timing)
                 {
                         printf("fail: %s\n\texpected:  ", fname);
                         err = ubik_value_print(&sstdout, expected);
-                        CHECK_ERR("couldn't print expected");
+                        CHECK_ERR("couldn't print expected", teardown);
 
                         printf("\n\t  actual:  ");
                         if (actual != NULL)
                         {
                                 err = ubik_value_print(&sstdout, actual);
-                                CHECK_ERR("couldn't print actual");
+                                CHECK_ERR("couldn't print actual", teardown);
                         }
                         else
                         {
