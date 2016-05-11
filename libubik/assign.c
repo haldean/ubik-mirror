@@ -29,6 +29,30 @@
 #include "ubik/value.h"
 
 no_ignore static ubik_error
+_set_name_in_scope(
+        struct ubik_resolve_scope *scope,
+        char *name,
+        struct ubik_dagc_node *n)
+{
+        struct ubik_resolve_name *bind;
+        size_t i;
+        bool found;
+
+        for (i = 0; i < scope->names.n && !found; i++)
+        {
+                bind = scope->names.elems[i];
+                if (strcmp(name, bind->name) == 0)
+                        found = true;
+        }
+
+        if (!found)
+                return ubik_raise(ERR_ABSENT, "name not found in scope");
+
+        bind->node = n;
+        return OK;
+}
+
+no_ignore static ubik_error
 _find_name_in_scope(
         struct ubik_dagc_node **n,
         struct ubik_resolve_scope *scope,
@@ -252,6 +276,10 @@ _assign_lambda(
                 if (err != OK)
                         return err;
                 t->gen = (struct ubik_dagc_node *) input_node;
+
+                err = _set_name_in_scope(expr->scope, t->name, t->gen);
+                if (err != OK)
+                        return err;
 
                 t = t->next;
         }
