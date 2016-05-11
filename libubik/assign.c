@@ -29,6 +29,7 @@
 
 no_ignore static ubik_error
 _assign_atom_node(
+        struct ubik_assign_context *ctx,
         union ubik_dagc_any_node *n,
         struct ubik_ast_expr *expr)
 {
@@ -39,8 +40,7 @@ _assign_atom_node(
         {
         case ATOM_INT:
                 n->node.node_type = DAGC_NODE_CONST;
-                /* TODO: node IDs? */
-                n->node.id = 0;
+                n->node.id = ctx->next_id++;
 
                 err = ubik_value_new(&n->as_const.type);
                 if (err != OK)
@@ -58,7 +58,7 @@ _assign_atom_node(
 
         case ATOM_NUM:
                 n->node.node_type = DAGC_NODE_CONST;
-                n->node.id = 0;
+                n->node.id = ctx->next_id++;
 
                 err = ubik_value_new(&n->as_const.type);
                 if (err != OK)
@@ -79,13 +79,13 @@ _assign_atom_node(
                         &referrent, expr->atom->str, args_in_scope))
                 {
                         n->node.node_type = DAGC_NODE_REF;
-                        n->node.id = 0;
+                        n->node.id = ctx->next_id++;
                         n->as_ref.referrent = referrent;
                         return OK;
                 }
 
                 n->node.node_type = DAGC_NODE_LOAD;
-                n->node.id = 0;
+                n->node.id = ctx->next_id++;
 
                 n->as_load.loc = calloc(1, sizeof(struct ubik_uri));
 
@@ -100,7 +100,7 @@ _assign_atom_node(
 
         case ATOM_QUALIFIED:
                 n->node.node_type = DAGC_NODE_LOAD;
-                n->node.id = 0;
+                n->node.id = ctx->next_id++;
 
                 n->as_load.loc = calloc(1, sizeof(struct ubik_uri));
 
@@ -121,7 +121,7 @@ _assign_atom_node(
 
         case ATOM_STRING:
                 n->node.node_type = DAGC_NODE_CONST;
-                n->node.id = 0;
+                n->node.id = ctx->next_id++;
 
                 err = ubik_value_new(&n->as_const.type);
                 if (err != OK)
@@ -143,12 +143,12 @@ _assign_atom_node(
 
 no_ignore static ubik_error
 _assign_apply_node(
+        struct ubik_assign_context *ctx,
         union ubik_dagc_any_node *n,
         struct ubik_ast_expr *expr)
 {
         n->node.node_type = DAGC_NODE_APPLY;
-        /* TODO */
-        n->node.id = 0;
+        n->node.id = ctx->next_id++;
 
         n->as_apply.func = expr->apply.head->gen;
         n->as_apply.arg = expr->apply.tail->gen;
@@ -158,12 +158,12 @@ _assign_apply_node(
 
 no_ignore static ubik_error
 _assign_conditional_node(
+        struct ubik_assign_context *ctx,
         union ubik_dagc_any_node *n,
         struct ubik_ast_expr *expr)
 {
         n->node.node_type = DAGC_NODE_COND;
-        /* TODO */
-        n->node.id = 0;
+        n->node.id = ctx->next_id++;
 
         n->as_cond.condition = expr->condition.cond->gen;
         n->as_cond.if_true = expr->condition.implied->gen;
@@ -208,8 +208,7 @@ _assign_lambda(
                 if (input_node == NULL)
                         return ubik_raise(ERR_NO_MEMORY, "input node alloc");
                 input_node->head.node_type = DAGC_NODE_INPUT;
-                /* TODO */
-                input_node->head.id = 0;
+                input_node->head.id = ctx->next_id++;
                 input_node->arg_num = i++;
 
                 err = ubik_bdagc_push_node(
@@ -237,7 +236,7 @@ _assign_lambda(
         ubik_assert(subgraph->refcount == 1);
 
         n->node.node_type = DAGC_NODE_CONST;
-        n->node.id = 0;
+        n->node.id = ctx->next_id++;
         n->as_const.value.graph = subgraph;
         err = ubik_value_new(&n->as_const.type);
         if (err != OK)
@@ -261,7 +260,7 @@ ubik_assign_nodes(
         switch (expr->expr_type)
         {
         case EXPR_ATOM:
-                err = _assign_atom_node(n, expr);
+                err = _assign_atom_node(ctx, n, expr);
                 if (err != OK)
                         return err;
                 break;
@@ -275,7 +274,7 @@ ubik_assign_nodes(
                 if (err != OK)
                         return err;
 
-                err = _assign_apply_node(n, expr);
+                err = _assign_apply_node(ctx, n, expr);
                 if (err != OK)
                         return err;
                 break;
@@ -293,7 +292,7 @@ ubik_assign_nodes(
                 if (err != OK)
                         return err;
 
-                err = _assign_conditional_node(n, expr);
+                err = _assign_conditional_node(ctx, n, expr);
                 if (err != OK)
                         return err;
                 break;
