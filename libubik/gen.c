@@ -17,383 +17,19 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include "ubik/assert.h"
+#include "ubik/assign.h"
 #include "ubik/bdagc.h"
 #include "ubik/dagc.h"
 #include "ubik/env.h"
-#include "ubik/ubik.h"
 #include "ubik/gen.h"
 #include "ubik/types.h"
+#include "ubik/ubik.h"
 #include "ubik/uri.h"
 #include "ubik/util.h"
 #include "ubik/value.h"
 
 #include <stdlib.h>
-#include <string.h>
-
-/* Note that the known_type argument on here is a total hack, and is a
- * workaround for the lack of type propagation available in the current
- * compiler. It is used specifically for generating lambda type signatures so we
- * can assign required types to input nodes. */
-no_ignore static ubik_error
-_assign_nodes(
-        struct ubik_graph_builder *builder,
-        struct ubik_ast_expr *expr,
-        struct ubik_ast_arg_list *args_in_scope);
-
-/* Returns true if the given name is in the arg list, and sets input_node to the
- * input node corresponding to the argument in the list. */
-bool
-_name_in_arg_list(
-        struct ubik_dagc_node **input_node,
-        char *name,
-        struct ubik_ast_arg_list *arg_list)
-{
-        while (arg_list != NULL && arg_list->name != NULL)
-        {
-                if (strcmp(arg_list->name, name) == 0)
-                {
-                        *input_node = arg_list->gen;
-                        return true;
-                }
-                arg_list = arg_list->next;
-        }
-        return false;
-}
-
-no_ignore static ubik_error
-_assign_atom_node(
-        union ubik_dagc_any_node *n,
-        struct ubik_ast_expr *expr,
-        struct ubik_ast_arg_list *args_in_scope)
-{
-        struct ubik_dagc_node *referrent;
-        ubik_error err;
-
-        switch (expr->atom->atom_type)
-        {
-        case ATOM_INT:
-                n->node.node_type = DAGC_NODE_CONST;
-                /* TODO: node IDs? */
-                n->node.id = 0;
-
-                err = ubik_value_new(&n->as_const.type);
-                if (err != OK)
-                        return err;
-                err = ubik_type_word(n->as_const.type);
-                if (err != OK)
-                        return err;
-
-                err = ubik_value_new(&n->as_const.value.tree);
-                if (err != OK)
-                        return err;
-                n->as_const.value.tree->tag |= TAG_LEFT_WORD | TAG_RIGHT_WORD;
-                n->as_const.value.tree->left.w = expr->atom->integer;
-                return OK;
-
-        case ATOM_NUM:
-                n->node.node_type = DAGC_NODE_CONST;
-                n->node.id = 0;
-
-                err = ubik_value_new(&n->as_const.type);
-                if (err != OK)
-                        return err;
-                err = ubik_type_float(n->as_const.type);
-                if (err != OK)
-                        return err;
-
-                err = ubik_value_new(&n->as_const.value.tree);
-                if (err != OK)
-                        return err;
-                n->as_const.value.tree->tag |= TAG_LEFT_WORD | TAG_RIGHT_WORD;
-                n->as_const.value.tree->left.f = expr->atom->number;
-                return OK;
-
-        case ATOM_NAME:
-                if (_name_in_arg_list(
-                        &referrent, expr->atom->str, args_in_scope))
-                {
-                        n->node.node_type = DAGC_NODE_REF;
-                        n->node.id = 0;
-                        n->as_ref.referrent = referrent;
-                        return OK;
-                }
-
-                n->node.node_type = DAGC_NODE_LOAD;
-                n->node.id = 0;
-
-                n->as_load.loc = calloc(1, sizeof(struct ubik_uri));
-
-                err = ubik_uri_unknown(n->as_load.loc, expr->atom->str);
-                if (err != OK)
-                        return err;
-
-                err = ubik_take(n->as_load.loc);
-                if (err != OK)
-                        return err;
-                return OK;
-
-        case ATOM_QUALIFIED:
-                n->node.node_type = DAGC_NODE_LOAD;
-                n->node.id = 0;
-
-                n->as_load.loc = calloc(1, sizeof(struct ubik_uri));
-
-                err = ubik_uri_package(
-                        n->as_load.loc,
-                        expr->atom->qualified.head,
-                        expr->atom->qualified.tail);
-                if (err != OK)
-                        return err;
-
-                err = ubik_take(n->as_load.loc);
-                if (err != OK)
-                        return err;
-                return OK;
-
-        case ATOM_TYPE_NAME:
-                return ubik_raise(ERR_NOT_IMPLEMENTED, "expr type constructor");
-
-        case ATOM_STRING:
-                n->node.node_type = DAGC_NODE_CONST;
-                n->node.id = 0;
-
-                err = ubik_value_new(&n->as_const.type);
-                if (err != OK)
-                        return err;
-                err = ubik_type_string(n->as_const.type);
-                if (err != OK)
-                        return err;
-
-                err = ubik_value_new(&n->as_const.value.tree);
-                if (err != OK)
-                        return err;
-                err = ubik_value_pack_string(
-                        n->as_const.value.tree, expr->atom->str,
-                        strlen(expr->atom->str));
-                return OK;
-        }
-        return ubik_raise(ERR_UNKNOWN_TYPE, "compile atom type");
-}
-
-no_ignore static ubik_error
-_assign_apply_node(
-        union ubik_dagc_any_node *n,
-        struct ubik_ast_expr *expr)
-{
-        n->node.node_type = DAGC_NODE_APPLY;
-        /* TODO */
-        n->node.id = 0;
-
-        n->as_apply.func = expr->apply.head->gen;
-        n->as_apply.arg = expr->apply.tail->gen;
-
-        return OK;
-}
-
-no_ignore static ubik_error
-_assign_conditional_node(
-        union ubik_dagc_any_node *n,
-        struct ubik_ast_expr *expr)
-{
-        n->node.node_type = DAGC_NODE_COND;
-        /* TODO */
-        n->node.id = 0;
-
-        n->as_cond.condition = expr->condition.cond->gen;
-        n->as_cond.if_true = expr->condition.implied->gen;
-        n->as_cond.if_false = expr->condition.opposed->gen;
-
-        return OK;
-}
-
-no_ignore static ubik_error
-_assign_block(
-        union ubik_dagc_any_node *n,
-        struct ubik_ast_expr *expr)
-{
-        struct ubik_dagc **graphs;
-        size_t n_graphs;
-        size_t i;
-        struct ubik_gen_requires *requires;
-        struct ubik_dagc *modinit;
-        ubik_error err;
-
-        ubik_assert(expr->block->immediate != NULL);
-
-        err = ubik_compile_unit(
-                &graphs, &n_graphs, &requires,
-                expr->block, LOAD_BLOCK, NULL);
-        if (err != OK)
-                return err;
-
-        modinit = NULL;
-        for (i = 0; i < n_graphs; i++)
-                if (graphs[i]->tag & TAG_GRAPH_MODINIT)
-                {
-                        modinit = graphs[i];
-                        break;
-                }
-        ubik_assert(modinit != NULL);
-
-        n->node.node_type = DAGC_NODE_CONST;
-        /* TODO */
-        n->node.id = 0;
-        n->as_const.value.graph = modinit;
-        /* TODO: type inference from type of immediate value*/
-        err = ubik_value_new(&n->as_const.type);
-        if (err != OK)
-                return err;
-        n->as_const.type->tag |= TAG_LEFT_WORD | TAG_RIGHT_WORD;
-
-        return OK;
-}
-
-no_ignore static ubik_error
-_assign_lambda(
-        union ubik_dagc_any_node *n,
-        struct ubik_ast_expr *expr)
-{
-        struct ubik_graph_builder builder;
-        struct ubik_dagc *subgraph;
-        struct ubik_ast_arg_list *t;
-        struct ubik_dagc_input *input_node;
-        size_t i;
-        ubik_error err;
-
-        err = ubik_bdagc_init(&builder);
-        if (err != OK)
-                return err;
-
-        ubik_assert(expr->lambda.args != NULL);
-        t = expr->lambda.args;
-        i = 0;
-        while (t->name != NULL)
-        {
-                input_node = calloc(1, sizeof(struct ubik_dagc_input));
-                if (input_node == NULL)
-                        return ubik_raise(ERR_NO_MEMORY, "input node alloc");
-                input_node->head.node_type = DAGC_NODE_INPUT;
-                /* TODO */
-                input_node->head.id = 0;
-                input_node->arg_num = i++;
-
-                err = ubik_bdagc_push_node(
-                        &builder, (struct ubik_dagc_node *) input_node);
-                if (err != OK)
-                        return err;
-                t->gen = (struct ubik_dagc_node *) input_node;
-
-                t = t->next;
-        }
-
-        err = _assign_nodes(
-                &builder, expr->lambda.body, expr->lambda.args);
-        if (err != OK)
-                return err;
-
-        builder.result = expr->lambda.body->gen;
-        builder.result->is_terminal = true;
-
-        err = ubik_bdagc_build(&subgraph, &builder);
-        if (err != OK)
-                return err;
-        subgraph->tag |= TAG_GRAPH_UNRESOLVED;
-
-        /* we let the node take the reference that we get by default. */
-        ubik_assert(subgraph->refcount == 1);
-
-        n->node.node_type = DAGC_NODE_CONST;
-        n->node.id = 0;
-        n->as_const.value.graph = subgraph;
-        err = ubik_value_new(&n->as_const.type);
-        if (err != OK)
-                return err;
-        n->as_const.type->tag |= TAG_LEFT_WORD | TAG_RIGHT_WORD;
-        /* TODO: lambda type here. */
-        return OK;
-}
-
-no_ignore static ubik_error
-_assign_nodes(
-        struct ubik_graph_builder *builder,
-        struct ubik_ast_expr *expr,
-        struct ubik_ast_arg_list *args_in_scope)
-{
-        union ubik_dagc_any_node *n;
-        ubik_error err;
-
-        n = calloc(1, sizeof(union ubik_dagc_any_node));
-
-        switch (expr->expr_type)
-        {
-        case EXPR_ATOM:
-                err = _assign_atom_node(n, expr, args_in_scope);
-                if (err != OK)
-                        return err;
-                break;
-
-        case EXPR_APPLY:
-                err = _assign_nodes(
-                        builder, expr->apply.head, args_in_scope);
-                if (err != OK)
-                        return err;
-
-                err = _assign_nodes(
-                        builder, expr->apply.tail, args_in_scope);
-                if (err != OK)
-                        return err;
-
-                err = _assign_apply_node(n, expr);
-                if (err != OK)
-                        return err;
-                break;
-
-        case EXPR_CONDITIONAL:
-                err = _assign_nodes(
-                        builder, expr->condition.cond, args_in_scope);
-                if (err != OK)
-                        return err;
-
-                err = _assign_nodes(
-                        builder, expr->condition.implied, args_in_scope);
-                if (err != OK)
-                        return err;
-
-                err = _assign_nodes(
-                        builder, expr->condition.opposed, args_in_scope);
-                if (err != OK)
-                        return err;
-
-                err = _assign_conditional_node(n, expr);
-                if (err != OK)
-                        return err;
-                break;
-
-        case EXPR_LAMBDA:
-                err = _assign_lambda(n, expr);
-                if (err != OK)
-                        return err;
-                break;
-
-        case EXPR_BLOCK:
-                err = _assign_block(n, expr);
-                if (err != OK)
-                        return err;
-                break;
-
-        case EXPR_CONSTRUCTOR:
-        default:
-                return ubik_raise(ERR_UNKNOWN_TYPE, "compile assign node");
-        }
-
-        err = ubik_bdagc_push_node(builder, &n->node);
-        if (err != OK)
-                return err;
-        expr->gen = &n->node;
-
-        return OK;
-}
+#include <stdio.h>
 
 no_ignore static ubik_error
 ubik_compile_binding(
@@ -405,6 +41,7 @@ ubik_compile_binding(
         struct ubik_uri *uri;
         struct ubik_graph_builder builder;
         struct ubik_value *type;
+        local(assign_context) struct ubik_assign_context ctx = {0};
         union ubik_value_or_graph ins_value;
 
         ubik_error err;
@@ -413,7 +50,7 @@ ubik_compile_binding(
         if (err != OK)
                 return err;
 
-        err = _assign_nodes(&builder, binding->expr, NULL);
+        err = ubik_assign_nodes(&ctx, &builder, binding->expr);
         if (err != OK)
                 return err;
 
@@ -694,6 +331,7 @@ ubik_create_modinit(
 {
         struct modinit_iterator iter;
         struct ubik_graph_builder builder;
+        local(assign_context) struct ubik_assign_context ctx = {0};
         ubik_error err;
         size_t i;
 
@@ -714,7 +352,7 @@ ubik_create_modinit(
         if (ast->immediate != NULL
                 && (load_reason == LOAD_MAIN || load_reason == LOAD_BLOCK))
         {
-                err = _assign_nodes(&builder, ast->immediate, NULL);
+                err = ubik_assign_nodes(&ctx, &builder, ast->immediate);
                 if (err != OK)
                         return err;
                 ast->immediate->gen->is_terminal = true;

@@ -23,9 +23,39 @@
 #include "ubik/assert.h"
 #include "ubik/assign.h"
 #include "ubik/dagc.h"
+#include "ubik/resolve.h"
 #include "ubik/types.h"
 #include "ubik/uri.h"
 #include "ubik/value.h"
+
+no_ignore static ubik_error
+_find_name_in_scope(
+        struct ubik_dagc_node **n,
+        struct ubik_resolve_scope *scope,
+        char *name)
+{
+        struct ubik_resolve_name *bind;
+        size_t i;
+        bool found;
+
+        do
+        {
+                for (i = 0; i < scope->names.n && !found; i++)
+                {
+                        bind = scope->names.elems[i];
+                        if (strcmp(name, bind->name) == 0)
+                                found = true;
+                }
+                scope = scope->parent;
+        }
+        while (!found && scope != NULL);
+
+        if (!found)
+                return ubik_raise(ERR_ABSENT, "name not found in scope");
+
+        *n = bind->node;
+        return OK;
+}
 
 no_ignore static ubik_error
 _assign_atom_node(
@@ -75,27 +105,33 @@ _assign_atom_node(
                 return OK;
 
         case ATOM_NAME:
-                if (_name_in_arg_list(
-                        &referrent, expr->atom->str, args_in_scope))
+                if (expr->atom->name_loc->type == RESOLVE_GLOBAL)
                 {
-                        n->node.node_type = DAGC_NODE_REF;
+                        n->node.node_type = DAGC_NODE_LOAD;
                         n->node.id = ctx->next_id++;
-                        n->as_ref.referrent = referrent;
+
+                        n->as_load.loc = calloc(1, sizeof(struct ubik_uri));
+
+                        err = ubik_uri_native(n->as_load.loc, expr->atom->str);
+                        if (err != OK)
+                                return err;
+
+                        err = ubik_take(n->as_load.loc);
+                        if (err != OK)
+                                return err;
                         return OK;
                 }
 
-                n->node.node_type = DAGC_NODE_LOAD;
+                err = _find_name_in_scope(
+                        &referrent, expr->scope, expr->atom->str);
+                if (err != OK)
+                        return err;
+                if (referrent == NULL)
+                        return ubik_raise(ERR_ABSENT, "no node set on name");
+
+                n->node.node_type = DAGC_NODE_REF;
                 n->node.id = ctx->next_id++;
-
-                n->as_load.loc = calloc(1, sizeof(struct ubik_uri));
-
-                err = ubik_uri_unknown(n->as_load.loc, expr->atom->str);
-                if (err != OK)
-                        return err;
-
-                err = ubik_take(n->as_load.loc);
-                if (err != OK)
-                        return err;
+                n->as_ref.referrent = referrent;
                 return OK;
 
         case ATOM_QUALIFIED:
@@ -320,4 +356,10 @@ ubik_assign_nodes(
         expr->gen = &n->node;
 
         return OK;
+}
+
+void
+ubik_assign_context_free(struct ubik_assign_context *ctx)
+{
+        unused(ctx);
 }
