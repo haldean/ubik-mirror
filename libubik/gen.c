@@ -17,6 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include "ubik/assert.h"
 #include "ubik/assign.h"
 #include "ubik/bdagc.h"
 #include "ubik/dagc.h"
@@ -99,15 +100,12 @@ ubik_compile_binding(
  * The returned URI has one reference allocated for the caller, and one
  * reference allocated for the requires list if appropriate. */
 no_ignore static ubik_error
-ubik_resolve_uri(
+_collect_dep_packages(
         struct ubik_uri **resolved,
         struct ubik_uri *uri,
-        struct ubik_env *env,
         struct ubik_gen_requires **requires)
 {
-        struct ubik_uri *r;
         struct ubik_gen_requires *new_req;
-        bool is_present;
         ubik_error err;
 
         if (uri->scope == SCOPE_PACKAGE)
@@ -131,54 +129,16 @@ ubik_resolve_uri(
                 return OK;
         }
 
-        r = calloc(1, sizeof(struct ubik_uri));
-
-        /* prefer user-defined to native, so that users can shadow. */
-        err = ubik_uri_user(r, uri->name);
+        ubik_assert(uri->scope != SCOPE_UNKNOWN);
+        err = ubik_take(uri);
         if (err != OK)
                 return err;
-        err = ubik_take(r);
-        if (err != OK)
-                return err;
-
-        err = ubik_env_present(&is_present, env, r);
-        if (err != OK)
-                return err;
-        if (is_present)
-        {
-                *resolved = r;
-                return OK;
-        }
-        err = ubik_release(r);
-        if (err != OK)
-                return err;
-
-        r = calloc(1, sizeof(struct ubik_uri));
-
-        err = ubik_uri_native(r, uri->name);
-        if (err != OK)
-                return err;
-        err = ubik_take(r);
-        if (err != OK)
-                return err;
-
-        err = ubik_env_present(&is_present, env, r);
-        if (err != OK)
-                return err;
-        if (is_present)
-        {
-                *resolved = r;
-                return OK;
-        }
-        err = ubik_release(r);
-        if (err != OK)
-                return err;
-
-        return ubik_raise(ERR_ABSENT, "couldn't resolve uri");
+        *resolved = uri;
+        return OK;
 }
 
 no_ignore static ubik_error
-ubik_resolve_uris(
+_collect_all_dep_packages(
         struct ubik_dagc *graph,
         struct ubik_env *local_env,
         struct ubik_gen_requires **requires,
@@ -205,7 +165,7 @@ ubik_resolve_uris(
                                 continue;
                         if (!(t & TAG_GRAPH_UNRESOLVED))
                                 continue;
-                        err = ubik_resolve_uris(
+                        err = _collect_all_dep_packages(
                                 cons->value.graph, local_env, requires,
                                 uri_source);
                         if (err != OK)
@@ -218,7 +178,7 @@ ubik_resolve_uris(
                 load = (struct ubik_dagc_load *) graph->nodes[i];
 
                 new_uri = NULL;
-                err = ubik_resolve_uri(&new_uri, load->loc, local_env, requires);
+                err = _collect_dep_packages(&new_uri, load->loc, requires);
                 if (err != OK)
                         return err;
 
@@ -226,7 +186,7 @@ ubik_resolve_uris(
                 if (err != OK)
                         return err;
 
-                /* The URI comes back from ubik_resolve_uri with a reference */
+                /* The URI comes back from _collect_dep_packages with a reference */
                 load->loc = new_uri;
         }
 
@@ -438,7 +398,7 @@ ubik_compile_unit(
 
         for (i = 0; i < *n_graphs; i++)
         {
-                err = ubik_resolve_uris(
+                err = _collect_all_dep_packages(
                         (*graphs)[i], &local_env, requires, uri_source);
                 if (err != OK)
                         return err;
