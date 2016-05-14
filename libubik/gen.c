@@ -101,39 +101,24 @@ ubik_compile_binding(
  * reference allocated for the requires list if appropriate. */
 no_ignore static ubik_error
 _collect_dep_packages(
-        struct ubik_uri **resolved,
         struct ubik_uri *uri,
         struct ubik_gen_requires **requires)
 {
         struct ubik_gen_requires *new_req;
         ubik_error err;
 
-        if (uri->scope == SCOPE_PACKAGE)
-        {
-                new_req = calloc(1, sizeof(struct ubik_gen_requires));
-                new_req->dependency = uri;
-                new_req->next = *requires;
-
-                /* one ref for the *resolved pointer... */
-                err = ubik_take(uri);
-                if (err != OK)
-                        return err;
-
-                /* ...and one for the *requires pointer */
-                err = ubik_take(uri);
-                if (err != OK)
-                        return err;
-
-                *requires = new_req;
-                *resolved = uri;
+        if (uri->scope != SCOPE_PACKAGE)
                 return OK;
-        }
 
-        ubik_assert(uri->scope != SCOPE_UNKNOWN);
+        new_req = calloc(1, sizeof(struct ubik_gen_requires));
+        new_req->dependency = uri;
+        new_req->next = *requires;
+
         err = ubik_take(uri);
         if (err != OK)
                 return err;
-        *resolved = uri;
+
+        *requires = new_req;
         return OK;
 }
 
@@ -148,7 +133,6 @@ _collect_all_dep_packages(
         ubik_error err;
         struct ubik_dagc_load *load;
         struct ubik_dagc_const *cons;
-        struct ubik_uri *new_uri;
         ubik_tag t;
 
         /* Mark the graph resolved here, so that self-references do not cause us
@@ -177,17 +161,9 @@ _collect_all_dep_packages(
                         continue;
                 load = (struct ubik_dagc_load *) graph->nodes[i];
 
-                new_uri = NULL;
-                err = _collect_dep_packages(&new_uri, load->loc, requires);
+                err = _collect_dep_packages(load->loc, requires);
                 if (err != OK)
                         return err;
-
-                err = ubik_release(load->loc);
-                if (err != OK)
-                        return err;
-
-                /* The URI comes back from _collect_dep_packages with a reference */
-                load->loc = new_uri;
         }
 
         return OK;
