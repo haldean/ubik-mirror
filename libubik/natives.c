@@ -470,6 +470,15 @@ _register_humanize(struct ubik_env *env)
         return OK;
 }
 
+static char *native_names[] = {
+        "uadd",
+        "usub",
+        "eq",
+        "emit",
+        "humanize",
+        "concat",
+};
+
 no_ignore ubik_error
 ubik_natives_register(struct ubik_env *env)
 {
@@ -500,4 +509,16 @@ ubik_natives_register(struct ubik_env *env)
                 return err;
 
         return OK;
+}
+
+bool
+ubik_natives_is_defined(char *name)
+{
+        size_t i;
+        size_t n;
+        n = sizeof(native_names) / sizeof(native_names[0]);
+        for (i = 0; i < n; i++)
+                if (strcmp(native_names[i], name) == 0)
+                        return true;
+        return false;
 }

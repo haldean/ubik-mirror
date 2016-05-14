@@ -90,6 +90,7 @@ _assign_atom_node(
         struct ubik_ast_expr *expr)
 {
         struct ubik_dagc_node *referrent;
+        enum ubik_resolve_type res_type;
         ubik_error err;
 
         switch (expr->atom->atom_type)
@@ -131,14 +132,21 @@ _assign_atom_node(
                 return OK;
 
         case ATOM_NAME:
-                if (expr->atom->name_loc->type == RESOLVE_GLOBAL)
+                res_type = expr->atom->name_loc->type;
+
+                if (res_type == RESOLVE_GLOBAL || res_type == RESOLVE_NATIVE)
                 {
                         n->node.node_type = DAGC_NODE_LOAD;
                         n->node.id = ctx->next_id++;
 
                         n->as_load.loc = calloc(1, sizeof(struct ubik_uri));
 
-                        err = ubik_uri_native(n->as_load.loc, expr->atom->str);
+                        if (res_type == RESOLVE_NATIVE)
+                                err = ubik_uri_native(
+                                        n->as_load.loc, expr->atom->str);
+                        else
+                                err = ubik_uri_user(
+                                        n->as_load.loc, expr->atom->str);
                         if (err != OK)
                                 return err;
 

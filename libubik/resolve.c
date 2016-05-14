@@ -403,7 +403,10 @@ find_name_resolution_types(
                         expr->atom->name_loc->type = RESOLVE_CLOSURE;
                         break;
                 case BOUNDARY_GLOBAL:
-                        expr->atom->name_loc->type = RESOLVE_GLOBAL;
+                        if (ubik_natives_is_defined(expr->atom->str))
+                                expr->atom->name_loc->type = RESOLVE_NATIVE;
+                        else
+                                expr->atom->name_loc->type = RESOLVE_GLOBAL;
                         break;
                 case BOUNDARY_BLOCK:
                         expr->atom->name_loc->type = RESOLVE_LOCAL;

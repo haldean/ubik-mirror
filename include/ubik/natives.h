@@ -17,8 +17,13 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#pragma once
 #include "ubik/ubik.h"
+#include <stdbool.h>
 
 no_ignore ubik_error
 ubik_natives_register(struct ubik_env *env);
 
+/* Returns true if the provided name is the name of a native function. */
+bool
+ubik_natives_is_defined(char *);

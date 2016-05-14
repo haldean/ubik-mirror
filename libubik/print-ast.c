@@ -47,6 +47,9 @@ _print_atom(struct ubik_ast_atom *atom)
                 case RESOLVE_GLOBAL:
                         printf("*");
                         break;
+                case RESOLVE_NATIVE:
+                        printf("@");
+                        break;
                 case RESOLVE_CLOSURE:
                         printf("%%");
                         break;

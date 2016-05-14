@@ -33,6 +33,9 @@ enum ubik_resolve_type
         /* if a name resolves through closure, then the ast needs to be
          * transformed such that the name can be accessed as a local. */
         RESOLVE_CLOSURE,
+        /* if a name resolves globally, then the name should be accessed by
+         * using a load node with the native scope. */
+        RESOLVE_NATIVE,
 };
 
 struct ubik_resolve_name
