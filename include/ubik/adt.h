@@ -44,6 +44,18 @@ ubik_adt_get_field(
         struct ubik_value *instance,
         size_t n);
 
+/* Returns the type of the Nth field of the provided ADT. The return reference
+ * is mutable and mutates the contents of the type declaration. The instance is
+ * used to determine which constructor is being referenced, but it is sufficient
+ * to pass a one-element list whose first element is the constructor being
+ * queried. */
+no_ignore ubik_error
+ubik_adt_get_field_type(
+        struct ubik_value **type,
+        struct ubik_value *type_decl,
+        struct ubik_value *instance,
+        size_t n);
+
 /* Returns the number of fields on the provided ADT instance. */
 no_ignore ubik_error
 ubik_adt_inst_size(

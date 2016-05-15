@@ -1,7 +1,7 @@
 include ../../res/build-config.am
 
-TESTS = buffer-test env-test gc-test host_to_net-test load_save-test path_concat-test pointer_set-test split-test uri-test list-test
-check_PROGRAMS = buffer-test env-test gc-test host_to_net-test load_save-test path_concat-test pointer_set-test split-test uri-test list-test
+TESTS = buffer-test env-test gc-test host_to_net-test load_save-test path_concat-test pointer_set-test split-test uri-test list-test adt-test
+check_PROGRAMS = buffer-test env-test gc-test host_to_net-test load_save-test path_concat-test pointer_set-test split-test uri-test list-test adt-test
 
 buffer_test_SOURCES=buffer.c
 env_test_SOURCES=env.c
@@ -13,5 +13,6 @@ pointer_set_test_SOURCES=pointer_set.c
 split_test_SOURCES=split.c
 uri_test_SOURCES=uri.c
 list_test_SOURCES=list.c
+adt_test_SOURCES=adt.c
 
 LDADD = $(top_builddir)/libubik/libubik.a

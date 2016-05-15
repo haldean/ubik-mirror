@@ -1,5 +1,5 @@
 /*
- * adt.c: tests for abstract data types
+ * adt.c: tests for algebraic data types
  * Copyright (C) 2016, Haldean Brown
  *
  * This program is free software; you can redistribute it and/or modify
