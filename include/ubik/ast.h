@@ -36,7 +36,7 @@ enum expr_type
         EXPR_BLOCK
 };
 
-enum type_expr_type
+enum ubik_type_expr_type
 {
         TYPE_EXPR_APPLY = 1,
         TYPE_EXPR_ATOM,
@@ -60,7 +60,7 @@ struct ubik_ast_type_expr;
 struct ubik_resolve_scope;
 struct ubik_resolve_name_loc;
 
-enum type_type
+enum ubik_type_type
 {
         TYPE_RECORD = 1,
         TYPE_ADT,
@@ -148,7 +148,7 @@ struct ubik_ast_type_expr
                         struct ubik_ast_type_expr *tail;
                 } apply;
         };
-        enum type_expr_type type_expr_type;
+        enum ubik_type_expr_type type_expr_type;
         struct ubik_ast_loc loc;
 };
 
@@ -219,7 +219,7 @@ struct ubik_ast_type
                 } adt;
         };
         char *name;
-        enum type_type type;
+        enum ubik_type_type type;
         struct ubik_ast_loc loc;
 };
 
