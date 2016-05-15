@@ -18,36 +18,65 @@
  */
 
 #include <stdlib.h>
+#include <string.h>
 
 #include "ubik/adt.h"
 #include "ubik/ast.h"
-#include "ubik/util.h"
+#include "ubik/ubik.h"
+#include "ubik/value.h"
 #include "unit.h"
 
 test_t simple_adt()
 {
-        struct ubik_ast_type decl = {0};
+        struct ubik_ast_type sdecl = {0};
         struct ubik_ast_adt_ctors *ctors;
+        struct ubik_value *decl;
+        struct ubik_value *args;
+        struct ubik_value *inst;
+
+        char *res_str;
+        size_t res_size;
 
         ctors = NULL;
 
-        ctors = calloc(3, sizeof(struct ubik_ast_adt_ctors));
+        ctors = calloc(2, sizeof(struct ubik_ast_adt_ctors));
 
         ctors[0].name = "Sphere";
         ctors[0].params = calloc(1, sizeof(struct ubik_ast_type_list));
         ctors[0].params[0].type_expr = calloc(1, sizeof(struct ubik_ast_type_list));
-        ctors[0].params[0].type_expr->name = "Location";
+        ctors[0].params[0].type_expr->name = "Length";
         ctors[0].params[0].type_expr->type_expr_type = TYPE_EXPR_ATOM;
         ctors[0].params[0].next = NULL;
-        ctors[0].next = NULL;
+        ctors[0].next = &ctors[1];
 
-        decl.name = "Shape";
-        decl.type = TYPE_ADT;
-        decl.adt.params = NULL;
-        decl.adt.constraints = NULL;
-        decl.adt.ctors = ctors;
+        ctors[1].name = "Point";
+        ctors[1].params = NULL;
+        ctors[1].next = NULL;
 
-        unused(decl);
+        sdecl.name = "Manifold";
+        sdecl.type = TYPE_ADT;
+        sdecl.adt.params = NULL;
+        sdecl.adt.constraints = NULL;
+        sdecl.adt.ctors = ctors;
+
+        assert(ubik_value_new(&decl) == OK);
+        assert(ubik_adt_create_decl(decl, &sdecl) == OK);
+
+        assert(ubik_value_new(&args) == OK);
+        args->tag |= TAG_LEFT_NODE | TAG_RIGHT_WORD;
+        args->right.w = 0;
+        assert(ubik_value_new(&args->left.t) == OK);
+        assert(ubik_value_pack_string(args->left.t, "Point", 5) == OK);
+
+        assert(ubik_value_new(&inst) == OK);
+        assert(ubik_adt_instantiate(inst, decl, args) == OK);
+
+        assert(ubik_adt_get_ctor(&res_str, inst) == OK);
+        assert(strcmp(res_str, "Point") == 0);
+        free(res_str);
+
+        assert(ubik_adt_inst_size(&res_size, inst) == OK);
+        assert(res_size == 0);
 
         free(ctors[0].params[0].type_expr);
         free(ctors[0].params);

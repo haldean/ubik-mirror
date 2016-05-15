@@ -18,6 +18,7 @@
  */
 
 #pragma once
+#include "ubik/ast.h"
 #include "ubik/ubik.h"
 
 /* Instantiate the ADT given in the value-encoded type declaration using
@@ -42,3 +43,15 @@ ubik_adt_get_field(
         struct ubik_value **res,
         struct ubik_value *instance,
         size_t n);
+
+/* Returns the number of fields on the provided ADT instance. */
+no_ignore ubik_error
+ubik_adt_inst_size(
+        size_t *n,
+        struct ubik_value *instance);
+
+/* Creates a value-encoded type declaration for an ADT. */
+no_ignore ubik_error
+ubik_adt_create_decl(
+        struct ubik_value *res,
+        struct ubik_ast_type *source);
