@@ -22,6 +22,7 @@
 
 #include "ubik/adt.h"
 #include "ubik/ast.h"
+#include "ubik/list.h"
 #include "ubik/ubik.h"
 #include "ubik/value.h"
 #include "unit.h"
@@ -33,6 +34,7 @@ test_t simple_adt()
         struct ubik_value *decl;
         struct ubik_value *args;
         struct ubik_value *inst;
+        struct ubik_value *ctor;
 
         char *res_str;
         size_t res_size;
@@ -62,14 +64,16 @@ test_t simple_adt()
         assert(ubik_value_new(&decl) == OK);
         assert(ubik_adt_create_decl(decl, &sdecl) == OK);
 
-        assert(ubik_value_new(&args) == OK);
-        args->tag |= TAG_LEFT_NODE | TAG_RIGHT_WORD;
-        args->right.w = 0;
-        assert(ubik_value_new(&args->left.t) == OK);
-        assert(ubik_value_pack_string(args->left.t, "Point", 5) == OK);
+        assert(ubik_value_new(&ctor) == OK);
+        assert(ubik_value_pack_string(ctor, "Point", 5) == OK);
 
-        assert(ubik_value_new(&inst) == OK);
-        assert(ubik_adt_instantiate(inst, decl, args) == OK);
+        assert(ubik_value_new(&args) == OK);
+        assert(ubik_list_create_empty(args) == OK);
+        assert(ubik_list_append(args, ctor) == OK);
+        assert(ubik_release(ctor) == OK);
+
+        assert(ubik_adt_instantiate(&inst, decl, args) == OK);
+        assert(ubik_take(inst) == OK);
 
         assert(ubik_adt_get_ctor(&res_str, inst) == OK);
         assert(strcmp(res_str, "Point") == 0);
@@ -77,6 +81,10 @@ test_t simple_adt()
 
         assert(ubik_adt_inst_size(&res_size, inst) == OK);
         assert(res_size == 0);
+
+        assert(ubik_release(decl) == OK);
+        assert(ubik_release(args) == OK);
+        assert(ubik_release(inst) == OK);
 
         free(ctors[0].params[0].type_expr);
         free(ctors[0].params);

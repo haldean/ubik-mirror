@@ -24,10 +24,11 @@
 /* Instantiate the ADT given in the value-encoded type declaration using
  * the provided value-encoded tuple of arguments. The first argument in
  * the argument tuple should be a string whose contents are the name of
- * the constructor to use. */
+ * the constructor to use. The instantiated value is returned without a
+ * reference for the caller; the caller must take it upon receipt. */
 no_ignore ubik_error
 ubik_adt_instantiate(
-        struct ubik_value *res,
+        struct ubik_value **res,
         struct ubik_value *type_decl,
         struct ubik_value *args);
 

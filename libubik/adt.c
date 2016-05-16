@@ -19,14 +19,18 @@
 
 #include "ubik/adt.h"
 #include "ubik/list.h"
+#include "ubik/util.h"
 #include "ubik/value.h"
 
 no_ignore ubik_error
 ubik_adt_instantiate(
-        struct ubik_value *res,
+        struct ubik_value **res,
         struct ubik_value *type_decl,
         struct ubik_value *args)
 {
+        unused(type_decl);
+        *res = args;
+        return OK;
 }
 
 no_ignore ubik_error
@@ -89,5 +93,7 @@ ubik_adt_create_decl(
         struct ubik_value *res,
         struct ubik_ast_type *source)
 {
-
+        unused(res);
+        unused(source);
+        return OK;
 }
