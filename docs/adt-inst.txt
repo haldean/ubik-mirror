@@ -1,0 +1,39 @@
+Instantiating Algebraic Data Types =====================================
+Haldean Brown                                      First draft: May 2016
+                                                  Last updated: May 2016
+
+Algebraic data types are translated at compile time into value-encoded
+heterogenous lists which, in combination with the actual type
+declaration itself, give the runtime sufficient type information to be
+able to work with the types.
+
+The instantiations are just tuples, essentially, where the first item is
+a string that represents the constructor used for the instantiation, and
+the remaininig items are all the arguments to the constructor (i.e., the
+fields of the object). These can be unpacked and addressed using the
+native function ubik-adt-get, which takes an instantiation and an index
+and returns the object at that index.
+
+As a concrete example, take this:
+
+        ^ Entity = Person Name
+        : print-name = \(Person n) -> emit n
+
+The print-name function is compiled down to this Ubik source:
+
+        : print-name = \x -> {
+            : n = ubik-adt-get x 0
+            != emit n
+        }
+
+For construction of ADTs, functions representing the type's constructors
+are inserted into the environment. From the above example, the following
+function would be created:
+
+        : Person ^ Entity = \name ->
+            ubik-adt-new "Person" (ubik-adt-arglist-1 name)
+
+The -1 at the end of ubik-adt-arglist-1 is a workaround for the lack of
+variable-arity functions in Ubik; arglists are supported for up to 32
+elements, meaning that an ADT can only have 32 fields.
+
