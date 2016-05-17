@@ -68,3 +68,10 @@ no_ignore ubik_error
 ubik_adt_create_decl(
         struct ubik_value *res,
         struct ubik_ast_type *source);
+
+/* Creates a graph that instantiates a given ADT. */
+no_ignore ubik_error
+ubik_adt_create_constructor(
+        struct ubik_dagc **res,
+        struct ubik_value *type_decl,
+        char *constructor_name);
