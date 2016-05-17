@@ -20,6 +20,7 @@
 #include <string.h>
 
 #include "ubik/adt.h"
+#include "ubik/assert.h"
 #include "ubik/list.h"
 #include "ubik/util.h"
 #include "ubik/value.h"
@@ -202,8 +203,44 @@ ubik_adt_create_constructor(
         struct ubik_value *type_decl,
         char *constructor_name)
 {
-        unused(res);
-        unused(type_decl);
-        unused(constructor_name);
+        struct ubik_dagc *ctor;
+        struct ubik_value *check_ctor;
+        struct ubik_value *c;
+        char *test_name;
+        size_t test_n;
+        size_t n_args;
+        bool found;
+        ubik_error err;
+
+        err = ubik_list_get(&check_ctor, type_decl, 2);
+        if (err != OK)
+                return err;
+
+        found = false;
+
+        while ((check_ctor->tag & TAG_LEFT_WORD) != 0)
+        {
+                err = ubik_list_get(&c, check_ctor->left.t, 0);
+                if (err != OK)
+                        return err;
+
+                err = ubik_string_read(&test_name, &test_n, c);
+                if (err != OK)
+                        return err;
+
+                if (strcmp(test_name, constructor_name) == 0)
+                {
+                        found = true;
+                        break;
+                }
+
+                if ((check_ctor->tag & TAG_RIGHT_NODE) == 0)
+                        return ubik_raise(
+                                ERR_BAD_TAG, "bad tag in ctor definition");
+                check_ctor = check_ctor->right.t;
+        }
+
+        c = check_ctor->left.t;
+
         return OK;
 }

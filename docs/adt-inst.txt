@@ -61,10 +61,9 @@ For construction of ADTs, functions representing the type's constructors
 are inserted into the environment. From the above example, the following
 function would be created:
 
-        : Person ^ Entity = \name ->
-            ubik-adt-new "Person" (ubik-adt-arglist-1 name)
+        : Person ^ Entity = \name -> ubik-adt-new-1 "Person" name
 
-The -1 at the end of ubik-adt-arglist-1 is a workaround for the lack of
+The -1 at the end of ubik-adt-new-1 is a workaround for the lack of
 variable-arity functions in Ubik; arglists are supported for up to 32
 elements, meaning that an ADT can only have 32 fields.
 
