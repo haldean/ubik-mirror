@@ -203,12 +203,10 @@ ubik_adt_create_constructor(
         struct ubik_value *type_decl,
         char *constructor_name)
 {
-        struct ubik_dagc *ctor;
         struct ubik_value *check_ctor;
         struct ubik_value *c;
         char *test_name;
         size_t test_n;
-        size_t n_args;
         bool found;
         ubik_error err;
 
@@ -240,7 +238,11 @@ ubik_adt_create_constructor(
                 check_ctor = check_ctor->right.t;
         }
 
+        if (!found)
+                return ubik_raise(ERR_ABSENT, "ctor does not exist");
+
         c = check_ctor->left.t;
 
+        unused(res);
         return OK;
 }
