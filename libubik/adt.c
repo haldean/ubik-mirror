@@ -281,6 +281,9 @@ ubik_adt_create_constructor(
         err = ubik_uri_native(native_func, native_func_name);
         if (err != OK)
                 return err;
+        err = ubik_take(native_func);
+        if (err != OK)
+                return err;
         free(native_func_name);
 
         err = ubik_bdagc_init(&builder);
