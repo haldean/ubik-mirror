@@ -406,6 +406,10 @@ ubik_compile_type(
                         return err;
         }
 
+        err = ubik_release(type_decl);
+        if (err != OK)
+                return err;
+
         return OK;
 }
 
