@@ -73,6 +73,7 @@ ubik_bdagc_build(
                 return err;
 
         ubik_assert(b->result != NULL);
+        graph->result = NULL;
 
         for (i = 0; i < b->n_nodes; i++)
         {
@@ -89,6 +90,8 @@ ubik_bdagc_build(
                 if (b->nodes[i] == b->result)
                         graph->result = graph->nodes[i];
         }
+
+        ubik_assert(graph->result != NULL);
 
         err = ubik_dagc_init(graph);
         if (err != OK)
