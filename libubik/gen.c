@@ -17,6 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include "ubik/adt.h"
 #include "ubik/assert.h"
 #include "ubik/assign.h"
 #include "ubik/bdagc.h"
@@ -84,8 +85,7 @@ ubik_compile_binding(
 
         ins_value.graph = graphs[n_graphs];
 
-        err = ubik_env_set(
-                local_env, uri, ins_value, type);
+        err = ubik_env_set(local_env, uri, ins_value, type);
         if (err != OK)
                 return err;
 
@@ -329,6 +329,80 @@ ubik_create_modinit(
         return OK;
 }
 
+no_ignore static ubik_error
+ubik_compile_type(
+        struct ubik_dagc **graphs,
+        size_t n_graphs,
+        struct ubik_ast_type *type,
+        struct ubik_env *local_env)
+{
+        struct ubik_value *type_decl;
+        struct ubik_value *ctor_type;
+        struct ubik_uri *uri;
+        struct ubik_ast_adt_ctors *ctor;
+        union ubik_value_or_graph ins_value;
+        char *ctor_name;
+        ubik_error err;
+
+        if (type->type != TYPE_ADT)
+                return ubik_raise(
+                        ERR_NOT_IMPLEMENTED,
+                        "only adts are supported");
+
+        err = ubik_value_new(&type_decl);
+        if (err != OK)
+                return err;
+        err = ubik_adt_create_decl(type_decl, type);
+        if (err != OK)
+                return err;
+
+        ctor = type->adt.ctors;
+        while (ctor != NULL)
+        {
+                ctor_name = ctor->name;
+
+                err = ubik_adt_create_constructor(
+                        &graphs[n_graphs],
+                        type_decl,
+                        ctor_name);
+                if (err != OK)
+                        return err;
+
+                uri = calloc(1, sizeof(struct ubik_uri));
+                if (uri == NULL)
+                        return ubik_raise(ERR_NO_MEMORY, "uri alloc");
+                err = ubik_uri_user(uri, ctor_name);
+                if (err != OK)
+                        return err;
+                err = ubik_take(uri);
+                if (err != OK)
+                        return err;
+                graphs[n_graphs]->identity = uri;
+
+                /* TODO: add constructor type here */
+                err = ubik_value_new(&ctor_type);
+                if (err != OK)
+                        return err;
+                ctor_type->tag |= TAG_LEFT_WORD | TAG_RIGHT_WORD;
+                ctor_type->left.w = 0;
+                ctor_type->right.w = 0;
+
+                ins_value.graph = graphs[n_graphs];
+
+                err = ubik_env_set(local_env, uri, ins_value, ctor_type);
+                if (err != OK)
+                        return err;
+
+                err = ubik_release(ctor_type);
+                if (err != OK)
+                        return err;
+
+                ctor = ctor->next;
+        }
+
+        return OK;
+}
+
 no_ignore ubik_error
 ubik_compile_unit(
         struct ubik_dagc ***graphs,
@@ -346,7 +420,9 @@ ubik_compile_unit(
         if (err != OK)
                 return err;
 
-        *graphs = calloc(ast->bindings.n + 1, sizeof(struct ubik_dagc *));
+        *graphs = calloc(
+                1 + ast->bindings.n + ast->types.n,
+                sizeof(struct ubik_dagc *));
         if (*graphs == NULL)
                 return ubik_raise(ERR_NO_MEMORY, "compile graph alloc");
 
@@ -358,6 +434,15 @@ ubik_compile_unit(
         {
                 err = ubik_compile_binding(
                         *graphs, (*n_graphs)++, ast->bindings.elems[i],
+                        &local_env);
+                if (err != OK)
+                        return err;
+        }
+
+        for (i = 0; i < ast->types.n; i++)
+        {
+                err = ubik_compile_type(
+                        *graphs, (*n_graphs)++, ast->types.elems[i],
                         &local_env);
                 if (err != OK)
                         return err;
