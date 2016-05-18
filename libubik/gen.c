@@ -91,6 +91,9 @@ ubik_compile_binding(
         err = ubik_release(type);
         if (err != OK)
                 return err;
+        err = ubik_release(res);
+        if (err != OK)
+                return err;
 
         return OK;
 }
@@ -397,6 +400,10 @@ ubik_compile_type(
                         return ubik_raise(
                                 ERR_NOT_IMPLEMENTED,
                                 "only a single adt ctor is implemented");
+
+                err = ubik_release(graph);
+                if (err != OK)
+                        return err;
         }
 
         return OK;
