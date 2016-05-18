@@ -50,10 +50,8 @@ usage()
 int
 main(int argc, char *argv[])
 {
-        struct ubik_dagc **graphs = NULL;
+        struct ubik_dagc *graph;
         struct ubik_stream in, out;
-        size_t i;
-        size_t n_graphs = 0;
         ubik_error err;
         struct ubik_compilation_env env;
         char *source_name;
@@ -63,6 +61,8 @@ main(int argc, char *argv[])
                 usage();
                 return EXIT_FAILURE;
         }
+
+        graph = NULL;
 
         c(ubik_start());
 
@@ -79,8 +79,8 @@ main(int argc, char *argv[])
         }
 
         c(ubik_compile_env_default(&env));
-        c(ubik_compile(&graphs, &n_graphs, source_name, &in, &env));
-        c(ubik_save(&out, graphs, n_graphs));
+        c(ubik_compile(&graph, source_name, &in, &env));
+        c(ubik_save(&out, &graph, 1));
 
 teardown:
         ubik_stream_close(&in);
@@ -89,15 +89,11 @@ teardown:
         if (ubik_compile_env_free(&env) != OK)
                 printf("error when freeing compile env\n");
 
-        for (i = 0; i < n_graphs; i++)
+        if (graph != NULL)
         {
-                if (graphs[i] == NULL)
-                        continue;
-                if (ubik_release(graphs[i]) != OK)
+                if (ubik_release(graph) != OK)
                         printf("error when releasing graph\n");
         }
-
-        free(graphs);
 
         if (ubik_teardown() != OK)
                 printf("error when tearing down runtime\n");

@@ -39,16 +39,14 @@ ubik_compile_env_free(struct ubik_compilation_env *cenv);
 
 no_ignore ubik_error
 ubik_compile(
-        struct ubik_dagc ***graphs,
-        size_t *n_graphs,
+        struct ubik_dagc **res,
         char *source_name,
         struct ubik_stream *in_stream,
         struct ubik_compilation_env *cenv);
 
 no_ignore ubik_error
 ubik_compile_ast(
-        struct ubik_dagc ***graphs,
-        size_t *n_graphs,
+        struct ubik_dagc **res,
         struct ubik_ast *ast,
         enum ubik_load_reason load_reason,
         char *uri_source,

@@ -47,20 +47,18 @@ int
 main(int argc, char *argv[])
 {
         struct ubik_ast *ast;
-        struct ubik_dagc **graphs;
+        struct ubik_dagc *graph;
         struct ubik_stream sstdin;
         struct ubik_env env = {0};
         struct ubik_scheduler *s;
         local(resolve_context) struct ubik_resolve_context rctx = {0};
-        size_t n_graphs;
-        size_t i;
         ubik_error err;
         ubik_error teardown_err;
         ubik_error parse_err;
         char *buf;
 
         ast = NULL;
-        graphs = NULL;
+        graph = NULL;
         s = NULL;
 
         c(ubik_start());
@@ -82,12 +80,12 @@ main(int argc, char *argv[])
         c(parse_err);
         c(err);
 
-        c(ubik_compile_ast(&graphs, &n_graphs, ast, LOAD_MAIN, NULL, NULL));
+        c(ubik_compile_ast(&graph, ast, LOAD_MAIN, NULL, NULL));
 
         c(ubik_env_init(&env));
 
         c(ubik_schedule_new(&s));
-        c(ubik_schedule_push(s, graphs[0], &env, NULL));
+        c(ubik_schedule_push(s, graph, &env, NULL));
         c(ubik_schedule_run(s));
 
 teardown:
@@ -116,22 +114,16 @@ teardown:
                 free(s);
         }
 
-        if (graphs != NULL)
+        if (graph != NULL)
         {
-                for (i = 0; i < n_graphs; i++)
+                teardown_err = ubik_release(graph);
+                if (teardown_err != OK)
                 {
-                        if (graphs[i] == NULL)
-                                continue;
-                        teardown_err = ubik_release(graphs[i]);
-                        if (teardown_err != OK)
-                        {
-                                buf = ubik_error_explain(teardown_err);
-                                printf("graph release failed: %s\n", buf);
-                                free(buf);
-                                free(teardown_err);
-                        }
+                        buf = ubik_error_explain(teardown_err);
+                        printf("graph release failed: %s\n", buf);
+                        free(buf);
+                        free(teardown_err);
                 }
-                free(graphs);
         }
 
         teardown_err = ubik_env_free(&env);

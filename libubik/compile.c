@@ -83,8 +83,7 @@ ubik_compile_env_free(struct ubik_compilation_env *cenv)
 
 no_ignore ubik_error
 ubik_compile_stream(
-        struct ubik_dagc ***graphs,
-        size_t *n_graphs,
+        struct ubik_dagc **res,
         char *source_name,
         struct ubik_stream *in_stream,
         char *uri_source,
@@ -123,7 +122,7 @@ ubik_compile_stream(
         if (err != OK)
                 goto free_ast;
 
-        err = ubik_compile_ast(graphs, n_graphs, ast, reason, uri_source, cenv);
+        err = ubik_compile_ast(res, ast, reason, uri_source, cenv);
         if (err != OK)
                 goto free_ast;
 
@@ -143,18 +142,16 @@ free_ast:
 
 no_ignore ubik_error
 ubik_compile(
-        struct ubik_dagc ***graphs,
-        size_t *n_graphs,
+        struct ubik_dagc **res,
         char *source_name,
         struct ubik_stream *in_stream,
         struct ubik_compilation_env *cenv)
 {
         return ubik_compile_stream(
-                graphs, n_graphs, source_name, in_stream, NULL, cenv,
-                LOAD_MAIN);
+                res, source_name, in_stream, NULL, cenv, LOAD_MAIN);
 }
 
-no_ignore static ubik_error
+no_ignore ubik_error
 _open_stream_for_requirement(
         struct ubik_stream *out,
         char **source_name,
@@ -195,58 +192,9 @@ _open_stream_for_requirement(
         return ubik_raise(ERR_ABSENT, package_name);
 }
 
-no_ignore static ubik_error
-_add_requirement(
-        struct ubik_dagc ***graphs,
-        size_t *n_graphs,
-        struct ubik_gen_requires *requires,
-        struct ubik_uri *dependency,
-        struct ubik_compilation_env *cenv)
-{
-        struct ubik_dagc **req_graphs;
-        size_t n_req_graphs;
-        struct ubik_stream package_stream;
-        struct ubik_dagc **buf;
-        char *source_name;
-        ubik_error err;
-
-        unused(requires);
-
-        source_name = NULL;
-        err = _open_stream_for_requirement(
-                &package_stream, &source_name, dependency->source, cenv);
-        if (err != OK)
-                return err;
-
-        err = ubik_compile_stream(
-                &req_graphs, &n_req_graphs, source_name, &package_stream,
-                dependency->source, cenv, LOAD_IMPORTED);
-        if (err != OK)
-                return err;
-
-        buf = realloc(
-                *graphs,
-                (*n_graphs + n_req_graphs) * sizeof(struct ubik_dagc **));
-        if (buf == NULL)
-                return ubik_raise(ERR_NO_MEMORY, "graph list realloc");
-        memcpy(
-                &buf[*n_graphs],
-                req_graphs,
-                n_req_graphs * sizeof(struct ubik_dagc **));
-        *graphs = buf;
-        *n_graphs += n_req_graphs;
-
-        ubik_stream_close(&package_stream);
-        free(req_graphs);
-        free(source_name);
-
-        return OK;
-}
-
 no_ignore ubik_error
 ubik_compile_ast(
-        struct ubik_dagc ***graphs,
-        size_t *n_graphs,
+        struct ubik_dagc **res,
         struct ubik_ast *ast,
         enum ubik_load_reason reason,
         char *uri_source,
@@ -256,21 +204,18 @@ ubik_compile_ast(
         struct ubik_gen_requires *head;
         ubik_error err;
 
+        unused(cenv);
+
         requires = NULL;
-        err = ubik_compile_unit(
-                graphs, n_graphs, &requires, ast, reason, uri_source);
+        err = ubik_gen_graphs(res, &requires, ast, reason, uri_source);
         if (err != OK)
                 return err;
 
         head = requires;
         while (requires != NULL)
         {
-                err = _add_requirement(
-                        graphs, n_graphs, requires,
-                        requires->dependency, cenv);
-                if (err != OK)
-                        return err;
-                requires = requires->next;
+                return ubik_raise(
+                        ERR_NOT_IMPLEMENTED, "imports not implemented");
         }
 
         err = ubik_gen_requires_free(head);

@@ -35,11 +35,10 @@
 
 no_ignore static ubik_error
 ubik_compile_binding(
-        struct ubik_dagc **graphs,
-        size_t n_graphs,
         struct ubik_ast_binding *binding,
         struct ubik_env *local_env)
 {
+        struct ubik_dagc *res;
         struct ubik_uri *uri;
         struct ubik_graph_builder builder;
         struct ubik_value *type;
@@ -59,10 +58,10 @@ ubik_compile_binding(
         builder.result = binding->expr->gen;
         builder.result->is_terminal = true;
 
-        err = ubik_bdagc_build(&graphs[n_graphs], &builder);
+        err = ubik_bdagc_build(&res, &builder);
         if (err != OK)
                 return err;
-        graphs[n_graphs]->tag |= TAG_GRAPH_UNRESOLVED;
+        res->tag |= TAG_GRAPH_UNRESOLVED;
 
         uri = calloc(1, sizeof(struct ubik_uri));
         if (uri == NULL)
@@ -73,7 +72,7 @@ ubik_compile_binding(
         err = ubik_take(uri);
         if (err != OK)
                 return err;
-        graphs[n_graphs]->identity = uri;
+        res->identity = uri;
 
         /* TODO: add binding type here */
         err = ubik_value_new(&type);
@@ -83,7 +82,7 @@ ubik_compile_binding(
         type->left.w = 0;
         type->right.w = 0;
 
-        ins_value.graph = graphs[n_graphs];
+        ins_value.graph = res;
 
         err = ubik_env_set(local_env, uri, ins_value, type);
         if (err != OK)
@@ -331,10 +330,10 @@ ubik_create_modinit(
 
 no_ignore static ubik_error
 ubik_compile_type(
-        struct ubik_dagc **graph,
         struct ubik_ast_type *type,
         struct ubik_env *local_env)
 {
+        struct ubik_dagc *graph;
         struct ubik_value *type_decl;
         struct ubik_value *ctor_type;
         struct ubik_uri *uri;
@@ -360,7 +359,7 @@ ubik_compile_type(
         {
                 ctor_name = ctor->name;
 
-                err = ubik_adt_create_constructor(graph, type_decl, ctor_name);
+                err = ubik_adt_create_constructor(&graph, type_decl, ctor_name);
                 if (err != OK)
                         return err;
 
@@ -373,7 +372,7 @@ ubik_compile_type(
                 err = ubik_take(uri);
                 if (err != OK)
                         return err;
-                (*graph)->identity = uri;
+                graph->identity = uri;
 
                 /* TODO: add constructor type here */
                 err = ubik_value_new(&ctor_type);
@@ -383,7 +382,7 @@ ubik_compile_type(
                 ctor_type->left.w = 0;
                 ctor_type->right.w = 0;
 
-                ins_value.graph = *graph;
+                ins_value.graph = graph;
 
                 err = ubik_env_set(local_env, uri, ins_value, ctor_type);
                 if (err != OK)
@@ -404,9 +403,8 @@ ubik_compile_type(
 }
 
 no_ignore ubik_error
-ubik_compile_unit(
-        struct ubik_dagc ***graphs,
-        size_t *n_graphs,
+ubik_gen_graphs(
+        struct ubik_dagc **res,
         struct ubik_gen_requires **requires,
         struct ubik_ast *ast,
         enum ubik_load_reason load_reason,
@@ -420,20 +418,9 @@ ubik_compile_unit(
         if (err != OK)
                 return err;
 
-        *graphs = calloc(
-                1 + ast->bindings.n + ast->types.n,
-                sizeof(struct ubik_dagc *));
-        if (*graphs == NULL)
-                return ubik_raise(ERR_NO_MEMORY, "compile graph alloc");
-
-        /* We start writing at the first graph, not the zeroth, so
-         * that the zeroth graph can be the modinit. */
-        *n_graphs = 1;
-
         for (i = 0; i < ast->types.n; i++)
         {
                 err = ubik_compile_type(
-                        &(*graphs)[(*n_graphs)++],
                         ast->types.elems[i],
                         &local_env);
                 if (err != OK)
@@ -443,14 +430,14 @@ ubik_compile_unit(
         for (i = 0; i < ast->bindings.n; i++)
         {
                 err = ubik_compile_binding(
-                        *graphs, (*n_graphs)++, ast->bindings.elems[i],
+                        ast->bindings.elems[i],
                         &local_env);
                 if (err != OK)
                         return err;
         }
 
         err = ubik_create_modinit(
-                &(*graphs)[0], ast, &local_env, load_reason, uri_source);
+                res, ast, &local_env, load_reason, uri_source);
         if (err != OK)
         {
                 if (err->error_code == ERR_NO_DATA)
@@ -458,13 +445,10 @@ ubik_compile_unit(
                 return err;
         }
 
-        for (i = 0; i < *n_graphs; i++)
-        {
-                err = _collect_all_dep_packages(
-                        (*graphs)[i], &local_env, requires, uri_source);
-                if (err != OK)
-                        return err;
-        }
+        err = _collect_all_dep_packages(
+                *res, &local_env, requires, uri_source);
+        if (err != OK)
+                return err;
 
         err = ubik_env_free(&local_env);
         if (err != OK)
