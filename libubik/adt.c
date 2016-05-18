@@ -29,6 +29,7 @@
 #include "ubik/assert.h"
 #include "ubik/bdagc.h"
 #include "ubik/list.h"
+#include "ubik/types.h"
 #include "ubik/uri.h"
 #include "ubik/util.h"
 #include "ubik/value.h"
@@ -217,6 +218,7 @@ ubik_adt_create_constructor(
         struct ubik_dagc_input *input_node;
         struct ubik_dagc_load *load_node;
         struct ubik_dagc_apply *apply_node;
+        struct ubik_dagc_const *const_node;
         struct ubik_dagc_node *last_apply_node;
         struct ubik_uri *native_func;
         char *native_func_name;
@@ -233,7 +235,7 @@ ubik_adt_create_constructor(
 
         found = false;
 
-        while ((check_ctor->tag & TAG_LEFT_WORD) != 0)
+        while ((check_ctor->tag & TAG_LEFT_WORD) == 0)
         {
                 err = ubik_list_get(&c, check_ctor->left.t, 0);
                 if (err != OK)
@@ -284,15 +286,55 @@ ubik_adt_create_constructor(
         if (err != OK)
                 return err;
 
-        load_node = calloc(1, sizeof(struct ubik_dagc_const));
+        load_node = calloc(1, sizeof(struct ubik_dagc_load));
         if (load_node == NULL)
                 return ubik_raise(ERR_NO_MEMORY, "const node alloc");
-        load_node->head.node_type = DAGC_NODE_CONST;
+        load_node->head.node_type = DAGC_NODE_LOAD;
         load_node->head.id = 0;
         load_node->head.is_terminal = false;
         load_node->loc = native_func;
+        err = ubik_bdagc_push_node(
+                &builder, (struct ubik_dagc_node *) load_node);
+        if (err != OK)
+                return err;
 
-        last_apply_node = (struct ubik_dagc_node *) load_node;
+        const_node = calloc(1, sizeof(struct ubik_dagc_const));
+        if (const_node == NULL)
+                return ubik_raise(ERR_NO_MEMORY, "const node alloc");
+        const_node->head.node_type = DAGC_NODE_CONST;
+        const_node->head.id = 1;
+        const_node->head.is_terminal = false;
+        /* the first element of the constructor list is the value representing
+         * the name of the constructor */
+        const_node->value.tree = c->left.t;
+        err = ubik_take(const_node->value.any);
+        if (err != OK)
+                return err;
+        err = ubik_value_new(&const_node->type);
+        if (err != OK)
+                return err;
+        err = ubik_type_string(const_node->type);
+        if (err != OK)
+                return err;
+        err = ubik_bdagc_push_node(
+                &builder, (struct ubik_dagc_node *) const_node);
+        if (err != OK)
+                return err;
+
+        apply_node = calloc(1, sizeof(struct ubik_dagc_apply));
+        if (apply_node == NULL)
+                return ubik_raise(ERR_NO_MEMORY, "apply node alloc");
+        apply_node->head.node_type = DAGC_NODE_CONST;
+        apply_node->head.id = 2;
+        apply_node->head.is_terminal = false;
+        apply_node->func = (struct ubik_dagc_node *) load_node;
+        apply_node->arg = (struct ubik_dagc_node *) const_node;
+        err = ubik_bdagc_push_node(
+                &builder, (struct ubik_dagc_node *) apply_node);
+        if (err != OK)
+                return err;
+
+        last_apply_node = (struct ubik_dagc_node *) apply_node;
 
         for (i = 0; i < n_args; i++)
         {
@@ -300,7 +342,7 @@ ubik_adt_create_constructor(
                 if (input_node == NULL)
                         return ubik_raise(ERR_NO_MEMORY, "input node alloc");
                 input_node->head.node_type = DAGC_NODE_INPUT;
-                input_node->head.id = 2 * i + 1;
+                input_node->head.id = 2 * i + 3;
                 input_node->head.is_terminal = false;
                 input_node->arg_num = i;
 
@@ -308,7 +350,7 @@ ubik_adt_create_constructor(
                 if (apply_node == NULL)
                         return ubik_raise(ERR_NO_MEMORY, "input node alloc");
                 apply_node->head.node_type = DAGC_NODE_APPLY;
-                apply_node->head.id = 2 * (i + 1);
+                apply_node->head.id = 2 * i + 4;
                 apply_node->head.is_terminal = i + 1 == n_args;
                 apply_node->func = last_apply_node;
                 apply_node->arg = (struct ubik_dagc_node *) input_node;
@@ -324,6 +366,8 @@ ubik_adt_create_constructor(
 
                 last_apply_node = (struct ubik_dagc_node *) apply_node;
         }
+
+        builder.result = last_apply_node;
 
         err = ubik_bdagc_build(res, &builder);
         if (err != OK)
