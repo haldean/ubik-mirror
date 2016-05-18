@@ -159,7 +159,16 @@ _eval_load(struct ubik_env *env, struct ubik_dagc_load *node)
         {
                 /* native funcs never reappear; they're gone forever. */
                 if (node->loc->scope == SCOPE_NATIVE)
+                {
+                        if (err->error_code == ERR_ABSENT)
+                        {
+                                char *buf = ubik_uri_explain(node->loc);
+                                printf("tried to access nonexistent native "
+                                       "function %s\n", buf);
+                                free(buf);
+                        }
                         return err;
+                }
 
                 if (err->error_code == ERR_ABSENT)
                 {
