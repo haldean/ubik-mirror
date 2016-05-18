@@ -18,7 +18,16 @@
  */
 
 #pragma once
+#include <stdbool.h>
+
 #include "ubik/ubik.h"
+
+struct ubik_list_iterator
+{
+        struct ubik_value *iter;
+        struct ubik_value *val;
+        bool ok;
+};
 
 /* Creates an empty list backed by the given value. */
 no_ignore ubik_error
@@ -39,3 +48,22 @@ ubik_list_get(
         struct ubik_value **val,
         struct ubik_value *lst,
         size_t i);
+
+/* Creates a new list iterator. Iterators are used by creating them and
+ * repeatedly calling ubik_list_iter_next until the ok field of the
+ * iterator is false:
+ *
+ *      struct ubik_list_iterator iter;
+ *      ubik_list_iter_new(&iter, list);
+ *      for (; iter.ok; ubik_list_iter_next(&iter))
+ *      {
+ *              do_something(iter.val);
+ *      }
+ */
+no_ignore ubik_error
+ubik_list_iter_new(
+        struct ubik_list_iterator *iter,
+        struct ubik_value *lst);
+
+no_ignore ubik_error
+ubik_list_iter_next(struct ubik_list_iterator *iter);
