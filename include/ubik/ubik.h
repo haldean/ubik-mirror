@@ -121,7 +121,7 @@ union ubik_value_or_graph
 {
         struct ubik_value *tree;
         struct ubik_dagc  *graph;
-        void            *any;
+        void              *any;
         ubik_tag          *tag;
 };
 
