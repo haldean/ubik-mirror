@@ -91,8 +91,13 @@ teardown:
 
         if (graph != NULL)
         {
-                if (ubik_release(graph) != OK)
-                        printf("error when releasing graph\n");
+                err = ubik_release(graph);
+                if (err != OK)
+                {
+                        char *expl = ubik_error_explain(err);
+                        printf("error when releasing graph: %s\n", expl);
+                        free(expl);
+                }
         }
 
         if (ubik_teardown() != OK)
