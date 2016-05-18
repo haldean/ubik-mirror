@@ -221,6 +221,7 @@ ubik_adt_create_constructor(
         struct ubik_dagc_const *const_node;
         struct ubik_dagc_node *last_apply_node;
         struct ubik_uri *native_func;
+        local(vector) struct ubik_vector free_list = {0};
         char *native_func_name;
         char *test_name;
         size_t test_n;
@@ -303,6 +304,9 @@ ubik_adt_create_constructor(
                 &builder, (struct ubik_dagc_node *) load_node);
         if (err != OK)
                 return err;
+        err = ubik_vector_append(&free_list, load_node);
+        if (err != OK)
+                return err;
 
         const_node = calloc(1, sizeof(struct ubik_dagc_const));
         if (const_node == NULL)
@@ -326,6 +330,9 @@ ubik_adt_create_constructor(
                 &builder, (struct ubik_dagc_node *) const_node);
         if (err != OK)
                 return err;
+        err = ubik_vector_append(&free_list, const_node);
+        if (err != OK)
+                return err;
 
         apply_node = calloc(1, sizeof(struct ubik_dagc_apply));
         if (apply_node == NULL)
@@ -337,6 +344,9 @@ ubik_adt_create_constructor(
         apply_node->arg = (struct ubik_dagc_node *) const_node;
         err = ubik_bdagc_push_node(
                 &builder, (struct ubik_dagc_node *) apply_node);
+        if (err != OK)
+                return err;
+        err = ubik_vector_append(&free_list, apply_node);
         if (err != OK)
                 return err;
 
@@ -357,7 +367,7 @@ ubik_adt_create_constructor(
                         return ubik_raise(ERR_NO_MEMORY, "input node alloc");
                 apply_node->head.node_type = DAGC_NODE_APPLY;
                 apply_node->head.id = 2 * i + 4;
-                apply_node->head.is_terminal = i + 1 == n_args;
+                apply_node->head.is_terminal = false;
                 apply_node->func = last_apply_node;
                 apply_node->arg = (struct ubik_dagc_node *) input_node;
 
@@ -370,14 +380,25 @@ ubik_adt_create_constructor(
                 if (err != OK)
                         return err;
 
+                err = ubik_vector_append(&free_list, input_node);
+                if (err != OK)
+                        return err;
+                err = ubik_vector_append(&free_list, apply_node);
+                if (err != OK)
+                        return err;
+
                 last_apply_node = (struct ubik_dagc_node *) apply_node;
         }
 
+        last_apply_node->is_terminal = true;
         builder.result = last_apply_node;
 
         err = ubik_bdagc_build(res, &builder);
         if (err != OK)
                 return err;
+
+        for (i = 0; i < free_list.n; i++)
+                free(free_list.elems[i]);
 
         return OK;
 }
