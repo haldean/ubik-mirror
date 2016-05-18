@@ -17,11 +17,19 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+
+#include <inttypes.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "ubik/adt.h"
 #include "ubik/assert.h"
+#include "ubik/bdagc.h"
 #include "ubik/list.h"
+#include "ubik/uri.h"
 #include "ubik/util.h"
 #include "ubik/value.h"
 
@@ -205,8 +213,17 @@ ubik_adt_create_constructor(
 {
         struct ubik_value *check_ctor;
         struct ubik_value *c;
+        struct ubik_graph_builder builder = {0};
+        struct ubik_dagc_input *input_node;
+        struct ubik_dagc_load *load_node;
+        struct ubik_dagc_apply *apply_node;
+        struct ubik_dagc_node *last_apply_node;
+        struct ubik_uri *native_func;
+        char *native_func_name;
         char *test_name;
         size_t test_n;
+        size_t i;
+        size_t n_args;
         bool found;
         ubik_error err;
 
@@ -243,6 +260,74 @@ ubik_adt_create_constructor(
 
         c = check_ctor->left.t;
 
-        unused(res);
+        err = ubik_list_size(&n_args, c);
+        if (err != OK)
+                return err;
+        if (n_args == 0)
+                return ubik_raise(
+                        ERR_BAD_VALUE,
+                        "ctor should have at least one element");
+        /* ignore the constructor, which is the first item */
+        n_args--;
+
+        if (asprintf(&native_func_name, "ubik-adt-new-%" PRIdPTR, n_args) < 0)
+                return ubik_raise(ERR_NO_MEMORY, "native func name alloc");
+
+        native_func = calloc(1, sizeof(struct ubik_uri));
+        if (native_func == NULL)
+                return ubik_raise(ERR_NO_MEMORY, "native uri alloc");
+        err = ubik_uri_native(native_func, native_func_name);
+        if (err != OK)
+                return err;
+
+        err = ubik_bdagc_init(&builder);
+        if (err != OK)
+                return err;
+
+        load_node = calloc(1, sizeof(struct ubik_dagc_const));
+        if (load_node == NULL)
+                return ubik_raise(ERR_NO_MEMORY, "const node alloc");
+        load_node->head.node_type = DAGC_NODE_CONST;
+        load_node->head.id = 0;
+        load_node->head.is_terminal = false;
+        load_node->loc = native_func;
+
+        last_apply_node = (struct ubik_dagc_node *) load_node;
+
+        for (i = 0; i < n_args; i++)
+        {
+                input_node = calloc(1, sizeof(struct ubik_dagc_input));
+                if (input_node == NULL)
+                        return ubik_raise(ERR_NO_MEMORY, "input node alloc");
+                input_node->head.node_type = DAGC_NODE_INPUT;
+                input_node->head.id = 2 * i + 1;
+                input_node->head.is_terminal = false;
+                input_node->arg_num = i;
+
+                apply_node = calloc(1, sizeof(struct ubik_dagc_apply));
+                if (apply_node == NULL)
+                        return ubik_raise(ERR_NO_MEMORY, "input node alloc");
+                apply_node->head.node_type = DAGC_NODE_APPLY;
+                apply_node->head.id = 2 * (i + 1);
+                apply_node->head.is_terminal = i + 1 == n_args;
+                apply_node->func = last_apply_node;
+                apply_node->arg = (struct ubik_dagc_node *) input_node;
+
+                err = ubik_bdagc_push_node(
+                        &builder, (struct ubik_dagc_node *) input_node);
+                if (err != OK)
+                        return err;
+                err = ubik_bdagc_push_node(
+                        &builder, (struct ubik_dagc_node *) apply_node);
+                if (err != OK)
+                        return err;
+
+                last_apply_node = (struct ubik_dagc_node *) apply_node;
+        }
+
+        err = ubik_bdagc_build(res, &builder);
+        if (err != OK)
+                return err;
+
         return OK;
 }
