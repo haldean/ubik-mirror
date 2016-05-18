@@ -331,8 +331,7 @@ ubik_create_modinit(
 
 no_ignore static ubik_error
 ubik_compile_type(
-        struct ubik_dagc **graphs,
-        size_t n_graphs,
+        struct ubik_dagc **graph,
         struct ubik_ast_type *type,
         struct ubik_env *local_env)
 {
@@ -361,10 +360,7 @@ ubik_compile_type(
         {
                 ctor_name = ctor->name;
 
-                err = ubik_adt_create_constructor(
-                        &graphs[n_graphs],
-                        type_decl,
-                        ctor_name);
+                err = ubik_adt_create_constructor(graph, type_decl, ctor_name);
                 if (err != OK)
                         return err;
 
@@ -377,7 +373,7 @@ ubik_compile_type(
                 err = ubik_take(uri);
                 if (err != OK)
                         return err;
-                graphs[n_graphs]->identity = uri;
+                (*graph)->identity = uri;
 
                 /* TODO: add constructor type here */
                 err = ubik_value_new(&ctor_type);
@@ -387,7 +383,7 @@ ubik_compile_type(
                 ctor_type->left.w = 0;
                 ctor_type->right.w = 0;
 
-                ins_value.graph = graphs[n_graphs];
+                ins_value.graph = *graph;
 
                 err = ubik_env_set(local_env, uri, ins_value, ctor_type);
                 if (err != OK)
@@ -398,6 +394,10 @@ ubik_compile_type(
                         return err;
 
                 ctor = ctor->next;
+                if (ctor != NULL)
+                        return ubik_raise(
+                                ERR_NOT_IMPLEMENTED,
+                                "only a single adt ctor is implemented");
         }
 
         return OK;
@@ -430,19 +430,20 @@ ubik_compile_unit(
          * that the zeroth graph can be the modinit. */
         *n_graphs = 1;
 
-        for (i = 0; i < ast->bindings.n; i++)
+        for (i = 0; i < ast->types.n; i++)
         {
-                err = ubik_compile_binding(
-                        *graphs, (*n_graphs)++, ast->bindings.elems[i],
+                err = ubik_compile_type(
+                        &(*graphs)[(*n_graphs)++],
+                        ast->types.elems[i],
                         &local_env);
                 if (err != OK)
                         return err;
         }
 
-        for (i = 0; i < ast->types.n; i++)
+        for (i = 0; i < ast->bindings.n; i++)
         {
-                err = ubik_compile_type(
-                        *graphs, (*n_graphs)++, ast->types.elems[i],
+                err = ubik_compile_binding(
+                        *graphs, (*n_graphs)++, ast->bindings.elems[i],
                         &local_env);
                 if (err != OK)
                         return err;
