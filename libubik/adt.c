@@ -247,9 +247,11 @@ ubik_adt_create_constructor(
 
                 if (strcmp(test_name, constructor_name) == 0)
                 {
+                        free(test_name);
                         found = true;
                         break;
                 }
+                free(test_name);
 
                 if ((check_ctor->tag & TAG_RIGHT_NODE) == 0)
                         return ubik_raise(
