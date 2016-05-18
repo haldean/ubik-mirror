@@ -131,6 +131,7 @@ _assign_atom_node(
                 n->as_const.value.tree->left.f = expr->atom->number;
                 return OK;
 
+        case ATOM_TYPE_NAME:
         case ATOM_NAME:
                 res_type = expr->atom->name_loc->type;
 
@@ -186,9 +187,6 @@ _assign_atom_node(
                 if (err != OK)
                         return err;
                 return OK;
-
-        case ATOM_TYPE_NAME:
-                return ubik_raise(ERR_NOT_IMPLEMENTED, "expr type constructor");
 
         case ATOM_STRING:
                 n->node.node_type = DAGC_NODE_CONST;

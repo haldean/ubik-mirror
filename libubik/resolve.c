@@ -214,6 +214,8 @@ update_scopes_with_bindings(
 {
         size_t i;
         struct ubik_ast_binding *bind;
+        struct ubik_ast_type *type;
+        struct ubik_ast_adt_ctors *ctor;
         struct ubik_resolve_name *name;
         ubik_error err;
 
@@ -242,6 +244,40 @@ update_scopes_with_bindings(
                 err = find_blocks_and_bind(ctx, bind->expr);
                 if (err != OK)
                         return err;
+        }
+
+        for (i = 0; i < ast->types.n; i++)
+        {
+                type = ast->types.elems[i];
+
+                if (type->type != TYPE_ADT)
+                        continue;
+
+                ctor = type->adt.ctors;
+                while (ctor != NULL)
+                {
+                        name = calloc(1, sizeof(struct ubik_resolve_name));
+                        if (name == NULL)
+                                return ubik_raise(
+                                        ERR_NO_MEMORY, "bind to scope alloc");
+                        err = ubik_vector_append(&ctx->allocs, name);
+                        if (err != OK)
+                        {
+                                free(name);
+                                return err;
+                        }
+
+                        name->name = ctor->name;
+                        name->type = ast->scope->boundary == BOUNDARY_GLOBAL
+                                ? RESOLVE_GLOBAL
+                                : RESOLVE_LOCAL;
+
+                        err = ubik_vector_append(&ast->scope->names, name);
+                        if (err != OK)
+                                return err;
+
+                        ctor = ctor->next;
+                }
         }
 
         if (ast->immediate != NULL)
@@ -345,6 +381,7 @@ find_name_resolution_types(
         struct ubik_ast_expr *expr)
 {
         bool found;
+        bool needs_resolve;
         char *name;
         size_t i;
         size_t n_subexprs;
@@ -356,7 +393,10 @@ find_name_resolution_types(
         struct ubik_resolve_name *check_name;
         ubik_error err;
 
-        if (expr->expr_type == EXPR_ATOM && expr->atom->atom_type == ATOM_NAME)
+        needs_resolve  = expr->expr_type == EXPR_ATOM;
+        needs_resolve &= (expr->atom->atom_type == ATOM_NAME ||
+                          expr->atom->atom_type == ATOM_TYPE_NAME);
+        if (needs_resolve)
         {
                 name_loc = calloc(1, sizeof(struct ubik_resolve_name_loc));
                 if (name_loc == NULL)
