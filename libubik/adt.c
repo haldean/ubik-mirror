@@ -325,7 +325,7 @@ ubik_adt_create_constructor(
         apply_node = calloc(1, sizeof(struct ubik_dagc_apply));
         if (apply_node == NULL)
                 return ubik_raise(ERR_NO_MEMORY, "apply node alloc");
-        apply_node->head.node_type = DAGC_NODE_CONST;
+        apply_node->head.node_type = DAGC_NODE_APPLY;
         apply_node->head.id = 2;
         apply_node->head.is_terminal = false;
         apply_node->func = (struct ubik_dagc_node *) load_node;
