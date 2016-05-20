@@ -407,6 +407,14 @@ _collapse_graph(
         struct ubik_env *child_env;
         ubik_error err;
 
+#if XL_SCHEDULE_DEBUG
+        {
+                char *buf = ubik_uri_explain(e->node->known.graph->identity);
+                printf("collapsing node graph %s to value\n", buf);
+                free(buf);
+        }
+#endif
+
         notify = calloc(1, sizeof(struct ubik_exec_notify));
         if (notify == NULL)
                 return ubik_raise(ERR_NO_MEMORY, "exec notify");
