@@ -21,6 +21,8 @@
 #include "ubik/ast.h"
 #include "ubik/ubik.h"
 
+#define UBIK_MAX_ADT_FIELDS 32
+
 /* Instantiate the ADT given in the value-encoded type declaration using
  * the provided value-encoded tuple of arguments. The first argument in
  * the argument tuple should be a string whose contents are the name of
@@ -31,6 +33,11 @@ ubik_adt_instantiate(
         struct ubik_value **res,
         struct ubik_value *type_decl,
         struct ubik_value *args);
+
+/* Returns the name of the ADT that is encoded in an ADT type
+ * declaration. */
+no_ignore ubik_error
+ubik_adt_get_name(char **res, struct ubik_value *type_decl);
 
 /* Returns the name of the constructor that was used for the value. The
  * caller must free the result of this function. */
@@ -45,11 +52,11 @@ ubik_adt_get_field(
         struct ubik_value *instance,
         size_t n);
 
-/* Returns the type of the Nth field of the provided ADT. The return reference
- * is mutable and mutates the contents of the type declaration. The instance is
- * used to determine which constructor is being referenced, but it is sufficient
- * to pass a one-element list whose first element is the constructor being
- * queried. */
+/* Returns the type of the Nth field of the provided ADT. The return
+ * reference is mutable and mutates the contents of the type
+ * declaration. The instance is used to determine which constructor is
+ * being referenced, but it is sufficient to pass a one-element list
+ * whose first element is the constructor being queried. */
 no_ignore ubik_error
 ubik_adt_get_field_type(
         struct ubik_value **type,

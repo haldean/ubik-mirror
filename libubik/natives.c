@@ -17,6 +17,11 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+
+#include "ubik/adt.h"
 #include "ubik/assert.h"
 #include "ubik/dagc.h"
 #include "ubik/env.h"
@@ -470,6 +475,66 @@ _register_humanize(struct ubik_env *env)
         return OK;
 }
 
+static ubik_error
+_native_adt_new(struct ubik_env *env, struct ubik_dagc *graph)
+{
+        unused(env);
+        printf("ubik adt new %lu\n", graph->n - 2);
+        return OK;
+}
+
+static ubik_error
+_register_all_adt_new(struct ubik_env *env)
+{
+        struct ubik_dagc *graph;
+        struct ubik_uri *uri;
+        struct ubik_value *type;
+        union ubik_value_or_graph ins;
+        ubik_error err;
+        char *func_name;
+        int res;
+        int i;
+
+        for (i = 0; i < UBIK_MAX_ADT_FIELDS; i++)
+        {
+                graph = NULL;
+                err = _create_op(&graph, i + 2, _native_adt_new);
+                if (err != OK)
+                        return err;
+
+                res = asprintf(&func_name, "ubik-adt-new-%d", i);
+                if (res < 0)
+                        return ubik_raise(ERR_NO_MEMORY, "adt new name alloc");
+                err = _native_uri(&uri, func_name);
+                if (err != OK)
+                        return err;
+                free(func_name);
+
+                graph->identity = uri;
+                err = ubik_take(graph->identity);
+                if (err != OK)
+                        return err;
+
+                err = ubik_value_new(&type);
+                if (err != OK)
+                        return err;
+
+                ins.graph = graph;
+                err = ubik_env_set(env, uri, ins, type);
+                if (err != OK)
+                        return err;
+
+                err = ubik_release(type);
+                if (err != OK)
+                        return err;
+                err = ubik_release(graph);
+                if (err != OK)
+                        return err;
+        }
+
+        return OK;
+}
+
 static char *native_names[] = {
         "uadd",
         "usub",
@@ -505,6 +570,10 @@ ubik_natives_register(struct ubik_env *env)
                 return err;
 
         err = _register_concat(env);
+        if (err != OK)
+                return err;
+
+        err = _register_all_adt_new(env);
         if (err != OK)
                 return err;
 

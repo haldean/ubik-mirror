@@ -12,7 +12,7 @@ ADT declarations are essentially three lists: type parameters, parameter
 constraints and constructor definitions (for more information, see
 docs/type-decls.txt). The top level encoding is:
 
-        (type-params (constraints (constructors (0 0))))
+        (name (type-params (constraints (constructors (0 0)))))
 
 The sub-structures have the following form:
 
@@ -61,7 +61,7 @@ For construction of ADTs, functions representing the type's constructors
 are inserted into the environment. From the above example, the following
 function would be created:
 
-        : Person ^ Entity = \name -> ubik-adt-new-1 "Person" name
+        : Person ^ Entity = \name -> ubik-adt-new-1 Entity "Person" name
 
 The -1 at the end of ubik-adt-new-1 is a workaround for the lack of
 variable-arity functions in Ubik; arglists are supported for up to 32

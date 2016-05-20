@@ -46,6 +46,26 @@ ubik_adt_instantiate(
 }
 
 no_ignore ubik_error
+ubik_adt_get_name(char **res, struct ubik_value *type_decl)
+{
+        struct ubik_value *encoded;
+        ubik_error err;
+        char *name;
+        size_t read;
+
+        err = ubik_list_get(&encoded, type_decl, 0);
+        if (err != OK)
+                return err;
+
+        err = ubik_string_read(&name, &read, encoded);
+        if (err != OK)
+                return err;
+
+        *res = name;
+        return OK;
+}
+
+no_ignore ubik_error
 ubik_adt_get_ctor(char **res, struct ubik_value *value)
 {
         struct ubik_value *encoded;
@@ -109,6 +129,7 @@ ubik_adt_create_decl(
         struct ubik_ast_type_constraints *src_constraints;
         struct ubik_ast_adt_ctors *src_ctors;
 
+        struct ubik_value *dst_name;
         struct ubik_value *dst_params;
         struct ubik_value *dst_constraints;
         struct ubik_value *dst_ctors;
@@ -116,6 +137,14 @@ ubik_adt_create_decl(
 
         struct ubik_value *t;
         ubik_error err;
+
+        err = ubik_value_new(&dst_name);
+        if (err != OK)
+                return err;
+        err = ubik_value_pack_string(
+                dst_name, source->name, strlen(source->name));
+        if (err != OK)
+                return err;
 
         err = ubik_value_new(&dst_params);
         if (err != OK)
@@ -183,6 +212,13 @@ ubik_adt_create_decl(
         if (err != OK)
                 return err;
 
+        err = ubik_list_append(res, dst_name);
+        if (err != OK)
+                return err;
+        err = ubik_release(dst_name);
+        if (err != OK)
+                return err;
+
         err = ubik_list_append(res, dst_params);
         if (err != OK)
                 return err;
@@ -216,21 +252,24 @@ ubik_adt_create_constructor(
         struct ubik_value *c;
         struct ubik_graph_builder builder = {0};
         struct ubik_dagc_input *input_node;
-        struct ubik_dagc_load *load_node;
+        struct ubik_dagc_load *load_func_node;
+        struct ubik_dagc_load *load_adt_node;
         struct ubik_dagc_apply *apply_node;
         struct ubik_dagc_const *const_node;
         struct ubik_dagc_node *last_apply_node;
-        struct ubik_uri *native_func;
+        struct ubik_uri *native_func_uri;
+        struct ubik_uri *adt_decl_uri;
         local(vector) struct ubik_vector free_list = {0};
         char *native_func_name;
         char *test_name;
+        char *adt_name;
         size_t test_n;
         size_t i;
         size_t n_args;
         bool found;
         ubik_error err;
 
-        err = ubik_list_get(&check_ctor, type_decl, 2);
+        err = ubik_list_get(&check_ctor, type_decl, 3);
         if (err != OK)
                 return err;
 
@@ -265,6 +304,20 @@ ubik_adt_create_constructor(
 
         c = check_ctor->left.t;
 
+        err = ubik_adt_get_name(&adt_name, type_decl);
+        if (err != OK)
+                return err;
+        adt_decl_uri = calloc(1, sizeof(struct ubik_uri));
+        if (adt_decl_uri == NULL)
+                return ubik_raise(ERR_NO_MEMORY, "native uri alloc");
+        err = ubik_uri_native(adt_decl_uri, adt_name);
+        if (err != OK)
+                return err;
+        err = ubik_take(adt_decl_uri);
+        if (err != OK)
+                return err;
+        free(adt_name);
+
         err = ubik_list_size(&n_args, c);
         if (err != OK)
                 return err;
@@ -278,13 +331,13 @@ ubik_adt_create_constructor(
         if (asprintf(&native_func_name, "ubik-adt-new-%" PRIdPTR, n_args) < 0)
                 return ubik_raise(ERR_NO_MEMORY, "native func name alloc");
 
-        native_func = calloc(1, sizeof(struct ubik_uri));
-        if (native_func == NULL)
+        native_func_uri = calloc(1, sizeof(struct ubik_uri));
+        if (native_func_uri == NULL)
                 return ubik_raise(ERR_NO_MEMORY, "native uri alloc");
-        err = ubik_uri_native(native_func, native_func_name);
+        err = ubik_uri_native(native_func_uri, native_func_name);
         if (err != OK)
                 return err;
-        err = ubik_take(native_func);
+        err = ubik_take(native_func_uri);
         if (err != OK)
                 return err;
         free(native_func_name);
@@ -293,18 +346,33 @@ ubik_adt_create_constructor(
         if (err != OK)
                 return err;
 
-        load_node = calloc(1, sizeof(struct ubik_dagc_load));
-        if (load_node == NULL)
+        load_func_node = calloc(1, sizeof(struct ubik_dagc_load));
+        if (load_func_node == NULL)
                 return ubik_raise(ERR_NO_MEMORY, "const node alloc");
-        load_node->head.node_type = DAGC_NODE_LOAD;
-        load_node->head.id = 0;
-        load_node->head.is_terminal = false;
-        load_node->loc = native_func;
+        load_func_node->head.node_type = DAGC_NODE_LOAD;
+        load_func_node->head.id = 0;
+        load_func_node->head.is_terminal = false;
+        load_func_node->loc = native_func_uri;
         err = ubik_bdagc_push_node(
-                &builder, (struct ubik_dagc_node *) load_node);
+                &builder, (struct ubik_dagc_node *) load_func_node);
         if (err != OK)
                 return err;
-        err = ubik_vector_append(&free_list, load_node);
+        err = ubik_vector_append(&free_list, load_func_node);
+        if (err != OK)
+                return err;
+
+        load_adt_node = calloc(1, sizeof(struct ubik_dagc_load));
+        if (load_adt_node == NULL)
+                return ubik_raise(ERR_NO_MEMORY, "const node alloc");
+        load_adt_node->head.node_type = DAGC_NODE_LOAD;
+        load_adt_node->head.id = 0;
+        load_adt_node->head.is_terminal = false;
+        load_adt_node->loc = adt_decl_uri;
+        err = ubik_bdagc_push_node(
+                &builder, (struct ubik_dagc_node *) load_adt_node);
+        if (err != OK)
+                return err;
+        err = ubik_vector_append(&free_list, load_adt_node);
         if (err != OK)
                 return err;
 
@@ -340,7 +408,23 @@ ubik_adt_create_constructor(
         apply_node->head.node_type = DAGC_NODE_APPLY;
         apply_node->head.id = 2;
         apply_node->head.is_terminal = false;
-        apply_node->func = (struct ubik_dagc_node *) load_node;
+        apply_node->func = (struct ubik_dagc_node *) load_func_node;
+        apply_node->arg = (struct ubik_dagc_node *) load_adt_node;
+        err = ubik_bdagc_push_node(
+                &builder, (struct ubik_dagc_node *) apply_node);
+        if (err != OK)
+                return err;
+        err = ubik_vector_append(&free_list, apply_node);
+        if (err != OK)
+                return err;
+
+        apply_node = calloc(1, sizeof(struct ubik_dagc_apply));
+        if (apply_node == NULL)
+                return ubik_raise(ERR_NO_MEMORY, "apply node alloc");
+        apply_node->head.node_type = DAGC_NODE_APPLY;
+        apply_node->head.id = 2;
+        apply_node->head.is_terminal = false;
+        apply_node->func = (struct ubik_dagc_node *) apply_node;
         apply_node->arg = (struct ubik_dagc_node *) const_node;
         err = ubik_bdagc_push_node(
                 &builder, (struct ubik_dagc_node *) apply_node);
