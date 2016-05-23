@@ -310,7 +310,7 @@ ubik_adt_create_constructor(
         adt_decl_uri = calloc(1, sizeof(struct ubik_uri));
         if (adt_decl_uri == NULL)
                 return ubik_raise(ERR_NO_MEMORY, "native uri alloc");
-        err = ubik_uri_native(adt_decl_uri, adt_name);
+        err = ubik_uri_user(adt_decl_uri, adt_name);
         if (err != OK)
                 return err;
         err = ubik_take(adt_decl_uri);

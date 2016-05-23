@@ -357,6 +357,30 @@ ubik_compile_type(
         if (err != OK)
                 return err;
 
+        /* insert the type record into the environnment */
+        uri = calloc(1, sizeof(struct ubik_uri));
+        if (uri == NULL)
+                return ubik_raise(ERR_NO_MEMORY, "uri alloc");
+        err = ubik_uri_user(uri, type->name);
+        if (err != OK)
+                return err;
+
+        err = ubik_value_new(&ctor_type);
+        if (err != OK)
+                return err;
+        ctor_type->tag |= TAG_LEFT_WORD | TAG_RIGHT_WORD;
+        ctor_type->left.w = 0;
+        ctor_type->right.w = 0;
+
+        ins_value.tree = type_decl;
+        err = ubik_env_set(local_env, uri, ins_value, ctor_type);
+        if (err != OK)
+                return err;
+
+        err = ubik_release(ctor_type);
+        if (err != OK)
+                return err;
+
         ctor = type->adt.ctors;
         while (ctor != NULL)
         {
