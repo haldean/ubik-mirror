@@ -61,6 +61,7 @@ ubik_adt_instantiate(
         if (err != OK)
                 goto release_res;
 
+        *res_ret = res;
         return OK;
 
 release_res:
@@ -152,6 +153,7 @@ ubik_adt_create_decl(
         struct ubik_ast_type_params *src_params;
         struct ubik_ast_type_constraints *src_constraints;
         struct ubik_ast_adt_ctors *src_ctors;
+        struct ubik_ast_type_list *src_ctor_param;
 
         struct ubik_value *dst_name;
         struct ubik_value *dst_params;
@@ -223,6 +225,26 @@ ubik_adt_create_decl(
                 err = ubik_release(t);
                 if (err != OK)
                         return err;
+
+                for (src_ctor_param = src_ctors->params;
+                        src_ctor_param != NULL;
+                        src_ctor_param = src_ctor_param->next)
+                {
+                        /* TODO: these should be types */
+                        err = ubik_value_new(&t);
+                        if (err != OK)
+                                return err;
+                        t->tag |= TAG_LEFT_WORD | TAG_RIGHT_WORD;
+                        t->left.w = 0;
+                        t->right.w = 0;
+
+                        err = ubik_list_append(dst_ctor, t);
+                        if (err != OK)
+                                return err;
+                        err = ubik_release(t);
+                        if (err != OK)
+                                return err;
+                }
 
                 err = ubik_list_append(dst_ctors, dst_ctor);
                 if (err != OK)

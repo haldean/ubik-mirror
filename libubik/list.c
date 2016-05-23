@@ -63,6 +63,49 @@ ubik_list_append(struct ubik_value *lst, struct ubik_value *v)
         return OK;
 }
 
+no_ignore ubik_error
+ubik_list_extend(struct ubik_value *lst, struct ubik_value *ex)
+{
+        size_t size;
+        ubik_error err;
+        ubik_word old_refcount;
+
+        err = ubik_list_size(&size, ex);
+        if (err != OK)
+                return err;
+
+        if (size == 0)
+                return OK;
+
+        err = ubik_list_size(&size, lst);
+        if (err != OK)
+                return err;
+
+        if (size == 0)
+        {
+                old_refcount = lst->refcount;
+                *lst = *ex;
+                lst->refcount = old_refcount;
+                return OK;
+        }
+
+        while ((lst->right.t->tag & TAG_LEFT_WORD) == 0)
+        {
+                if ((lst->tag & TAG_RIGHT_NODE) == 0)
+                        return ubik_raise(
+                                ERR_BAD_TAG, "provided value is not a list");
+                lst = lst->right.t;
+        }
+
+        lst->right.t = ex;
+
+        err = ubik_take(ex);
+        if (err != OK)
+                return err;
+
+        return OK;
+}
+
 /* Returns the number of items in the list. */
 no_ignore ubik_error
 ubik_list_size(size_t *ret_size, struct ubik_value *lst)

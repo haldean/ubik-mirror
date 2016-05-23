@@ -513,6 +513,11 @@ _native_adt_new(struct ubik_env *env, struct ubik_dagc *graph)
         if (err != OK)
                 goto free_args;
 
+        graph->result->known_type = type_decl;
+        err = ubik_take(type_decl);
+        if (err != OK)
+                goto free_args;
+
 free_args:
         cerr = ubik_release(args);
         if (cerr != OK)
