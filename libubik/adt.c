@@ -418,13 +418,15 @@ ubik_adt_create_constructor(
         if (err != OK)
                 return err;
 
+        last_apply_node = (struct ubik_dagc_node *) apply_node;
+
         apply_node = calloc(1, sizeof(struct ubik_dagc_apply));
         if (apply_node == NULL)
                 return ubik_raise(ERR_NO_MEMORY, "apply node alloc");
         apply_node->head.node_type = DAGC_NODE_APPLY;
         apply_node->head.id = 2;
         apply_node->head.is_terminal = false;
-        apply_node->func = (struct ubik_dagc_node *) apply_node;
+        apply_node->func = (struct ubik_dagc_node *) last_apply_node;
         apply_node->arg = (struct ubik_dagc_node *) const_node;
         err = ubik_bdagc_push_node(
                 &builder, (struct ubik_dagc_node *) apply_node);
