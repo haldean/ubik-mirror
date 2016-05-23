@@ -47,7 +47,7 @@ emit_graph(struct ubik_dagc *graph)
         size_t i;
         char *buf;
 
-        printf("    tag 0x%04X:", graph->tag);
+        printf("    @%hx tag 0x%04X:", (short) (uintptr_t) graph, graph->tag);
         if (graph->tag & TAG_GRAPH)
                 printf(" graph");
         if (graph->tag & TAG_GRAPH_NATIVE)

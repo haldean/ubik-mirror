@@ -86,6 +86,14 @@ ubik_node_explain(struct ubik_dagc_node *node)
                         node_type, id, (short)((uintptr_t) n), uri);
                 free(uri);
         }
+        else if (node->node_type == DAGC_NODE_APPLY)
+        {
+                aspr_res = asprintf(
+                        &res, "%s %s @%hx func @%hx arg @%hx",
+                        node_type, id, (short)(uintptr_t) n,
+                        (short)(uintptr_t) n->as_apply.func,
+                        (short)(uintptr_t) n->as_apply.arg);
+        }
         else
         {
                 aspr_res = asprintf(
