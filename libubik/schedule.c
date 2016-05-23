@@ -216,6 +216,10 @@ _push_deps(
         if (err != OK)
                 return err;
 
+        ubik_assert(d1 != node);
+        ubik_assert(d2 != node);
+        ubik_assert(d3 != node);
+
         if (d1 != NULL && (node->flags & XL_DAGC_FLAG_WAIT_D1))
         {
                 /* only the root gets notified; everything below it doesn't */
