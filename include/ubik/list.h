@@ -38,6 +38,10 @@ ubik_list_create_empty(struct ubik_value *lst);
 no_ignore ubik_error
 ubik_list_append(struct ubik_value *lst, struct ubik_value *);
 
+/* Concatenates one list to the end of another. */
+no_ignore ubik_error
+ubik_list_extend(struct ubik_value *lst, struct ubik_value *);
+
 /* Returns the number of items in the list. */
 no_ignore ubik_error
 ubik_list_size(size_t *size, struct ubik_value *lst);

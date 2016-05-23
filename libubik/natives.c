@@ -25,9 +25,10 @@
 #include "ubik/assert.h"
 #include "ubik/dagc.h"
 #include "ubik/env.h"
-#include "ubik/ubik.h"
+#include "ubik/list.h"
 #include "ubik/natives.h"
 #include "ubik/types.h"
+#include "ubik/ubik.h"
 #include "ubik/util.h"
 #include "ubik/value.h"
 
@@ -478,9 +479,46 @@ _register_humanize(struct ubik_env *env)
 static ubik_error
 _native_adt_new(struct ubik_env *env, struct ubik_dagc *graph)
 {
+        struct ubik_value *type_decl;
+        struct ubik_value *ctor;
+        struct ubik_value *args;
+        struct ubik_value *res;
+        ubik_error err, cerr;
+        size_t i;
         unused(env);
-        printf("ubik adt new %lu\n", graph->n - 2);
-        return OK;
+
+        type_decl = graph->nodes[0]->known.tree;
+        ctor = graph->nodes[1]->known.tree;
+
+        err = ubik_value_new(&args);
+        if (err != OK)
+                return err;
+        err = ubik_list_create_empty(args);
+        if (err != OK)
+                goto free_args;
+
+        for (i = 2; i < graph->n - 1; i++)
+        {
+                err = ubik_list_append(args, graph->nodes[i]->known.tree);
+                if (err != OK)
+                        goto free_args;
+        }
+
+        err = ubik_adt_instantiate(&res, type_decl, ctor, args);
+        if (err != OK)
+                goto free_args;
+
+        graph->result->known.tree = res;
+        err = ubik_take(res);
+        if (err != OK)
+                goto free_args;
+
+free_args:
+        cerr = ubik_release(args);
+        if (cerr != OK)
+                return err ? err : cerr;
+
+        return err;
 }
 
 static ubik_error

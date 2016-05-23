@@ -36,13 +36,37 @@
 
 no_ignore ubik_error
 ubik_adt_instantiate(
-        struct ubik_value **res,
+        struct ubik_value **res_ret,
         struct ubik_value *type_decl,
+        struct ubik_value *ctor_name,
         struct ubik_value *args)
 {
+        struct ubik_value *res;
+        ubik_error err, rerr;
         unused(type_decl);
-        *res = args;
+
+        err = ubik_value_new(&res);
+        if (err != OK)
+                return err;
+
+        err = ubik_list_create_empty(res);
+        if (err != OK)
+                goto release_res;
+
+        err = ubik_list_append(res, ctor_name);
+        if (err != OK)
+                goto release_res;
+
+        err = ubik_list_extend(res, args);
+        if (err != OK)
+                goto release_res;
+
         return OK;
+
+release_res:
+
+        rerr = ubik_release(res);
+        return err ? err : rerr;
 }
 
 no_ignore ubik_error
