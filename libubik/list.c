@@ -97,6 +97,10 @@ ubik_list_extend(struct ubik_value *lst, struct ubik_value *ex)
                 lst = lst->right.t;
         }
 
+        err = ubik_release(lst->right.t);
+        if (err != OK)
+                return err;
+
         lst->right.t = ex;
 
         err = ubik_take(ex);
