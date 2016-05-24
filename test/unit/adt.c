@@ -69,11 +69,10 @@ test_t simple_adt()
 
         assert(ubik_value_new(&args) == OK);
         assert(ubik_list_create_empty(args) == OK);
-        assert(ubik_list_append(args, ctor) == OK);
-        assert(ubik_release(ctor) == OK);
 
-        assert(ubik_adt_instantiate(&inst, decl, args) == OK);
-        assert(ubik_take(inst) == OK);
+        assert(ubik_adt_instantiate(&inst, decl, ctor, args) == OK);
+        assert(ubik_release(ctor) == OK);
+        assert(ubik_release(args) == OK);
 
         assert(ubik_adt_get_ctor(&res_str, inst) == OK);
         assert(strcmp(res_str, "Point") == 0);
@@ -83,7 +82,6 @@ test_t simple_adt()
         assert(res_size == 0);
 
         assert(ubik_release(decl) == OK);
-        assert(ubik_release(args) == OK);
         assert(ubik_release(inst) == OK);
 
         free(ctors[0].params[0].type_expr);
