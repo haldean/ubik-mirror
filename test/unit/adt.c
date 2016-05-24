@@ -70,7 +70,8 @@ test_t simple_adt()
         assert(ubik_value_new(&args) == OK);
         assert(ubik_list_create_empty(args) == OK);
 
-        assert(ubik_adt_instantiate(&inst, decl, ctor, args) == OK);
+        assert(ubik_value_new(&inst) == OK);
+        assert(ubik_adt_instantiate(inst, decl, ctor, args) == OK);
         assert(ubik_release(ctor) == OK);
         assert(ubik_release(args) == OK);
 

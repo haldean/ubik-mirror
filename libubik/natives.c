@@ -504,7 +504,10 @@ _native_adt_new(struct ubik_env *env, struct ubik_dagc *graph)
                         goto free_args;
         }
 
-        err = ubik_adt_instantiate(&res, type_decl, ctor, args);
+        err = ubik_value_new(&res);
+        if (err != OK)
+                return err;
+        err = ubik_adt_instantiate(res, type_decl, ctor, args);
         if (err != OK)
                 goto free_args;
         graph->result->known.tree = res;
