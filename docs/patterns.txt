@@ -1,20 +1,31 @@
-Pattern Matching in Ubik ===============================================
+Conditional blocks in Ubik =============================================
 Haldean Brown                                      First draft: May 2016
                                                   Last updated: May 2016
 
-Pattern matching is the base conditional in Ubik; all other statements
-with conditional behavior are implemented in terms of matches. In Ubik,
-patterns are a syntactic literal (just like the literal "5" is a literal
-integer). Behind the scenes, matches are compiled down to simple
-predicate functions.
+Conditional blocks (cond-blocks) are the base of all control flow in
+Ubik; all other statements with conditional behavior are implemented in
+terms of cond-blocks. Cond-blocks can take two forms: pattern-matching
+blocks and predicate blocks. Pattern matching blocks are like
+switch-case statements on steroids; they allow you to match an object to
+a set of patterns, and are the operation that give ADTs their expressive
+power. Predicate blocks are more similar to the cond macro in Common
+Lisp; they take a series of predicates along with the value of the
+cond-block expression should each predicate be true.
 
-Patterns are constructed using the pattern operator "~", like so:
+In order to maintain the totality of the functions at play, each
+cond-block is required to handle all possible cases of input. For
+pattern blocks, this means that either all cases for the appropriate
+type must be handled, and for predicate blocks, it means that there must
+be a predicate involved which provably evalutes to true, always.
 
-        ~ Pair x y
+Cond-blocks are all expressed as curly-brace-enclosed blocks of case
+statements; each case statement has a head and a tail, where the head is
+that which may or may not evaluate to true or match the expression, and
+the tail is the value of the block should the head evaluate to true.
 
-This creates a pattern that matches anything created with the pair
-constructor, and also results in a local binding to x and y. When used
-in conjunction with the match operator "?", like so:
+For example, here is what a simple pattern matching block looks like; in
+this example, Pair is a type with only one constructor, so only one
+pattern is required to match all possible inputs:
 
         : fst
             ^ Pair a b -> a
@@ -23,7 +34,11 @@ in conjunction with the match operator "?", like so:
             }
 
 Patterns are restricted to unpacking Algebraic Data Types (ADTs).
-Another syntactic example:
+Another syntactic example, this time with an ADT with two constructors:
+
+        ^ Shape
+            = Circle Vec2 Number
+            = Rect Vec2 Vec2
 
         : shape-name
             ^ Shape -> String
@@ -32,15 +47,13 @@ Another syntactic example:
                 ~ Rect lo hi => "rectangle"
             }
 
-The ? operator takes an expression and a block containing a number of
+For pattern blocks, the ? operator takes an expression and the block of
 case statements. The heads are evaluated in turn; if the head evaluates
 to true, the tail of the case statement is executed and nothing after it
 is.
 
-The result of this is that any expression can be at the head of a case
-statement, not just a pattern. Patterns are special heads which both
-have a boolean evaluator and a resulting binding. Thus, the following is
-totally legal:
+Predicate blocks look very similar; they are only missing the expression
+to evaluate:
 
         : is-more-than-10
             = num -> ? {
@@ -48,15 +61,8 @@ totally legal:
                 _ => "no"
             }
 
-_ is a special operator that always evaluates to true. Note that in
-this example there is no match expression; for any cond block, the heads
-of each case statement must either all be patterns or boolean values.
-The _ operator can be used as both pattern and boolean, so it can be
-used as a catch-all with both.
+_ is a special operator that always evaluates to true and always matches
+any expression.  The _ operator can be used as both pattern and boolean,
+so it can be used as a catch-all with both pattern blocks and predicate
+blocks.
 
-Just because the heads must all be patterns doesn't mean that the heads
-need be pattern literals. The ~ operator is a function just like any
-other; you can use it to create a pattern and then pass it around just
-like a normal object. If you do not use a literal, though, then the
-bindings are not created; you only get bindings with an in-place
-literal.
