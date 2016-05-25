@@ -67,7 +67,7 @@
 }
 
 %token <token> BIND TYPE IMPLIES GOES_TO LAMBDA IS OPEN_PAR CLOSE_PAR IMMEDIATE
-%token <token> USES MEMBER OPEN_SCOPE CLOSE_SCOPE OPPOSES GIVEN EXISTS
+%token <token> USES MEMBER OPEN_SCOPE CLOSE_SCOPE OPPOSES GIVEN EXISTS COND
 %token <integer> INTEGER
 %token <floating> NUMBER
 %token <string> NAME TYPE_NAME STRING QUALIFIED_NAME
@@ -307,6 +307,7 @@ top_expr
           merge_loc($$, $$, $3);
           merge_loc($$, $$, $5);
         }
+| cond_block {}
 ;
 
 expr
@@ -407,6 +408,20 @@ atom
           $$->str = $1;
           load_loc($$->loc);
         }
+;
+
+cond_block
+: COND expr OPEN_SCOPE case_stmts CLOSE_SCOPE {}
+| COND OPEN_SCOPE case_stmts CLOSE_SCOPE {}
+;
+
+case_stmts
+: case_stmts case_stmt {}
+| case_stmt {}
+;
+
+case_stmt
+: MEMBER expr IMPLIES expr {}
 ;
 
 top_type_expr

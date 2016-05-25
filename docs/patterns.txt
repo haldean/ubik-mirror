@@ -30,7 +30,7 @@ pattern is required to match all possible inputs:
         : fst
             ^ Pair a b -> a
             = \p -> ? p {
-                ~ Pair x y => x
+                . Pair x y => x
             }
 
 Patterns are restricted to unpacking Algebraic Data Types (ADTs).
@@ -43,8 +43,8 @@ Another syntactic example, this time with an ADT with two constructors:
         : shape-name
             ^ Shape -> String
             = \x -> ? x {
-                ~ Circle center _ => concat "circle " (humanize center)
-                ~ Rect lo hi => "rectangle"
+                . Circle center _ => concat "circle " (humanize center)
+                . Rect lo hi => "rectangle"
             }
 
 For pattern blocks, the ? operator takes an expression and the block of
@@ -57,8 +57,8 @@ to evaluate:
 
         : is-more-than-10
             = num -> ? {
-                num > 10 => "yes"
-                _ => "no"
+                . num > 10 => "yes"
+                . _ => "no"
             }
 
 _ is a special operator that always evaluates to true and always matches
@@ -66,3 +66,17 @@ any expression.  The _ operator can be used as both pattern and boolean,
 so it can be used as a catch-all with both pattern blocks and predicate
 blocks.
 
+A note on the use of the member operator; without it, the grammar is
+unfortunately either whitespace-dependent (no-go) or ambiguous; it would
+be otherwise impossible to differentiate this:
+
+        ? { a => b c
+            d => e }
+
+From this:
+
+        ? { a => b
+            c d => e }
+
+As the member operator cannot appear at the head of an expression, it
+disambiguates thw two cases.
