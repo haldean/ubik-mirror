@@ -1,4 +1,4 @@
-/*
+/* vim: set shiftwidth=8 tabstop=8 :
  * grammar.y: ubik language grammar
  * Copyright (C) 2016, Haldean Brown
  *
@@ -43,7 +43,8 @@
 
 %}
 
-%union {
+%union
+{
         int token;
         ubik_word integer;
         ubik_float floating;
@@ -121,32 +122,40 @@ int yydebug = 1;
 
 prog
 : blocks
-        { ctx->ast = $1; }
+{
+        ctx->ast = $1;
+}
 | blocks immediate
-        { ctx->ast = $1;
-          ctx->ast->immediate = $2; }
+{
+        ctx->ast = $1;
+        ctx->ast->immediate = $2;
+}
 ;
 
 blocks
 : %empty
-        { alloc($$, 1, struct ubik_ast);
-          load_loc($$->loc);
-        }
+{
+        alloc($$, 1, struct ubik_ast);
+        load_loc($$->loc);
+}
 | blocks binding
-        { wrap_err(ubik_ast_bind($1, $2));
-          $$ = $1;
-          merge_loc($$, $$, $2);
-        }
+{
+        wrap_err(ubik_ast_bind($1, $2));
+        $$ = $1;
+        merge_loc($$, $$, $2);
+}
 | blocks imports
-        { wrap_err(ubik_ast_import($1, $2));
-          $$ = $1;
-          merge_loc($$, $$, $2);
-        }
+{
+        wrap_err(ubik_ast_import($1, $2));
+        $$ = $1;
+        merge_loc($$, $$, $2);
+}
 | blocks type_def
-        { wrap_err(ubik_ast_add_type($1, $2));
-          $$ = $1;
-          merge_loc($$, $$, $2);
-        }
+{
+        wrap_err(ubik_ast_add_type($1, $2));
+        $$ = $1;
+        merge_loc($$, $$, $2);
+}
 ;
 
 type_def
