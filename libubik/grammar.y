@@ -165,258 +165,293 @@ type_def
 
 binding
 : BIND NAME IS top_expr
-        { alloc($$, 1, struct ubik_ast_binding);
-          $$->name = $2;
-          $$->expr = $4;
+{
+        alloc($$, 1, struct ubik_ast_binding);
+        $$->name = $2;
+        $$->expr = $4;
 
-          load_loc($$->loc);
-          merge_loc($$, $$, $4);
-        }
+        load_loc($$->loc);
+        merge_loc($$, $$, $4);
+}
 | BIND NAME TYPE top_type_expr IS top_expr
-        { alloc($$, 1, struct ubik_ast_binding);
-          $$->name = $2;
-          $$->expr = $6;
-          $$->type_expr = $4;
+{
+        alloc($$, 1, struct ubik_ast_binding);
+        $$->name = $2;
+        $$->expr = $6;
+        $$->type_expr = $4;
 
-          load_loc($$->loc);
-          merge_loc($$, $$, $4);
-          merge_loc($$, $$, $6);
-        }
+        load_loc($$->loc);
+        merge_loc($$, $$, $4);
+        merge_loc($$, $$, $6);
+}
 ;
 
 immediate
 : IMMEDIATE IS top_expr
-        { $$ = $3;
-          load_loc($$->loc);
-          merge_loc($$, $$, $3);
-        }
+{
+        $$ = $3;
+        load_loc($$->loc);
+        merge_loc($$, $$, $3);
+}
 ;
 
 imports
 : USES NAME
-        { alloc($$, 1, struct ubik_ast_import_list);
-          $$->name = $2;
-          load_loc($$->loc);
-        }
+{
+        alloc($$, 1, struct ubik_ast_import_list);
+        $$->name = $2;
+        load_loc($$->loc);
+}
 ;
 
 /* Type aliases */
 alias_def
 : BIND TYPE_NAME IS top_type_expr
-        { alloc($$, 1, struct ubik_ast_type);
-          $$->name = $2;
-          $$->type = TYPE_ALIAS;
-          $$->aliases_to = $4;
+{
+        alloc($$, 1, struct ubik_ast_type);
+        $$->name = $2;
+        $$->type = TYPE_ALIAS;
+        $$->aliases_to = $4;
 
-          load_loc($$->loc);
-          merge_loc($$, $$, $4);
-        }
+        load_loc($$->loc);
+        merge_loc($$, $$, $4);
+}
 
 /* Abstract Data Types */
 adt_def
 : TYPE TYPE_NAME type_params type_constraints adt_ctors
-        { alloc($$, 1, struct ubik_ast_type);
-          $$->name = $2;
-          $$->type = TYPE_ADT;
-          $$->adt.params = $3;
-          $$->adt.constraints = $4;
-          $$->adt.ctors = $5;
+{
+        alloc($$, 1, struct ubik_ast_type);
+        $$->name = $2;
+        $$->type = TYPE_ADT;
+        $$->adt.params = $3;
+        $$->adt.constraints = $4;
+        $$->adt.ctors = $5;
 
-          load_loc($$->loc);
-          merge_loc($$, $$, $5);
-        }
+        load_loc($$->loc);
+        merge_loc($$, $$, $5);
+}
 ;
 
 type_params
 : NAME type_params
-        { alloc($$, 1, struct ubik_ast_type_params);
-          $$->name = $1;
-          $$->next = $2;
-          load_loc($$->loc);
-        }
+{
+        alloc($$, 1, struct ubik_ast_type_params);
+        $$->name = $1;
+        $$->next = $2;
+        load_loc($$->loc);
+}
 | %empty
-        { $$ = NULL; }
+{
+        $$ = NULL;
+}
 ;
 
 type_constraints
 : GIVEN EXISTS TYPE_NAME type_params type_constraints
-        { alloc($$, 1, struct ubik_ast_type_constraints);
-          $$->interface = $3;
-          $$->params = $4;
-          $$->next = $5;
-          load_loc($$->loc);
-          merge_loc($$, $$, $4);
-        }
+{
+        alloc($$, 1, struct ubik_ast_type_constraints);
+        $$->interface = $3;
+        $$->params = $4;
+        $$->next = $5;
+        load_loc($$->loc);
+        merge_loc($$, $$, $4);
+}
 | %empty
-        { $$ = NULL; }
+{
+        $$ = NULL;
+}
 ;
 
 adt_ctors
 : adt_ctor adt_ctors
-        { $$ = $1;
-          $$->next = $2;
-        }
+{
+        $$ = $1;
+        $$->next = $2;
+}
 | adt_ctor
 ;
 
 adt_ctor
 : IS TYPE_NAME type_list
-        { alloc($$, 1, struct ubik_ast_adt_ctors);
-          $$->name = $2;
-          $$->params = $3;
-          load_loc($$->loc);
-          merge_loc($$, $$, $3);
-        }
+{
+        alloc($$, 1, struct ubik_ast_adt_ctors);
+        $$->name = $2;
+        $$->params = $3;
+        load_loc($$->loc);
+        merge_loc($$, $$, $3);
+}
 ;
 
 type_list
 : type_atom type_list
-        { alloc($$, 1, struct ubik_ast_type_list);
-          $$->type_expr = $1;
-          $$->next = $2;
-          load_loc($$->loc);
-        }
+{
+        alloc($$, 1, struct ubik_ast_type_list);
+        $$->type_expr = $1;
+        $$->next = $2;
+        load_loc($$->loc);
+}
 | OPEN_PAR top_type_expr CLOSE_PAR type_list
-        { alloc($$, 1, struct ubik_ast_type_list);
-          $$->type_expr = $2;
-          $$->next = $4;
-          load_loc($$->loc);
-        }
+{
+        alloc($$, 1, struct ubik_ast_type_list);
+        $$->type_expr = $2;
+        $$->next = $4;
+        load_loc($$->loc);
+}
 | %empty
-        { $$ = NULL; }
+{
+        $$ = NULL;
+}
 ;
 
 /* Expressions */
 
 /* top_expr is a "top expression" in the parse tree; these are things that can't
- * be subexpressions without first being wrapped in parentheses. Without the
- * parentheses around a top expression inside another expression, the grammar is
- * ambiguous. */
+* be subexpressions without first being wrapped in parentheses. Without the
+* parentheses around a top expression inside another expression, the grammar is
+* ambiguous. */
 top_expr
 : expr
-        { $$ = $1; }
 | LAMBDA arg_list GOES_TO top_expr
-        { alloc($$, 1, struct ubik_ast_expr);
-          $$->expr_type = EXPR_LAMBDA;
-          $$->lambda.args = $2;
-          $$->lambda.body = $4;
+{
+        alloc($$, 1, struct ubik_ast_expr);
+        $$->expr_type = EXPR_LAMBDA;
+        $$->lambda.args = $2;
+        $$->lambda.body = $4;
 
-          load_loc($$->loc);
-          merge_loc($$, $$, $2);
-          merge_loc($$, $$, $4);
-        }
+        load_loc($$->loc);
+        merge_loc($$, $$, $2);
+        merge_loc($$, $$, $4);
+}
 | expr IMPLIES expr OPPOSES expr
-        { alloc($$, 1, struct ubik_ast_expr);
-          $$->expr_type = EXPR_CONDITIONAL;
-          $$->condition.cond = $1;
-          $$->condition.implied = $3;
-          $$->condition.opposed = $5;
+{
+        alloc($$, 1, struct ubik_ast_expr);
+        $$->expr_type = EXPR_CONDITIONAL;
+        $$->condition.cond = $1;
+        $$->condition.implied = $3;
+        $$->condition.opposed = $5;
 
-          $$->loc = $1->loc;
-          merge_loc($$, $$, $3);
-          merge_loc($$, $$, $5);
-        }
-| cond_block {}
+        $$->loc = $1->loc;
+        merge_loc($$, $$, $3);
+        merge_loc($$, $$, $5);
+}
+| cond_block
+{
+}
 ;
 
 expr
 : expr atom
-        { struct ubik_ast_expr *tail;
-          alloc(tail, 1, struct ubik_ast_expr);
-          tail->expr_type = EXPR_ATOM;
-          tail->atom = $2;
-          tail->loc = $2->loc;
+{
+        struct ubik_ast_expr *tail;
+        alloc(tail, 1, struct ubik_ast_expr);
+        tail->expr_type = EXPR_ATOM;
+        tail->atom = $2;
+        tail->loc = $2->loc;
 
-          alloc($$, 1, struct ubik_ast_expr);
-          $$->expr_type = EXPR_APPLY;
-          $$->apply.head = $1;
-          $$->apply.tail = tail;
+        alloc($$, 1, struct ubik_ast_expr);
+        $$->expr_type = EXPR_APPLY;
+        $$->apply.head = $1;
+        $$->apply.tail = tail;
 
-          merge_loc($$, $1, $2);
-        }
+        merge_loc($$, $1, $2);
+}
 | expr OPEN_PAR top_expr CLOSE_PAR
-        { alloc($$, 1, struct ubik_ast_expr);
-          $$->expr_type = EXPR_APPLY;
-          $$->apply.head = $1;
-          $$->apply.tail = $3;
-          merge_loc($$, $1, $3);
-        }
+{
+        alloc($$, 1, struct ubik_ast_expr);
+        $$->expr_type = EXPR_APPLY;
+        $$->apply.head = $1;
+        $$->apply.tail = $3;
+        merge_loc($$, $1, $3);
+}
 | atom
-        { alloc($$, 1, struct ubik_ast_expr);
-          $$->expr_type = EXPR_ATOM;
-          $$->atom = $1;
-          $$->loc = $1->loc;
-        }
+{
+        alloc($$, 1, struct ubik_ast_expr);
+        $$->expr_type = EXPR_ATOM;
+        $$->atom = $1;
+        $$->loc = $1->loc;
+}
 | OPEN_PAR top_expr CLOSE_PAR
-        { $$ = $2;
-        }
+{
+        $$ = $2;
+}
 | TYPE_NAME OPEN_SCOPE blocks CLOSE_SCOPE
-        { alloc($$, 1, struct ubik_ast_expr);
-          $$->expr_type = EXPR_CONSTRUCTOR;
-          $$->constructor.type_name = $1;
-          $$->constructor.scope = $3;
-          load_loc($$->loc);
-          merge_loc($$, $$, $3);
-        }
+{
+        alloc($$, 1, struct ubik_ast_expr);
+        $$->expr_type = EXPR_CONSTRUCTOR;
+        $$->constructor.type_name = $1;
+        $$->constructor.scope = $3;
+        load_loc($$->loc);
+        merge_loc($$, $$, $3);
+}
 | OPEN_SCOPE blocks immediate CLOSE_SCOPE
-        { $2->immediate = $3;
-          alloc($$, 1, struct ubik_ast_expr);
-          $$->expr_type = EXPR_BLOCK;
-          $$->block = $2;
-          load_loc($$->loc);
-          merge_loc($$, $$, $2);
-          merge_loc($$, $$, $3);
-        }
+{
+        $2->immediate = $3;
+        alloc($$, 1, struct ubik_ast_expr);
+        $$->expr_type = EXPR_BLOCK;
+        $$->block = $2;
+        load_loc($$->loc);
+        merge_loc($$, $$, $2);
+        merge_loc($$, $$, $3);
+}
 ;
 
 arg_list
 : %empty
-        { alloc($$, 1, struct ubik_ast_arg_list);
-          load_loc($$->loc);
-        }
+{
+        alloc($$, 1, struct ubik_ast_arg_list);
+        load_loc($$->loc);
+}
 | NAME arg_list
-        { alloc($$, 1, struct ubik_ast_arg_list);
-          $$->name = $1;
-          $$->next = $2;
-          load_loc($$->loc);
-        }
+{
+        alloc($$, 1, struct ubik_ast_arg_list);
+        $$->name = $1;
+        $$->next = $2;
+        load_loc($$->loc);
+}
 ;
 
 atom
 : NAME
-        { alloc($$, 1, struct ubik_ast_atom);
-          $$->atom_type = ATOM_NAME;
-          $$->str = $1;
-          load_loc($$->loc);
-        }
+{
+        alloc($$, 1, struct ubik_ast_atom);
+        $$->atom_type = ATOM_NAME;
+        $$->str = $1;
+        load_loc($$->loc);
+}
 | QUALIFIED_NAME
-        { wrap_err(ubik_ast_atom_new_qualified(&$$, $1));
-          load_loc($$->loc);
-        }
+{
+        wrap_err(ubik_ast_atom_new_qualified(&$$, $1));
+        load_loc($$->loc);
+}
 | TYPE_NAME
-        { alloc($$, 1, struct ubik_ast_atom);
-          $$->atom_type = ATOM_TYPE_NAME;
-          $$->str = $1;
-          load_loc($$->loc);
-        }
+{
+        alloc($$, 1, struct ubik_ast_atom);
+        $$->atom_type = ATOM_TYPE_NAME;
+        $$->str = $1;
+        load_loc($$->loc);
+}
 | INTEGER
-        { alloc($$, 1, struct ubik_ast_atom);
-          $$->atom_type = ATOM_INT;
-          $$->integer = $1;
-          load_loc($$->loc);
-        }
+{
+        alloc($$, 1, struct ubik_ast_atom);
+        $$->atom_type = ATOM_INT;
+        $$->integer = $1;
+        load_loc($$->loc);
+}
 | NUMBER
-        { alloc($$, 1, struct ubik_ast_atom);
-          $$->atom_type = ATOM_NUM;
-          $$->number = $1;
-          load_loc($$->loc);
-        }
+{
+        alloc($$, 1, struct ubik_ast_atom);
+        $$->atom_type = ATOM_NUM;
+        $$->number = $1;
+        load_loc($$->loc);
+}
 | STRING
-        { alloc($$, 1, struct ubik_ast_atom);
-          $$->atom_type = ATOM_STRING;
-          $$->str = $1;
-          load_loc($$->loc);
-        }
+{
+        alloc($$, 1, struct ubik_ast_atom);
+        $$->atom_type = ATOM_STRING;
+        $$->str = $1;
+        load_loc($$->loc);
+}
 ;
 
 cond_block
@@ -436,40 +471,46 @@ case_stmt
 top_type_expr
 : type_expr
 | type_expr GOES_TO top_type_expr
-        { alloc($$, 1, struct ubik_ast_type_expr);
-          $$->type_expr_type = TYPE_EXPR_ARROW;
-          $$->apply.head = $1;
-          $$->apply.tail = $3;
-          merge_loc($$, $1, $3);
-        }
+{
+        alloc($$, 1, struct ubik_ast_type_expr);
+        $$->type_expr_type = TYPE_EXPR_ARROW;
+        $$->apply.head = $1;
+        $$->apply.tail = $3;
+        merge_loc($$, $1, $3);
+}
 ;
 
 type_expr
 : type_expr type_atom
-        { alloc($$, 1, struct ubik_ast_type_expr);
-          $$->type_expr_type = TYPE_EXPR_APPLY;
-          $$->apply.head = $1;
-          $$->apply.tail = $2;
-          merge_loc($$, $1, $2);
-        }
+{
+        alloc($$, 1, struct ubik_ast_type_expr);
+        $$->type_expr_type = TYPE_EXPR_APPLY;
+        $$->apply.head = $1;
+        $$->apply.tail = $2;
+        merge_loc($$, $1, $2);
+}
 | type_atom
 | OPEN_PAR top_type_expr CLOSE_PAR
-        { $$ = $2; }
+{
+        $$ = $2;
+}
 ;
 
 type_atom
 : NAME
-        { alloc($$, 1, struct ubik_ast_type_expr);
-          $$->type_expr_type = TYPE_EXPR_VAR;
-          $$->name = $1;
-          load_loc($$->loc);
-        }
+{
+        alloc($$, 1, struct ubik_ast_type_expr);
+        $$->type_expr_type = TYPE_EXPR_VAR;
+        $$->name = $1;
+        load_loc($$->loc);
+}
 | TYPE_NAME
-        { alloc($$, 1, struct ubik_ast_type_expr);
-          $$->type_expr_type = TYPE_EXPR_ATOM;
-          $$->name = $1;
-          load_loc($$->loc);
-        }
+{
+        alloc($$, 1, struct ubik_ast_type_expr);
+        $$->type_expr_type = TYPE_EXPR_ATOM;
+        $$->name = $1;
+        load_loc($$->loc);
+}
 ;
 
 %%
