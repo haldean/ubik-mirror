@@ -65,6 +65,8 @@
         struct ubik_ast_type_params *type_params;
         struct ubik_ast_type_constraints *type_constraints;
         struct ubik_ast_adt_ctors *adt_ctor;
+
+        struct ubik_ast_case *case_stmt;
 }
 
 %token <token> BIND TYPE IMPLIES GOES_TO LAMBDA IS OPEN_PAR CLOSE_PAR IMMEDIATE
@@ -75,7 +77,7 @@
 
 %type <ast> prog blocks
 %type <binding> binding
-%type <expr> expr immediate top_expr
+%type <expr> expr immediate top_expr cond_block
 %type <type_expr> top_type_expr type_expr type_atom
 %type <atom> atom
 %type <arg_list> arg_list
@@ -85,6 +87,7 @@
 %type <adt_ctor> adt_ctor adt_ctors
 %type <type_params> type_params
 %type <type_constraints> type_constraints
+%type <case_stmt> case_stmt case_stmts
 
 %define api.pure full
 %define api.push-pull push
@@ -460,21 +463,35 @@ cond_block
 }
 | COND OPEN_SCOPE case_stmts CLOSE_SCOPE
 {
+        alloc($$, 1, struct ubik_ast_expr);
+        $$->expr_type = EXPR_COND_BLOCK;
+        $$->cond_block.block_type = COND_PREDICATE;
+        $$->cond_block.to_match = NULL;
+        $$->cond_block.case_stmts = $3;
+        load_loc($$->loc);
+        merge_loc($$, $$, $3);
 }
 ;
 
 case_stmts
 : case_stmts case_stmt
 {
+        $$ = $1;
+        while ($1->next != NULL)
+                $1 = $1->next;
+        $1->next = $2;
 }
 | case_stmt
-{
-}
 ;
 
 case_stmt
 : MEMBER expr IMPLIES expr
 {
+        alloc($$, 1, struct ubik_ast_case);
+        $$->head = $2;
+        $$->tail = $4;
+        load_loc($$->loc);
+        merge_loc($$, $$, $4);
 }
 ;
 

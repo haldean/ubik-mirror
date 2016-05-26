@@ -33,7 +33,8 @@ enum expr_type
         EXPR_LAMBDA,
         EXPR_CONSTRUCTOR,
         EXPR_CONDITIONAL,
-        EXPR_BLOCK
+        EXPR_BLOCK,
+        EXPR_COND_BLOCK,
 };
 
 enum ubik_type_expr_type
@@ -54,18 +55,24 @@ enum atom_type
         ATOM_STRING
 };
 
-struct ubik_ast;
-struct ubik_ast_expr;
-struct ubik_ast_type_expr;
-struct ubik_resolve_scope;
-struct ubik_resolve_name_loc;
-
 enum ubik_type_type
 {
         TYPE_RECORD = 1,
         TYPE_ADT,
         TYPE_ALIAS,
 };
+
+enum ubik_cond_block_type
+{
+        COND_PREDICATE = 1,
+        COND_PATTERN,
+};
+
+struct ubik_ast;
+struct ubik_ast_expr;
+struct ubik_ast_type_expr;
+struct ubik_resolve_scope;
+struct ubik_resolve_name_loc;
 
 struct ubik_ast_loc
 {
@@ -101,6 +108,14 @@ struct ubik_ast_arg_list
         struct ubik_ast_loc loc;
 };
 
+struct ubik_ast_case
+{
+        struct ubik_ast_expr *head;
+        struct ubik_ast_expr *tail;
+        struct ubik_ast_case *next;
+        struct ubik_ast_loc loc;
+};
+
 struct ubik_ast_expr
 {
         union
@@ -127,6 +142,12 @@ struct ubik_ast_expr
                         struct ubik_ast_expr *implied;
                         struct ubik_ast_expr *opposed;
                 } condition;
+                struct
+                {
+                        enum ubik_cond_block_type block_type;
+                        struct ubik_ast_expr *to_match;
+                        struct ubik_ast_case *case_stmts;
+                } cond_block;
                 struct ubik_ast *block;
         };
         enum expr_type expr_type;
