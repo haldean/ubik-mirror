@@ -455,17 +455,27 @@ atom
 ;
 
 cond_block
-: COND expr OPEN_SCOPE case_stmts CLOSE_SCOPE {}
-| COND OPEN_SCOPE case_stmts CLOSE_SCOPE {}
+: COND expr OPEN_SCOPE case_stmts CLOSE_SCOPE
+{
+}
+| COND OPEN_SCOPE case_stmts CLOSE_SCOPE
+{
+}
 ;
 
 case_stmts
-: case_stmts case_stmt {}
-| case_stmt {}
+: case_stmts case_stmt
+{
+}
+| case_stmt
+{
+}
 ;
 
 case_stmt
-: MEMBER expr IMPLIES expr {}
+: MEMBER expr IMPLIES expr
+{
+}
 ;
 
 top_type_expr
