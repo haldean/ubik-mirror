@@ -26,6 +26,9 @@
 no_ignore ubik_error
 _print_ast(struct ubik_ast *ast, int indent);
 
+no_ignore static ubik_error
+_print_expr(struct ubik_ast_expr *expr, int indent);
+
 static inline void
 _indent(int indent)
 {
@@ -94,6 +97,30 @@ _print_arg_list(struct ubik_ast_arg_list *arg_list)
 }
 
 no_ignore static ubik_error
+_print_case_stmts(struct ubik_ast_case *case_stmt, int indent)
+{
+        ubik_error err;
+
+        while (case_stmt != NULL)
+        {
+                printf("\n");
+                _indent(indent);
+                printf("( ");
+                err = _print_expr(case_stmt->head, indent);
+                if (err != OK)
+                        return err;
+                printf(" => ");
+                err = _print_expr(case_stmt->tail, indent);
+                if (err != OK)
+                        return err;
+                printf(" )");
+
+                case_stmt = case_stmt->next;
+        }
+        return OK;
+}
+
+no_ignore static ubik_error
 _print_expr(struct ubik_ast_expr *expr, int indent)
 {
         ubik_error err;
@@ -156,6 +183,23 @@ _print_expr(struct ubik_ast_expr *expr, int indent)
                         return err;
                 _indent(indent + 4);
                 printf("}");
+                return OK;
+
+        case EXPR_COND_BLOCK:
+                printf("? ");
+                if (expr->cond_block.block_type == COND_PATTERN)
+                {
+                        err = _print_expr(
+                                expr->cond_block.to_match, indent + 4);
+                        if (err != OK)
+                                return err;
+                        printf(" ");
+                }
+                printf("{\n");
+                err = _print_case_stmts(
+                        expr->cond_block.case_stmts, indent + 4);
+                if (err != OK)
+                        return err;
                 return OK;
         }
 
