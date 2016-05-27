@@ -525,8 +525,14 @@ ubik_ast_subexprs(
                                 return ubik_raise(
                                         ERR_BAD_VALUE,
                                         "too many case statements");
-                        if (case_stmt->head != NULL)
+                        /* We don't consider patterns expressions, because they
+                         * often need to be treated in a very different way from
+                         * a normal expression. */
+                        if (case_stmt->head != NULL
+                                && expr->cond_block.block_type != COND_PATTERN)
+                        {
                                 subexprs[i++] = case_stmt->head;
+                        }
                         subexprs[i++] = case_stmt->tail;
                         case_stmt = case_stmt->next;
                 }

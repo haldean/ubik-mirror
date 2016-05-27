@@ -452,7 +452,7 @@ cond_block
 {
         alloc($$, 1, struct ubik_ast_expr);
         $$->expr_type = EXPR_COND_BLOCK;
-        $$->cond_block.block_type = COND_PREDICATE;
+        $$->cond_block.block_type = COND_PATTERN;
         $$->cond_block.to_match = $2;
         $$->cond_block.case_stmts = $4;
         load_loc($$->loc);
