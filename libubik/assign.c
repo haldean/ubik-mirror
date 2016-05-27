@@ -519,33 +519,33 @@ ubik_assign_nodes(
         case EXPR_ATOM:
                 err = _assign_atom_node(ctx, n, expr);
                 if (err != OK)
-                        return err;
+                        goto failed;
                 break;
 
         case EXPR_APPLY:
                 err = ubik_assign_nodes(ctx, builder, expr->apply.head);
                 if (err != OK)
-                        return err;
+                        goto failed;
 
                 err = ubik_assign_nodes(ctx, builder, expr->apply.tail);
                 if (err != OK)
-                        return err;
+                        goto failed;
 
                 err = _assign_apply_node(ctx, n, expr);
                 if (err != OK)
-                        return err;
+                        goto failed;
                 break;
 
         case EXPR_LAMBDA:
                 err = _assign_lambda(ctx, n, expr);
                 if (err != OK)
-                        return err;
+                        goto failed;
                 break;
 
         case EXPR_BLOCK:
                 err = _assign_block(n, expr);
                 if (err != OK)
-                        return err;
+                        goto failed;
                 break;
 
         case EXPR_COND_BLOCK:
@@ -554,19 +554,20 @@ ubik_assign_nodes(
                 case COND_PREDICATE:
                         err = _assign_pred_block(ctx, n, builder, expr);
                         if (err != OK)
-                                return err;
+                                goto failed;
                         break;
                 case COND_PATTERN:
                         err = _assign_pattern_block(ctx, n, builder, expr);
                         if (err != OK)
-                                return err;
+                                goto failed;
                         break;
                 }
                 break;
 
         case EXPR_CONSTRUCTOR:
         default:
-                return ubik_raise(ERR_UNKNOWN_TYPE, "compile assign node");
+                err = ubik_raise(ERR_UNKNOWN_TYPE, "compile assign node");
+                goto failed;
         }
 
         err = ubik_bdagc_push_node(builder, &n->node);
@@ -575,6 +576,10 @@ ubik_assign_nodes(
         expr->gen = &n->node;
 
         return OK;
+
+failed:
+        free(n);
+        return err;
 }
 
 bool
