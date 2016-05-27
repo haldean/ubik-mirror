@@ -34,6 +34,9 @@ struct ubik_parse_context
         /* we keep track of everything allocated during parsing so that we can
          * clean up if the parse fails halfway through. */
         struct ubik_vector allocs;
+
+        char *source_name;
+        struct ubik_stream *source_stream;
 };
 
 no_ignore ubik_error

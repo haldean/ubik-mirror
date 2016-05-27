@@ -46,6 +46,9 @@ ubik_parse(struct ubik_ast **ast, char *source_name, struct ubik_stream *stream)
         local(parse_context) struct ubik_parse_context ctx = {0};
         size_t i;
 
+        ctx.source_name = source_name;
+        ctx.source_stream = stream;
+
         status = yylex_init(&scanner);
         if (status != 0)
                 return ubik_raise(ERR_UNEXPECTED_FAILURE, "yylex_init failed");

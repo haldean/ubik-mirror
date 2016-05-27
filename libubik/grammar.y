@@ -38,6 +38,8 @@
         (loc_ptr).line_end = yyloc.last_line; \
         (loc_ptr).col_start = yyloc.first_column; \
         (loc_ptr).col_end = yyloc.last_column; \
+        (loc_ptr).source_name = ctx->source_name; \
+        (loc_ptr).source = ctx->source_stream; \
         } while (0)
 #define merge_loc(res, l1, l2) ubik_ast_merge_loc(&res->loc, &l1->loc, &l2->loc)
 
