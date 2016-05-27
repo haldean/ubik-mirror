@@ -332,6 +332,100 @@ _assign_pred_block(
 }
 
 no_ignore static ubik_error
+_assign_pattern_match(
+        struct ubik_assign_context *ctx,
+        struct ubik_graph_builder *builder,
+        struct ubik_ast_expr *head,
+        struct ubik_ast_expr *tail,
+        struct ubik_dagc_node *next,
+        struct ubik_ast_expr *to_match)
+{
+        unused(ctx);
+        unused(builder);
+        unused(head);
+        unused(tail);
+        unused(next);
+        unused(to_match);
+        return ubik_raise(ERR_NOT_IMPLEMENTED, "pattern match codegen");
+}
+
+no_ignore static ubik_error
+_assign_pattern_case(
+        struct ubik_assign_context *ctx,
+        struct ubik_graph_builder *builder,
+        struct ubik_ast_case *case_stmt,
+        struct ubik_ast_expr *to_match)
+{
+        union ubik_dagc_any_node *n;
+        ubik_error err;
+
+        n = calloc(1, sizeof(union ubik_dagc_any_node));
+        if (n == NULL)
+                return ubik_raise(ERR_NO_MEMORY, "pred node alloc");
+
+        if (case_stmt->next != NULL)
+        {
+                err = _assign_pattern_case(
+                        ctx, builder, case_stmt->next, to_match);
+                if (err != OK)
+                        return err;
+
+                err = _assign_pattern_match(
+                        ctx, builder, case_stmt->head,
+                        case_stmt->tail, case_stmt->next->gen, to_match);
+                if (err != OK)
+                        return err;
+
+                n->node.node_type = DAGC_NODE_REF;
+                n->node.id = ctx->next_id++;
+                n->as_ref.referrent = case_stmt->head->gen;
+        }
+        else
+        {
+                /* TODO: confirm that the pattern block is a total function */
+                err = ubik_assign_nodes(ctx, builder, case_stmt->tail);
+                if (err != OK)
+                        return err;
+
+                n->node.node_type = DAGC_NODE_REF;
+                n->node.id = ctx->next_id++;
+                n->as_ref.referrent = case_stmt->tail->gen;
+        }
+
+        err = ubik_bdagc_push_node(builder, &n->node);
+        if (err != OK)
+                return err;
+        case_stmt->gen = &n->node;
+        return OK;
+}
+
+no_ignore static ubik_error
+_assign_pattern_block(
+        struct ubik_assign_context *ctx,
+        union ubik_dagc_any_node *n,
+        struct ubik_graph_builder *builder,
+        struct ubik_ast_expr *expr)
+{
+        ubik_error err;
+
+        err = ubik_assign_nodes(ctx, builder, expr->cond_block.to_match);
+        if (err != OK)
+                return err;
+
+        err = _assign_pattern_case(
+                ctx, builder, expr->cond_block.case_stmts,
+                expr->cond_block.to_match);
+        if (err != OK)
+                return err;
+
+        n->node.node_type = DAGC_NODE_REF;
+        n->node.id = ctx->next_id++;
+        n->as_ref.referrent = expr->cond_block.case_stmts->gen;
+
+        return OK;
+}
+
+no_ignore static ubik_error
 _assign_block(
         union ubik_dagc_any_node *n,
         struct ubik_ast_expr *expr)
@@ -463,9 +557,10 @@ ubik_assign_nodes(
                                 return err;
                         break;
                 case COND_PATTERN:
-                        return ubik_raise(
-                                ERR_NOT_IMPLEMENTED,
-                                "pattern blocks not implemented");
+                        err = _assign_pattern_block(ctx, n, builder, expr);
+                        if (err != OK)
+                                return err;
+                        break;
                 }
                 break;
 
