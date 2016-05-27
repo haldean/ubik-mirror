@@ -481,7 +481,7 @@ ubik_gen_graphs(
                 return err;
         }
 
-        if (ubik_assign_emit_errors(&ctx, NULL))
+        if (ubik_assign_emit_errors(&ctx))
                 return ubik_raise(
                         ERR_BAD_VALUE,
                         "node assignment failed.");
