@@ -482,6 +482,7 @@ ubik_ast_subexprs(
         struct ubik_ast_expr *expr)
 {
         struct ubik_ast_case *case_stmt;
+        struct ubik_ast_expr *t;
         size_t i;
 
         *subast = NULL;
@@ -532,6 +533,21 @@ ubik_ast_subexprs(
                                 && expr->cond_block.block_type != COND_PATTERN)
                         {
                                 subexprs[i++] = case_stmt->head;
+                        }
+                        /* TODO: this is a hack to get pattern heads (which are
+                         * type constructors) to be resolved correctly. This
+                         * should be put somewhere else (probably). */
+                        else if (case_stmt->head != NULL)
+                        {
+                                t = case_stmt->head;
+                                if (t->expr_type == EXPR_APPLY)
+                                        subexprs[i++] = t->apply.head;
+                                else if (t->expr_type == EXPR_ATOM)
+                                        subexprs[i++] = t;
+                                else
+                                        return ubik_raise(
+                                                ERR_BAD_TYPE,
+                                                "unexpected pattern expr");
                         }
                         subexprs[i++] = case_stmt->tail;
                         case_stmt = case_stmt->next;
