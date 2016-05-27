@@ -22,6 +22,7 @@
 
 #include <inttypes.h>
 #include <stdio.h>
+#include <string.h>
 
 no_ignore ubik_error
 _print_ast(struct ubik_ast *ast, int indent);
@@ -40,6 +41,9 @@ _indent(int indent)
 no_ignore static ubik_error
 _print_atom(struct ubik_ast_atom *atom)
 {
+        size_t i;
+        size_t n;
+
         if (atom->name_loc != 0)
         {
                 switch (atom->name_loc->type)
@@ -76,7 +80,20 @@ _print_atom(struct ubik_ast_atom *atom)
                 printf("%s:t", atom->str);
                 return OK;
         case ATOM_STRING:
-                printf("%s:s", atom->str);
+                n = strlen(atom->str);
+                putchar('"');
+                for (i = 0; i < n; i++)
+                {
+                        if (atom->str[i] == '\n')
+                                printf("\\n");
+                        else if (atom->str[i] == '\t')
+                                printf("\\t");
+                        else if (atom->str[i] == '\r')
+                                printf("\\r");
+                        else
+                                putchar(atom->str[i]);
+                }
+                printf("\":s");
                 return OK;
         }
 
