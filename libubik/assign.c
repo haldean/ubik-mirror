@@ -265,15 +265,15 @@ _assign_pred_case(
         {
                 err = _assign_pred_case(ctx, builder, case_stmt->next);
                 if (err != OK)
-                        return err;
+                        goto failed;
 
                 err = ubik_assign_nodes(ctx, builder, case_stmt->head);
                 if (err != OK)
-                        return err;
+                        goto failed;
 
                 err = ubik_assign_nodes(ctx, builder, case_stmt->tail);
                 if (err != OK)
-                        return err;
+                        goto failed;
 
                 n->node.node_type = DAGC_NODE_COND;
                 n->node.id = ctx->next_id++;
@@ -293,11 +293,11 @@ _assign_pred_case(
                         err = _add_nontotal_predicate_err(
                                 ctx, case_stmt->loc);
                         if (err != OK)
-                                return err;
+                                goto failed;
                 }
                 err = ubik_assign_nodes(ctx, builder, case_stmt->tail);
                 if (err != OK)
-                        return err;
+                        goto failed;
 
                 n->node.node_type = DAGC_NODE_REF;
                 n->node.id = ctx->next_id++;
@@ -306,9 +306,13 @@ _assign_pred_case(
 
         err = ubik_bdagc_push_node(builder, &n->node);
         if (err != OK)
-                return err;
+                goto failed;
         case_stmt->gen = &n->node;
         return OK;
+
+failed:
+        free(n);
+        return err;
 }
 
 no_ignore static ubik_error
@@ -368,13 +372,13 @@ _assign_pattern_case(
                 err = _assign_pattern_case(
                         ctx, builder, case_stmt->next, to_match);
                 if (err != OK)
-                        return err;
+                        goto failed;
 
                 err = _assign_pattern_match(
                         ctx, builder, case_stmt->head,
                         case_stmt->tail, case_stmt->next->gen, to_match);
                 if (err != OK)
-                        return err;
+                        goto failed;
 
                 n->node.node_type = DAGC_NODE_REF;
                 n->node.id = ctx->next_id++;
@@ -385,7 +389,7 @@ _assign_pattern_case(
                 /* TODO: confirm that the pattern block is a total function */
                 err = ubik_assign_nodes(ctx, builder, case_stmt->tail);
                 if (err != OK)
-                        return err;
+                        goto failed;
 
                 n->node.node_type = DAGC_NODE_REF;
                 n->node.id = ctx->next_id++;
@@ -394,9 +398,13 @@ _assign_pattern_case(
 
         err = ubik_bdagc_push_node(builder, &n->node);
         if (err != OK)
-                return err;
+                goto failed;
         case_stmt->gen = &n->node;
         return OK;
+
+failed:
+        free(n);
+        return err;
 }
 
 no_ignore static ubik_error
