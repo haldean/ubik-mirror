@@ -1,0 +1,14 @@
+^ Number
+    = Succ Number
+    = Zero
+
+: is-it-zero
+    ^ Number -> String
+    = \n -> ? n {
+        . Succ _ => "no"
+        . Zero   => "yes"
+    }
+
+!= emit (concat (is-it-zero Zero)
+    (concat " " (is-it-zero (Succ Zero))))
+
