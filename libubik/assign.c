@@ -24,9 +24,32 @@
 #include "ubik/assign.h"
 #include "ubik/dagc.h"
 #include "ubik/resolve.h"
+#include "ubik/streamutil.h"
 #include "ubik/types.h"
 #include "ubik/uri.h"
 #include "ubik/value.h"
+#include "ubik/vector.h"
+
+no_ignore static ubik_error
+_add_nontotal_predicate_err(
+        struct ubik_assign_context *ctx,
+        struct ubik_ast_loc loc)
+{
+        struct ubik_assign_error *res;
+        ubik_error err;
+
+        res = calloc(1, sizeof(struct ubik_assign_error));
+        if (res == NULL)
+                return ubik_raise(ERR_NO_MEMORY, "nontotal pred error alloc");
+
+        res->err_type = ASSIGN_ERR_PRED_BLOCK_NOT_TOTAL;
+        res->loc = loc;
+
+        err = ubik_vector_append(&ctx->errors, res);
+        if (err != OK)
+                return err;
+        return OK;
+}
 
 no_ignore static ubik_error
 _set_name_in_scope(
@@ -277,11 +300,17 @@ _assign_pred_case(
         }
         else
         {
-                /* TODO: create an actual user error here */
+                /* This is a user error but we still have enough information to
+                 * go ahead and generate code. We rely on the caller to pay
+                 * attention to the errors present in the context after
+                 * assignment is complete. */
                 if (case_stmt->head != NULL)
-                        return ubik_raise(
-                                ERR_BAD_VALUE,
-                                "last case in pred must be trivially true");
+                {
+                        err = _add_nontotal_predicate_err(
+                                ctx, case_stmt->loc);
+                        if (err != OK)
+                                return err;
+                }
                 err = ubik_assign_nodes(ctx, builder, case_stmt->tail);
                 if (err != OK)
                         return err;
@@ -485,6 +514,36 @@ ubik_assign_nodes(
         expr->gen = &n->node;
 
         return OK;
+}
+
+bool
+ubik_assign_emit_errors(struct ubik_assign_context *ctx)
+{
+        size_t i;
+        struct ubik_assign_error *ass_err;
+
+        for (i = 0; i < ctx->errors.n; i++)
+        {
+                ass_err = ctx->errors.elems[i];
+                switch (ass_err->err_type)
+                {
+                case ASSIGN_ERR_PRED_BLOCK_NOT_TOTAL:
+                        fprintf(stderr,
+                                "\x1b[37m%s:%lu:%lu:\x1b[31m "
+                                "error:\x1b[0m last case in predicate block "
+                                "must have an empty head\n",
+                                ass_err->loc.source_name,
+                                ass_err->loc.line_start,
+                                ass_err->loc.col_start);
+                        ubik_streamutil_print_line_char(
+                                ass_err->loc.source,
+                                ass_err->loc.line_start - 1,
+                                ass_err->loc.col_start);
+                        break;
+                }
+        }
+
+        return ctx->errors.n != 0;
 }
 
 void

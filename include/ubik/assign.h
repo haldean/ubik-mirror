@@ -29,7 +29,6 @@ enum ubik_assign_error_type
 struct ubik_assign_error
 {
         enum ubik_assign_error_type err_type;
-        char *name;
         struct ubik_ast_loc loc;
 };
 
@@ -43,8 +42,14 @@ struct ubik_assign_context
 void
 ubik_assign_context_free(struct ubik_assign_context *ctx);
 
-/* Assigns nodes to everything in the tree of a given expression, adding the
- * results to the graph builder. */
+/* Prints a human-readable description of any errors that occured, and
+ * returns whether assignment failed (i.e., this returns true if there
+ * were any errors). */
+bool
+ubik_assign_emit_errors(struct ubik_assign_context *ctx);
+
+/* Assigns nodes to everything in the tree of a given expression, adding
+ * the results to the graph builder. */
 no_ignore ubik_error
 ubik_assign_nodes(
         struct ubik_assign_context *ctx,
