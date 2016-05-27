@@ -467,7 +467,10 @@ _assign_lambda(
         {
                 input_node = calloc(1, sizeof(struct ubik_dagc_input));
                 if (input_node == NULL)
+                {
+                        ubik_bdagc_free(&builder);
                         return ubik_raise(ERR_NO_MEMORY, "input node alloc");
+                }
                 input_node->head.node_type = DAGC_NODE_INPUT;
                 input_node->head.id = ctx->next_id++;
                 input_node->arg_num = i++;
@@ -475,19 +478,28 @@ _assign_lambda(
                 err = ubik_bdagc_push_node(
                         &builder, (struct ubik_dagc_node *) input_node);
                 if (err != OK)
+                {
+                        ubik_bdagc_free(&builder);
                         return err;
+                }
                 t->gen = (struct ubik_dagc_node *) input_node;
 
                 err = _set_name_in_scope(expr->scope, t->name, t->gen);
                 if (err != OK)
+                {
+                        ubik_bdagc_free(&builder);
                         return err;
+                }
 
                 t = t->next;
         }
 
         err = ubik_assign_nodes(ctx, &builder, expr->lambda.body);
         if (err != OK)
+        {
+                ubik_bdagc_free(&builder);
                 return err;
+        }
 
         builder.result = expr->lambda.body->gen;
         builder.result->is_terminal = true;
@@ -502,12 +514,14 @@ _assign_lambda(
 
         n->node.node_type = DAGC_NODE_CONST;
         n->node.id = ctx->next_id++;
+
         n->as_const.value.graph = subgraph;
         err = ubik_value_new(&n->as_const.type);
         if (err != OK)
                 return err;
         n->as_const.type->tag |= TAG_LEFT_WORD | TAG_RIGHT_WORD;
         /* TODO: lambda type here. */
+
         return OK;
 }
 

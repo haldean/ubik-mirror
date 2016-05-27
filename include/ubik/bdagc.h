@@ -44,3 +44,7 @@ no_ignore ubik_error
 ubik_bdagc_build(
         struct ubik_dagc **graph,
         struct ubik_graph_builder *b);
+
+/* Frees a graph builder. */
+void
+ubik_bdagc_free(struct ubik_graph_builder *b);

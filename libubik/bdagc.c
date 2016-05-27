@@ -97,8 +97,14 @@ ubik_bdagc_build(
         if (err != OK)
                 return err;
 
-        free(b->nodes);
+        ubik_bdagc_free(b);
 
         *outgraph = graph;
         return OK;
+}
+
+void
+ubik_bdagc_free(struct ubik_graph_builder *b)
+{
+        free(b->nodes);
 }
