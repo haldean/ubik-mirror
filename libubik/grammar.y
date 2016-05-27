@@ -72,7 +72,7 @@
 }
 
 %token <token> BIND TYPE IMPLIES GOES_TO LAMBDA IS OPEN_PAR CLOSE_PAR IMMEDIATE
-%token <token> USES MEMBER OPEN_SCOPE CLOSE_SCOPE OPPOSES GIVEN EXISTS COND
+%token <token> USES MEMBER OPEN_SCOPE CLOSE_SCOPE GIVEN EXISTS COND
 %token <integer> INTEGER
 %token <floating> NUMBER
 %token <string> NAME TYPE_NAME STRING QUALIFIED_NAME
@@ -328,21 +328,7 @@ top_expr
         merge_loc($$, $$, $2);
         merge_loc($$, $$, $4);
 }
-| expr IMPLIES expr OPPOSES expr
-{
-        alloc($$, 1, struct ubik_ast_expr);
-        $$->expr_type = EXPR_CONDITIONAL;
-        $$->condition.cond = $1;
-        $$->condition.implied = $3;
-        $$->condition.opposed = $5;
-
-        $$->loc = $1->loc;
-        merge_loc($$, $$, $3);
-        merge_loc($$, $$, $5);
-}
 | cond_block
-{
-}
 ;
 
 expr

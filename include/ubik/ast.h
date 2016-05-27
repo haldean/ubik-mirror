@@ -32,7 +32,6 @@ enum expr_type
         EXPR_ATOM,
         EXPR_LAMBDA,
         EXPR_CONSTRUCTOR,
-        EXPR_CONDITIONAL,
         EXPR_BLOCK,
         EXPR_COND_BLOCK,
 };
@@ -139,12 +138,6 @@ struct ubik_ast_expr
                         char *type_name;
                         struct ubik_ast *scope;
                 } constructor;
-                struct
-                {
-                        struct ubik_ast_expr *cond;
-                        struct ubik_ast_expr *implied;
-                        struct ubik_ast_expr *opposed;
-                } condition;
                 struct
                 {
                         enum ubik_cond_block_type block_type;

@@ -181,20 +181,6 @@ _print_expr(struct ubik_ast_expr *expr, int indent)
                 printf("}");
                 return OK;
 
-        case EXPR_CONDITIONAL:
-                err = _print_expr(expr->condition.cond, indent);
-                if (err != OK)
-                        return err;
-                printf(" => ");
-                err = _print_expr(expr->condition.implied, indent);
-                if (err != OK)
-                        return err;
-                printf(" /> ");
-                err = _print_expr(expr->condition.opposed, indent);
-                if (err != OK)
-                        return err;
-                return OK;
-
         case EXPR_BLOCK:
                 printf("{\n");
                 err = _print_ast(expr->block, indent + 8);

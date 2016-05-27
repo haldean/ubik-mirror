@@ -136,15 +136,6 @@ _free_expr(struct ubik_ast_expr *expr)
                 free(expr->constructor.type_name);
                 err = ubik_ast_free(expr->constructor.scope);
                 break;
-        case EXPR_CONDITIONAL:
-                err = _free_expr(expr->condition.cond);
-                if (err != OK)
-                        return err;
-                err = _free_expr(expr->condition.implied);
-                if (err != OK)
-                        return err;
-                err = _free_expr(expr->condition.opposed);
-                break;
         case EXPR_BLOCK:
                 err = ubik_ast_free(expr->block);
                 break;
@@ -514,13 +505,6 @@ ubik_ast_subexprs(
 
         case EXPR_CONSTRUCTOR:
                 *subast = expr->constructor.scope;
-                return OK;
-
-        case EXPR_CONDITIONAL:
-                subexprs[0] = expr->condition.cond;
-                subexprs[1] = expr->condition.implied;
-                subexprs[2] = expr->condition.opposed;
-                *n_subexprs = 3;
                 return OK;
 
         case EXPR_COND_BLOCK:

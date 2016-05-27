@@ -2,7 +2,8 @@ Ubik
 =====
 
 *This document is a work-in-progress, and everything in it is subject to
-change.*
+change. The notes present in the docs directory are much more likely to
+represent the current state of affairs.*
 
 Ubik will eventually be a programming language. Ubik aims to be a
 programming language that approximates the combination of the.
@@ -189,19 +190,6 @@ Functions can be composed using the `,` (pronounced "then") operator:
 Note that `(, f g) x` is equivalent to `g (f x)`; when using composition
 the functions are specified in the order that they are applied to the
 input.
-
-### Conditionals
-
-There is only one explicit control-flow construct in Ubik: a simple
-conditional statement. You can create a conditional statement using the
-`=>` (pronounced "implies") and `/>` (pronounced "opposes") operator,
-like so:
-
-    : ball-location
-        ^ Ball -> Vector
-        = \b -> is-hollow b
-            => point-on-surface b
-            /> point-at-center b
 
 ### Compile-time partial application
 

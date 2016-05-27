@@ -249,22 +249,6 @@ _assign_apply_node(
 }
 
 no_ignore static ubik_error
-_assign_conditional_node(
-        struct ubik_assign_context *ctx,
-        union ubik_dagc_any_node *n,
-        struct ubik_ast_expr *expr)
-{
-        n->node.node_type = DAGC_NODE_COND;
-        n->node.id = ctx->next_id++;
-
-        n->as_cond.condition = expr->condition.cond->gen;
-        n->as_cond.if_true = expr->condition.implied->gen;
-        n->as_cond.if_false = expr->condition.opposed->gen;
-
-        return OK;
-}
-
-no_ignore static ubik_error
 _assign_pred_case(
         struct ubik_assign_context *ctx,
         struct ubik_graph_builder *builder,
@@ -454,24 +438,6 @@ ubik_assign_nodes(
                         return err;
 
                 err = _assign_apply_node(ctx, n, expr);
-                if (err != OK)
-                        return err;
-                break;
-
-        case EXPR_CONDITIONAL:
-                err = ubik_assign_nodes(ctx, builder, expr->condition.cond);
-                if (err != OK)
-                        return err;
-
-                err = ubik_assign_nodes(ctx, builder, expr->condition.implied);
-                if (err != OK)
-                        return err;
-
-                err = ubik_assign_nodes(ctx, builder, expr->condition.opposed);
-                if (err != OK)
-                        return err;
-
-                err = _assign_conditional_node(ctx, n, expr);
                 if (err != OK)
                         return err;
                 break;

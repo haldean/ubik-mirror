@@ -74,7 +74,6 @@ assign_initial_scopes(
         {
         case EXPR_APPLY:
         case EXPR_ATOM:
-        case EXPR_CONDITIONAL:
         case EXPR_COND_BLOCK:
                 expr->scope = parent;
                 break;
