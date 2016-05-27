@@ -36,13 +36,13 @@
 no_ignore static ubik_error
 ubik_compile_binding(
         struct ubik_ast_binding *binding,
-        struct ubik_env *local_env)
+        struct ubik_env *local_env,
+        struct ubik_assign_context *ctx)
 {
         struct ubik_dagc *res;
         struct ubik_uri *uri;
         struct ubik_graph_builder builder;
         struct ubik_value *type;
-        local(assign_context) struct ubik_assign_context ctx = {0};
         union ubik_value_or_graph ins_value;
 
         ubik_error err;
@@ -51,7 +51,7 @@ ubik_compile_binding(
         if (err != OK)
                 return err;
 
-        err = ubik_assign_nodes(&ctx, &builder, binding->expr);
+        err = ubik_assign_nodes(ctx, &builder, binding->expr);
         if (err != OK)
                 return err;
 
@@ -265,11 +265,11 @@ ubik_create_modinit(
         struct ubik_ast *ast,
         struct ubik_env *local_env,
         enum ubik_load_reason load_reason,
-        char *uri_source)
+        char *uri_source,
+        struct ubik_assign_context *ctx)
 {
         struct modinit_iterator iter;
         struct ubik_graph_builder builder;
-        local(assign_context) struct ubik_assign_context ctx = {0};
         ubik_error err;
         size_t i;
 
@@ -290,7 +290,7 @@ ubik_create_modinit(
         if (ast->immediate != NULL
                 && (load_reason == LOAD_MAIN || load_reason == LOAD_BLOCK))
         {
-                err = ubik_assign_nodes(&ctx, &builder, ast->immediate);
+                err = ubik_assign_nodes(ctx, &builder, ast->immediate);
                 if (err != OK)
                         return err;
                 ast->immediate->gen->is_terminal = true;
@@ -448,6 +448,7 @@ ubik_gen_graphs(
         size_t i;
         ubik_error err;
         struct ubik_env local_env;
+        local(assign_context) struct ubik_assign_context ctx = {0};
 
         err = ubik_env_init(&local_env);
         if (err != OK)
@@ -466,19 +467,24 @@ ubik_gen_graphs(
         {
                 err = ubik_compile_binding(
                         ast->bindings.elems[i],
-                        &local_env);
+                        &local_env, &ctx);
                 if (err != OK)
                         return err;
         }
 
         err = ubik_create_modinit(
-                res, ast, &local_env, load_reason, uri_source);
+                res, ast, &local_env, load_reason, uri_source, &ctx);
         if (err != OK)
         {
                 if (err->error_code == ERR_NO_DATA)
                         printf("source has no data in it\n");
                 return err;
         }
+
+        if (ubik_assign_emit_errors(&ctx, NULL))
+                return ubik_raise(
+                        ERR_BAD_VALUE,
+                        "node assignment failed.");
 
         err = _collect_all_dep_packages(
                 *res, &local_env, requires, uri_source);
