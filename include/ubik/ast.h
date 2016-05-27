@@ -80,6 +80,8 @@ struct ubik_ast_loc
         size_t line_end;
         size_t col_start;
         size_t col_end;
+        char *source_name;
+        struct ubik_stream *source;
 };
 
 struct ubik_ast_atom
