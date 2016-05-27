@@ -119,6 +119,7 @@ apply_downwards_transform(
         ubik_error err;
         size_t i;
         struct ubik_ast_expr *expr;
+        struct ubik_ast_case *case_stmt;
 
         expr = *expr_ref;
         subast = NULL;
@@ -154,6 +155,24 @@ apply_downwards_transform(
                 check_closure_appl(expr->condition.cond);
                 check_closure_appl(expr->condition.implied);
                 check_closure_appl(expr->condition.opposed);
+                return OK;
+
+        case EXPR_COND_BLOCK:
+                switch (expr->cond_block.block_type)
+                {
+                case COND_PATTERN:
+                        check_closure_appl(expr->cond_block.to_match);
+                        break;
+                case COND_PREDICATE:
+                        break;
+                }
+                case_stmt = expr->cond_block.case_stmts;
+                while (case_stmt != NULL)
+                {
+                        check_closure_appl(case_stmt->head);
+                        check_closure_appl(case_stmt->tail);
+                        case_stmt = case_stmt->next;
+                }
                 return OK;
 
         case EXPR_CONSTRUCTOR:
@@ -261,6 +280,9 @@ traverse_expr(
 {
         struct ubik_ast *subast;
         struct ubik_ast_expr *expr;
+        struct ubik_ast_expr *subexprs[XL_MAX_SUBEXPRS];
+        size_t n_subexprs;
+        size_t i;
         ubik_error err;
 
         expr = *expr_ref;
@@ -274,44 +296,22 @@ traverse_expr(
                 return OK;
         }
 
-        #define traverse_child(subexpr) do { \
-                err = traverse_expr(resolving_name, changed, ctx, &subexpr); \
-                if (err != OK) \
-                        return err; \
-                if (*resolving_name != NULL) \
-                { \
-                        err = apply_upwards_transform( \
-                                resolving_name, ctx, expr_ref); \
-                        return err; \
-                } \
-        } while (0)
+        err = ubik_ast_subexprs(&subast, subexprs, &n_subexprs, expr);
+        if (err != OK)
+                return err;
 
-        switch (expr->expr_type)
+        for (i = 0; i < n_subexprs; i++)
         {
-        case EXPR_ATOM:
-                return OK;
-
-        case EXPR_APPLY:
-                traverse_child(expr->apply.head);
-                traverse_child(expr->apply.tail);
-                return OK;
-
-        case EXPR_LAMBDA:
-                traverse_child(expr->lambda.body);
-                return OK;
-
-        case EXPR_CONDITIONAL:
-                traverse_child(expr->condition.cond);
-                traverse_child(expr->condition.implied);
-                traverse_child(expr->condition.opposed);
-                return OK;
-
-        case EXPR_CONSTRUCTOR:
-                subast = expr->constructor.scope;
-                break;
-        case EXPR_BLOCK:
-                subast = expr->block;
-                break;
+                err = traverse_expr(
+                        resolving_name, changed, ctx, &subexprs[i]);
+                if (err != OK)
+                        return err;
+                if (*resolving_name != NULL)
+                {
+                        err = apply_upwards_transform(
+                                resolving_name, ctx, expr_ref);
+                        return err;
+                }
         }
 
         if (subast != NULL)

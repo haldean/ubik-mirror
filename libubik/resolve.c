@@ -75,6 +75,7 @@ assign_initial_scopes(
         case EXPR_APPLY:
         case EXPR_ATOM:
         case EXPR_CONDITIONAL:
+        case EXPR_COND_BLOCK:
                 expr->scope = parent;
                 break;
 
@@ -393,9 +394,10 @@ find_name_resolution_types(
         struct ubik_resolve_name *check_name;
         ubik_error err;
 
-        needs_resolve  = expr->expr_type == EXPR_ATOM;
-        needs_resolve &= (expr->atom->atom_type == ATOM_NAME ||
-                          expr->atom->atom_type == ATOM_TYPE_NAME);
+        needs_resolve = expr->expr_type == EXPR_ATOM;
+        if (needs_resolve)
+                needs_resolve &= (expr->atom->atom_type == ATOM_NAME ||
+                                  expr->atom->atom_type == ATOM_TYPE_NAME);
         if (needs_resolve)
         {
                 name_loc = calloc(1, sizeof(struct ubik_resolve_name_loc));

@@ -27,6 +27,9 @@
         (x) = calloc(nelem, sizeof(contents)); \
         if ((x) == NULL) return ubik_raise(ERR_NO_MEMORY, ""); }
 
+no_ignore static ubik_error
+_free_expr(struct ubik_ast_expr *expr);
+
 /* Allocates a new AST. */
 no_ignore ubik_error
 ubik_ast_new(struct ubik_ast **ast)
@@ -59,6 +62,28 @@ _free_atom(struct ubik_ast_atom *atom)
         }
 
         free(atom);
+        return OK;
+}
+
+no_ignore static ubik_error
+_free_case_stmts(struct ubik_ast_case *case_stmt)
+{
+        struct ubik_ast_case *next;
+        ubik_error err;
+
+        while (case_stmt != NULL)
+        {
+                next = case_stmt->next;
+                err = _free_expr(case_stmt->head);
+                if (err != OK)
+                        return err;
+                err = _free_expr(case_stmt->tail);
+                if (err != OK)
+                        return err;
+                free(case_stmt);
+                case_stmt = next;
+        }
+
         return OK;
 }
 
@@ -117,6 +142,19 @@ _free_expr(struct ubik_ast_expr *expr)
                 break;
         case EXPR_BLOCK:
                 err = ubik_ast_free(expr->block);
+                break;
+        case EXPR_COND_BLOCK:
+                err = _free_case_stmts(expr->cond_block.case_stmts);
+                if (err != OK)
+                        return err;
+                switch (expr->cond_block.block_type)
+                {
+                case COND_PATTERN:
+                        err = _free_expr(expr->cond_block.to_match);
+                        break;
+                case COND_PREDICATE:
+                        break;
+                }
                 break;
         default:
                 return ubik_raise(ERR_BAD_TYPE, "unknown expr type in free");
@@ -447,6 +485,9 @@ ubik_ast_subexprs(
         size_t *n_subexprs,
         struct ubik_ast_expr *expr)
 {
+        struct ubik_ast_case *case_stmt;
+        size_t i;
+
         *subast = NULL;
         *n_subexprs = 0;
 
@@ -475,6 +516,31 @@ ubik_ast_subexprs(
                 subexprs[1] = expr->condition.implied;
                 subexprs[2] = expr->condition.opposed;
                 *n_subexprs = 3;
+                return OK;
+
+        case EXPR_COND_BLOCK:
+                i = 0;
+                switch (expr->cond_block.block_type)
+                {
+                case COND_PATTERN:
+                        subexprs[i++] = expr->cond_block.to_match;
+                        break;
+                case COND_PREDICATE:
+                        break;
+                }
+
+                case_stmt = expr->cond_block.case_stmts;
+                while (case_stmt != NULL)
+                {
+                        if (i >= XL_MAX_SUBEXPRS - 1)
+                                return ubik_raise(
+                                        ERR_BAD_VALUE,
+                                        "too many case statements");
+                        subexprs[i++] = case_stmt->head;
+                        subexprs[i++] = case_stmt->tail;
+                        case_stmt = case_stmt->next;
+                }
+                *n_subexprs = i;
                 return OK;
 
         case EXPR_BLOCK:

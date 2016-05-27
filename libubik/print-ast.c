@@ -103,7 +103,6 @@ _print_case_stmts(struct ubik_ast_case *case_stmt, int indent)
 
         while (case_stmt != NULL)
         {
-                printf("\n");
                 _indent(indent);
                 printf("( ");
                 err = _print_expr(case_stmt->head, indent);
@@ -113,7 +112,7 @@ _print_case_stmts(struct ubik_ast_case *case_stmt, int indent)
                 err = _print_expr(case_stmt->tail, indent);
                 if (err != OK)
                         return err;
-                printf(" )");
+                printf(" )\n");
 
                 case_stmt = case_stmt->next;
         }
@@ -200,6 +199,7 @@ _print_expr(struct ubik_ast_expr *expr, int indent)
                         expr->cond_block.case_stmts, indent + 4);
                 if (err != OK)
                         return err;
+                printf("}");
                 return OK;
         }
 

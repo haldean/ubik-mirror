@@ -383,6 +383,7 @@ ubik_assign_nodes(
                 break;
 
         case EXPR_CONSTRUCTOR:
+        case EXPR_COND_BLOCK:
         default:
                 return ubik_raise(ERR_UNKNOWN_TYPE, "compile assign node");
         }
