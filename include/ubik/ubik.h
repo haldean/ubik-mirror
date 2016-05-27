@@ -142,7 +142,7 @@ struct ubik_dagc_node
         /* Nonzero if we want the value of this node at the end of
          * evaluation */
         uint8_t is_terminal;
-        /* A bitsest of the XL_DAGC_FLAG constants */
+        /* A bitsest of the UBIK_DAGC_FLAG constants */
         uint8_t flags;
 };
 

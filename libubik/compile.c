@@ -178,7 +178,7 @@ _open_stream_for_requirement(
                         err = ubik_stream_rfile(out, test_file);
                         if (err != OK)
                                 return err;
-#ifdef XL_COMPILE_DEBUG
+#ifdef UBIK_COMPILE_DEBUG
                         printf("found %s for %s\n", test_file, package_name);
 #endif
                         free(test_file);

@@ -147,7 +147,7 @@ ubik_stream_write(struct ubik_stream *dst, void *src, size_t len)
                 return 0;
         case STREAM_TYPE_FILE_W:
                 written = fwrite(src, 1, len, dst->file);
-#ifdef XL_EAGER_FLUSH
+#ifdef UBIK_EAGER_FLUSH
                 fflush(dst->file);
 #endif
                 return written;

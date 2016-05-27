@@ -66,7 +66,7 @@ _eval_apply(struct ubik_env *env, struct ubik_dagc_apply *node)
         for (i = 0; i < result->in_arity; i++)
                 result->inputs[i] = result->inputs[i + 1];
 
-        input->head.flags = XL_DAGC_FLAG_COMPLETE;
+        input->head.flags = UBIK_DAGC_FLAG_COMPLETE;
 
         input->head.known_type = node->arg->known_type;
         err = ubik_take(input->head.known_type);
@@ -85,7 +85,7 @@ _eval_apply(struct ubik_env *env, struct ubik_dagc_apply *node)
         if (err != OK)
                 return err;
 
-        node->head.flags |= XL_DAGC_FLAG_COMPLETE;
+        node->head.flags |= UBIK_DAGC_FLAG_COMPLETE;
         return OK;
 }
 
@@ -108,7 +108,7 @@ _eval_const(struct ubik_env *env, struct ubik_dagc_const *node)
         if (err != OK)
                 return err;
 
-        node->head.flags |= XL_DAGC_FLAG_COMPLETE;
+        node->head.flags |= UBIK_DAGC_FLAG_COMPLETE;
         return OK;
 }
 
@@ -128,7 +128,7 @@ _eval_ref(struct ubik_env *env, struct ubik_dagc_ref *node)
         if (err != OK)
                 return err;
 
-        node->head.flags |= XL_DAGC_FLAG_COMPLETE;
+        node->head.flags |= UBIK_DAGC_FLAG_COMPLETE;
         return OK;
 }
 
@@ -143,7 +143,7 @@ _mark_load_complete(
         unused(uri);
 
         node = (struct ubik_dagc_node *) node_void;
-        node->flags &= ~XL_DAGC_FLAG_WAIT_DATA;
+        node->flags &= ~UBIK_DAGC_FLAG_WAIT_DATA;
         return OK;
 }
 
@@ -173,7 +173,7 @@ _eval_load(struct ubik_env *env, struct ubik_dagc_load *node)
                 if (err->error_code == ERR_ABSENT)
                 {
                         free(err);
-                        node->head.flags |= XL_DAGC_FLAG_WAIT_DATA;
+                        node->head.flags |= UBIK_DAGC_FLAG_WAIT_DATA;
                         err = ubik_env_watch(
                                 _mark_load_complete, env, node->loc, node);
                         if (err != OK)
@@ -194,7 +194,7 @@ _eval_load(struct ubik_env *env, struct ubik_dagc_load *node)
         node->head.known_type = type;
         node->head.known = value;
 
-        node->head.flags |= XL_DAGC_FLAG_COMPLETE;
+        node->head.flags |= UBIK_DAGC_FLAG_COMPLETE;
         return OK;
 }
 
@@ -220,8 +220,8 @@ _eval_cond(struct ubik_env *env, struct ubik_dagc_cond *cond)
                  * our wait flag on the appropriate node and let the scheduler
                  * pick it up and reevaluate us later. */
                 cond->head.flags |= condition
-                        ? XL_DAGC_FLAG_WAIT_D2
-                        : XL_DAGC_FLAG_WAIT_D3;
+                        ? UBIK_DAGC_FLAG_WAIT_D2
+                        : UBIK_DAGC_FLAG_WAIT_D3;
                 return OK;
         }
 
@@ -235,7 +235,7 @@ _eval_cond(struct ubik_env *env, struct ubik_dagc_cond *cond)
         if (err != OK)
                 return err;
 
-        cond->head.flags |= XL_DAGC_FLAG_COMPLETE;
+        cond->head.flags |= UBIK_DAGC_FLAG_COMPLETE;
         return OK;
 }
 
@@ -255,7 +255,7 @@ _eval_store(struct ubik_env *env, struct ubik_dagc_store *node)
         if (err != OK)
                 return err;
 
-        node->head.flags |= XL_DAGC_FLAG_COMPLETE;
+        node->head.flags |= UBIK_DAGC_FLAG_COMPLETE;
         return ubik_env_set(
                 env, node->loc, node->value->known, node->value->known_type);
 }
@@ -266,7 +266,7 @@ _eval_input(struct ubik_env *env, struct ubik_dagc_input *node)
         unused(env);
         unused(node);
 
-        node->head.flags |= XL_DAGC_FLAG_COMPLETE;
+        node->head.flags |= UBIK_DAGC_FLAG_COMPLETE;
         return OK;
 }
 
@@ -277,7 +277,7 @@ ubik_dagc_node_eval(
 {
         ubik_error err;
 
-        ubik_assert(!(node->flags & XL_DAGC_WAIT_MASK));
+        ubik_assert(!(node->flags & UBIK_DAGC_WAIT_MASK));
 
         switch (node->node_type)
         {

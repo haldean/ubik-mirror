@@ -17,7 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-/* Define XL_GC_DEBUG to have garbage collection information
+/* Define UBIK_GC_DEBUG to have garbage collection information
  * printed to stderr. */
 
 #include <stdio.h>
@@ -107,7 +107,7 @@ ubik_gc_teardown()
 {
         ubik_error err;
 
-        #if XL_GC_DEBUG && XL_GC_DEBUG_V
+        #if UBIK_GC_DEBUG && UBIK_GC_DEBUG_V
         size_t i;
         bool present;
         bool any_leaked;
@@ -216,7 +216,7 @@ ubik_dagc_alloc(
         size_t i;
         union ubik_dagc_any_node *node_memory;
 
-        #if XL_GC_DEBUG && XL_GC_DEBUG_V
+        #if UBIK_GC_DEBUG && UBIK_GC_DEBUG_V
         ubik_error err;
         #endif
 
@@ -224,8 +224,8 @@ ubik_dagc_alloc(
         if (*graph == NULL)
                 return ubik_raise(ERR_NO_MEMORY, "graph allocation");
 
-        #if XL_GC_DEBUG
-                #if XL_GC_DEBUG_V
+        #if UBIK_GC_DEBUG
+                #if UBIK_GC_DEBUG_V
                         fprintf(gc_out, "alloc graph %hx\n",
                                (uint16_t) ((uintptr_t) *graph));
                         err = ubik_pointer_set_add(NULL, &graph_alloc, *graph);
@@ -267,7 +267,7 @@ ubik_dagc_alloc(
 no_ignore ubik_error
 ubik_value_new(struct ubik_value **v)
 {
-#if XL_GC_DEBUG && XL_GC_DEBUG_V
+#if UBIK_GC_DEBUG && UBIK_GC_DEBUG_V
         ubik_error err;
 #endif
 
@@ -279,10 +279,10 @@ ubik_value_new(struct ubik_value **v)
         (*v)->tag = TAG_VALUE;
         (*v)->refcount = 1;
 
-        #if XL_GC_DEBUG
+        #if UBIK_GC_DEBUG
         gc_stats->n_val_allocs++;
 
-        #if XL_GC_DEBUG_V
+        #if UBIK_GC_DEBUG_V
         err = ubik_pointer_set_add(NULL, &value_alloc, *v);
         if (err != OK)
                 return err;
@@ -358,9 +358,9 @@ _release_value(struct ubik_value *v)
                 if (err == OK && (v->tag & (TAG_RIGHT_NODE | TAG_RIGHT_GRAPH)))
                         err = ubik_release(v->right.any);
 
-                #if XL_GC_DEBUG
+                #if UBIK_GC_DEBUG
                 gc_stats->n_val_frees++;
-                #if XL_GC_DEBUG_V
+                #if UBIK_GC_DEBUG_V
                 err = ubik_pointer_set_add(NULL, &value_freed, v);
                 if (err != OK)
                         return err;
@@ -438,7 +438,7 @@ _release_graph(struct ubik_dagc *g)
         uint64_t self_refs;
         struct ubik_dagc_const *n;
 
-        #if XL_GC_DEBUG && XL_GC_DEBUG_V
+        #if UBIK_GC_DEBUG && UBIK_GC_DEBUG_V
         char *buf;
         #endif
 
@@ -491,8 +491,8 @@ _release_graph(struct ubik_dagc *g)
         free(g->inputs);
         free(g->terminals);
 
-        #if XL_GC_DEBUG
-                #if XL_GC_DEBUG_V
+        #if UBIK_GC_DEBUG
+                #if UBIK_GC_DEBUG_V
                         fprintf(gc_out, "free graph %hx\n",
                                (uint16_t) ((uintptr_t) g));
                         fprintf(gc_out, "\tarity %lu\n", g->in_arity);
@@ -529,13 +529,13 @@ no_ignore static ubik_error
 _release_uri(struct ubik_uri *u)
 {
         ubik_error err;
-        #if XL_GC_DEBUG && XL_GC_DEBUG_V
+        #if UBIK_GC_DEBUG && UBIK_GC_DEBUG_V
         char *buf;
         #endif
 
         if (unlikely(u->refcount == 0))
         {
-                #if XL_GC_DEBUG && XL_GC_DEBUG_V
+                #if UBIK_GC_DEBUG && UBIK_GC_DEBUG_V
                 fprintf(gc_out, "ref underflow for uri %hx\n",
                         (uint16_t) ((uintptr_t) u));
                 #endif
@@ -546,7 +546,7 @@ _release_uri(struct ubik_uri *u)
         if (u->refcount)
                 return OK;
 
-        #if XL_GC_DEBUG && XL_GC_DEBUG_V
+        #if UBIK_GC_DEBUG && UBIK_GC_DEBUG_V
         buf = ubik_uri_explain(u);
         fprintf(gc_out, "free uri %s\n", buf);
         free(buf);

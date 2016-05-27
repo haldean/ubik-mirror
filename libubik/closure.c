@@ -120,7 +120,7 @@ apply_downwards_transform(
         size_t n_subexprs;
         size_t i;
         struct ubik_ast_expr *expr;
-        struct ubik_ast_expr *subexprs[XL_MAX_SUBEXPRS];
+        struct ubik_ast_expr *subexprs[UBIK_MAX_SUBEXPRS];
 
         expr = *expr_ref;
         subast = NULL;
@@ -248,7 +248,7 @@ traverse_expr(
 {
         struct ubik_ast *subast;
         struct ubik_ast_expr *expr;
-        struct ubik_ast_expr *subexprs[XL_MAX_SUBEXPRS];
+        struct ubik_ast_expr *subexprs[UBIK_MAX_SUBEXPRS];
         size_t n_subexprs;
         size_t i;
         ubik_error err;

@@ -43,7 +43,7 @@ gc()
         }
 
         ubik_gc_get_stats(&gc_stats);
-        #ifdef XL_GC_DEBUG
+        #ifdef UBIK_GC_DEBUG
                 assert(gc_stats.n_val_allocs == N_TEST_GC_VALUES);
                 assert(gc_stats.n_val_frees == N_TEST_GC_VALUES);
         #endif

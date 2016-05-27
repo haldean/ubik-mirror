@@ -21,7 +21,7 @@
 
 struct ubik_gc_info
 {
-#ifdef XL_GC_DEBUG
+#ifdef UBIK_GC_DEBUG
         uint64_t n_val_allocs;
         uint64_t n_val_frees;
         uint64_t n_graph_allocs;

@@ -89,20 +89,20 @@ _set_initial_ready(struct ubik_dagc_node *n)
          * they are re-waited. */
         if (n->node_type == DAGC_NODE_COND)
         {
-                if (d1->flags & XL_DAGC_FLAG_COMPLETE)
+                if (d1->flags & UBIK_DAGC_FLAG_COMPLETE)
                         n->flags = 0;
                 else
-                        n->flags = XL_DAGC_FLAG_WAIT_D1;
+                        n->flags = UBIK_DAGC_FLAG_WAIT_D1;
         }
         else
         {
                 n->flags = 0;
-                if (d1 != NULL && !(d1->flags & XL_DAGC_FLAG_COMPLETE))
-                        n->flags |= XL_DAGC_FLAG_WAIT_D1;
-                if (d2 != NULL && !(d2->flags & XL_DAGC_FLAG_COMPLETE))
-                        n->flags |= XL_DAGC_FLAG_WAIT_D2;
-                if (d3 != NULL && !(d3->flags & XL_DAGC_FLAG_COMPLETE))
-                        n->flags |= XL_DAGC_FLAG_WAIT_D3;
+                if (d1 != NULL && !(d1->flags & UBIK_DAGC_FLAG_COMPLETE))
+                        n->flags |= UBIK_DAGC_FLAG_WAIT_D1;
+                if (d2 != NULL && !(d2->flags & UBIK_DAGC_FLAG_COMPLETE))
+                        n->flags |= UBIK_DAGC_FLAG_WAIT_D2;
+                if (d3 != NULL && !(d3->flags & UBIK_DAGC_FLAG_COMPLETE))
+                        n->flags |= UBIK_DAGC_FLAG_WAIT_D3;
         }
 
         return OK;
@@ -174,7 +174,7 @@ _eval_native_dagc(
         if (err != OK)
                 return err;
 
-        graph->result->flags |= XL_DAGC_FLAG_COMPLETE;
+        graph->result->flags |= UBIK_DAGC_FLAG_COMPLETE;
 
         if (notify == NULL)
                 return OK;
@@ -220,20 +220,20 @@ _push_deps(
         ubik_assert(d2 != node);
         ubik_assert(d3 != node);
 
-        if (d1 != NULL && (node->flags & XL_DAGC_FLAG_WAIT_D1))
+        if (d1 != NULL && (node->flags & UBIK_DAGC_FLAG_WAIT_D1))
         {
                 /* only the root gets notified; everything below it doesn't */
                 err = _push_dep_tree(s, graph, d1, env, NULL);
                 if (err != OK)
                         return err;
         }
-        if (d2 != NULL && (node->flags & XL_DAGC_FLAG_WAIT_D2))
+        if (d2 != NULL && (node->flags & UBIK_DAGC_FLAG_WAIT_D2))
         {
                 err = _push_dep_tree(s, graph, d2, env, NULL);
                 if (err != OK)
                         return err;
         }
-        if (d3 != NULL && (node->flags & XL_DAGC_FLAG_WAIT_D3))
+        if (d3 != NULL && (node->flags & UBIK_DAGC_FLAG_WAIT_D3))
         {
                 err = _push_dep_tree(s, graph, d3, env, NULL);
                 if (err != OK)
@@ -324,11 +324,11 @@ ubik_schedule_complete(
                         return err;
 
                 if (d1 == e->node)
-                        parents[i]->flags &= ~XL_DAGC_FLAG_WAIT_D1;
+                        parents[i]->flags &= ~UBIK_DAGC_FLAG_WAIT_D1;
                 if (d2 == e->node)
-                        parents[i]->flags &= ~XL_DAGC_FLAG_WAIT_D2;
+                        parents[i]->flags &= ~UBIK_DAGC_FLAG_WAIT_D2;
                 if (d3 == e->node)
-                        parents[i]->flags &= ~XL_DAGC_FLAG_WAIT_D3;
+                        parents[i]->flags &= ~UBIK_DAGC_FLAG_WAIT_D3;
         }
 
         if (e->notify != NULL)
@@ -356,7 +356,7 @@ _notify_node(
         void *old_type;
         ubik_error err;
 
-#ifdef XL_SCHEDULE_DEBUG
+#ifdef UBIK_SCHEDULE_DEBUG
         printf("notifying %s on completion of %s\n",
                ubik_node_explain(waiting->node), ubik_node_explain(complete->node));
 #endif
@@ -394,7 +394,7 @@ _notify_node(
         if (err != OK)
                 return err;
 
-        waiting->node->flags = XL_DAGC_FLAG_COMPLETE;
+        waiting->node->flags = UBIK_DAGC_FLAG_COMPLETE;
         err = ubik_schedule_complete(s, waiting);
         if (err != OK)
                 return err;
@@ -411,7 +411,7 @@ _collapse_graph(
         struct ubik_env *child_env;
         ubik_error err;
 
-#if XL_SCHEDULE_DEBUG
+#if UBIK_SCHEDULE_DEBUG
         {
                 char *buf = ubik_uri_explain(e->node->known.graph->identity);
                 printf("collapsing node graph %s to value\n", buf);
@@ -425,7 +425,7 @@ _collapse_graph(
         notify->notify = (ubik_exec_notify_func) _notify_node;
         notify->arg = e;
 
-        e->node->flags = XL_DAGC_FLAG_WAIT_EVAL;
+        e->node->flags = UBIK_DAGC_FLAG_WAIT_EVAL;
 
         /* Create a child environment to execute the function in. */
         child_env = calloc(1, sizeof(struct ubik_env));
@@ -448,7 +448,7 @@ _collapse_graph(
 no_ignore static bool
 _is_ready(struct ubik_exec_unit *e)
 {
-        return !(e->node->flags & XL_DAGC_WAIT_MASK);
+        return !(e->node->flags & UBIK_DAGC_WAIT_MASK);
 }
 
 no_ignore static ubik_error
@@ -465,11 +465,11 @@ _dump_exec_unit(struct ubik_exec_unit *u)
         printf("parent @%hx\n", (short)((uintptr_t) u->env->parent));
 
         printf("\t\twait on d1 %d d2 %d d3 %d eval %d data %d\n",
-                !!(u->node->flags & XL_DAGC_FLAG_WAIT_D1),
-                !!(u->node->flags & XL_DAGC_FLAG_WAIT_D2),
-                !!(u->node->flags & XL_DAGC_FLAG_WAIT_D3),
-                !!(u->node->flags & XL_DAGC_FLAG_WAIT_EVAL),
-                !!(u->node->flags & XL_DAGC_FLAG_WAIT_DATA));
+                !!(u->node->flags & UBIK_DAGC_FLAG_WAIT_D1),
+                !!(u->node->flags & UBIK_DAGC_FLAG_WAIT_D2),
+                !!(u->node->flags & UBIK_DAGC_FLAG_WAIT_D3),
+                !!(u->node->flags & UBIK_DAGC_FLAG_WAIT_EVAL),
+                !!(u->node->flags & UBIK_DAGC_FLAG_WAIT_DATA));
 
         err = ubik_dagc_get_deps(&d1, &d2, &d3, u->node);
         if (err != OK)
@@ -546,7 +546,7 @@ _run_single_pass(struct ubik_scheduler *s)
 
                 if (_is_ready(u))
                 {
-#ifdef XL_SCHEDULE_DEBUG
+#ifdef UBIK_SCHEDULE_DEBUG
                         printf("moving %s from waiting to ready\n",
                                ubik_node_explain(u->node));
 #endif
@@ -574,7 +574,7 @@ _run_single_pass(struct ubik_scheduler *s)
                 return ubik_raise(ERR_DEADLOCK, "all jobs are waiting");
         }
 
-#ifdef XL_SCHEDULE_STEP
+#ifdef UBIK_SCHEDULE_STEP
         err = ubik_schedule_dump(s);
         if (err != OK)
                 return err;
@@ -591,11 +591,11 @@ _run_single_pass(struct ubik_scheduler *s)
 
                 s->ready = s->ready->next;
 
-                if (u->node->flags & XL_DAGC_FLAG_COMPLETE &&
+                if (u->node->flags & UBIK_DAGC_FLAG_COMPLETE &&
                         *u->node->known.tag & TAG_GRAPH &&
                         u->node->known.graph->in_arity == 0)
                 {
-#ifdef XL_SCHEDULE_DEBUG
+#ifdef UBIK_SCHEDULE_DEBUG
                         printf("collapsing %s\n",
                                ubik_node_explain(u->node));
 #endif
@@ -607,9 +607,9 @@ _run_single_pass(struct ubik_scheduler *s)
                         if (err != OK)
                                 return err;
                 }
-                else if (u->node->flags & XL_DAGC_FLAG_COMPLETE)
+                else if (u->node->flags & UBIK_DAGC_FLAG_COMPLETE)
                 {
-#ifdef XL_SCHEDULE_DEBUG
+#ifdef UBIK_SCHEDULE_DEBUG
                         printf("marking %s complete\n",
                                ubik_node_explain(u->node));
 #endif
@@ -617,9 +617,9 @@ _run_single_pass(struct ubik_scheduler *s)
                         if (err != OK)
                                 return err;
                 }
-                else if (u->node->flags & XL_DAGC_WAIT_MASK)
+                else if (u->node->flags & UBIK_DAGC_WAIT_MASK)
                 {
-#ifdef XL_SCHEDULE_DEBUG
+#ifdef UBIK_SCHEDULE_DEBUG
                         printf("moving %s back to waiting\n",
                                ubik_node_explain(u->node));
 #endif

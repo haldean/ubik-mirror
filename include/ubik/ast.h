@@ -24,7 +24,7 @@
 #include <stdbool.h>
 
 /* The maximum number of subexpressions any one expression can have. */
-#define XL_MAX_SUBEXPRS 64
+#define UBIK_MAX_SUBEXPRS 64
 
 enum expr_type
 {

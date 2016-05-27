@@ -65,7 +65,7 @@ assign_initial_scopes(
         struct ubik_resolve_scope *parent)
 {
         struct ubik_ast *subast;
-        struct ubik_ast_expr *subexprs[XL_MAX_SUBEXPRS];
+        struct ubik_ast_expr *subexprs[UBIK_MAX_SUBEXPRS];
         size_t n_subexprs;
         size_t i;
         ubik_error err;
@@ -183,7 +183,7 @@ find_blocks_and_bind(
         struct ubik_ast_expr *expr)
 {
         struct ubik_ast *subast;
-        struct ubik_ast_expr *subexprs[XL_MAX_SUBEXPRS];
+        struct ubik_ast_expr *subexprs[UBIK_MAX_SUBEXPRS];
         size_t n_subexprs;
         size_t i;
         ubik_error err;
@@ -299,7 +299,7 @@ find_lambdas_and_bind(
         struct ubik_ast_arg_list *args;
         struct ubik_resolve_name *name;
         struct ubik_ast *subast;
-        struct ubik_ast_expr *subexprs[XL_MAX_SUBEXPRS];
+        struct ubik_ast_expr *subexprs[UBIK_MAX_SUBEXPRS];
         size_t n_subexprs;
         size_t i;
         ubik_error err;
@@ -388,7 +388,7 @@ find_name_resolution_types(
         size_t n_subexprs;
         enum ubik_resolve_boundary_type highest_bdry;
         struct ubik_ast *subast;
-        struct ubik_ast_expr *subexprs[XL_MAX_SUBEXPRS];
+        struct ubik_ast_expr *subexprs[UBIK_MAX_SUBEXPRS];
         struct ubik_resolve_name_loc *name_loc;
         struct ubik_resolve_scope *scope;
         struct ubik_resolve_name *check_name;

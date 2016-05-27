@@ -537,7 +537,7 @@ ubik_ast_subexprs(
                 case_stmt = expr->cond_block.case_stmts;
                 while (case_stmt != NULL)
                 {
-                        if (i >= XL_MAX_SUBEXPRS - 1)
+                        if (i >= UBIK_MAX_SUBEXPRS - 1)
                                 return ubik_raise(
                                         ERR_BAD_VALUE,
                                         "too many case statements");

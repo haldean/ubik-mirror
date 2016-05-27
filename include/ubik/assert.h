@@ -17,7 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#ifndef XL_RECKLESS
+#ifndef UBIK_RECKLESS
         #include <stdio.h>
         #include <stdlib.h>
         #include "ubik/util.h"
