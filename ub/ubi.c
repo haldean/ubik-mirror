@@ -67,7 +67,7 @@ main(int argc, char *argv[])
 
         parse_err = ubik_parse(&ast, "(stdin)", &sstdin);
         if (parse_err == OK)
-                parse_err = ubik_resolve(ast, "(stdin)", &sstdin, &rctx);
+                parse_err = ubik_resolve(ast, &rctx);
         if (parse_err == OK)
                 parse_err = ubik_infer_types(ast, "(stdin)", &sstdin);
         if (argc > 1 && strcmp(argv[1], "emit-ast") == 0)

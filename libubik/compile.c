@@ -104,7 +104,7 @@ ubik_compile_stream(
         if (err != OK)
                 goto free_ast;
 
-        err = ubik_resolve(ast, source_name, in_stream, &ctx);
+        err = ubik_resolve(ast, &ctx);
         if (err != OK)
                 goto free_ast;
 

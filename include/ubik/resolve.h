@@ -103,8 +103,6 @@ struct ubik_resolve_context
 no_ignore ubik_error
 ubik_resolve(
         struct ubik_ast *ast,
-        char *source_name,
-        struct ubik_stream *stream,
         struct ubik_resolve_context *ctx);
 
 void

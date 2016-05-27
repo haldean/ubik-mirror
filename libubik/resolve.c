@@ -564,8 +564,6 @@ create_native_scope(struct ubik_resolve_context *ctx)
 no_ignore ubik_error
 ubik_resolve(
         struct ubik_ast *ast,
-        char *source_name,
-        struct ubik_stream *stream,
         struct ubik_resolve_context *ctx)
 {
         struct ubik_resolve_error *resolv_err;
@@ -607,12 +605,12 @@ ubik_resolve(
                                 fprintf(stderr,
                                         "\x1b[37m%s:%lu:%lu:\x1b[31m "
                                         "error:\x1b[0m name not found: %s\n",
-                                        source_name,
+                                        resolv_err->loc.source_name,
                                         resolv_err->loc.line_start,
                                         resolv_err->loc.col_start,
                                         resolv_err->name);
                                 ubik_streamutil_print_line_char(
-                                        stream,
+                                        resolv_err->loc.source,
                                         resolv_err->loc.line_start - 1,
                                         resolv_err->loc.col_start);
                         }
