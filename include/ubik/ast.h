@@ -113,6 +113,7 @@ struct ubik_ast_case
         struct ubik_ast_expr *head;
         struct ubik_ast_expr *tail;
         struct ubik_ast_case *next;
+        struct ubik_dagc_node *gen;
         struct ubik_ast_loc loc;
 };
 

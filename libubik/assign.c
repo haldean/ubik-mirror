@@ -242,6 +242,80 @@ _assign_conditional_node(
 }
 
 no_ignore static ubik_error
+_assign_pred_case(
+        struct ubik_assign_context *ctx,
+        struct ubik_graph_builder *builder,
+        struct ubik_ast_case *case_stmt)
+{
+        union ubik_dagc_any_node *n;
+        ubik_error err;
+
+        n = calloc(1, sizeof(union ubik_dagc_any_node));
+        if (n == NULL)
+                return ubik_raise(ERR_NO_MEMORY, "pred node alloc");
+
+        if (case_stmt->next != NULL)
+        {
+                err = _assign_pred_case(ctx, builder, case_stmt->next);
+                if (err != OK)
+                        return err;
+
+                err = ubik_assign_nodes(ctx, builder, case_stmt->head);
+                if (err != OK)
+                        return err;
+
+                err = ubik_assign_nodes(ctx, builder, case_stmt->tail);
+                if (err != OK)
+                        return err;
+
+                n->node.node_type = DAGC_NODE_COND;
+                n->node.id = ctx->next_id++;
+
+                n->as_cond.condition = case_stmt->head->gen;
+                n->as_cond.if_true = case_stmt->tail->gen;
+                n->as_cond.if_false = case_stmt->next->gen;
+        }
+        else
+        {
+                /* TODO: ensure that the head of the final case statement always
+                 * evaluates to true (instead of just assuming it does) */
+                err = ubik_assign_nodes(ctx, builder, case_stmt->tail);
+                if (err != OK)
+                        return err;
+
+                n->node.node_type = DAGC_NODE_REF;
+                n->node.id = ctx->next_id++;
+                n->as_ref.referrent = case_stmt->tail->gen;
+        }
+
+        err = ubik_bdagc_push_node(builder, &n->node);
+        if (err != OK)
+                return err;
+        case_stmt->gen = &n->node;
+        return OK;
+}
+
+no_ignore static ubik_error
+_assign_pred_block(
+        struct ubik_assign_context *ctx,
+        union ubik_dagc_any_node *n,
+        struct ubik_graph_builder *builder,
+        struct ubik_ast_expr *expr)
+{
+        ubik_error err;
+
+        err = _assign_pred_case(ctx, builder, expr->cond_block.case_stmts);
+        if (err != OK)
+                return err;
+
+        n->node.node_type = DAGC_NODE_REF;
+        n->node.id = ctx->next_id++;
+        n->as_ref.referrent = expr->cond_block.case_stmts->gen;
+
+        return OK;
+}
+
+no_ignore static ubik_error
 _assign_block(
         union ubik_dagc_any_node *n,
         struct ubik_ast_expr *expr)
@@ -382,8 +456,22 @@ ubik_assign_nodes(
                         return err;
                 break;
 
-        case EXPR_CONSTRUCTOR:
         case EXPR_COND_BLOCK:
+                switch (expr->cond_block.block_type)
+                {
+                case COND_PREDICATE:
+                        err = _assign_pred_block(ctx, n, builder, expr);
+                        if (err != OK)
+                                return err;
+                        break;
+                case COND_PATTERN:
+                        return ubik_raise(
+                                ERR_NOT_IMPLEMENTED,
+                                "pattern blocks not implemented");
+                }
+                break;
+
+        case EXPR_CONSTRUCTOR:
         default:
                 return ubik_raise(ERR_UNKNOWN_TYPE, "compile assign node");
         }
@@ -399,5 +487,10 @@ ubik_assign_nodes(
 void
 ubik_assign_context_free(struct ubik_assign_context *ctx)
 {
-        unused(ctx);
+        size_t i;
+        for (i = 0; i < ctx->errors.n; i++)
+        {
+                free(ctx->errors.elems[i]);
+        }
+        ubik_vector_free(&ctx->errors);
 }

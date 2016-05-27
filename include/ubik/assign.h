@@ -21,9 +21,23 @@
 #include "ubik/bdagc.h"
 #include "ubik/ubik.h"
 
+enum ubik_assign_error_type
+{
+        ASSIGN_ERR_PRED_BLOCK_NOT_TOTAL = 1,
+};
+
+struct ubik_assign_error
+{
+        enum ubik_assign_error_type err_type;
+        char *name;
+        struct ubik_ast_loc loc;
+};
+
 struct ubik_assign_context
 {
         ubik_word next_id;
+        /* Elements are struct ubik_assign_error * */
+        struct ubik_vector errors;
 };
 
 void

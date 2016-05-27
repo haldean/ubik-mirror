@@ -80,6 +80,8 @@ _free_case_stmts(struct ubik_ast_case *case_stmt)
                 err = _free_expr(case_stmt->tail);
                 if (err != OK)
                         return err;
+                if (case_stmt->gen != NULL)
+                        free(case_stmt->gen);
                 free(case_stmt);
                 case_stmt = next;
         }
