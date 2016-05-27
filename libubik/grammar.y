@@ -87,7 +87,7 @@
 %type <adt_ctor> adt_ctor adt_ctors
 %type <type_params> type_params
 %type <type_constraints> type_constraints
-%type <case_stmt> case_stmt case_stmts
+%type <case_stmt> case_stmt case_stmts last_case_stmt all_case_stmts
 
 %define api.pure full
 %define api.push-pull push
@@ -458,10 +458,10 @@ atom
 ;
 
 cond_block
-: COND expr OPEN_SCOPE case_stmts CLOSE_SCOPE
+: COND expr OPEN_SCOPE all_case_stmts CLOSE_SCOPE
 {
 }
-| COND OPEN_SCOPE case_stmts CLOSE_SCOPE
+| COND OPEN_SCOPE all_case_stmts CLOSE_SCOPE
 {
         alloc($$, 1, struct ubik_ast_expr);
         $$->expr_type = EXPR_COND_BLOCK;
@@ -473,6 +473,17 @@ cond_block
 }
 ;
 
+all_case_stmts
+: case_stmts last_case_stmt
+{
+        $$ = $1;
+        while ($1->next != NULL)
+                $1 = $1->next;
+        $1->next = $2;
+}
+| case_stmts
+;
+
 case_stmts
 : case_stmts case_stmt
 {
@@ -482,6 +493,17 @@ case_stmts
         $1->next = $2;
 }
 | case_stmt
+;
+
+last_case_stmt
+: MEMBER IMPLIES expr
+{
+        alloc($$, 1, struct ubik_ast_case);
+        $$->head = NULL;
+        $$->tail = $3;
+        load_loc($$->loc);
+        merge_loc($$, $$, $3);
+}
 ;
 
 case_stmt

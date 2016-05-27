@@ -74,9 +74,12 @@ _free_case_stmts(struct ubik_ast_case *case_stmt)
         while (case_stmt != NULL)
         {
                 next = case_stmt->next;
-                err = _free_expr(case_stmt->head);
-                if (err != OK)
-                        return err;
+                if (case_stmt->head != NULL)
+                {
+                        err = _free_expr(case_stmt->head);
+                        if (err != OK)
+                                return err;
+                }
                 err = _free_expr(case_stmt->tail);
                 if (err != OK)
                         return err;
@@ -538,7 +541,8 @@ ubik_ast_subexprs(
                                 return ubik_raise(
                                         ERR_BAD_VALUE,
                                         "too many case statements");
-                        subexprs[i++] = case_stmt->head;
+                        if (case_stmt->head != NULL)
+                                subexprs[i++] = case_stmt->head;
                         subexprs[i++] = case_stmt->tail;
                         case_stmt = case_stmt->next;
                 }

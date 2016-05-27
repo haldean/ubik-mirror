@@ -105,9 +105,12 @@ _print_case_stmts(struct ubik_ast_case *case_stmt, int indent)
         {
                 _indent(indent);
                 printf("( ");
-                err = _print_expr(case_stmt->head, indent);
-                if (err != OK)
-                        return err;
+                if (case_stmt->head != NULL)
+                {
+                        err = _print_expr(case_stmt->head, indent);
+                        if (err != OK)
+                                return err;
+                }
                 printf(" => ");
                 err = _print_expr(case_stmt->tail, indent);
                 if (err != OK)

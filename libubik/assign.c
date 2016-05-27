@@ -277,8 +277,11 @@ _assign_pred_case(
         }
         else
         {
-                /* TODO: ensure that the head of the final case statement always
-                 * evaluates to true (instead of just assuming it does) */
+                /* TODO: create an actual user error here */
+                if (case_stmt->head != NULL)
+                        return ubik_raise(
+                                ERR_BAD_VALUE,
+                                "last case in pred must be trivially true");
                 err = ubik_assign_nodes(ctx, builder, case_stmt->tail);
                 if (err != OK)
                         return err;
