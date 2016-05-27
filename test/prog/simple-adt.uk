@@ -1,2 +1,6 @@
-^ Expr = Const String
+^ Expr
+    = Const String
+    = OtherExpr
+
 : thing ^ Expr = Const "champion!"
+: other-thing ^ Expr = OtherExpr

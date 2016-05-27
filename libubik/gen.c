@@ -420,10 +420,6 @@ ubik_compile_type(
                         return err;
 
                 ctor = ctor->next;
-                if (ctor != NULL)
-                        return ubik_raise(
-                                ERR_NOT_IMPLEMENTED,
-                                "only a single adt ctor is implemented");
 
                 err = ubik_release(graph);
                 if (err != OK)
