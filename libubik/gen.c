@@ -442,7 +442,7 @@ ubik_gen_graphs(
         char *uri_source)
 {
         size_t i;
-        ubik_error err;
+        ubik_error err, rerr;
         struct ubik_env local_env;
         local(assign_context) struct ubik_assign_context ctx = {0};
 
@@ -456,7 +456,7 @@ ubik_gen_graphs(
                         ast->types.elems[i],
                         &local_env);
                 if (err != OK)
-                        return err;
+                        goto cleanup_env;
         }
 
         for (i = 0; i < ast->bindings.n; i++)
@@ -465,7 +465,7 @@ ubik_gen_graphs(
                         ast->bindings.elems[i],
                         &local_env, &ctx);
                 if (err != OK)
-                        return err;
+                        goto cleanup_env;
         }
 
         err = ubik_create_modinit(
@@ -474,24 +474,25 @@ ubik_gen_graphs(
         {
                 if (err->error_code == ERR_NO_DATA)
                         printf("source has no data in it\n");
-                return err;
+                goto cleanup_env;
         }
 
         if (ubik_assign_emit_errors(&ctx))
-                return ubik_raise(
+        {
+                err = ubik_raise(
                         ERR_BAD_VALUE,
                         "node assignment failed.");
+                goto cleanup_env;
+        }
 
         err = _collect_all_dep_packages(
                 *res, &local_env, requires, uri_source);
         if (err != OK)
                 return err;
 
-        err = ubik_env_free(&local_env);
-        if (err != OK)
-                return err;
-
-        return OK;
+cleanup_env:
+        rerr = ubik_env_free(&local_env);
+        return err == OK ? rerr : err;
 }
 
 no_ignore ubik_error
