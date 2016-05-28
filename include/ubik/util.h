@@ -43,6 +43,13 @@ ntohw(ubik_word);
 void
 ubik_trace_print(void);
 
+/* Gets a stack trace. The returned value here is the same as the
+ * return value of glibc's backtrace_symbols; it's a list of
+ * NULL-terminated strings, each of which is one line in the backtrace,
+ * but to clean it up you need only free the first one. */
+void
+ubik_trace_get(char ***res, size_t *n_lines);
+
 /* Converts a constant to its string value. */
 char *
 ubik_word_explain(ubik_word);

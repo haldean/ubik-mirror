@@ -85,15 +85,28 @@ ntohw(ubik_word w)
 #endif
 }
 
+#define UBIK_TRACE_SIZE 128
+
 /* Obtain a backtrace and print it to stdout. */
 void
 ubik_trace_print(void)
 {
-        void *array[40];
+        void *array[UBIK_TRACE_SIZE];
         size_t size;
 
-        size = backtrace(array, 40);
+        size = backtrace(array, UBIK_TRACE_SIZE);
         backtrace_symbols_fd(array, size, STDERR_FILENO);
+}
+
+void
+ubik_trace_get(char ***res, size_t *n_lines)
+{
+        void *array[UBIK_TRACE_SIZE];
+        size_t size;
+
+        size = backtrace(array, UBIK_TRACE_SIZE);
+        *res = backtrace_symbols(array, size);
+        *n_lines = size;
 }
 
 char *

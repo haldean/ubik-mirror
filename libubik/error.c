@@ -17,8 +17,13 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "ubik/ubik.h"
 #include "ubik/util.h"
@@ -39,6 +44,9 @@ ubik_error_new(
         res->file = file;
         res->lineno = lineno;
         res->function = function;
+#if UBIK_ERRORS_HAVE_TRACES
+        ubik_trace_get(&res->trace, &res->n_trace_lines);
+#endif
         return res;
 }
 
@@ -56,5 +64,17 @@ ubik_error_explain(ubik_error err)
         if (aspr_res < 0)
                 res = NULL;
         free(err_word_expl);
+
+#if UBIK_ERRORS_HAVE_TRACES
+        size_t i;
+        for (i = 0; i < err->n_trace_lines; i++)
+        {
+                res = realloc(res, strlen(res) + strlen(err->trace[i]) + 2);
+                if (res == NULL)
+                        return res;
+                res = strcat(res, "\n");
+                res = strcat(res, err->trace[i]);
+        }
+#endif
         return res;
 }

@@ -62,6 +62,10 @@ typedef long double ubik_float;
 /* The maximum Ubik bytecode version that this library supports. */
 #define CURRENT_ENCODING_VERSION 1
 
+/* If true, all errors have backtraces attached but the traces are leaked all
+ * over the place. */
+#define UBIK_ERRORS_HAVE_TRACES 0
+
 /* Private data structures referenced by public data structures. */
 struct ubik_alloc_page;
 struct ubik_env;
@@ -80,6 +84,10 @@ struct ubik_error
         const char *file;
         const char *function;
         uint32_t lineno;
+#if UBIK_ERRORS_HAVE_TRACES
+        char **trace;
+        size_t n_trace_lines;
+#endif
 };
 typedef struct ubik_error * ubik_error;
 #define OK ((ubik_error) NULL)
