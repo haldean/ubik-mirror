@@ -1,0 +1,10 @@
+: a-few-assignments
+    ^ String
+    = {
+        : first-part = "this is the first part "
+        : second-part ^ String = "and this is the second "
+        : third-part = "and this is the third"
+        != concat first-part (concat second-part third-part)
+    }
+
+!= emit a-few-assignments
