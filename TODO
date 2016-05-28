@@ -6,3 +6,4 @@ dagc source maps
 interface files
 real parser for URIs instead of hacky shit
 list iterators
+define _GNU_SOURCE in ubik.h, remove it everywhere else
