@@ -58,13 +58,8 @@ to evaluate:
         : is-more-than-10
             = num -> ? {
                 . num > 10 => "yes"
-                . _ => "no"
+                . => "no"
             }
-
-_ is a special operator that always evaluates to true and always matches
-any expression.  The _ operator can be used as both pattern and boolean,
-so it can be used as a catch-all with both pattern blocks and predicate
-blocks.
 
 A note on the use of the member operator; without it, the grammar is
 unfortunately either whitespace-dependent (no-go) or ambiguous; it would
@@ -80,3 +75,42 @@ From this:
 
 As the member operator cannot appear at the head of an expression, it
 disambiguates thw two cases.
+
+When generating code, the following case statement:
+
+        ? {
+            . eq num 10 => "yes"
+            . => "no"
+        }
+
+Becomes the following graph:
+
+        1: const 10
+        2: load native://eq
+        3: apply 2 1
+        4: const "yes"
+        5: cond 3 4 6
+        6: const "no"
+
+And the following:
+
+        ? x {
+            . A fst => fst
+            . B fst snd => snd
+        }
+
+Becomes the following pseudocode:
+
+        ? {
+            ubik-adt-ctor-matches? "A" x => {
+                : fst = ubik-adt-get 0 x
+                != fst
+            }
+            ubik-adt-ctor-matches? "B" x => {
+                : fst = ubik-adt-get 0 x
+                : snd = ubik-adt-get 1 x
+                != snd
+            }
+        }
+
+Which is then code-generated in the same manner as the previous example.
