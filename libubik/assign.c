@@ -337,11 +337,13 @@ _assign_pred_block(
 
 no_ignore static ubik_error
 _assign_block(
+        struct ubik_assign_context *ctx,
         union ubik_dagc_any_node *n,
         struct ubik_ast_expr *expr)
 {
         unused(n);
         unused(expr);
+        unused(ctx);
         return ubik_raise(ERR_NOT_IMPLEMENTED, "block codegen");
 }
 
@@ -467,7 +469,7 @@ ubik_assign_nodes(
                 break;
 
         case EXPR_BLOCK:
-                err = _assign_block(n, expr);
+                err = _assign_block(ctx, n, expr);
                 if (err != OK)
                         goto failed;
                 break;
