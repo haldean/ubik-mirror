@@ -1,0 +1,14 @@
+^ MaybeString
+    = Solo String
+    = Nada
+
+: whats-the-string
+    ^ MaybeString -> String
+    = \s -> ? s {
+        . Solo str => str
+        . Nada => "nothing"
+    }
+
+!= emit (concat (concat "should print this nothing:\n"
+            (concat (whats-the-string (Solo "this "))
+                    (whats-the-string Nada))))
