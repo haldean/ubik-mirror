@@ -25,6 +25,7 @@
 #include "ubik/compile.h"
 #include "ubik/infer.h"
 #include "ubik/parse.h"
+#include "ubik/patterns.h"
 #include "ubik/resolve.h"
 #include "ubik/string.h"
 #include "ubik/util.h"
@@ -91,7 +92,8 @@ ubik_compile_stream(
         enum ubik_load_reason reason)
 {
         struct ubik_ast *ast;
-        local(resolve_context) struct ubik_resolve_context ctx = {0};
+        local(resolve_context) struct ubik_resolve_context resolve_ctx = {0};
+        local(patterns_context) struct ubik_patterns_context pattern_ctx = {0};
         ubik_error err;
         ubik_error free_err;
 
@@ -104,7 +106,16 @@ ubik_compile_stream(
         if (err != OK)
                 goto free_ast;
 
-        err = ubik_resolve(ast, &ctx);
+        err = ubik_patterns_compile_all(ast, &pattern_ctx);
+        if (err != OK)
+                return err;
+
+        printf("\npatterns\n");
+        err = ubik_ast_print(ast);
+        if (err != OK)
+                goto free_ast;
+
+        err = ubik_resolve(ast, &resolve_ctx);
         if (err != OK)
                 goto free_ast;
 

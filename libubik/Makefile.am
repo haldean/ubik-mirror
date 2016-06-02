@@ -21,6 +21,7 @@ libubik_a_SOURCES = \
     load.c \
     natives.c \
     parse.c \
+    patterns.c \
     pointerset.c \
     print-ast.c \
     resolve.c \

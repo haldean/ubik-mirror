@@ -16,6 +16,7 @@ nobase_include_HEADERS = \
 	ubik/list.h \
 	ubik/natives.h \
 	ubik/parse.h \
+	ubik/patterns.h \
 	ubik/pointerset.h \
 	ubik/resolve.h \
 	ubik/schedule.h \
