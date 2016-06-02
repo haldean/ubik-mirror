@@ -577,6 +577,94 @@ _register_all_adt_new(struct ubik_env *env)
         return OK;
 }
 
+no_ignore static ubik_error
+_native_adt_ctor_matches(struct ubik_env *env, struct ubik_dagc *graph)
+{
+        struct ubik_value *inst;
+        struct ubik_value *match_name_val;
+        char *match_name;
+        char *ctor_name;
+        size_t match_name_len;
+        bool matches;
+        ubik_error err;
+        unused(env);
+
+        match_name_val = graph->nodes[0]->known.tree;
+        inst = graph->nodes[1]->known.tree;
+        err = OK;
+
+        err = ubik_string_read(&match_name, &match_name_len, match_name_val);
+        if (err != OK)
+                return err;
+
+        err = ubik_adt_get_ctor(&ctor_name, inst);
+        if (err != OK)
+                goto free_match_name;
+
+        matches = strncmp(match_name, ctor_name, match_name_len) == 0;
+
+        err = ubik_value_new(&graph->result->known.tree);
+        if (err != OK)
+                goto free_ctor_name;
+        graph->result->known.tree->tag |= TAG_LEFT_WORD | TAG_RIGHT_WORD;
+        graph->result->known.tree->left.w = matches ? 1 : 0;
+
+        err = ubik_value_new(&graph->result->known_type);
+        if (err != OK)
+                goto free_ctor_name;
+        err = ubik_type_bool(graph->result->known_type);
+        if (err != OK)
+                goto free_ctor_name;
+
+free_ctor_name:
+        free(ctor_name);
+free_match_name:
+        free(match_name);
+
+        return err;
+}
+
+static ubik_error
+_register_adt_ctor_matches(struct ubik_env *env)
+{
+        struct ubik_dagc *graph;
+        struct ubik_uri *uri;
+        struct ubik_value *type;
+        union ubik_value_or_graph ins;
+        ubik_error err;
+
+        graph = NULL;
+        err = _create_op(&graph, 2, _native_adt_ctor_matches);
+        if (err != OK)
+                return err;
+
+        err = _native_uri(&uri, "ubik-adt-ctor-matches?");
+        if (err != OK)
+                return err;
+
+        graph->identity = uri;
+        err = ubik_take(graph->identity);
+        if (err != OK)
+                return err;
+
+        err = ubik_value_new(&type);
+        if (err != OK)
+                return err;
+
+        ins.graph = graph;
+        err = ubik_env_set(env, uri, ins, type);
+        if (err != OK)
+                return err;
+
+        err = ubik_release(type);
+        if (err != OK)
+                return err;
+        err = ubik_release(graph);
+        if (err != OK)
+                return err;
+        return OK;
+}
+
 static char *native_names[] = {
         "uadd",
         "usub",
@@ -617,6 +705,10 @@ ubik_natives_register(struct ubik_env *env)
                 return err;
 
         err = _register_all_adt_new(env);
+        if (err != OK)
+                return err;
+
+        err = _register_adt_ctor_matches(env);
         if (err != OK)
                 return err;
 

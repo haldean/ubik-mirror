@@ -116,12 +116,9 @@ ubik_compile_stream(
                 goto free_ast;
 
         err = ubik_resolve(ast, &resolve_ctx);
-        if (err != OK)
-                goto free_ast;
-
         printf("\nresolved\n");
-        err = ubik_ast_print(ast);
-        if (err != OK)
+        free_err = ubik_ast_print(ast);
+        if (err != OK || free_err != OK)
                 goto free_ast;
 
         err = ubik_infer_types(ast, source_name, in_stream);

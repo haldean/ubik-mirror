@@ -87,7 +87,7 @@ create_ctor_match_head(
                 err = ubik_raise(ERR_NO_MEMORY, "pattern ctor atom alloc");
                 goto free_native_func_atom_atom;
         }
-        ctor_name_atom->atom->atom_type = ATOM_NAME;
+        ctor_name_atom->atom->atom_type = ATOM_STRING;
         ctor_name_atom->atom->str = strdup(ctor_name);
         ctor_name_atom->scope = to_match->scope;
         ctor_name_atom->loc = res->loc;
@@ -174,21 +174,27 @@ _compile_block(
                 printf("%s\n", pattern_ctor);
 
                 new_case = calloc(1, sizeof(struct ubik_ast_case));
-                new_case->head = calloc(1, sizeof(struct ubik_ast_expr));
                 new_case->tail = old_case->tail;
                 new_case->loc = old_case->loc;
                 new_case->next = old_case->next;
 
-                new_case->head->loc = old_case->head->loc;
-                err = create_ctor_match_head(
-                        new_case->head,
-                        pattern_ctor,
-                        expr->cond_block.to_match);
-                if (err != OK)
+                /* TODO: verify that all cases are handled! */
+                if (new_case->next == NULL)
+                        new_case->head = NULL;
+                else
                 {
-                        free(new_case->head);
-                        free(new_case);
-                        return err;
+                        new_case->head = calloc(1, sizeof(struct ubik_ast_expr));
+                        new_case->head->loc = old_case->head->loc;
+                        err = create_ctor_match_head(
+                                new_case->head,
+                                pattern_ctor,
+                                expr->cond_block.to_match);
+                        if (err != OK)
+                        {
+                                free(new_case->head);
+                                free(new_case);
+                                return err;
+                        }
                 }
 
                 if (last_case == NULL)
