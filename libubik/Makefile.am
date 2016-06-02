@@ -1,5 +1,44 @@
 lib_LIBRARIES = libubik.a
-libubik_a_SOURCES = store.c error.c uri.c gen.c timer.c eval.c load.c gc.c pointerset.c compile.c string.c schedule.c natives.c types.c print-ast.c value.c bdagc.c assert.c explain.c ast.c dagc.c parse.c util.c rt.c stream.c env.c token.l grammar.y uri-value.tree humanize-poly.tree vector.c resolve.c closure.c streamutil.c infer.c assign.c list.c adt.c
+libubik_a_SOURCES = \
+    adt.c \
+    assert.c \
+    assign.c \
+    ast.c \
+    bdagc.c \
+    closure.c \
+    compile.c \
+    dagc.c \
+    env.c \
+    error.c \
+    eval.c \
+    explain.c \
+    gc.c \
+    gen.c \
+    grammar.y \
+    humanize-poly.tree \
+    infer.c \
+    list.c \
+    load.c \
+    natives.c \
+    parse.c \
+    pointerset.c \
+    print-ast.c \
+    resolve.c \
+    rt.c \
+    schedule.c \
+    store.c \
+    stream.c \
+    streamutil.c \
+    string.c \
+    timer.c \
+    token.l \
+    types.c \
+    uri-value.tree \
+    uri.c \
+    util.c \
+    value.c \
+    vector.c
+
 BUILT_SOURCES = grammar.h uri-value.h humanize-poly.h
 
 libubik_a_CFLAGS = -std=c11 -Werror -Wall -Wextra -fno-strict-aliasing -rdynamic -Wswitch-enum -fPIC
