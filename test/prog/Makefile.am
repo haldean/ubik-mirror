@@ -8,6 +8,7 @@ TESTS = \
 	lambda-simple.uk \
 	lambda.uk \
 	num.uk \
+	pattern-block.uk \
 	pred-block.uk \
 	print-lib.uk \
 	record.uk \
