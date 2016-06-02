@@ -339,12 +339,39 @@ no_ignore static ubik_error
 _assign_block(
         struct ubik_assign_context *ctx,
         union ubik_dagc_any_node *n,
+        struct ubik_graph_builder *builder,
         struct ubik_ast_expr *expr)
 {
-        unused(n);
-        unused(expr);
-        unused(ctx);
-        return ubik_raise(ERR_NOT_IMPLEMENTED, "block codegen");
+        size_t i;
+        struct ubik_ast_binding *bind;
+        ubik_error err;
+
+        if (expr->block->types.n != 0)
+                return ubik_raise(ERR_NOT_IMPLEMENTED, "private types");
+
+        for (i = 0; i < expr->block->bindings.n; i++)
+        {
+                bind = expr->block->bindings.elems[i];
+                err = ubik_assign_nodes(ctx, builder, bind->expr);
+                if (err != OK)
+                        return err;
+
+                err = _set_name_in_scope(
+                        expr->block->scope,
+                        bind->name,
+                        bind->expr->gen);
+                if (err != OK)
+                        return err;
+        }
+
+        err = ubik_assign_nodes(ctx, builder, expr->block->immediate);
+        if (err != OK)
+                return err;
+
+        n->node.node_type = DAGC_NODE_REF;
+        n->node.id = ctx->next_id++;
+        n->as_ref.referrent = expr->block->immediate->gen;
+        return OK;
 }
 
 no_ignore static ubik_error
@@ -469,7 +496,7 @@ ubik_assign_nodes(
                 break;
 
         case EXPR_BLOCK:
-                err = _assign_block(ctx, n, expr);
+                err = _assign_block(ctx, n, builder, expr);
                 if (err != OK)
                         goto failed;
                 break;
