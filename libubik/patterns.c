@@ -29,6 +29,117 @@
 #include "ubik/patterns.h"
 #include "ubik/util.h"
 
+#include <string.h>
+
+no_ignore static ubik_error
+create_ctor_match_head(
+        struct ubik_ast_expr *res,
+        char *ctor_name,
+        struct ubik_ast_expr *to_match)
+{
+        struct ubik_ast_expr *apply1;
+        struct ubik_ast_expr *ctor_name_atom;
+        struct ubik_ast_expr *native_func_atom;
+        struct ubik_ast_expr *to_match_copy;
+        ubik_error err;
+
+        apply1 = calloc(1, sizeof(struct ubik_ast_expr));
+        if (apply1 == NULL)
+                return ubik_raise(ERR_NO_MEMORY, "pattern ctor match head");
+
+        ctor_name_atom = calloc(1, sizeof(struct ubik_ast_expr));
+        if (ctor_name_atom == NULL)
+        {
+                err = ubik_raise(ERR_NO_MEMORY, "pattern ctor match head");
+                goto free_apply1;
+        }
+
+        native_func_atom = calloc(1, sizeof(struct ubik_ast_expr));
+        if (native_func_atom == NULL)
+        {
+                err = ubik_raise(ERR_NO_MEMORY, "pattern ctor match head");
+                goto free_ctor_name_atom;
+        }
+
+        to_match_copy = calloc(1, sizeof(struct ubik_ast_expr));
+        if (to_match_copy == NULL)
+        {
+                err = ubik_raise(ERR_NO_MEMORY, "pattern ctor match head");
+                goto free_native_func_atom;
+        }
+
+        native_func_atom->expr_type = EXPR_ATOM;
+        native_func_atom->atom = calloc(1, sizeof(struct ubik_ast_atom));
+        if (native_func_atom->atom == NULL)
+        {
+                err = ubik_raise(ERR_NO_MEMORY, "pattern ctor atom alloc");
+                goto free_to_match_copy;
+        }
+        native_func_atom->atom->atom_type = ATOM_NAME;
+        native_func_atom->atom->str = strdup("ubik-adt-ctor-matches?");
+        native_func_atom->scope = to_match->scope;
+        native_func_atom->loc = res->loc;
+
+        ctor_name_atom->expr_type = EXPR_ATOM;
+        ctor_name_atom->atom = calloc(1, sizeof(struct ubik_ast_atom));
+        if (ctor_name_atom->atom == NULL)
+        {
+                err = ubik_raise(ERR_NO_MEMORY, "pattern ctor atom alloc");
+                goto free_native_func_atom_atom;
+        }
+        ctor_name_atom->atom->atom_type = ATOM_NAME;
+        ctor_name_atom->atom->str = strdup(ctor_name);
+        ctor_name_atom->scope = to_match->scope;
+        ctor_name_atom->loc = res->loc;
+
+        if (to_match->expr_type != EXPR_ATOM)
+        {
+                err = ubik_raise(
+                        ERR_NOT_IMPLEMENTED,
+                        "only matches against atomic expressions are "
+                        "currently supported");
+                goto free_ctor_name_atom_atom;
+        }
+        to_match_copy->expr_type = EXPR_ATOM;
+        to_match_copy->atom = calloc(1, sizeof(struct ubik_ast_atom));
+        if (to_match_copy->atom == NULL)
+        {
+                err = ubik_raise(ERR_NO_MEMORY, "pattern ctor atom alloc");
+                goto free_ctor_name_atom_atom;
+        }
+        to_match_copy->atom->atom_type = ATOM_NAME;
+        to_match_copy->atom->str = strdup(to_match->atom->str);
+        to_match_copy->scope = to_match->scope;
+        to_match_copy->loc = to_match->loc;
+
+        apply1->expr_type = EXPR_APPLY;
+        apply1->scope = to_match->scope;
+        apply1->apply.head = native_func_atom;
+        apply1->apply.tail = ctor_name_atom;
+        apply1->loc = res->loc;
+
+        res->expr_type = EXPR_APPLY;
+        res->scope = to_match->scope;
+        res->apply.head = apply1;
+        res->apply.tail = to_match_copy;
+
+        return OK;
+
+free_ctor_name_atom_atom:
+        free(ctor_name_atom->atom);
+free_native_func_atom_atom:
+        free(native_func_atom->atom);
+free_to_match_copy:
+        free(to_match_copy);
+free_native_func_atom:
+        free(native_func_atom);
+free_ctor_name_atom:
+        free(ctor_name_atom);
+free_apply1:
+        free(apply1);
+        return err;
+}
+
 no_ignore static ubik_error
 _compile_block(
         struct ubik_ast_expr *expr,
@@ -63,10 +174,22 @@ _compile_block(
                 printf("%s\n", pattern_ctor);
 
                 new_case = calloc(1, sizeof(struct ubik_ast_case));
-                new_case->head = NULL;
+                new_case->head = calloc(1, sizeof(struct ubik_ast_expr));
                 new_case->tail = old_case->tail;
                 new_case->loc = old_case->loc;
                 new_case->next = old_case->next;
+
+                new_case->head->loc = old_case->head->loc;
+                err = create_ctor_match_head(
+                        new_case->head,
+                        pattern_ctor,
+                        expr->cond_block.to_match);
+                if (err != OK)
+                {
+                        free(new_case->head);
+                        free(new_case);
+                        return err;
+                }
 
                 if (last_case == NULL)
                         expr->cond_block.case_stmts = new_case;
@@ -80,6 +203,12 @@ _compile_block(
                 free(old_case);
                 old_case = new_case->next;
         }
+
+        err = ubik_ast_expr_free(expr->cond_block.to_match);
+        if (err != OK)
+                return err;
+        expr->cond_block.to_match = NULL;
+        expr->cond_block.block_type = COND_PREDICATE;
 
         return OK;
 }

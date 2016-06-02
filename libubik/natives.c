@@ -584,6 +584,7 @@ static char *native_names[] = {
         "emit",
         "humanize",
         "concat",
+        "ubik-adt-ctor-matches?",
 };
 
 no_ignore ubik_error
