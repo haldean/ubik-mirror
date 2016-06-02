@@ -23,21 +23,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define check_alloc(x, nelem, contents) { \
-        (x) = calloc(nelem, sizeof(contents)); \
-        if ((x) == NULL) return ubik_raise(ERR_NO_MEMORY, ""); }
-
-no_ignore static ubik_error
-_free_expr(struct ubik_ast_expr *expr);
-
-/* Allocates a new AST. */
-no_ignore ubik_error
-ubik_ast_new(struct ubik_ast **ast)
-{
-        check_alloc(*ast, 1, struct ubik_ast);
-        return OK;
-}
-
 no_ignore static ubik_error
 _free_atom(struct ubik_ast_atom *atom)
 {
@@ -76,11 +61,11 @@ _free_case_stmts(struct ubik_ast_case *case_stmt)
                 next = case_stmt->next;
                 if (case_stmt->head != NULL)
                 {
-                        err = _free_expr(case_stmt->head);
+                        err = ubik_ast_expr_free(case_stmt->head);
                         if (err != OK)
                                 return err;
                 }
-                err = _free_expr(case_stmt->tail);
+                err = ubik_ast_expr_free(case_stmt->tail);
                 if (err != OK)
                         return err;
                 if (case_stmt->gen != NULL)
@@ -110,8 +95,8 @@ _free_arg_list(struct ubik_ast_arg_list *arg_list)
         return OK;
 }
 
-no_ignore static ubik_error
-_free_expr(struct ubik_ast_expr *expr)
+no_ignore ubik_error
+ubik_ast_expr_free(struct ubik_ast_expr *expr)
 {
         ubik_error err;
 
@@ -121,13 +106,13 @@ _free_expr(struct ubik_ast_expr *expr)
                 err = _free_atom(expr->atom);
                 break;
         case EXPR_APPLY:
-                err = _free_expr(expr->apply.head);
+                err = ubik_ast_expr_free(expr->apply.head);
                 if (err != OK)
                         return err;
-                err = _free_expr(expr->apply.tail);
+                err = ubik_ast_expr_free(expr->apply.tail);
                 break;
         case EXPR_LAMBDA:
-                err = _free_expr(expr->lambda.body);
+                err = ubik_ast_expr_free(expr->lambda.body);
                 if (err != OK)
                         return err;
                 err = _free_arg_list(expr->lambda.args);
@@ -146,7 +131,7 @@ _free_expr(struct ubik_ast_expr *expr)
                 switch (expr->cond_block.block_type)
                 {
                 case COND_PATTERN:
-                        err = _free_expr(expr->cond_block.to_match);
+                        err = ubik_ast_expr_free(expr->cond_block.to_match);
                         break;
                 case COND_PREDICATE:
                         break;
@@ -199,7 +184,7 @@ _free_binding(struct ubik_ast_binding *binding)
 
         free(binding->name);
 
-        err = _free_expr(binding->expr);
+        err = ubik_ast_expr_free(binding->expr);
         if (err != OK)
                 return err;
 
@@ -392,7 +377,7 @@ ubik_ast_free(struct ubik_ast *ast)
 
         if (ast->immediate != NULL)
         {
-                err = _free_expr(ast->immediate);
+                err = ubik_ast_expr_free(ast->immediate);
                 if (err != OK)
                         return err;
         }
@@ -446,7 +431,9 @@ ubik_ast_atom_new_qualified(
         ubik_assert(head_len > 0);
         ubik_assert(tail_len > 0);
 
-        check_alloc(*atom, 1, struct ubik_ast_atom);
+        *atom = calloc(1, sizeof(struct ubik_ast_atom));
+        if (*atom == NULL)
+                return ubik_raise(ERR_NO_MEMORY, "new qualified name");
         (*atom)->atom_type = ATOM_QUALIFIED;
 
         (*atom)->qualified.head = calloc(head_len + 1, sizeof(char));

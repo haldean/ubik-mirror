@@ -264,6 +264,9 @@ ubik_ast_new(struct ubik_ast **ast);
 no_ignore ubik_error
 ubik_ast_free(struct ubik_ast *ast);
 
+no_ignore ubik_error
+ubik_ast_expr_free(struct ubik_ast_expr *expr);
+
 void
 ubik_ast_error_loc_free(struct ubik_ast_loc *err_loc);
 

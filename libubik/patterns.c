@@ -39,6 +39,7 @@ _compile_block(
         struct ubik_ast_case *last_case;
         struct ubik_ast_expr *head;
         char *pattern_ctor;
+        ubik_error err;
         unused(ctx);
 
         old_case = expr->cond_block.case_stmts;
@@ -73,6 +74,10 @@ _compile_block(
                         last_case->next = new_case;
                 last_case = new_case;
 
+                err = ubik_ast_expr_free(old_case->head);
+                if (err != OK)
+                        return err;
+                free(old_case);
                 old_case = new_case->next;
         }
 
