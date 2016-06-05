@@ -46,5 +46,5 @@ AC_FUNC_REALLOC
 AC_CHECK_FUNCS([backtrace backtrace_symbols_fd bzero clock_gettime fmemopen getcwd memmove memset strdup])
 
 AC_CONFIG_FILES([Makefile include/Makefile bin/Makefile libubik/Makefile
-                 disasm/Makefile test/prog/Makefile test/unit/Makefile test/pyasm/Makefile])
+                 test/prog/Makefile test/unit/Makefile test/pyasm/Makefile])
 AC_OUTPUT
