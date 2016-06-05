@@ -1,7 +1,7 @@
 all:
-	make -C include
-	make -C libubik
-	make -C bin
+	+make -C include
+	+make -C libubik
+	+make -C bin
 
 clean:
 	make -C include clean

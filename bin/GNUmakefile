@@ -8,4 +8,7 @@ all: $(bins)
 $(bins): %: %.c
 	$(CC) -o $@ $(CFLAGS) $< ../libubik/libubik.a
 
-.PHONY: all
+clean:
+	rm -f $(bins)
+
+.PHONY: all clean
