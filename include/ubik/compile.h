@@ -29,6 +29,8 @@ struct ubik_compilation_env
 
         char **include_dirs;
         size_t n_include_dirs;
+
+        bool verbose_src_xform;
 };
 
 no_ignore ubik_error

@@ -101,43 +101,60 @@ ubik_compile_stream(
         if (err != OK)
                 return err;
 
-        printf("parsed\n");
-        err = ubik_ast_print(ast);
-        if (err != OK)
-                goto free_ast;
+        if (cenv->verbose_src_xform)
+        {
+                printf("parsed\n");
+                err = ubik_ast_print(ast);
+                if (err != OK)
+                        goto free_ast;
+        }
 
         err = ubik_patterns_compile_all(ast, &pattern_ctx);
         if (err != OK)
                 return err;
 
-        printf("\npatterns\n");
-        err = ubik_ast_print(ast);
-        if (err != OK)
-                goto free_ast;
+        if (cenv->verbose_src_xform)
+        {
+                printf("\npatterns\n");
+                err = ubik_ast_print(ast);
+                if (err != OK)
+                        goto free_ast;
+        }
 
         err = ubik_resolve(ast, &resolve_ctx);
-        printf("\nresolved\n");
-        free_err = ubik_ast_print(ast);
-        if (err != OK || free_err != OK)
+        if (err != OK)
                 goto free_ast;
+        if (cenv->verbose_src_xform)
+        {
+                printf("\nresolved\n");
+                err = ubik_ast_print(ast);
+                if (err != OK)
+                        goto free_ast;
+        }
 
         err = ubik_infer_types(ast, source_name, in_stream);
         if (err != OK)
                 goto free_ast;
 
-        printf("\ninferred\n");
-        err = ubik_ast_print(ast);
-        if (err != OK)
-                goto free_ast;
+        if (cenv->verbose_src_xform)
+        {
+                printf("\ninferred\n");
+                err = ubik_ast_print(ast);
+                if (err != OK)
+                        goto free_ast;
+        }
 
         err = ubik_compile_ast(res, ast, reason, uri_source, cenv);
         if (err != OK)
                 goto free_ast;
 
-        printf("\ncompiled\n");
-        err = ubik_ast_print(ast);
-        if (err != OK)
-                goto free_ast;
+        if (cenv->verbose_src_xform)
+        {
+                printf("\ncompiled\n");
+                err = ubik_ast_print(ast);
+                if (err != OK)
+                        goto free_ast;
+        }
 
 free_ast:
         free_err = ubik_ast_free(ast);
