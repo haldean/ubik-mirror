@@ -38,4 +38,4 @@ host_to_net()
         return ok;
 }
 
-run_single(host_to_net);
+run_single(host_to_net)

@@ -92,4 +92,4 @@ test_t simple_adt()
         return ok;
 }
 
-run_single(simple_adt);
+run_single(simple_adt)

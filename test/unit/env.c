@@ -100,4 +100,4 @@ env()
         return ok;
 }
 
-run_single(env);
+run_single(env)
