@@ -665,6 +665,84 @@ _register_adt_ctor_matches(struct ubik_env *env)
         return OK;
 }
 
+no_ignore static ubik_error
+_native_adt_get(struct ubik_env *env, struct ubik_dagc *graph)
+{
+        struct ubik_value *inst;
+        struct ubik_value *index_val;
+        struct ubik_value *res;
+        ubik_word index;
+        ubik_error err, rerr;
+        unused(env);
+
+        index_val = graph->nodes[0]->known.tree;
+        inst = graph->nodes[1]->known.tree;
+
+        ubik_assert(
+                index_val->tag == (TAG_VALUE | TAG_LEFT_WORD | TAG_RIGHT_WORD));
+        index = index_val->left.w;
+
+        err = ubik_adt_get_field(&res, inst, index);
+        if (err != OK)
+                return err;
+
+        graph->result->known.tree = res;
+        err = ubik_take(res);
+        if (err != OK)
+                return err;
+
+        err = ubik_value_new(&graph->result->known_type);
+        if (err != OK)
+                goto release_res;
+
+        return OK;
+
+release_res:
+        rerr = ubik_release(res);
+        return err != OK ? err : rerr;
+}
+
+static ubik_error
+_register_adt_get(struct ubik_env *env)
+{
+        struct ubik_dagc *graph;
+        struct ubik_uri *uri;
+        struct ubik_value *type;
+        union ubik_value_or_graph ins;
+        ubik_error err;
+
+        graph = NULL;
+        err = _create_op(&graph, 2, _native_adt_get);
+        if (err != OK)
+                return err;
+
+        err = _native_uri(&uri, "ubik-adt-get");
+        if (err != OK)
+                return err;
+
+        graph->identity = uri;
+        err = ubik_take(graph->identity);
+        if (err != OK)
+                return err;
+
+        err = ubik_value_new(&type);
+        if (err != OK)
+                return err;
+
+        ins.graph = graph;
+        err = ubik_env_set(env, uri, ins, type);
+        if (err != OK)
+                return err;
+
+        err = ubik_release(type);
+        if (err != OK)
+                return err;
+        err = ubik_release(graph);
+        if (err != OK)
+                return err;
+        return OK;
+}
+
 static char *native_names[] = {
         "uadd",
         "usub",
@@ -673,6 +751,7 @@ static char *native_names[] = {
         "humanize",
         "concat",
         "ubik-adt-ctor-matches?",
+        "ubik-adt-get",
 };
 
 no_ignore ubik_error
@@ -709,6 +788,10 @@ ubik_natives_register(struct ubik_env *env)
                 return err;
 
         err = _register_adt_ctor_matches(env);
+        if (err != OK)
+                return err;
+
+        err = _register_adt_get(env);
         if (err != OK)
                 return err;
 

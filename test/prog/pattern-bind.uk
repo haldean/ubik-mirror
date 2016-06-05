@@ -5,10 +5,13 @@
 : whats-the-string
     ^ MaybeString -> String
     = \s -> ? s {
-        . Solo str other => str
+        . Solo str _ => str
         . Nada => "nothing"
     }
 
-!= emit (concat (concat "should print this nothing:\n"
-            (concat (whats-the-string (Solo "this " "ignore"))
-                    (whats-the-string Nada))))
+!= emit
+    (concat "should print this nothing:\n"
+        (concat (whats-the-string (Solo "this " "ignore"))
+                (whats-the-string Nada)
+        )
+    )

@@ -1,0 +1,10 @@
+^ StringH
+    = StringHolder String
+
+: thing ^ StringH = StringHolder "hello"
+
+: thing-string ^ String = ? thing {
+    . StringHolder x => x
+}
+
+!= emit thing-string
