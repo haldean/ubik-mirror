@@ -331,7 +331,6 @@ _compile_block(
                         t = t->apply.head;
                 ubik_assert(t->expr_type == EXPR_ATOM);
                 pattern_ctor = t->atom->str;
-                printf("CTOR: %s\n", pattern_ctor);
 
                 new_case = calloc(1, sizeof(struct ubik_ast_case));
                 new_case->loc = old_case->loc;
