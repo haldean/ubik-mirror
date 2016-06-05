@@ -1,6 +1,12 @@
 Conditional blocks in Ubik =============================================
 Haldean Brown                                      First draft: May 2016
-                                                  Last updated: May 2016
+                                                  Last updated: Jun 2016
+
+Status: In progress
+Remaining:
+    - Ensure that pattern matches are exhaustive
+
+------------------------------------------------------------------------
 
 Conditional blocks (cond-blocks) are the base of all control flow in
 Ubik; all other statements with conditional behavior are implemented in

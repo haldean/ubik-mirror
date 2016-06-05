@@ -2,6 +2,13 @@ Ubik Type Declarations =================================================
 Haldean Brown                                      First draft: May 2016
                                                   Last updated: May 2016
 
+Status: In progress
+Remaining:
+    - Type aliases (not useful until type inference is complete)
+    - Interfaces
+
+------------------------------------------------------------------------
+
 There are three varieties of type declaration currently supported by the
 Ubik specification:
 

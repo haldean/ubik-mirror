@@ -2,6 +2,10 @@ Instantiating Algebraic Data Types =====================================
 Haldean Brown                                      First draft: May 2016
                                                   Last updated: May 2016
 
+Status: Complete
+
+------------------------------------------------------------------------
+
 Algebraic data types are translated at compile time into value-encoded
 heterogenous lists which, in combination with the actual type
 declaration itself, give the runtime sufficient type information to be
