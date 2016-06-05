@@ -8,7 +8,6 @@ tests = \
 	emit-poly.ub \
 	huge.ub \
 	loadstore.ub \
-	mult.ub \
 	please-leak.ub \
 	ref.ub \
 	simplefunc.ub
