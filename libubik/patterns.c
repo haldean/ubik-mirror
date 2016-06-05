@@ -140,6 +140,171 @@ free_apply1:
         return err;
 }
 
+/* Creates an expression that accesses the i'th member on the ADT identified by
+ * the name in to_match. Resulting expression must have its location filled in
+ * before this function is called. */
+no_ignore static ubik_error
+create_adt_accessor(
+        struct ubik_ast_expr *res,
+        char *to_match,
+        size_t i)
+{
+        struct ubik_ast_expr *apply;
+        struct ubik_ast_expr *native_func;
+        struct ubik_ast_expr *index;
+        struct ubik_ast_expr *obj;
+        ubik_error err;
+
+        native_func = calloc(1, sizeof(struct ubik_ast_expr));
+        if (native_func == NULL)
+                return ubik_raise(ERR_NO_MEMORY, "adt accessor");
+        native_func->atom = calloc(1, sizeof(struct ubik_ast_atom));
+        if (native_func->atom == NULL)
+        {
+                err = ubik_raise(ERR_NO_MEMORY, "adt accessor");
+                goto free_native_func;
+        }
+        apply = calloc(1, sizeof(struct ubik_ast_expr));
+        if (apply == NULL)
+        {
+                err = ubik_raise(ERR_NO_MEMORY, "adt accessor");
+                goto free_native_func_atom;
+        }
+        index = calloc(1, sizeof(struct ubik_ast_expr));
+        if (index == NULL)
+        {
+                err = ubik_raise(ERR_NO_MEMORY, "adt accessor");
+                goto free_apply;
+        }
+        index->atom = calloc(1, sizeof(struct ubik_ast_atom));
+        if (index->atom == NULL)
+        {
+                err = ubik_raise(ERR_NO_MEMORY, "adt accessor");
+                goto free_index;
+        }
+        obj = calloc(1, sizeof(struct ubik_ast_expr));
+        if (obj == NULL)
+        {
+                err = ubik_raise(ERR_NO_MEMORY, "adt accessor");
+                goto free_index_atom;
+        }
+        obj->atom = calloc(1, sizeof(struct ubik_ast_atom));
+        if (obj->atom == NULL)
+        {
+                err = ubik_raise(ERR_NO_MEMORY, "adt accessor");
+                goto free_obj;
+        }
+
+        native_func->expr_type = EXPR_ATOM;
+        native_func->atom->atom_type = ATOM_NAME;
+        native_func->atom->str = strdup("ubik-adt-get");
+        native_func->atom->loc = res->loc;
+        native_func->loc = res->loc;
+
+        index->expr_type = EXPR_ATOM;
+        index->atom->atom_type = ATOM_INT;
+        /* i is a size_t, which is max 64 bits; ubik_word is always larger or
+         * the same size as a size_t. */
+        index->atom->integer = (ubik_word) i;
+        index->atom->loc = res->loc;
+        index->loc = res->loc;
+
+        obj->expr_type = EXPR_ATOM;
+        obj->atom->atom_type = ATOM_NAME;
+        obj->atom->str = strdup(to_match);
+        obj->atom->loc = res->loc;
+        obj->loc = res->loc;
+
+        apply->expr_type = EXPR_APPLY;
+        apply->apply.head = native_func;
+        apply->apply.tail = index;
+        apply->loc = res->loc;
+
+        res->expr_type = EXPR_APPLY;
+        res->apply.head = apply;
+        res->apply.tail = obj;
+        return OK;
+
+free_obj:
+        free(obj);
+free_index_atom:
+        free(index->atom);
+free_index:
+        free(index);
+free_apply:
+        free(apply);
+free_native_func_atom:
+        free(native_func->atom);
+free_native_func:
+        free(native_func);
+
+        return err;
+}
+
+no_ignore static ubik_error
+create_bind_tail(
+        struct ubik_ast_expr *res,
+        char *to_match,
+        struct ubik_ast_expr *head,
+        struct ubik_ast_expr *tail)
+{
+        struct ubik_ast_expr *t;
+        struct ubik_ast_binding *bind;
+        char *name;
+        size_t i;
+        size_t n_args;
+        ubik_error err;
+
+        res->expr_type = EXPR_BLOCK;
+        res->block = calloc(1, sizeof(struct ubik_ast));
+        if (res->block == NULL)
+                return ubik_raise(ERR_NO_MEMORY, "pattern bind tail");
+        /* the old tail is always what we want to run, it's just a question of
+         * whether we need to make any bindings first. */
+        res->block->immediate = tail;
+
+        /* this is the case where the constructor takes no arguments, so we
+         * don't have to do anything other than refer to the old tail, which
+         * we've already done. */
+        if (head->expr_type == EXPR_ATOM)
+                return OK;
+
+        ubik_assert(head->expr_type == EXPR_APPLY);
+
+        /* we have a tree that is left-associative, which means the topmost node
+         * represents the application of the last parameter. To figure out how
+         * to index into the actual object, we count the number of arguments and
+         * then work our way down from the end. */
+        for (n_args = 0, t = head;
+                t->expr_type == EXPR_APPLY;
+                n_args++, t = t->apply.head);
+
+        for (i = n_args - 1, t = head; t->expr_type == EXPR_APPLY; i--, t = t->apply.head)
+        {
+                name = t->apply.tail->atom->str;
+                if (strcmp(name, "_") == 0)
+                        continue;
+                bind = calloc(1, sizeof(struct ubik_ast_binding));
+                if (bind == NULL)
+                        return ubik_raise(ERR_NO_MEMORY, "pattern bind tail");
+                bind->name = strdup(name);
+                bind->expr = calloc(1, sizeof(struct ubik_ast_expr));
+                if (bind->expr == NULL)
+                        return ubik_raise(ERR_NO_MEMORY, "pattern bind tail");
+                bind->expr->loc = tail->loc;
+                err = create_adt_accessor(bind->expr, to_match, i);
+                if (err != OK)
+                        return err;
+                bind->type_expr = NULL;
+                bind->loc = tail->loc;
+
+                err = ubik_vector_append(&res->block->bindings, bind);
+                if (err != OK)
+                        return err;
+        }
+        return OK;
+}
+
 no_ignore static ubik_error
 _compile_block(
         struct ubik_ast_expr *expr,
@@ -191,6 +356,24 @@ _compile_block(
                                 free(new_case);
                                 return err;
                         }
+                }
+
+                new_case->tail = calloc(1, sizeof(struct ubik_ast_expr));
+                if (new_case->tail == NULL)
+                        return ubik_raise(ERR_NO_MEMORY, "pattern");
+                new_case->tail->loc = old_case->tail->loc;
+                err = create_bind_tail(
+                        new_case->tail,
+                        expr->cond_block.to_match->atom->str,
+                        old_case->head,
+                        old_case->tail);
+                if (err != OK)
+                {
+                        if (new_case->head != NULL)
+                                free(new_case->head);
+                        free(new_case->tail);
+                        free(new_case);
+                        return err;
                 }
 
                 if (last_case == NULL)
