@@ -1,7 +1,7 @@
 #!/bin/sh
 
-UBIC=${UBIKC:-../../ub/ubic}
-UBIK=${RUNUBIK:-../../ubik/ubik}
+UBIC=${UBIKC:-../../bin/ubic}
+UBIK=${RUNUBIK:-../../bin/ubik}
 UBIK_FILE=$1
 
 set -ex

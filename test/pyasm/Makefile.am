@@ -12,7 +12,7 @@ TESTS = \
 
 XFAIL_TESTS = mult.ub
 TEST_EXTENSIONS = .ub
-UB_LOG_COMPILER = $(top_srcdir)/ubik/ubik
+UB_LOG_COMPILER = $(top_srcdir)/bin/ubik
 
 .upy.ub:
 	PYTHONPATH=$(top_srcdir) $(PYTHON) $< $@
