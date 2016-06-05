@@ -4,7 +4,8 @@ Haldean Brown                                      First draft: May 2016
 
 Status: In progress
 Remaining:
-    - Ensure that pattern matches are exhaustive
+    - Ensure that pattern matches are exhaustive (waiting on type
+      inference in order to determine which type is being matched on).
 
 ------------------------------------------------------------------------
 
