@@ -45,7 +45,7 @@ BUILT_SOURCES = \
 
 libubik_a_CFLAGS = -std=c11 -Werror -Wall -Wextra -fno-strict-aliasing -rdynamic -Wswitch-enum -fPIC
 libubik_a_CPPFLAGS = -I$(top_srcdir)/include/ -D_GNU_SOURCE -Itree/
-AM_YFLAGS = -d --report=state -Wall #-Werror
+AM_YFLAGS = -d --report=state -Wall -Werror
 
 .tree.h:
 	$(PYTHON) ../res/buildtree/buildtree.py $< $@
