@@ -148,7 +148,7 @@ _compile_block(
         struct ubik_ast_case *old_case;
         struct ubik_ast_case *new_case;
         struct ubik_ast_case *last_case;
-        struct ubik_ast_expr *head;
+        struct ubik_ast_expr *t;
         char *pattern_ctor;
         ubik_error err;
         unused(ctx);
@@ -159,22 +159,16 @@ _compile_block(
 
         while (old_case != NULL)
         {
-                head = old_case->head;
-                if (head->expr_type == EXPR_ATOM)
-                        pattern_ctor = head->atom->str;
-                else if (head->expr_type == EXPR_APPLY)
-                {
-                        ubik_assert(head->apply.head->expr_type == EXPR_ATOM);
-                        pattern_ctor = head->apply.head->atom->str;
-                }
-                else return ubik_raise(
-                        ERR_BAD_TYPE,
-                        "pattern head must be apply or atom");
-
-                printf("%s\n", pattern_ctor);
+                /* find the atom at the start of the pattern, which represents
+                 * the constructor we're matching. */
+                t = old_case->head;
+                while (t->expr_type == EXPR_APPLY)
+                        t = t->apply.head;
+                ubik_assert(t->expr_type == EXPR_ATOM);
+                pattern_ctor = t->atom->str;
+                printf("CTOR: %s\n", pattern_ctor);
 
                 new_case = calloc(1, sizeof(struct ubik_ast_case));
-                new_case->tail = old_case->tail;
                 new_case->loc = old_case->loc;
                 new_case->next = old_case->next;
 
@@ -184,6 +178,8 @@ _compile_block(
                 else
                 {
                         new_case->head = calloc(1, sizeof(struct ubik_ast_expr));
+                        if (new_case->head == NULL)
+                                return ubik_raise(ERR_NO_MEMORY, "pattern");
                         new_case->head->loc = old_case->head->loc;
                         err = create_ctor_match_head(
                                 new_case->head,

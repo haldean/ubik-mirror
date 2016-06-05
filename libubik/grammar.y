@@ -79,7 +79,7 @@
 
 %type <ast> prog blocks
 %type <binding> binding
-%type <expr> expr immediate top_expr cond_block pattern atoms
+%type <expr> expr immediate top_expr cond_block pattern
 %type <type_expr> top_type_expr type_expr type_atom
 %type <atom> atom
 %type <arg_list> arg_list
@@ -536,46 +536,7 @@ pred_case_stmt
 ;
 
 pattern
-: TYPE_NAME atoms
-{
-        struct ubik_ast_expr *head;
-        struct ubik_ast_atom *atom;
-
-        alloc(atom, 1, struct ubik_ast_atom);
-        atom->atom_type = ATOM_TYPE_NAME;
-        atom->str = $1;
-        load_loc(atom->loc);
-
-        alloc(head, 1, struct ubik_ast_expr);
-        head->expr_type = EXPR_ATOM;
-        head->atom = atom;
-        head->loc = atom->loc;
-
-        alloc($$, 1, struct ubik_ast_expr);
-        $$->expr_type = EXPR_APPLY;
-        $$->apply.head = head;
-        $$->apply.tail = $2;
-
-        $$->loc = atom->loc;
-        merge_loc($$, $$, $2);
-}
-| TYPE_NAME
-{
-        struct ubik_ast_atom *atom;
-        alloc(atom, 1, struct ubik_ast_atom);
-        atom->atom_type = ATOM_TYPE_NAME;
-        atom->str = $1;
-        load_loc(atom->loc);
-
-        alloc($$, 1, struct ubik_ast_expr);
-        $$->expr_type = EXPR_ATOM;
-        $$->atom = atom;
-        $$->loc = atom->loc;
-}
-;
-
-atoms
-: atoms atom
+: pattern atom
 {
         struct ubik_ast_expr *tail;
         alloc(tail, 1, struct ubik_ast_expr);
@@ -590,12 +551,18 @@ atoms
 
         merge_loc($$, $1, $2);
 }
-| atom
+| TYPE_NAME
 {
+        struct ubik_ast_atom *atom;
+        alloc(atom, 1, struct ubik_ast_atom);
+        atom->atom_type = ATOM_TYPE_NAME;
+        atom->str = $1;
+        load_loc(atom->loc);
+
         alloc($$, 1, struct ubik_ast_expr);
         $$->expr_type = EXPR_ATOM;
-        $$->atom = $1;
-        $$->loc = $1->loc;
+        $$->atom = atom;
+        $$->loc = atom->loc;
 }
 ;
 
