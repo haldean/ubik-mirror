@@ -31,7 +31,6 @@ enum expr_type
         EXPR_APPLY = 1,
         EXPR_ATOM,
         EXPR_LAMBDA,
-        EXPR_CONSTRUCTOR,
         EXPR_BLOCK,
         EXPR_COND_BLOCK,
 };

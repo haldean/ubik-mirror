@@ -172,15 +172,6 @@ _print_expr(struct ubik_ast_expr *expr, int indent)
                         return err;
                 return OK;
 
-        case EXPR_CONSTRUCTOR:
-                printf("%s {\n", expr->constructor.type_name);
-                err = _print_ast(expr->constructor.scope, indent + 8);
-                if (err != OK)
-                        return err;
-                _indent(indent + 4);
-                printf("}");
-                return OK;
-
         case EXPR_BLOCK:
                 printf("{\n");
                 err = _print_ast(expr->block, indent + 8);

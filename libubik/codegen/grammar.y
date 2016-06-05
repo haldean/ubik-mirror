@@ -368,15 +368,6 @@ expr
 {
         $$ = $2;
 }
-| TYPE_NAME OPEN_SCOPE blocks CLOSE_SCOPE
-{
-        alloc($$, 1, struct ubik_ast_expr);
-        $$->expr_type = EXPR_CONSTRUCTOR;
-        $$->constructor.type_name = $1;
-        $$->constructor.scope = $3;
-        load_loc($$->loc);
-        merge_loc($$, $$, $3);
-}
 | OPEN_SCOPE blocks immediate CLOSE_SCOPE
 {
         $2->immediate = $3;

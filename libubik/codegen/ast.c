@@ -117,10 +117,6 @@ ubik_ast_expr_free(struct ubik_ast_expr *expr)
                         return err;
                 err = _free_arg_list(expr->lambda.args);
                 break;
-        case EXPR_CONSTRUCTOR:
-                free(expr->constructor.type_name);
-                err = ubik_ast_free(expr->constructor.scope);
-                break;
         case EXPR_BLOCK:
                 err = ubik_ast_free(expr->block);
                 break;
@@ -489,10 +485,6 @@ ubik_ast_subexprs(
         case EXPR_LAMBDA:
                 subexprs[0] = expr->lambda.body;
                 *n_subexprs = 1;
-                return OK;
-
-        case EXPR_CONSTRUCTOR:
-                *subast = expr->constructor.scope;
                 return OK;
 
         case EXPR_COND_BLOCK:

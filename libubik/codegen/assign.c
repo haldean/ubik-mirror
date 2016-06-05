@@ -517,7 +517,6 @@ ubik_assign_nodes(
                 }
                 break;
 
-        case EXPR_CONSTRUCTOR:
         default:
                 err = ubik_raise(ERR_UNKNOWN_TYPE, "compile assign node");
                 goto failed;

@@ -94,7 +94,6 @@ assign_initial_scopes(
                 break;
 
         case EXPR_BLOCK:
-        case EXPR_CONSTRUCTOR:
                 expr->scope = calloc(1, sizeof(struct ubik_resolve_scope));
                 if (expr->scope == NULL)
                         return ubik_raise(ERR_NO_MEMORY, "expr scope alloc");
