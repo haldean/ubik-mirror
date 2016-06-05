@@ -20,7 +20,7 @@
 #include <stdlib.h>
 #include "ubik/parse.h"
 #include "ubik/streamutil.h"
-#include "grammar.h"
+#include "codegen/grammar.h"
 
 /* autotools doesn't yet support flex headers, so we have to declare these
  * extern instead. */
