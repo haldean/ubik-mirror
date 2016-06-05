@@ -38,6 +38,8 @@ ubik_compile_env_default(struct ubik_compilation_env *cenv)
         char *include_dirs;
         ubik_error err;
 
+        cenv->verbose_src_xform = false;
+
         scratch_dir = calloc(512, sizeof(char));
         if (getcwd(scratch_dir, 500) == NULL)
         {
