@@ -1,49 +1,50 @@
 lib_LIBRARIES = libubik.a
 libubik_a_SOURCES = \
-    adt.c \
-    assert.c \
-    assign.c \
-    ast.c \
-    bdagc.c \
-    closure.c \
-    compile.c \
-    dagc.c \
-    env.c \
-    error.c \
-    eval.c \
-    explain.c \
-    gc.c \
-    gen.c \
-    grammar.y \
-    humanize-poly.tree \
-    infer.c \
-    list.c \
-    load.c \
-    natives.c \
-    parse.c \
-    patterns.c \
-    pointerset.c \
-    print-ast.c \
-    resolve.c \
-    rt.c \
-    schedule.c \
-    store.c \
-    stream.c \
-    streamutil.c \
-    string.c \
-    timer.c \
-    token.l \
-    types.c \
-    uri-value.tree \
-    uri.c \
-    util.c \
-    value.c \
-    vector.c
+    ./codegen/assign.c \
+    ./codegen/ast.c \
+    ./codegen/bdagc.c \
+    ./codegen/closure.c \
+    ./codegen/compile.c \
+    ./codegen/gen.c \
+    ./codegen/grammar.y \
+    ./codegen/infer.c \
+    ./codegen/parse.c \
+    ./codegen/patterns.c \
+    ./codegen/resolve.c \
+    ./codegen/token.l \
+    ./rt/eval.c \
+    ./rt/gc.c \
+    ./rt/schedule.c \
+    ./rt/timer.c \
+    ./shared/adt.c \
+    ./shared/assert.c \
+    ./shared/dagc.c \
+    ./shared/env.c \
+    ./shared/error.c \
+    ./shared/explain.c \
+    ./shared/list.c \
+    ./shared/load.c \
+    ./shared/natives.c \
+    ./shared/pointerset.c \
+    ./shared/print-ast.c \
+    ./shared/rt.c \
+    ./shared/store.c \
+    ./shared/stream.c \
+    ./shared/streamutil.c \
+    ./shared/string.c \
+    ./shared/types.c \
+    ./shared/uri.c \
+    ./shared/util.c \
+    ./shared/value.c \
+    ./shared/vector.c
 
-BUILT_SOURCES = grammar.h uri-value.h humanize-poly.h
+BUILT_SOURCES = \
+    codegen/grammar.h \
+    tree/uri-value.h \
+    tree/humanize-poly.h
 
 libubik_a_CFLAGS = -std=c11 -Werror -Wall -Wextra -fno-strict-aliasing -rdynamic -Wswitch-enum -fPIC
-libubik_a_CPPFLAGS = -I$(top_srcdir)/include/ -D_GNU_SOURCE #-D_FORTIFY_SOURCE=2
+libubik_a_CPPFLAGS = -I$(top_srcdir)/include/ -D_GNU_SOURCE -Itree/
 AM_YFLAGS = -d --report=state -Wall #-Werror
 
 .tree.h:

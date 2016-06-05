@@ -536,20 +536,27 @@ pred_case_stmt
 ;
 
 pattern
-: pattern atom
+: pattern NAME
 {
         struct ubik_ast_expr *tail;
+        struct ubik_ast_atom *atom;
+
+        alloc(atom, 1, struct ubik_ast_atom);
+        atom->atom_type = ATOM_NAME;
+        atom->str = $2;
+        load_loc(atom->loc);
+
         alloc(tail, 1, struct ubik_ast_expr);
         tail->expr_type = EXPR_ATOM;
-        tail->atom = $2;
-        tail->loc = $2->loc;
+        tail->atom = atom;
+        tail->loc = atom->loc;
 
         alloc($$, 1, struct ubik_ast_expr);
         $$->expr_type = EXPR_APPLY;
         $$->apply.head = $1;
         $$->apply.tail = tail;
 
-        merge_loc($$, $1, $2);
+        merge_loc($$, $1, tail);
 }
 | TYPE_NAME
 {

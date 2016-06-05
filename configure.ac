@@ -5,10 +5,10 @@ AC_PREREQ([2.69])
 AC_INIT([ubik], [0.1], [ubik@haldean.org])
 
 # Use automake to compile Makefile.ac to Makefile.in
-AM_INIT_AUTOMAKE([foreign -Wall -Werror])
+AM_INIT_AUTOMAKE([foreign -Wall -Werror subdir-objects])
 
 # Make sure we're running in the right directory
-AC_CONFIG_SRCDIR([libubik/rt.c])
+AC_CONFIG_SRCDIR([libubik/shared/rt.c])
 
 AC_CONFIG_HEADERS([config.h])
 
