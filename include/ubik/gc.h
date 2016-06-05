@@ -26,6 +26,8 @@ struct ubik_gc_info
         uint64_t n_val_frees;
         uint64_t n_graph_allocs;
         uint64_t n_graph_frees;
+#else
+        char unused;
 #endif
 };
 
