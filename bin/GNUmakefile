@@ -7,3 +7,5 @@ all: $(bins)
 
 $(bins): %: %.c
 	$(CC) -d $< -o $@ $(CFLAGS) -lubik -Llibubik
+
+.PHONY: all

@@ -73,3 +73,5 @@ clean:
 		$(buildtree_headers) \
 		codegen/grammar.{c,h,output} \
 	       	codegen/token.c
+
+.PHONY: clean
