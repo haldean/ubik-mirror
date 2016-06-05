@@ -20,4 +20,7 @@ all: $(tests)
 $(tests): %-test: %.c
 	$(CC) -o $@ $(CFLAGS) $(LDFLAGS) $< ../../libubik/libubik.a
 
-.PHONY: all
+clean:
+	rm -f $(tests)
+
+.PHONY: all clean

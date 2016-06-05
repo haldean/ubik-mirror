@@ -18,5 +18,8 @@ all: $(tests)
 $(tests): %.ub: %.upy
 	PYTHONPATH=$(top) $(PYTHON) $< $@
 
-.PHONY: all
+clean:
+	rm -f $(tests)
+
+.PHONY: all clean
 
