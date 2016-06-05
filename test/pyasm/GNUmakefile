@@ -1,0 +1,23 @@
+top=../..
+-include ../../res/build-config.mk
+
+tests = \
+	add.ub \
+	cond.ub \
+	const.ub \
+	emit-poly.ub \
+	huge.ub \
+	loadstore.ub \
+	mult.ub \
+	please-leak.ub \
+	ref.ub \
+	simplefunc.ub
+
+all: $(tests)
+	$(BASH) ../run_tests.sh runner.sh $(tests)
+
+$(tests): %.ub: %.upy
+	PYTHONPATH=$(top) $(PYTHON) $< $@
+
+.PHONY: all
+

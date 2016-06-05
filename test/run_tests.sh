@@ -1,9 +1,16 @@
+#!/bin/bash
+
 passed=0
 failed=0
 
+runner=$1
 for f in $@
 do
-        $f >/dev/null 2>/dev/null
+        if [[ "$f" == "$runner" ]]
+        then
+                continue
+        fi
+        $runner $f
         res=$?
         if [[ $res == 0 ]]
         then
@@ -22,3 +29,4 @@ else
         echo -e "\e[31m$failed failed, $passed succeeded\e[39m"
 fi
 exit $failed
+

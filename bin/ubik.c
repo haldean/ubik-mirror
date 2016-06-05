@@ -197,7 +197,10 @@ teardown:
                                 char *explain = ubik_error_explain(teardown_err);
                                 printf("graph release failed: %s\n", explain);
                                 free(explain);
-                                free(teardown_err);
+                                if (err == OK)
+                                        err = teardown_err;
+                                else
+                                        free(teardown_err);
                         }
 
                 }
@@ -210,7 +213,10 @@ teardown:
                 char *explain = ubik_error_explain(teardown_err);
                 printf("teardown failed: %s\n", explain);
                 free(explain);
-                free(teardown_err);
+                if (err == OK)
+                        err = teardown_err;
+                else
+                        free(teardown_err);
         }
 
         ubik_stream_close(&stream);

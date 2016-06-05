@@ -15,7 +15,7 @@ tests = \
 	uri-test
 
 all: $(tests)
-	$(BASH) run_tests.sh $(tests)
+	$(BASH) ../run_tests.sh $(shell pwd)/runner.sh $(tests)
 
 $(tests): %-test: %.c
 	$(CC) -o $@ $(CFLAGS) $(LDFLAGS) $< ../../libubik/libubik.a
