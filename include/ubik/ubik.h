@@ -303,6 +303,6 @@ ubik_error_explain(ubik_error err);
 
 /* Raise an error with the current file and line populated. */
 #define ubik_raise(code, tag) \
-        ubik_error_new((code), (tag), __FILE__, __LINE__, __FUNCTION__)
+        ubik_error_new((code), (tag), __FILE__, __LINE__, __func__)
 
 #define local(type) __attribute__((cleanup(ubik_ ## type ## _free)))
