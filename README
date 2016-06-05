@@ -28,21 +28,11 @@ tests by running `make check`.
 
 To build and test ubik, run the following commands:
 
-        ./configure
         make check
 
-If the configure script is not present (i.e., you got Ubik from git
-instead of from a tarball), you will need to run:
-
-        autoreconf --install
-
-Before you run anything else. When you're done with all that, the
-compiler will be present at ubikc/ubikc, the interpreter will be at
-ubikc/ubiki and the runtime will be at runubik/runubik. To install
-these to your system path (along with the headers and static library),
-use:
-
-        make install
+When you're done with all that, the compiler will be present at
+bin/ubic, the interpreter will be at bin/ubi and the runtime will
+be at bin/ubik.
 
 One last thing: before contributing, please ensure you have installed
 the pre-commit hook in the `res` directory before you commit anything.
@@ -55,7 +45,6 @@ For completeness, building Ubik requires:
       versions of GCC and with clang, but they're untested)
     - Bison 3.0 or later
     - Flex 2.6 or later
-    - GNU autoconf 2.69 or later
 
 Ubik has no runtime dependencies outside of libc. The rest of this
 document is more interesting, I promise.
