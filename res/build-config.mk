@@ -1,4 +1,5 @@
 AWK ?= gawk
+BASH ?= bash
 BISON ?= bison
 PYTHON ?= python2
 FLEX ?= flex
