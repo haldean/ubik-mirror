@@ -1,0 +1,140 @@
+Packaging in Ubik ======================================================
+Haldean Brown                                      First draft: Jun 2016
+                                                  Last updated: Jun 2016
+
+Status: Draft
+
+------------------------------------------------------------------------
+
+Packaging is hard. Building and distributing code and binaries is one of
+the biggest difficulties with actually deploying code in many popular
+(and otherwise very pleasant-to-use) languages. In order to try to avoid
+the problems that language designers more talented than I introduced
+into their own systems, I'm going to start off by picking on them and
+identifying some of the common problems with today's production
+languages. From there, maybe, we can find inspiration for something more
+likely to avoid them.
+
+Python -----------------------------------------------------------------
+
+I'm going to pick on Python the most because I've deployed it the most,
+and thus have the biggest beefs with it. Python is by far the hardest
+language to deploy that I have ever met, for three reasons:
+
+    - Dependency management is not built into the language, but is
+      provided by some combination of setuptools, distutils and the OS
+      package manager (and even setuptools behaves differently when
+      installing using setup.py vs using pip).
+    - In the interest of convenience and the creation of nice, "cute"
+      APIs, there are way too many ways to create a namespace: source
+      packages, namespace packages, zip packages, eggs; the Python
+      importer is so difficult that after years of managing Python in
+      production I still have to look at the pkg_resources source to try
+      to figure out why it's pulling something from over here instead of
+      over there.
+    - Once you have a working system you can't bundle it up for
+      deployment; you have to make sure that the existing tools work
+      perfectly for you and in concert with each other.
+
+These three facts (with some other more minor complaints) combine to
+create these problems:
+
+    - It is difficult to predict the source of code imported under a
+      certain name.
+    - It is difficult to specify exactly where you would like code to be
+      loaded from.
+    - It is difficult to build once and deploy across a fleet.
+    - It is difficult to split a package across multiple codebases
+      (example.package1 and example.package2 can technically be in
+      different code repositories and installed separately using
+      namespace packages, but a number of things stop working very
+      suddenly when you do so, including PYTHONPATH).
+    - It is impossible to specify the visibility of a binding outside of
+      a namespace (there is no privacy, only the underscore convention
+      and the double-underscore name-mangling which is discouraged).
+    - Configuration is controlled with environment variables, so it is
+      difficult to reproduce certain classes of build problems on
+      separate machines.
+
+Python's system does have some nice properties though:
+
+    - It is easy to suggest what elements of a namespace are placed in
+      its public API (by exporting them at the package rather than the
+      module level).
+    - Simple pure-Python packages are easy to install globally.
+    - The centralized registry of packages, PyPA, is easy to submit to
+      and easy to pull from.
+    - Given that there is no build step, there are no build flags that
+      need to be associated with a project.
+    - The ability to run arbitrary code if the module being evaluated
+      was executed (rather than being imported, i.e., __name__ ==
+      __main__) is extremely useful.
+
+Ubik -------------------------------------------------------------------
+
+Based on that, Ubik's packaging system should have the following
+properties:
+
+    - Easy to control what code gets used to satisfy a requirement
+    - Easy to install the code to satisfy a requirement
+    - Build configuration that's checked in with the code being built
+    - Strong controls over what is added to the public API of a
+      namespace
+    - The ability to run code when a module is executed but not when it
+      is imported
+    - Easy to build a single artifact which can be distributed across
+      machines and executed on each (this requirement may be removed
+      when the substrate becomes more fully specified).
+
+Given these, the following proposal is put forward. A module must start
+with the following line (excluding comments, which may proceed it):
+
+    . example-package
+
+Which specifies that the bindings in the current file are all members of
+the "example-package" package. The same package can then specify the
+other packages that it depends on, by using lines that begin with the
+"add" operator. For example, this would add the "io" and "list" modules
+as dependencies of the package:
+
+    . example-package
+    + io
+    + list
+
+A package must be provided as a single file. Unlike in other languages,
+there is no meaning to directory hierarchies or file names that specify
+packages. By convention, package names exploit the fact that slashes are
+allowed in names and use slashes to represent a semantic connection
+between packages. So, for example, you might set up a series of packages
+like "ibm/deep-blue", "ibm/watson", and "ibm/watson/jeopardy", but the
+relationship between them would be purely textual. They would be
+imported as:
+
+    . brain-trust
+    + ibm/deep-blue
+    + ibm/watson
+    + ibm/watson/jeopardy
+
+Once imported, the members of all of these packages are accessed using
+qualified names, like so:
+
+    : checkmate = ibm/deep-blue:make-move game
+
+Of course, this can get pretty verbose pretty quickly:
+
+    : question = ibm/watson/jeopardy:guess-question answer
+
+So with that in mind, you can bind imports to shorter names using
+everyone's favorite bind operator:
+
+    + ibm/watson/jeopardy : jeopardy
+    : question = jeopardy:guess-question answer
+
+Packages may have an optional "immediate" expression, which is an
+expression proceeded by the immediate operator, "!". This expression is
+run when the module is executed but not when it is imported. Continuing
+our previous example, we might add:
+
+    ! emit question
+
+To print the contents of the question when we execute our package.
