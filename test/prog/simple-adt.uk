@@ -1,3 +1,5 @@
+. ubik-tests/simple-adt
+
 ^ Expr
     = Const String
     = OtherExpr

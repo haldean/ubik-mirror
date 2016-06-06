@@ -1,3 +1,5 @@
+. ubik-tests/num
+
 : eight
     ^ Number
     = 8

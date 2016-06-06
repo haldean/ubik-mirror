@@ -7,8 +7,8 @@ tests = \
 	block.uk \
 	fib.uk \
 	hello.uk \
-	lambda-simple.uk \
 	lambda.uk \
+	lambda-simple.uk \
 	num.uk \
 	pattern-bind.uk \
 	pattern-bind-simple.uk \

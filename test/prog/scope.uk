@@ -1,3 +1,5 @@
+. ubik-tests/scope
+
 : so-deep
     ^ Word -> Word
     = \ x -> {

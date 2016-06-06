@@ -1,3 +1,5 @@
+. ubik-tests/bind
+
 : hello-world
     ^ Integer
     = 8

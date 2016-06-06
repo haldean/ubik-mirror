@@ -1,4 +1,5 @@
 # ubik hello world, with a function call for kicks
+. ubik-tests/add
 
 : add-two-numbers
   ^ Word
