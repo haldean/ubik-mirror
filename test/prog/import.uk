@@ -1,3 +1,4 @@
-+ print-lib
+. ubik-tests/import
++ ubik-tests/print-lib
 
-! print-lib:number 7
+! ubik-tests/print-lib:number 7
