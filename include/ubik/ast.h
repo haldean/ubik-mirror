@@ -275,6 +275,10 @@ ubik_ast_error_loc_free(struct ubik_ast_loc *err_loc);
 no_ignore ubik_error
 ubik_ast_print(struct ubik_ast *ast);
 
+/* Prints an expression to stdout. */
+no_ignore ubik_error
+ubik_ast_expr_print(struct ubik_ast_expr *expr);
+
 no_ignore ubik_error
 ubik_ast_bind(
         struct ubik_ast *ast,

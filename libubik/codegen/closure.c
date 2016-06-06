@@ -334,7 +334,7 @@ traverse_expr(
         return OK;
 }
 
-no_ignore ubik_error
+no_ignore static ubik_error
 traverse_ast(
         char **resolving_name,
         bool *changed,

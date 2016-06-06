@@ -399,3 +399,9 @@ ubik_ast_print(struct ubik_ast *ast)
 {
         return _print_ast(ast, 0);
 }
+
+no_ignore ubik_error
+ubik_ast_expr_print(struct ubik_ast_expr *expr)
+{
+        return _print_expr(expr, 0);
+}
