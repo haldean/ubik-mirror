@@ -213,6 +213,8 @@ apply_upwards_transform(
         struct ubik_ast_expr *expr;
         struct ubik_ast_arg_list *args;
         struct ubik_resolve_scope *scope;
+        struct ubik_resolve_name *rname;
+        ubik_error err;
 
         resolving_name = *resolving_name_ref;
         expr = *expr_ref;
@@ -248,6 +250,22 @@ break_all:
 
                 expr->lambda.args = args;
                 expr->scope->needs_closure_appl = true;
+
+                rname = calloc(1, sizeof(struct ubik_resolve_name));
+                if (rname == NULL)
+                        return ubik_raise(ERR_NO_MEMORY, "args to scope");
+                err = ubik_vector_append(&ctx->allocs, rname);
+                if (err != OK)
+                {
+                        free(rname);
+                        return err;
+                }
+                rname->name = args->name;
+                rname->type = RESOLVE_LOCAL;
+
+                err = ubik_vector_append(&expr->scope->names, rname);
+                if (err != OK)
+                        return err;
         }
 
         if (is_top)
