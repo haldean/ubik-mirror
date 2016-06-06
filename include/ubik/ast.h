@@ -254,6 +254,8 @@ struct ubik_ast
         /* the location of this ast (useful because there are sub-ASTs whose
          * location is actually interesting) */
         struct ubik_ast_loc loc;
+        /* the package that this AST is a member of */
+        char *package_name;
 };
 
 /* Allocates a new AST. */

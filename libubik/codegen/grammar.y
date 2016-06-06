@@ -91,6 +91,7 @@
 %type <type_constraints> type_constraints
 %type <case_stmt> pred_case_stmt pred_case_stmts last_pred_case_stmt all_pred_case_stmts
 %type <case_stmt> all_pattern_case_stmts pattern_case_stmt
+%type <string> package
 
 %define api.pure full
 %define api.push-pull push
@@ -127,14 +128,23 @@ int yydebug = 1;
 %%
 
 prog
-: blocks
+: package blocks
 {
-        ctx->ast = $1;
+        ctx->ast = $2;
+        ctx->ast->package_name = $1;
 }
-| blocks immediate
+| package blocks immediate
 {
-        ctx->ast = $1;
-        ctx->ast->immediate = $2;
+        ctx->ast = $2;
+        ctx->ast->immediate = $3;
+        ctx->ast->package_name = $1;
+}
+;
+
+package
+: MEMBER NAME
+{
+        $$ = $2;
 }
 ;
 
