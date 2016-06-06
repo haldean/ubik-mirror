@@ -349,6 +349,9 @@ _print_ast(struct ubik_ast *ast, int indent)
         struct ubik_ast_binding *b;
         struct ubik_ast_import_list *imports;
 
+        _indent(indent);
+        printf("package %s\n", ast->package_name);
+
         imports = ast->imports;
         while (imports != NULL)
         {

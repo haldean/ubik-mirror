@@ -25,6 +25,7 @@
 #include "ubik/compile.h"
 #include "ubik/infer.h"
 #include "ubik/parse.h"
+#include "ubik/package.h"
 #include "ubik/patterns.h"
 #include "ubik/resolve.h"
 #include "ubik/string.h"
@@ -118,6 +119,17 @@ ubik_compile_stream(
         if (cenv->verbose_src_xform)
         {
                 printf("\npatterns\n");
+                err = ubik_ast_print(ast);
+                if (err != OK)
+                        goto free_ast;
+        }
+
+        err = ubik_package_assign(ast);
+        if (err != OK)
+                goto free_ast;
+        if (cenv->verbose_src_xform)
+        {
+                printf("\npackaged\n");
                 err = ubik_ast_print(ast);
                 if (err != OK)
                         goto free_ast;
