@@ -385,6 +385,8 @@ ubik_ast_free(struct ubik_ast *ast)
                         return err;
         }
 
+        if (ast->package_name != NULL)
+                free(ast->package_name);
         free(ast);
         return OK;
 }
