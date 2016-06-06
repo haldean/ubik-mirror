@@ -38,12 +38,13 @@ ubik_streamutil_get_line(
 
         ubik_stream_reset(stream);
         n_lines_seen = 0;
+        i = 0;
 
         if (n <= 1)
                 return ubik_raise(ERR_BAD_VALUE, "buffer too short");
         bzero(res, n);
 
-        for (;;)
+        do
         {
                 read = ubik_stream_read(buf, stream, GET_LINE_BUF_SIZE - 1);
                 if (read == 0)
@@ -52,21 +53,24 @@ ubik_streamutil_get_line(
 
                 for (i = 0; i < GET_LINE_BUF_SIZE - 1; i++)
                 {
-                        if (n_lines_seen == line_i)
-                                goto line_found;
+                        if (n_lines_seen >= line_i)
+                                break;
                         if (buf[i] == '\n')
                                 n_lines_seen++;
                 }
         }
+        while (n_lines_seen < line_i);
 
-line_found:
         res_i = 0;
         for (;;)
         {
                 for (; i < GET_LINE_BUF_SIZE - 1; i++)
                 {
                         if (buf[i] == '\n')
+                        {
+                                res[res_i] = '\0';
                                 return OK;
+                        }
                         res[res_i++] = buf[i];
                         if (res_i - 1 == n)
                                 return ubik_raise(
@@ -74,9 +78,7 @@ line_found:
                 }
                 read = ubik_stream_read(buf, stream, GET_LINE_BUF_SIZE - 1);
                 if (read == 0)
-                {
                         return OK;
-                }
                 i = 0;
         }
 }
@@ -104,7 +106,8 @@ ubik_streamutil_print_line_char(
         }
         printf("%s\n", buf);
 
-        for (i = 0; i < column - 1; i++)
-                putchar(' ');
+        if (column > 0)
+                for (i = 0; i < column - 1; i++)
+                        putchar(' ');
         printf("^\n");
 }
