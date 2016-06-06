@@ -168,9 +168,6 @@ imports
         $$->next = $1;
 }
 | import
-{
-        $$ = NULL;
-}
 ;
 
 import
