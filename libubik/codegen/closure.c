@@ -117,10 +117,9 @@ apply_downwards_transform(
 {
         struct ubik_ast *subast;
         ubik_error err;
-        size_t n_subexprs;
         size_t i;
         struct ubik_ast_expr *expr;
-        struct ubik_ast_expr *subexprs[UBIK_MAX_SUBEXPRS];
+        struct ubik_ast_case *case_stmt;
 
         expr = *expr_ref;
         subast = NULL;
@@ -133,16 +132,50 @@ apply_downwards_transform(
                 expr = *expr_ref;
         }
 
-        err = ubik_ast_subexprs(&subast, subexprs, &n_subexprs, expr);
-        if (err != OK)
-                return err;
-
-        for (i = 0; i < n_subexprs; i++)
+        /* Unfortunately, we can't use the subexprs stuff here because we need
+         * proper refs into the pointers themselves so we can mutate these
+         * things. */
+        #define apply_down(x) do { \
+                err = apply_downwards_transform(resolving_name, ctx, &x); \
+                if (err != OK) return err; } while (0)
+        subast = NULL;
+        switch (expr->expr_type)
         {
-                err = apply_downwards_transform(
-                        resolving_name, ctx, &subexprs[i]);
-                if (err != OK)
-                        return err;
+        case EXPR_ATOM:
+                break;
+
+        case EXPR_APPLY:
+                apply_down(expr->apply.head);
+                apply_down(expr->apply.tail);
+                break;
+
+        case EXPR_LAMBDA:
+                apply_down(expr->lambda.body);
+                break;
+
+        case EXPR_COND_BLOCK:
+                switch (expr->cond_block.block_type)
+                {
+                case COND_PATTERN:
+                        apply_down(expr->cond_block.to_match);
+                        break;
+                case COND_PREDICATE:
+                        break;
+                }
+                case_stmt = expr->cond_block.case_stmts;
+                while (case_stmt != NULL)
+                {
+                        if (case_stmt->head != NULL
+                                && expr->cond_block.block_type != COND_PATTERN)
+                                apply_down(case_stmt->head);
+                        apply_down(case_stmt->tail);
+                        case_stmt = case_stmt->next;
+                }
+                break;
+
+        case EXPR_BLOCK:
+                subast = expr->block;
+                break;
         }
 
         if (subast != NULL)
