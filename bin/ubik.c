@@ -221,7 +221,7 @@ teardown:
 
         ubik_stream_close(&stream);
 
-        if (err == OK)
+        if (err == OK && debug)
                 printf("ok:   %s\n", fname);
 
         return err;
