@@ -347,6 +347,15 @@ _print_ast(struct ubik_ast *ast, int indent)
         size_t i;
         ubik_error err;
         struct ubik_ast_binding *b;
+        struct ubik_ast_import_list *imports;
+
+        imports = ast->imports;
+        while (imports != NULL)
+        {
+                _indent(indent);
+                printf("import %s as %s\n", imports->canonical, imports->name);
+                imports = imports->next;
+        }
 
         if (ast->types.n > 0)
         {
@@ -361,7 +370,10 @@ _print_ast(struct ubik_ast *ast, int indent)
         }
 
         _indent(indent);
-        printf("%lu bindings:\n", ast->bindings.n);
+        if (ast->bindings.n > 0)
+                printf("%lu bindings:\n", ast->bindings.n);
+        else
+                printf("bindings: none\n");
         for (i = 0; i < ast->bindings.n; i++)
         {
                 b = ast->bindings.elems[i];
@@ -397,7 +409,7 @@ _print_ast(struct ubik_ast *ast, int indent)
 no_ignore ubik_error
 ubik_ast_print(struct ubik_ast *ast)
 {
-        return _print_ast(ast, 0);
+        return _print_ast(ast, 4);
 }
 
 no_ignore ubik_error
