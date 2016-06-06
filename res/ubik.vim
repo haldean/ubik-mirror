@@ -10,7 +10,7 @@ endif
 
 syntax match ubikBind ":"
 syntax match ubikBind "\."
-syntax match ubikBind "!="
+syntax match ubikBind "!"
 syntax match ubikBind "_"
 syntax match ubikBind "|"
 syntax match ubikBind "'"

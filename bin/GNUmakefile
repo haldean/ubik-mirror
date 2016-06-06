@@ -5,7 +5,7 @@ bins = ubi ubic ubik ubik-dis
 
 all: $(bins)
 
-$(bins): %: %.c
+$(bins): %: %.c ../libubik/libubik.a
 	$(CC) -o $@ $(CFLAGS) $< ../libubik/libubik.a
 
 clean:

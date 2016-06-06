@@ -2,4 +2,4 @@
     ^ Word -> String
     = \ x -> "hello\n"
 
-!= emit (l 10)
+! emit (l 10)

@@ -305,7 +305,8 @@ ubik_create_modinit(
         }
         else
         {
-                return ubik_raise(ERR_NO_DATA, "nothing to bind in modinit");
+                err = ubik_raise(ERR_NO_DATA, "nothing to bind in modinit");
+                goto cleanup;
         }
 
         err = ubik_bdagc_build(modinit, &builder);
@@ -324,11 +325,14 @@ ubik_create_modinit(
         if (err != OK)
                 return err;
 
+        err = OK;
+
+cleanup:
         for (i = 0; i < iter.next_node; i++)
                 free(iter.free_nodes[i]);
         free(iter.free_nodes);
 
-        return OK;
+        return err;
 }
 
 no_ignore static ubik_error

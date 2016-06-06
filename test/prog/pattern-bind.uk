@@ -9,7 +9,7 @@
         . Nada => "nothing"
     }
 
-!= emit
+! emit
     (concat "should print this nothing:\n"
         (concat (whats-the-string (Solo "this " "ignore"))
                 (whats-the-string Nada)

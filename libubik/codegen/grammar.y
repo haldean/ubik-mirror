@@ -193,11 +193,11 @@ binding
 ;
 
 immediate
-: IMMEDIATE IS top_expr
+: IMMEDIATE top_expr
 {
-        $$ = $3;
+        $$ = $2;
         load_loc($$->loc);
-        merge_loc($$, $$, $3);
+        merge_loc($$, $$, $2);
 }
 ;
 

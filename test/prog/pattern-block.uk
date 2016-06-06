@@ -9,7 +9,7 @@
         . Zero   => "yes"
     }
 
-!= emit (concat (concat "should print yes no:\n"
-        (concat (is-it-zero Zero)
-        (concat " " (is-it-zero (Succ Zero))))) "\n")
+! emit (concat (concat "should print yes no:\n"
+       (concat (is-it-zero Zero)
+       (concat " " (is-it-zero (Succ Zero))))) "\n")
 

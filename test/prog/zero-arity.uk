@@ -4,4 +4,4 @@
     ^ Word
     = \ -> 66
 
-!= emit (concat (humanize sixty-six) "\n")
+! emit (concat (humanize sixty-six) "\n")

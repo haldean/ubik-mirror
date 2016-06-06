@@ -6,4 +6,4 @@
         .        => uadd (fib (usub x 1)) (fib (usub x 2))
     }
 
-!= emit (concat (humanize (fib 5)) "\n")
+! emit (concat (humanize (fib 5)) "\n")

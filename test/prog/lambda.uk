@@ -11,4 +11,4 @@
 
 : x ^ String = humanize (add-7 10)
 
-!= emit (concat (three-string-concat x x x) "\n")
+! emit (concat (three-string-concat x x x) "\n")

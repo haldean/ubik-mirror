@@ -4,4 +4,4 @@
   ^ Word
   = uadd 2 64
 
-!= emit (concat (humanize add-two-numbers) "\nhello world!\n")
+! emit (concat (humanize add-two-numbers) "\nhello world!\n")
