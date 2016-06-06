@@ -1,7 +1,7 @@
 top=..
 -include ../res/build-config.mk
 
-bins = ubi ubic ubik ubik-dis
+bins = ubic ubik ubik-dis
 
 all: $(bins)
 
