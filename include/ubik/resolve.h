@@ -48,6 +48,9 @@ struct ubik_resolve_name
 struct ubik_resolve_name_loc
 {
         enum ubik_resolve_type type;
+        /* The name of the package that contains this name. This should be the
+         * source of the URI used to access this name, if applicable. */
+        char *package_name;
 };
 
 /* Scope boundaries are used to determine whether something is
@@ -78,6 +81,9 @@ struct ubik_resolve_scope
         /* This thing is complicated. There's a long explanation in closure.c
          * about what it means. Go read that. */
         bool needs_closure_appl;
+
+        /* The package that this scope exists inside. */
+        char *package_name;
 };
 
 enum ubik_resolve_error_type

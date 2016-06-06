@@ -48,5 +48,4 @@ ubik_gen_graphs(
         struct ubik_dagc **res,
         struct ubik_gen_requires **requires,
         struct ubik_ast *ast,
-        enum ubik_load_reason load_reason,
-        char *uri_source);
+        enum ubik_load_reason load_reason);

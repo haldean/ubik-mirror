@@ -21,10 +21,12 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "ubik/assert.h"
 #include "ubik/ast.h"
 #include "ubik/closure.h"
 #include "ubik/env.h"
 #include "ubik/natives.h"
+#include "ubik/package.h"
 #include "ubik/resolve.h"
 #include "ubik/streamutil.h"
 #include "ubik/util.h"
@@ -374,6 +376,15 @@ update_scopes_with_args(
         return OK;
 }
 
+static inline void
+load_global_name(
+        struct ubik_resolve_name_loc *name_loc,
+        struct ubik_resolve_scope *scope)
+{
+        name_loc->type = RESOLVE_GLOBAL;
+        name_loc->package_name = scope->package_name;
+}
+
 no_ignore ubik_error
 find_name_resolution_types(
         struct ubik_resolve_context *ctx,
@@ -446,7 +457,8 @@ find_name_resolution_types(
                         if (ubik_natives_is_defined(expr->atom->str))
                                 expr->atom->name_loc->type = RESOLVE_NATIVE;
                         else
-                                expr->atom->name_loc->type = RESOLVE_GLOBAL;
+                                load_global_name(
+                                        expr->atom->name_loc, expr->scope);
                         break;
                 case BOUNDARY_BLOCK:
                         expr->atom->name_loc->type = RESOLVE_LOCAL;
@@ -581,6 +593,10 @@ ubik_resolve(
                 return err;
 
         err = update_scopes_with_args(ctx, ast);
+        if (err != OK)
+                return err;
+
+        err = ubik_package_add_to_scope(ast);
         if (err != OK)
                 return err;
 

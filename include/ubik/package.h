@@ -19,7 +19,8 @@
 
 #include "ubik/ubik.h"
 #include "ubik/ast.h"
+#include "ubik/resolve.h"
 
-/* Sets the appropriate package name on all ASTs in a tree. */
+/* Sets the appropriate package name on all scopes in an AST. */
 no_ignore ubik_error
-ubik_package_assign(struct ubik_ast *ast);
+ubik_package_add_to_scope(struct ubik_ast *ast);

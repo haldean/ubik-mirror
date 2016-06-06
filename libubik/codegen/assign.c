@@ -114,6 +114,7 @@ _assign_atom_node(
 {
         struct ubik_dagc_node *referrent;
         enum ubik_resolve_type res_type;
+        char *pkg;
         ubik_error err;
 
         switch (expr->atom->atom_type)
@@ -169,8 +170,12 @@ _assign_atom_node(
                                 err = ubik_uri_native(
                                         n->as_load.loc, expr->atom->str);
                         else
-                                err = ubik_uri_user(
-                                        n->as_load.loc, expr->atom->str);
+                        {
+                                pkg = expr->atom->name_loc->package_name;
+                                ubik_assert(pkg != NULL);
+                                err = ubik_uri_package(
+                                        n->as_load.loc, pkg, expr->atom->str);
+                        }
                         if (err != OK)
                                 return err;
 

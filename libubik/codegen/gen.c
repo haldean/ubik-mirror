@@ -24,6 +24,7 @@
 #include "ubik/dagc.h"
 #include "ubik/env.h"
 #include "ubik/gen.h"
+#include "ubik/resolve.h"
 #include "ubik/types.h"
 #include "ubik/ubik.h"
 #include "ubik/uri.h"
@@ -32,6 +33,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 no_ignore static ubik_error
 ubik_compile_binding(
@@ -66,7 +68,8 @@ ubik_compile_binding(
         uri = calloc(1, sizeof(struct ubik_uri));
         if (uri == NULL)
                 return ubik_raise(ERR_NO_MEMORY, "uri alloc");
-        err = ubik_uri_user(uri, binding->name);
+        err = ubik_uri_package(
+                uri, binding->expr->scope->package_name, binding->name);
         if (err != OK)
                 return err;
         err = ubik_take(uri);
@@ -104,12 +107,15 @@ ubik_compile_binding(
 no_ignore static ubik_error
 _collect_dep_packages(
         struct ubik_uri *uri,
-        struct ubik_gen_requires **requires)
+        struct ubik_gen_requires **requires,
+        char *package_name)
 {
         struct ubik_gen_requires *new_req;
         ubik_error err;
 
         if (uri->scope != SCOPE_PACKAGE)
+                return OK;
+        if (strcmp(uri->source, package_name) == 0)
                 return OK;
 
         new_req = calloc(1, sizeof(struct ubik_gen_requires));
@@ -129,7 +135,7 @@ _collect_all_dep_packages(
         struct ubik_dagc *graph,
         struct ubik_env *local_env,
         struct ubik_gen_requires **requires,
-        char *uri_source)
+        char *package_name)
 {
         size_t i;
         ubik_error err;
@@ -153,7 +159,7 @@ _collect_all_dep_packages(
                                 continue;
                         err = _collect_all_dep_packages(
                                 cons->value.graph, local_env, requires,
-                                uri_source);
+                                package_name);
                         if (err != OK)
                                 return err;
                         continue;
@@ -163,7 +169,7 @@ _collect_all_dep_packages(
                         continue;
                 load = (struct ubik_dagc_load *) graph->nodes[i];
 
-                err = _collect_dep_packages(load->loc, requires);
+                err = _collect_dep_packages(load->loc, requires, package_name);
                 if (err != OK)
                         return err;
         }
@@ -174,7 +180,7 @@ _collect_all_dep_packages(
 struct modinit_iterator
 {
         struct ubik_graph_builder *builder;
-        char *uri_source;
+        char *package_name;
 
         struct ubik_dagc_node **free_nodes;
         size_t next_node;
@@ -202,19 +208,12 @@ _add_modinit_setter(
         if (err != OK)
                 return err;
 
-        if (iter->uri_source == NULL)
-        {
-                store_uri = uri;
-        }
-        else
-        {
-                store_uri = calloc(1, sizeof(struct ubik_uri));
-                if (store_uri == NULL)
-                        return ubik_raise(ERR_NO_MEMORY, "uri alloc");
-                err = ubik_uri_package(store_uri, iter->uri_source, uri->name);
-                if (err != OK)
-                        return err;
-        }
+        store_uri = calloc(1, sizeof(struct ubik_uri));
+        if (store_uri == NULL)
+                return ubik_raise(ERR_NO_MEMORY, "uri alloc");
+        err = ubik_uri_package(store_uri, iter->package_name, uri->name);
+        if (err != OK)
+                return err;
 
         const_node = calloc(1, sizeof(struct ubik_dagc_const));
         if (const_node == NULL)
@@ -265,7 +264,6 @@ ubik_create_modinit(
         struct ubik_ast *ast,
         struct ubik_env *local_env,
         enum ubik_load_reason load_reason,
-        char *uri_source,
         struct ubik_assign_context *ctx)
 {
         struct modinit_iterator iter;
@@ -278,7 +276,7 @@ ubik_create_modinit(
                 return err;
 
         iter.builder = &builder;
-        iter.uri_source = uri_source;
+        iter.package_name = ast->package_name;
         iter.free_nodes = calloc(
                 2 * local_env->n, sizeof(struct ubik_dagc_node *));
         iter.next_node = 0;
@@ -315,10 +313,8 @@ ubik_create_modinit(
 
         (*modinit)->tag |= TAG_GRAPH_UNRESOLVED | TAG_GRAPH_MODINIT;
         (*modinit)->identity = calloc(1, sizeof(struct ubik_uri));
-        if (uri_source == NULL)
-                err = ubik_uri_user((*modinit)->identity, "__modinit");
-        else
-                err = ubik_uri_package((*modinit)->identity, uri_source, "__modinit");
+        err = ubik_uri_package(
+                (*modinit)->identity, ast->package_name, "__modinit");
         if (err != OK)
                 return err;
         err = ubik_take((*modinit)->identity);
@@ -338,6 +334,7 @@ cleanup:
 no_ignore static ubik_error
 ubik_compile_type(
         struct ubik_ast_type *type,
+        char *package_name,
         struct ubik_env *local_env)
 {
         struct ubik_dagc *graph;
@@ -365,7 +362,7 @@ ubik_compile_type(
         uri = calloc(1, sizeof(struct ubik_uri));
         if (uri == NULL)
                 return ubik_raise(ERR_NO_MEMORY, "uri alloc");
-        err = ubik_uri_user(uri, type->name);
+        err = ubik_uri_package(uri, package_name, type->name);
         if (err != OK)
                 return err;
 
@@ -390,14 +387,15 @@ ubik_compile_type(
         {
                 ctor_name = ctor->name;
 
-                err = ubik_adt_create_constructor(&graph, type_decl, ctor_name);
+                err = ubik_adt_create_constructor(
+                        &graph, type_decl, package_name, ctor_name);
                 if (err != OK)
                         return err;
 
                 uri = calloc(1, sizeof(struct ubik_uri));
                 if (uri == NULL)
                         return ubik_raise(ERR_NO_MEMORY, "uri alloc");
-                err = ubik_uri_user(uri, ctor_name);
+                err = ubik_uri_package(uri, package_name, ctor_name);
                 if (err != OK)
                         return err;
                 err = ubik_take(uri);
@@ -442,8 +440,7 @@ ubik_gen_graphs(
         struct ubik_dagc **res,
         struct ubik_gen_requires **requires,
         struct ubik_ast *ast,
-        enum ubik_load_reason load_reason,
-        char *uri_source)
+        enum ubik_load_reason load_reason)
 {
         size_t i;
         ubik_error err, rerr;
@@ -457,8 +454,7 @@ ubik_gen_graphs(
         for (i = 0; i < ast->types.n; i++)
         {
                 err = ubik_compile_type(
-                        ast->types.elems[i],
-                        &local_env);
+                        ast->types.elems[i], ast->package_name, &local_env);
                 if (err != OK)
                         goto cleanup_env;
         }
@@ -473,7 +469,7 @@ ubik_gen_graphs(
         }
 
         err = ubik_create_modinit(
-                res, ast, &local_env, load_reason, uri_source, &ctx);
+                res, ast, &local_env, load_reason, &ctx);
         if (err != OK)
         {
                 if (err->error_code == ERR_NO_DATA)
@@ -490,7 +486,7 @@ ubik_gen_graphs(
         }
 
         err = _collect_all_dep_packages(
-                *res, &local_env, requires, uri_source);
+                *res, &local_env, requires, ast->package_name);
         if (err != OK)
                 return err;
 

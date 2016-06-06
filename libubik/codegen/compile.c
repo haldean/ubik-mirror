@@ -25,7 +25,6 @@
 #include "ubik/compile.h"
 #include "ubik/infer.h"
 #include "ubik/parse.h"
-#include "ubik/package.h"
 #include "ubik/patterns.h"
 #include "ubik/resolve.h"
 #include "ubik/string.h"
@@ -39,7 +38,7 @@ ubik_compile_env_default(struct ubik_compilation_env *cenv)
         char *include_dirs;
         ubik_error err;
 
-        cenv->verbose_src_xform = false;
+        cenv->verbose_src_xform = true;
 
         scratch_dir = calloc(512, sizeof(char));
         if (getcwd(scratch_dir, 500) == NULL)
@@ -90,7 +89,6 @@ ubik_compile_stream(
         struct ubik_dagc **res,
         char *source_name,
         struct ubik_stream *in_stream,
-        char *uri_source,
         struct ubik_compilation_env *cenv,
         enum ubik_load_reason reason)
 {
@@ -124,17 +122,6 @@ ubik_compile_stream(
                         goto free_ast;
         }
 
-        err = ubik_package_assign(ast);
-        if (err != OK)
-                goto free_ast;
-        if (cenv->verbose_src_xform)
-        {
-                printf("\npackaged\n");
-                err = ubik_ast_print(ast);
-                if (err != OK)
-                        goto free_ast;
-        }
-
         err = ubik_resolve(ast, &resolve_ctx);
         if (err != OK)
                 goto free_ast;
@@ -158,7 +145,7 @@ ubik_compile_stream(
                         goto free_ast;
         }
 
-        err = ubik_compile_ast(res, ast, reason, uri_source, cenv);
+        err = ubik_compile_ast(res, ast, reason, cenv);
         if (err != OK)
                 goto free_ast;
 
@@ -187,7 +174,7 @@ ubik_compile(
         struct ubik_compilation_env *cenv)
 {
         return ubik_compile_stream(
-                res, source_name, in_stream, NULL, cenv, LOAD_MAIN);
+                res, source_name, in_stream, cenv, LOAD_MAIN);
 }
 
 no_ignore ubik_error
@@ -236,7 +223,6 @@ ubik_compile_ast(
         struct ubik_dagc **res,
         struct ubik_ast *ast,
         enum ubik_load_reason reason,
-        char *uri_source,
         struct ubik_compilation_env *cenv)
 {
         struct ubik_gen_requires *requires;
@@ -246,7 +232,7 @@ ubik_compile_ast(
         unused(cenv);
 
         requires = NULL;
-        err = ubik_gen_graphs(res, &requires, ast, reason, uri_source);
+        err = ubik_gen_graphs(res, &requires, ast, reason);
         if (err != OK)
                 return err;
 

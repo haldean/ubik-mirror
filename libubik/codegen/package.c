@@ -25,7 +25,7 @@ no_ignore static ubik_error
 assign_package(struct ubik_ast *ast, char *package_name);
 
 no_ignore static ubik_error
-find_asts(struct ubik_ast_expr *expr, char *package_name)
+assign_package_expr(struct ubik_ast_expr *expr, char *package_name)
 {
         struct ubik_ast *subast;
         struct ubik_ast_expr *subexprs[UBIK_MAX_SUBEXPRS];
@@ -33,13 +33,15 @@ find_asts(struct ubik_ast_expr *expr, char *package_name)
         size_t i;
         ubik_error err;
 
+        expr->scope->package_name = package_name;
+
         err = ubik_ast_subexprs(&subast, subexprs, &n_subexprs, expr);
         if (err != OK)
                 return err;
 
         for (i = 0; i < n_subexprs; i++)
         {
-                err = find_asts(subexprs[i], package_name);
+                err = assign_package_expr(subexprs[i], package_name);
                 if (err != OK)
                         return err;
         }
@@ -69,14 +71,14 @@ assign_package(struct ubik_ast *ast, char *package_name)
         for (i = 0; i < ast->bindings.n; i++)
         {
                 bind = ast->bindings.elems[i];
-                err = find_asts(bind->expr, package_name);
+                err = assign_package_expr(bind->expr, package_name);
                 if (err != OK)
                         return err;
         }
 
         if (ast->immediate != NULL)
         {
-                err = find_asts(ast->immediate, package_name);
+                err = assign_package_expr(ast->immediate, package_name);
                 if (err != OK)
                         return err;
         }
@@ -85,7 +87,7 @@ assign_package(struct ubik_ast *ast, char *package_name)
 }
 
 no_ignore ubik_error
-ubik_package_assign(struct ubik_ast *ast)
+ubik_package_add_to_scope(struct ubik_ast *ast)
 {
         if (ast->package_name == NULL)
                 return ubik_raise(

@@ -79,4 +79,5 @@ no_ignore ubik_error
 ubik_adt_create_constructor(
         struct ubik_dagc **res,
         struct ubik_value *type_decl,
+        char *package_name,
         char *constructor_name);
