@@ -1,4 +1,4 @@
-!= emit (concat (? {
+! emit (concat (? {
     . eq 10 30 => "wrong 1"
     . eq 10 20 => "wrong 2"
     . eq 10 10 => "right"

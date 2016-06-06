@@ -2,4 +2,4 @@
     ^ Word -> Word
     = \x -> emit (concat (humanize x) "\n")
 
-!= concat (number 4) "\n"
+! concat (number 4) "\n"

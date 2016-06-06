@@ -2,4 +2,4 @@
     ^ Word
     = \x -> uadd (uadd x y) z
 
-!= test-thing 8
+! test-thing 8

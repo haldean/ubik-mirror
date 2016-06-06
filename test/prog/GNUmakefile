@@ -14,6 +14,7 @@ tests = \
 	pattern-bind-simple.ub \
 	pattern-block.ub \
 	pred-block.ub \
+	scope.ub \
 	simple-adt.ub \
 	zero-arity.ub
 

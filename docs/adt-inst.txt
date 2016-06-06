@@ -58,7 +58,7 @@ The print-name function is compiled down to this Ubik source:
 
         : print-name = \x -> {
             : n = ubik-adt-get x 0
-            != emit n
+            ! emit n
         }
 
 For construction of ADTs, functions representing the type's constructors

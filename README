@@ -447,12 +447,12 @@ When assigning nodes to AST elements, the first applicable rule applies:
    It transforms this:
         \x -> {
             : y = + x 10
-            != \z -> y
+            ! \z -> y
         }
    Into this:
         \x -> {
             : y = + x 10
-            != (\y0 z -> y0) y
+            ! (\y0 z -> y0) y
         }
 
    This closes these functions over the enclosing scope by making all

@@ -2,8 +2,8 @@
     ^ Word -> Word
     = \ x -> {
         : y ^ Word = uadd x 2
-        != \ z -> uadd x (uadd y z)
+        ! \ z -> uadd x (uadd y z)
     }
 
 # + 4 (+ (+ 4 2) 8) == 18
-!= emit (humanize ((so-deep 4) 8))
+! emit (humanize ((so-deep 4) 8))

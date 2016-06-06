@@ -111,12 +111,12 @@ Becomes the following pseudocode:
         ? {
             ubik-adt-ctor-matches? "A" x => {
                 : fst = ubik-adt-get 0 x
-                != fst
+                ! fst
             }
             ubik-adt-ctor-matches? "B" x => {
                 : fst = ubik-adt-get 0 x
                 : snd = ubik-adt-get 1 x
-                != snd
+                ! snd
             }
         }
 
