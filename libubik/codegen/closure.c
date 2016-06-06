@@ -145,22 +145,25 @@ apply_downwards_transform(
                         return err;
         }
 
-        for (i = 0; i < subast->bindings.n; i++)
+        if (subast != NULL)
         {
-                struct ubik_ast_binding *bind;
-                bind = subast->bindings.elems[i];
-                err = apply_downwards_transform(
-                        resolving_name, ctx, &bind->expr);
-                if (err != OK)
-                        return err;
-        }
+                for (i = 0; i < subast->bindings.n; i++)
+                {
+                        struct ubik_ast_binding *bind;
+                        bind = subast->bindings.elems[i];
+                        err = apply_downwards_transform(
+                                resolving_name, ctx, &bind->expr);
+                        if (err != OK)
+                                return err;
+                }
 
-        if (subast->immediate != NULL)
-        {
-                err = apply_downwards_transform(
-                        resolving_name, ctx, &subast->immediate);
-                if (err != OK)
-                        return err;
+                if (subast->immediate != NULL)
+                {
+                        err = apply_downwards_transform(
+                                resolving_name, ctx, &subast->immediate);
+                        if (err != OK)
+                                return err;
+                }
         }
         return OK;
 }
