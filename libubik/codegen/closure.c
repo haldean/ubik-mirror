@@ -67,10 +67,14 @@
  */
 
 no_ignore static ubik_error
-apply_closure(struct ubik_ast_expr **lambda, char *resolving_name)
+apply_closure(
+        struct ubik_resolve_context *ctx,
+        struct ubik_ast_expr **lambda,
+        char *resolving_name)
 {
         struct ubik_ast_expr *apply;
         struct ubik_ast_expr *name;
+        ubik_error err;
 
         (*lambda)->scope->needs_closure_appl = false;
 
@@ -82,22 +86,37 @@ apply_closure(struct ubik_ast_expr **lambda, char *resolving_name)
 
         name->atom = calloc(1, sizeof(struct ubik_ast_atom));
         if (name->atom == NULL)
-                return ubik_raise(ERR_NO_MEMORY, "closure name alloc");
+        {
+                err = ubik_raise(ERR_NO_MEMORY, "closure name alloc");
+                goto free1;
+        }
         name->atom->atom_type = ATOM_NAME;
         name->atom->name_loc = calloc(1, sizeof(struct ubik_resolve_name_loc));
         if (name->atom->name_loc == NULL)
-                return ubik_raise(ERR_NO_MEMORY, "closure name alloc");
+        {
+                err = ubik_raise(ERR_NO_MEMORY, "closure name alloc");
+                goto free2;
+        }
+        err = ubik_vector_append(&ctx->allocs, name->atom->name_loc);
+        if (err != OK)
+                goto free3;
         name->atom->name_loc->type = RESOLVE_LOCAL;
 
         name->atom->str = strdup(resolving_name);
         if (name->atom->str == NULL)
-                return ubik_raise(ERR_NO_MEMORY, "closure name alloc");
+        {
+                err = ubik_raise(ERR_NO_MEMORY, "closure name alloc");
+                goto free3;
+        }
 
         name->scope = (*lambda)->scope->parent;
 
         apply = calloc(1, sizeof(struct ubik_ast_expr));
         if (apply == NULL)
-                return ubik_raise(ERR_NO_MEMORY, "closure apply alloc");
+        {
+                err = ubik_raise(ERR_NO_MEMORY, "closure apply alloc");
+                goto free3;
+        }
         apply->expr_type = EXPR_APPLY;
 
         apply->scope = (*lambda)->scope->parent;
@@ -107,6 +126,14 @@ apply_closure(struct ubik_ast_expr **lambda, char *resolving_name)
 
         *lambda = apply;
         return OK;
+
+free3:
+        free(name->atom->name_loc);
+free2:
+        free(name->atom);
+free1:
+        free(name);
+        return err;
 }
 
 no_ignore static ubik_error
@@ -126,7 +153,7 @@ apply_downwards_transform(
 
         if (expr->scope->needs_closure_appl)
         {
-                err = apply_closure(expr_ref, resolving_name);
+                err = apply_closure(ctx, expr_ref, resolving_name);
                 if (err != OK)
                         return err;
                 expr = *expr_ref;
