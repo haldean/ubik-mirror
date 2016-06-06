@@ -72,7 +72,7 @@
 }
 
 %token <token> BIND TYPE IMPLIES GOES_TO LAMBDA IS OPEN_PAR CLOSE_PAR IMMEDIATE
-%token <token> USES MEMBER OPEN_SCOPE CLOSE_SCOPE GIVEN EXISTS COND
+%token <token> MEMBER OPEN_SCOPE CLOSE_SCOPE GIVEN EXISTS COND ADD
 %token <integer> INTEGER
 %token <floating> NUMBER
 %token <string> NAME TYPE_NAME STRING QUALIFIED_NAME
@@ -83,7 +83,7 @@
 %type <type_expr> top_type_expr type_expr type_atom
 %type <atom> atom
 %type <arg_list> arg_list
-%type <imports> imports
+%type <imports> imports import
 %type <type_def> adt_def alias_def type_def
 %type <type_list> type_list
 %type <adt_ctor> adt_ctor adt_ctors
@@ -136,8 +136,21 @@ prog
 | package blocks immediate
 {
         ctx->ast = $2;
-        ctx->ast->immediate = $3;
         ctx->ast->package_name = $1;
+        ctx->ast->immediate = $3;
+}
+| package imports blocks
+{
+        ctx->ast = $3;
+        ctx->ast->package_name = $1;
+        ctx->ast->imports = $2;
+}
+| package imports blocks immediate
+{
+        ctx->ast = $3;
+        ctx->ast->package_name = $1;
+        ctx->ast->imports = $2;
+        ctx->ast->immediate = $4;
 }
 ;
 
@@ -145,6 +158,28 @@ package
 : MEMBER NAME
 {
         $$ = $2;
+}
+;
+
+imports
+: imports import
+{
+        $$ = $2;
+        $$->next = $1;
+}
+| import
+{
+        $$ = NULL;
+}
+;
+
+import
+: ADD NAME
+{
+        alloc($$, 1, struct ubik_ast_import_list);
+        $$->canonical = $2;
+        $$->name = strdup($2);
+        load_loc($$->loc);
 }
 ;
 
@@ -157,12 +192,6 @@ blocks
 | blocks binding
 {
         wrap_err(ubik_ast_bind($1, $2));
-        $$ = $1;
-        merge_loc($$, $$, $2);
-}
-| blocks imports
-{
-        wrap_err(ubik_ast_import($1, $2));
         $$ = $1;
         merge_loc($$, $$, $2);
 }
@@ -208,15 +237,6 @@ immediate
         $$ = $2;
         load_loc($$->loc);
         merge_loc($$, $$, $2);
-}
-;
-
-imports
-: USES NAME
-{
-        alloc($$, 1, struct ubik_ast_import_list);
-        $$->name = $2;
-        load_loc($$->loc);
 }
 ;
 

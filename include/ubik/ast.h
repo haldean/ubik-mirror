@@ -178,6 +178,7 @@ struct ubik_ast_binding
 
 struct ubik_ast_import_list
 {
+        char *canonical;
         char *name;
         struct ubik_ast_loc loc;
         struct ubik_ast_import_list *next;
