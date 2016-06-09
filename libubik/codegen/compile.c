@@ -211,6 +211,8 @@ create_import_request(
                         err = ubik_ast_free(test_ast);
                         if (err != OK)
                                 goto free_fullpath;
+
+                        free(fullpath);
                 }
 
                 closedir(test_dir);
@@ -239,7 +241,6 @@ load_ast(struct ubik_compile_env *cenv, struct ubik_compile_job *job)
         import = job->ast->imports;
         while (import != NULL)
         {
-                printf("needs import %s\n", import->canonical);
                 req = calloc(1, sizeof(struct ubik_compile_request));
                 err = create_import_request(req, cenv, import->canonical);
                 if (err != OK)
@@ -250,6 +251,7 @@ load_ast(struct ubik_compile_env *cenv, struct ubik_compile_job *job)
                         free_req(req);
                         return err;
                 }
+                free_req(req);
                 import = import->next;
         }
 
