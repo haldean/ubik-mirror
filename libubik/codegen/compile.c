@@ -167,7 +167,6 @@ compile_request(
         struct ubik_compile_env *cenv,
         struct ubik_compile_job *job)
 {
-        struct ubik_gen_requires *requires;
         struct ubik_dagc *graph;
         struct ubik_compile_result *res;
         local(resolve_context) struct ubik_resolve_context resolve_ctx = {0};
@@ -201,17 +200,8 @@ compile_request(
         if (err != OK)
                 return err;
 
-        if (cenv->debug)
-        {
-                printf("\ninferred\n");
-                err = ubik_ast_print(job->ast);
-                if (err != OK)
-                        return err;
-        }
-
-        requires = NULL;
         err = ubik_gen_graphs(
-                &graph, &requires, job->ast, job->request->reason);
+                &graph, job->ast, job->request->reason);
         if (err != OK)
                 return err;
 

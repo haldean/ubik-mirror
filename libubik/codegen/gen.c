@@ -101,82 +101,6 @@ ubik_compile_binding(
         return OK;
 }
 
-/* Returns a fully-resolved URI, adding it to the requires list if necessary.
- * The returned URI has one reference allocated for the caller, and one
- * reference allocated for the requires list if appropriate. */
-no_ignore static ubik_error
-_collect_dep_packages(
-        struct ubik_uri *uri,
-        struct ubik_gen_requires **requires,
-        char *package_name)
-{
-        struct ubik_gen_requires *new_req;
-        ubik_error err;
-
-        if (uri->scope != SCOPE_PACKAGE)
-                return OK;
-        if (strcmp(uri->source, package_name) == 0)
-                return OK;
-
-        new_req = calloc(1, sizeof(struct ubik_gen_requires));
-        new_req->dependency = uri;
-        new_req->next = *requires;
-
-        err = ubik_take(uri);
-        if (err != OK)
-                return err;
-
-        *requires = new_req;
-        return OK;
-}
-
-no_ignore static ubik_error
-_collect_all_dep_packages(
-        struct ubik_dagc *graph,
-        struct ubik_env *local_env,
-        struct ubik_gen_requires **requires,
-        char *package_name)
-{
-        size_t i;
-        ubik_error err;
-        struct ubik_dagc_load *load;
-        struct ubik_dagc_const *cons;
-        ubik_tag t;
-
-        /* Mark the graph resolved here, so that self-references do not cause us
-         * to go into an infinite loop. */
-        graph->tag &= ~TAG_GRAPH_UNRESOLVED;
-
-        for (i = 0; i < graph->n; i++)
-        {
-                if (graph->nodes[i]->node_type == DAGC_NODE_CONST)
-                {
-                        cons = (struct ubik_dagc_const *) graph->nodes[i];
-                        t = *cons->value.tag;
-                        if ((t & TAG_TYPE_MASK) != TAG_GRAPH)
-                                continue;
-                        if (!(t & TAG_GRAPH_UNRESOLVED))
-                                continue;
-                        err = _collect_all_dep_packages(
-                                cons->value.graph, local_env, requires,
-                                package_name);
-                        if (err != OK)
-                                return err;
-                        continue;
-                }
-
-                if (graph->nodes[i]->node_type != DAGC_NODE_LOAD)
-                        continue;
-                load = (struct ubik_dagc_load *) graph->nodes[i];
-
-                err = _collect_dep_packages(load->loc, requires, package_name);
-                if (err != OK)
-                        return err;
-        }
-
-        return OK;
-}
-
 struct modinit_iterator
 {
         struct ubik_graph_builder *builder;
@@ -438,7 +362,6 @@ ubik_compile_type(
 no_ignore ubik_error
 ubik_gen_graphs(
         struct ubik_dagc **res,
-        struct ubik_gen_requires **requires,
         struct ubik_ast *ast,
         enum ubik_load_reason load_reason)
 {
@@ -485,32 +408,7 @@ ubik_gen_graphs(
                 goto cleanup_env;
         }
 
-        err = _collect_all_dep_packages(
-                *res, &local_env, requires, ast->package_name);
-        if (err != OK)
-                return err;
-
 cleanup_env:
         rerr = ubik_env_free(&local_env);
         return err == OK ? rerr : err;
-}
-
-no_ignore ubik_error
-ubik_gen_requires_free(struct ubik_gen_requires *req)
-{
-        struct ubik_gen_requires *to_free;
-        ubik_error err;
-
-        while (req != NULL)
-        {
-                to_free = req;
-                req = to_free->next;
-
-                err = ubik_release(to_free->dependency);
-                if (err != OK)
-                        return err;
-                free(to_free);
-        }
-
-        return OK;
 }
