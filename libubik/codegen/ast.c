@@ -343,6 +343,7 @@ _free_import_list(struct ubik_ast_import_list *import_list)
                 import_list = to_free->next;
 
                 free(to_free->name);
+                free(to_free->canonical);
                 free(to_free);
         }
 
