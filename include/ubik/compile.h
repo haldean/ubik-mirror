@@ -30,6 +30,7 @@ struct ubik_compilation_request;
 typedef ubik_error (*ubik_compilation_cb)(
         const struct ubik_compilation_result *);
 
+/* Represents a user's request for compilation. */
 struct ubik_compilation_request
 {
         /* the path of the source file, used for reporting errors */
@@ -42,15 +43,20 @@ struct ubik_compilation_request
         ubik_compilation_cb cb;
 };
 
+/* Represents the final result of compilation. */
 struct ubik_compilation_result
 {
+        /* the request that was handled */
         struct ubik_compilation_request *request;
-
+        /* the fully-annotated AST for the request */
         struct ubik_ast *ast;
+        /* a list of graphs required for the request and its transitive
+         * dependency closure */
         struct ubik_dagc **graphs;
         size_t n_graphs;
 };
 
+/* Represents an in-progress compilation job. */
 struct ubik_compilation_job
 {
         struct ubik_compilation_request *request;
