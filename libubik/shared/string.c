@@ -117,3 +117,17 @@ ubik_string_path_concat(
         *out_p = out;
         return OK;
 }
+
+bool
+ubik_string_endswith(char *haystack, char *needle)
+{
+        size_t hlen;
+        size_t nlen;
+
+        hlen = strlen(haystack);
+        nlen = strlen(needle);
+
+        if (strncmp(&haystack[hlen - nlen], needle, nlen) == 0)
+                return true;
+        return false;
+}

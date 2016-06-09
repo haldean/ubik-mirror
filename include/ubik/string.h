@@ -17,6 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include <stdbool.h>
 #include <strings.h>
 #include "ubik/ubik.h"
 
@@ -36,3 +37,7 @@ ubik_string_path_concat(
         char **out,
         char *first,
         char *second);
+
+/* Returns true if the given string ends with the given suffix. */
+bool
+ubik_string_endswith(char *haystack, char *needle);
