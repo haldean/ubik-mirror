@@ -36,9 +36,24 @@ ubik_compile_env_default(struct ubik_compilation_env *cenv)
 {
         char *scratch_dir;
         char *include_dirs;
+        char *debug_var;
+        bool debug;
         ubik_error err;
 
-        cenv->verbose_src_xform = true;
+        debug_var = getenv("UBIK_DEBUG");
+        if (debug_var == NULL)
+                debug = false;
+        else
+        {
+                if (strcmp(debug_var, "0") == 0)
+                        debug = false;
+                else if (strcmp(debug_var, "no") == 0)
+                        debug = false;
+                else
+                        debug = true;
+        }
+
+        cenv->verbose_src_xform = debug;
 
         scratch_dir = calloc(512, sizeof(char));
         if (getcwd(scratch_dir, 500) == NULL)
