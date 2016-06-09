@@ -60,6 +60,7 @@ test_file(char *fname, bool debug, bool timing)
         n_graphs = 0;
         graphs = NULL;
         s = NULL;
+        expected = NULL;
 
         if (timing)
         {
@@ -98,6 +99,7 @@ test_file(char *fname, bool debug, bool timing)
                 err = ubik_value_load(expected, &stream);
                 if (err != OK && err->error_code == ERR_NO_DATA)
                 {
+                        free(err);
                         /* No expected result for this run, we'll just run it and make
                          * sure we don't crash. */
                         err = ubik_release(expected);
@@ -205,6 +207,21 @@ teardown:
 
                 }
                 free(graphs);
+        }
+
+        if (expected != NULL)
+        {
+                teardown_err = ubik_release(expected);
+                if (teardown_err != OK)
+                {
+                        char *explain = ubik_error_explain(teardown_err);
+                        printf("expected val release failed: %s\n", explain);
+                        free(explain);
+                        if (err == OK)
+                                err = teardown_err;
+                        else
+                                free(teardown_err);
+                }
         }
 
         teardown_err = ubik_teardown();
