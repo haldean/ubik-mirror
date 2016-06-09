@@ -22,16 +22,24 @@
 #include "ubik/gen.h"
 #include "ubik/ubik.h"
 
-struct ubik_compilation_result;
-struct ubik_compilation_request;
+enum ubik_compile_job_status
+{
+        COMPILE_WAIT_FOR_AST = 1,
+        COMPILE_WAIT_FOR_IMPORTS,
+        COMPILE_READY,
+        COMPILE_DONE,
+};
+
+struct ubik_compile_result;
+struct ubik_compile_request;
 
 /* Type for functions that are called when compilation of a certain compilation
  * request is complete. */
-typedef ubik_error (*ubik_compilation_cb)(
-        const struct ubik_compilation_result *);
+typedef ubik_error (*ubik_compile_cb)(
+        const struct ubik_compile_result *);
 
 /* Represents a user's request for compilation. */
-struct ubik_compilation_request
+struct ubik_compile_request
 {
         /* the path of the source file, used for reporting errors */
         char *source_name;
@@ -40,14 +48,14 @@ struct ubik_compilation_request
         /* the reason for this object to be compiled */
         enum ubik_load_reason reason;
         /* the callback to call once compilation is complete */
-        ubik_compilation_cb cb;
+        ubik_compile_cb cb;
 };
 
 /* Represents the final result of compilation. */
-struct ubik_compilation_result
+struct ubik_compile_result
 {
         /* the request that was handled */
-        struct ubik_compilation_request *request;
+        struct ubik_compile_request *request;
         /* the fully-annotated AST for the request */
         struct ubik_ast *ast;
         /* a list of graphs required for the request and its transitive
@@ -57,13 +65,14 @@ struct ubik_compilation_result
 };
 
 /* Represents an in-progress compilation job. */
-struct ubik_compilation_job
+struct ubik_compile_job
 {
-        struct ubik_compilation_request *request;
+        struct ubik_compile_request *request;
         struct ubik_ast *ast;
+        enum ubik_compile_job_status status;
 };
 
-struct ubik_compilation_env
+struct ubik_compile_env
 {
         char *scratch_dir;
 
@@ -72,17 +81,17 @@ struct ubik_compilation_env
 
         bool debug;
 
-        /* elements are ubik_compilation_job pointers */
+        /* elements are ubik_compile_job pointers */
         struct ubik_vector to_compile;
-        /* elements are ubik_compilation_result pointers */
+        /* elements are ubik_compile_result pointers */
         struct ubik_vector compiled;
 };
 
 no_ignore ubik_error
-ubik_compile_env_default(struct ubik_compilation_env *cenv);
+ubik_compile_env_default(struct ubik_compile_env *cenv);
 
 no_ignore ubik_error
-ubik_compile_env_free(struct ubik_compilation_env *cenv);
+ubik_compile_env_free(struct ubik_compile_env *cenv);
 
 /* Enqueues the given compilation job. Note that the request is shallow-copied
  * into the environment; it is safe to free the request immediately after
@@ -90,9 +99,9 @@ ubik_compile_env_free(struct ubik_compilation_env *cenv);
  * untouched until after compilation is complete. */
 no_ignore ubik_error
 ubik_compile_enqueue(
-        struct ubik_compilation_env *cenv,
-        struct ubik_compilation_request *req);
+        struct ubik_compile_env *cenv,
+        struct ubik_compile_request *req);
 
 /* Runs the compiler queue, returning when the queue is empty. */
 no_ignore ubik_error
-ubik_compile_run(struct ubik_compilation_env *cenv);
+ubik_compile_run(struct ubik_compile_env *cenv);

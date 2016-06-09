@@ -51,7 +51,7 @@ usage()
 }
 
 no_ignore ubik_error
-save_result(const struct ubik_compilation_result *res)
+save_result(const struct ubik_compile_result *res)
 {
         return ubik_save(&out, res->graphs, res->n_graphs);
 }
@@ -59,8 +59,8 @@ save_result(const struct ubik_compilation_result *res)
 int
 main(int argc, char *argv[])
 {
-        struct ubik_compilation_env env = {0};
-        struct ubik_compilation_request req;
+        struct ubik_compile_env env = {0};
+        struct ubik_compile_request req;
         struct ubik_stream in;
         ubik_error err;
 

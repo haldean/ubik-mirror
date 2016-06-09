@@ -31,7 +31,7 @@
 #include "ubik/util.h"
 
 no_ignore ubik_error
-ubik_compile_env_default(struct ubik_compilation_env *cenv)
+ubik_compile_env_default(struct ubik_compile_env *cenv)
 {
         char *scratch_dir;
         char *include_dirs;
@@ -84,10 +84,10 @@ ubik_compile_env_default(struct ubik_compilation_env *cenv)
 }
 
 no_ignore ubik_error
-ubik_compile_env_free(struct ubik_compilation_env *cenv)
+ubik_compile_env_free(struct ubik_compile_env *cenv)
 {
-        struct ubik_compilation_result *res;
-        struct ubik_compilation_request *req;
+        struct ubik_compile_result *res;
+        struct ubik_compile_job *job;
         size_t i, j;
         ubik_error err;
 
@@ -122,9 +122,16 @@ ubik_compile_env_free(struct ubik_compilation_env *cenv)
 
         for (i = 0; i < cenv->to_compile.n; i++)
         {
-                req = cenv->to_compile.elems[i];
-                free(req->source_name);
-                free(req);
+                job = cenv->to_compile.elems[i];
+                free(job->request->source_name);
+                free(job->request);
+                if (job->ast != NULL)
+                {
+                        err = ubik_ast_free(job->ast);
+                        if (err != OK)
+                                return err;
+                }
+                free(job);
         }
         ubik_vector_free(&cenv->to_compile);
 
@@ -132,92 +139,87 @@ ubik_compile_env_free(struct ubik_compilation_env *cenv)
 }
 
 no_ignore static ubik_error
-compile_request(
-        struct ubik_compilation_env *cenv,
-        struct ubik_compilation_job *job)
+load_ast(struct ubik_compile_job *job)
 {
-        struct ubik_ast *ast;
-        struct ubik_gen_requires *requires;
-        struct ubik_gen_requires *head;
-        struct ubik_dagc *graph;
-        struct ubik_compilation_result *res;
-        local(resolve_context) struct ubik_resolve_context resolve_ctx = {0};
-        local(patterns_context) struct ubik_patterns_context pattern_ctx = {0};
         ubik_error err;
-        ubik_error free_err;
+        struct ubik_ast_import_list *import;
 
-        err = ubik_parse(&ast, job->request->source_name, job->request->source);
+        err = ubik_parse(
+                &job->ast, job->request->source_name, job->request->source);
         if (err != OK)
                 return err;
 
-        if (cenv->debug)
+        import = job->ast->imports;
+        while (import != NULL)
         {
-                printf("parsed\n");
-                err = ubik_ast_print(ast);
-                if (err != OK)
-                        goto free_ast;
+                printf("needs import %s\n", import->name);
+                import = import->next;
         }
 
-        err = ubik_patterns_compile_all(ast, &pattern_ctx);
+        job->status = job->ast->imports == NULL
+                ? COMPILE_READY
+                : COMPILE_WAIT_FOR_IMPORTS;
+        return OK;
+}
+
+no_ignore static ubik_error
+compile_request(
+        struct ubik_compile_env *cenv,
+        struct ubik_compile_job *job)
+{
+        struct ubik_gen_requires *requires;
+        struct ubik_dagc *graph;
+        struct ubik_compile_result *res;
+        local(resolve_context) struct ubik_resolve_context resolve_ctx = {0};
+        local(patterns_context) struct ubik_patterns_context pattern_ctx = {0};
+        ubik_error err;
+
+        err = ubik_patterns_compile_all(job->ast, &pattern_ctx);
         if (err != OK)
                 return err;
 
         if (cenv->debug)
         {
                 printf("\npatterns\n");
-                err = ubik_ast_print(ast);
+                err = ubik_ast_print(job->ast);
                 if (err != OK)
-                        goto free_ast;
+                        return err;
         }
 
-        err = ubik_resolve(ast, &resolve_ctx);
+        err = ubik_resolve(job->ast, &resolve_ctx);
         if (err != OK)
-                goto free_ast;
+                return err;
         if (cenv->debug)
         {
                 printf("\nresolved\n");
-                err = ubik_ast_print(ast);
+                err = ubik_ast_print(job->ast);
                 if (err != OK)
-                        goto free_ast;
+                        return err;
         }
 
-        err = ubik_infer_types(ast, job->request->source);
+        err = ubik_infer_types(job->ast, job->request->source);
         if (err != OK)
-                goto free_ast;
+                return err;
 
         if (cenv->debug)
         {
                 printf("\ninferred\n");
-                err = ubik_ast_print(ast);
+                err = ubik_ast_print(job->ast);
                 if (err != OK)
-                        goto free_ast;
+                        return err;
         }
 
         requires = NULL;
-        err = ubik_gen_graphs(&graph, &requires, ast, job->request->reason);
+        err = ubik_gen_graphs(
+                &graph, &requires, job->ast, job->request->reason);
         if (err != OK)
-                goto free_ast;
+                return err;
 
-        head = requires;
-        while (requires != NULL)
-        {
-                err = ubik_raise(
-                        ERR_NOT_IMPLEMENTED, "imports not implemented");
-                goto free_ast;
-        }
-
-        err = ubik_gen_requires_free(head);
-        if (err != OK)
-                goto free_ast;
-
-        res = calloc(1, sizeof(struct ubik_compilation_result));
+        res = calloc(1, sizeof(struct ubik_compile_result));
         if (res == NULL)
-        {
-                err = ubik_raise(ERR_NO_MEMORY, "compilation result alloc");
-                goto free_ast;
-        }
+                return ubik_raise(ERR_NO_MEMORY, "compilation result alloc");
         res->request = job->request;
-        res->ast = ast;
+        res->ast = job->ast;
         res->graphs = calloc(1, sizeof(struct ubik_dagc *));
         if (res->graphs == NULL)
         {
@@ -232,20 +234,14 @@ compile_request(
                 goto free_res_graphs;
 
         job->request->cb(res);
-        free(job);
+        job->status = COMPILE_DONE;
         return OK;
 
 free_res_graphs:
         free(res->graphs);
 free_res:
         free(res);
-free_ast:
-        free_err = ubik_ast_free(ast);
-        if (err != OK)
-                return err;
-        if (free_err != OK)
-                return free_err;
-        return OK;
+        return err;
 }
 
 no_ignore ubik_error
@@ -253,7 +249,7 @@ _open_stream_for_requirement(
         struct ubik_stream *out,
         char **source_name,
         char *package_name,
-        struct ubik_compilation_env *cenv)
+        struct ubik_compile_env *cenv)
 {
         size_t i;
         char *test_file;
@@ -291,17 +287,17 @@ _open_stream_for_requirement(
 
 no_ignore ubik_error
 ubik_compile_enqueue(
-        struct ubik_compilation_env *cenv,
-        struct ubik_compilation_request *userreq)
+        struct ubik_compile_env *cenv,
+        struct ubik_compile_request *userreq)
 {
-        struct ubik_compilation_request *req;
-        struct ubik_compilation_job *job;
+        struct ubik_compile_request *req;
+        struct ubik_compile_job *job;
 
-        req = calloc(1, sizeof(struct ubik_compilation_request));
+        req = calloc(1, sizeof(struct ubik_compile_request));
         if (req == NULL)
                 return ubik_raise(ERR_NO_MEMORY, "enqueue compilation request");
 
-        job = calloc(1, sizeof(struct ubik_compilation_job));
+        job = calloc(1, sizeof(struct ubik_compile_job));
         if (job == NULL)
         {
                 free(req);
@@ -315,23 +311,43 @@ ubik_compile_enqueue(
 
         job->request = req;
         job->ast = NULL;
+        job->status = COMPILE_WAIT_FOR_AST;
 
         return ubik_vector_append(&cenv->to_compile, job);
 }
 
 no_ignore ubik_error
-ubik_compile_run(struct ubik_compilation_env *cenv)
+ubik_compile_run(struct ubik_compile_env *cenv)
 {
-        struct ubik_compilation_job *job;
+        struct ubik_compile_job *job;
         ubik_error err;
 
         while (cenv->to_compile.n > 0)
         {
-                job = cenv->to_compile.elems[0];
-                err = compile_request(cenv, job);
-                if (err != OK)
-                        return err;
-                cenv->to_compile.n--;
+                job = cenv->to_compile.elems[cenv->to_compile.n - 1];
+
+                switch (job->status)
+                {
+                case COMPILE_WAIT_FOR_AST:
+                        err = load_ast(job);
+                        if (err != OK)
+                                return err;
+                        break;
+
+                case COMPILE_WAIT_FOR_IMPORTS:
+                        return ubik_raise(ERR_NOT_IMPLEMENTED, "imports");
+
+                case COMPILE_READY:
+                        err = compile_request(cenv, job);
+                        if (err != OK)
+                                return err;
+                        break;
+
+                case COMPILE_DONE:
+                        free(job);
+                        cenv->to_compile.n--;
+                        break;
+                }
         }
 
         return OK;
