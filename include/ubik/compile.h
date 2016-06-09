@@ -51,6 +51,12 @@ struct ubik_compilation_result
         size_t n_graphs;
 };
 
+struct ubik_compilation_job
+{
+        struct ubik_compilation_request *request;
+        struct ubik_ast *ast;
+};
+
 struct ubik_compilation_env
 {
         char *scratch_dir;
@@ -60,7 +66,7 @@ struct ubik_compilation_env
 
         bool debug;
 
-        /* elements are ubik_compilation_request pointers */
+        /* elements are ubik_compilation_job pointers */
         struct ubik_vector to_compile;
         /* elements are ubik_compilation_result pointers */
         struct ubik_vector compiled;

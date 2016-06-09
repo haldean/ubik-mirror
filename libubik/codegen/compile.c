@@ -134,7 +134,7 @@ ubik_compile_env_free(struct ubik_compilation_env *cenv)
 no_ignore static ubik_error
 compile_request(
         struct ubik_compilation_env *cenv,
-        struct ubik_compilation_request *req)
+        struct ubik_compilation_job *job)
 {
         struct ubik_ast *ast;
         struct ubik_gen_requires *requires;
@@ -146,7 +146,7 @@ compile_request(
         ubik_error err;
         ubik_error free_err;
 
-        err = ubik_parse(&ast, req->source_name, req->source);
+        err = ubik_parse(&ast, job->request->source_name, job->request->source);
         if (err != OK)
                 return err;
 
@@ -181,7 +181,7 @@ compile_request(
                         goto free_ast;
         }
 
-        err = ubik_infer_types(ast, req->source);
+        err = ubik_infer_types(ast, job->request->source);
         if (err != OK)
                 goto free_ast;
 
@@ -194,7 +194,7 @@ compile_request(
         }
 
         requires = NULL;
-        err = ubik_gen_graphs(&graph, &requires, ast, req->reason);
+        err = ubik_gen_graphs(&graph, &requires, ast, job->request->reason);
         if (err != OK)
                 goto free_ast;
 
@@ -216,7 +216,7 @@ compile_request(
                 err = ubik_raise(ERR_NO_MEMORY, "compilation result alloc");
                 goto free_ast;
         }
-        res->request = req;
+        res->request = job->request;
         res->ast = ast;
         res->graphs = calloc(1, sizeof(struct ubik_dagc *));
         if (res->graphs == NULL)
@@ -231,7 +231,8 @@ compile_request(
         if (err != OK)
                 goto free_res_graphs;
 
-        req->cb(res);
+        job->request->cb(res);
+        free(job);
         return OK;
 
 free_res_graphs:
@@ -294,28 +295,40 @@ ubik_compile_enqueue(
         struct ubik_compilation_request *userreq)
 {
         struct ubik_compilation_request *req;
+        struct ubik_compilation_job *job;
 
         req = calloc(1, sizeof(struct ubik_compilation_request));
         if (req == NULL)
                 return ubik_raise(ERR_NO_MEMORY, "enqueue compilation request");
+
+        job = calloc(1, sizeof(struct ubik_compilation_job));
+        if (job == NULL)
+        {
+                free(req);
+                return ubik_raise(ERR_NO_MEMORY, "enqueue compilation request");
+        }
+
         req->source_name = strdup(userreq->source_name);
         req->source = userreq->source;
         req->reason = userreq->reason;
         req->cb = userreq->cb;
 
-        return ubik_vector_append(&cenv->to_compile, req);
+        job->request = req;
+        job->ast = NULL;
+
+        return ubik_vector_append(&cenv->to_compile, job);
 }
 
 no_ignore ubik_error
 ubik_compile_run(struct ubik_compilation_env *cenv)
 {
-        struct ubik_compilation_request *req;
+        struct ubik_compilation_job *job;
         ubik_error err;
 
         while (cenv->to_compile.n > 0)
         {
-                req = cenv->to_compile.elems[0];
-                err = compile_request(cenv, req);
+                job = cenv->to_compile.elems[0];
+                err = compile_request(cenv, job);
                 if (err != OK)
                         return err;
                 cenv->to_compile.n--;
