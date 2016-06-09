@@ -17,6 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include <dirent.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -83,6 +84,15 @@ ubik_compile_env_default(struct ubik_compile_env *cenv)
         return OK;
 }
 
+static void
+free_req(struct ubik_compile_request *req)
+{
+        free(req->source_name);
+        if (req->package_name != NULL)
+                free(req->package_name);
+        free(req);
+}
+
 no_ignore ubik_error
 ubik_compile_env_free(struct ubik_compile_env *cenv)
 {
@@ -101,8 +111,7 @@ ubik_compile_env_free(struct ubik_compile_env *cenv)
         {
                 res = cenv->compiled.elems[i];
 
-                free(res->request->source_name);
-                free(res->request);
+                free_req(res->request);
 
                 err = ubik_ast_free(res->ast);
                 if (err != OK)
@@ -123,8 +132,7 @@ ubik_compile_env_free(struct ubik_compile_env *cenv)
         for (i = 0; i < cenv->to_compile.n; i++)
         {
                 job = cenv->to_compile.elems[i];
-                free(job->request->source_name);
-                free(job->request);
+                free_req(job->request);
                 if (job->ast != NULL)
                 {
                         err = ubik_ast_free(job->ast);
@@ -139,20 +147,109 @@ ubik_compile_env_free(struct ubik_compile_env *cenv)
 }
 
 no_ignore static ubik_error
-load_ast(struct ubik_compile_job *job)
+create_import_request(
+        struct ubik_compile_request *res,
+        struct ubik_compile_env *cenv,
+        char *name)
+{
+        struct dirent *test_f;
+        struct ubik_stream in_stream;
+        struct ubik_ast *test_ast;
+        DIR *test_dir;
+        char *fullpath;
+        size_t i;
+        ubik_error err;
+
+        err = OK;
+
+        for (i = 0; i < cenv->n_include_dirs; i++)
+        {
+                test_dir = opendir(cenv->include_dirs[i]);
+                if (test_dir == NULL)
+                {
+                        perror("couldn't open include directory");
+                        err = ubik_raise(ERR_SYSTEM, "open include directory");
+                        goto free_fullpath;
+                }
+
+                while ((test_f = readdir(test_dir)) != NULL)
+                {
+                        if (!ubik_string_endswith(test_f->d_name, ".uk"))
+                                continue;
+
+                        err = ubik_string_path_concat(
+                                &fullpath, cenv->include_dirs[i],
+                                test_f->d_name);
+                        if (err != OK)
+                                goto free_fullpath;
+
+                        err = ubik_stream_rfile(&in_stream, fullpath);
+                        if (err != OK)
+                                goto free_fullpath;
+
+                        err = ubik_parse(&test_ast, fullpath, &in_stream, false);
+                        if (err != OK)
+                                continue;
+
+                        if (strcmp(test_ast->package_name, name) == 0)
+                        {
+                                err = ubik_ast_free(test_ast);
+                                if (err != OK)
+                                        goto free_fullpath;
+
+                                ubik_stream_reset(&in_stream);
+                                res->source_name = fullpath;
+                                res->package_name = strdup(name);
+                                res->source = in_stream;
+                                res->reason = LOAD_IMPORTED;
+                                res->cb = NULL;
+
+                                closedir(test_dir);
+                                return OK;
+                        }
+
+                        err = ubik_ast_free(test_ast);
+                        if (err != OK)
+                                goto free_fullpath;
+                }
+
+                closedir(test_dir);
+        }
+
+        return ubik_raise(ERR_ABSENT, "couldn't find import source");
+
+free_fullpath:
+        free(fullpath);
+        return err;
+}
+
+no_ignore static ubik_error
+load_ast(struct ubik_compile_env *cenv, struct ubik_compile_job *job)
 {
         ubik_error err;
         struct ubik_ast_import_list *import;
+        struct ubik_compile_request *req;
 
         err = ubik_parse(
-                &job->ast, job->request->source_name, job->request->source);
+                &job->ast, job->request->source_name, &job->request->source,
+                true);
         if (err != OK)
                 return err;
 
         import = job->ast->imports;
         while (import != NULL)
         {
-                printf("needs import %s\n", import->name);
+                printf("needs import %s\n", import->canonical);
+                req = calloc(1, sizeof(struct ubik_compile_request));
+                err = create_import_request(req, cenv, import->canonical);
+                if (err != OK)
+                        return err;
+                err = ubik_compile_enqueue(cenv, req);
+                if (err != OK)
+                {
+                        free_req(req);
+                        return err;
+                }
                 import = import->next;
         }
 
@@ -163,7 +260,7 @@ load_ast(struct ubik_compile_job *job)
 }
 
 no_ignore static ubik_error
-compile_request(
+compile_job(
         struct ubik_compile_env *cenv,
         struct ubik_compile_job *job)
 {
@@ -196,7 +293,7 @@ compile_request(
                         return err;
         }
 
-        err = ubik_infer_types(job->ast, job->request->source);
+        err = ubik_infer_types(job->ast, &job->request->source);
         if (err != OK)
                 return err;
 
@@ -223,7 +320,8 @@ compile_request(
         if (err != OK)
                 goto free_res_graphs;
 
-        job->request->cb(res);
+        if (job->request->cb != NULL)
+                job->request->cb(res);
         job->status = COMPILE_DONE;
         return OK;
 
@@ -232,47 +330,6 @@ free_res_graphs:
 free_res:
         free(res);
         return err;
-}
-
-no_ignore ubik_error
-_open_stream_for_requirement(
-        struct ubik_stream *out,
-        char **source_name,
-        char *package_name,
-        struct ubik_compile_env *cenv)
-{
-        size_t i;
-        char *test_file;
-        char *test_basename;
-        ubik_error err;
-
-        test_basename = calloc(strlen(package_name) + 4, sizeof(char));
-        strcpy(test_basename, package_name);
-        strcat(test_basename, ".uk");
-
-        for (i = 0; i < cenv->n_include_dirs; i++)
-        {
-                err = ubik_string_path_concat(
-                        &test_file, cenv->include_dirs[i], test_basename);
-                if (err != OK)
-                        return err;
-                if (access(test_file, R_OK) == 0)
-                {
-                        err = ubik_stream_rfile(out, test_file);
-                        if (err != OK)
-                                return err;
-                        if (cenv->debug)
-                                printf("found %s for %s\n",
-                                       test_file, package_name);
-                        free(test_file);
-                        *source_name = test_basename;
-                        return OK;
-                }
-                free(test_file);
-        }
-
-        free(test_basename);
-        return ubik_raise(ERR_ABSENT, package_name);
 }
 
 no_ignore ubik_error
@@ -295,6 +352,10 @@ ubik_compile_enqueue(
         }
 
         req->source_name = strdup(userreq->source_name);
+        if (userreq->package_name != NULL)
+                req->package_name = strdup(userreq->package_name);
+        else
+                req->package_name = NULL;
         req->source = userreq->source;
         req->reason = userreq->reason;
         req->cb = userreq->cb;
@@ -304,6 +365,45 @@ ubik_compile_enqueue(
         job->status = COMPILE_WAIT_FOR_AST;
 
         return ubik_vector_append(&cenv->to_compile, job);
+}
+
+no_ignore static ubik_error
+ensure_imports_ready(
+        struct ubik_compile_env *cenv,
+        struct ubik_compile_job *job)
+{
+        struct ubik_ast_import_list *import;
+        struct ubik_compile_result *result;
+        bool found;
+        char *expect;
+        char *check;
+        size_t i;
+
+        import = job->ast->imports;
+        while (import != NULL)
+        {
+                expect = import->canonical;
+                for (i = 0; i < cenv->compiled.n; i++)
+                {
+                        result = cenv->compiled.elems[i];
+                        check = result->request->package_name;
+                        if (check == NULL)
+                                continue;
+                        if (strcmp(check, expect) == 0)
+                        {
+                                found = true;
+                                break;
+                        }
+                }
+                if (!found)
+                        return ubik_raise(
+                                ERR_UNEXPECTED_FAILURE,
+                                "imports were not satisfied in compilation");
+                import = import->next;
+        }
+
+        job->status = COMPILE_READY;
+        return OK;
 }
 
 no_ignore ubik_error
@@ -319,16 +419,19 @@ ubik_compile_run(struct ubik_compile_env *cenv)
                 switch (job->status)
                 {
                 case COMPILE_WAIT_FOR_AST:
-                        err = load_ast(job);
+                        err = load_ast(cenv, job);
                         if (err != OK)
                                 return err;
                         break;
 
                 case COMPILE_WAIT_FOR_IMPORTS:
-                        return ubik_raise(ERR_NOT_IMPLEMENTED, "imports");
+                        err = ensure_imports_ready(cenv, job);
+                        if (err != OK)
+                                return err;
+                        break;
 
                 case COMPILE_READY:
-                        err = compile_request(cenv, job);
+                        err = compile_job(cenv, job);
                         if (err != OK)
                                 return err;
                         break;

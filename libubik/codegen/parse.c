@@ -35,7 +35,11 @@ ubik_parse_context_free(struct ubik_parse_context *ctx)
 }
 
 no_ignore ubik_error
-ubik_parse(struct ubik_ast **ast, char *source_name, struct ubik_stream *stream)
+ubik_parse(
+        struct ubik_ast **ast,
+        char *source_name,
+        struct ubik_stream *stream,
+        bool show_errors)
 {
         int status;
         yypstate *ps;
@@ -73,14 +77,17 @@ ubik_parse(struct ubik_ast **ast, char *source_name, struct ubik_stream *stream)
 
         if (ctx.err_loc != NULL)
         {
-                fprintf(stderr,
-                        "\x1b[37m%s:%lu:%lu:\x1b[31m error:\x1b[0m %s\n",
-                        source_name, ctx.err_loc->line_start,
-                        ctx.err_loc->col_start, ctx.err_msg);
-                ubik_streamutil_print_line_char(
-                        stream,
-                        ctx.err_loc->line_start - 1,
-                        ctx.err_loc->col_start);
+                if (show_errors)
+                {
+                        fprintf(stderr,
+                                "\x1b[37m%s:%lu:%lu:\x1b[31m error:\x1b[0m %s\n",
+                                source_name, ctx.err_loc->line_start,
+                                ctx.err_loc->col_start, ctx.err_msg);
+                        ubik_streamutil_print_line_char(
+                                stream,
+                                ctx.err_loc->line_start - 1,
+                                ctx.err_loc->col_start);
+                }
                 free(ctx.err_loc);
                 free(ctx.err_msg);
         }

@@ -75,8 +75,8 @@ main(int argc, char *argv[])
         req.source_name = argv[1];
         req.reason = LOAD_MAIN;
         req.cb = save_result;
-        req.source = &in;
-        if (ubik_stream_rfile(req.source, req.source_name) != OK)
+        req.source = in;
+        if (ubik_stream_rfile(&req.source, req.source_name) != OK)
         {
                 printf("could not open %s for reading\n", argv[1]);
                 return EXIT_FAILURE;
@@ -92,7 +92,7 @@ main(int argc, char *argv[])
         c(ubik_compile_run(&env));
 
 teardown:
-        ubik_stream_close(req.source);
+        ubik_stream_close(&req.source);
         ubik_stream_close(&out);
 
         if (ubik_compile_env_free(&env) != OK)

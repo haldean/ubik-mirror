@@ -40,4 +40,8 @@ struct ubik_parse_context
 };
 
 no_ignore ubik_error
-ubik_parse(struct ubik_ast **ast, char *source_name, struct ubik_stream *stream);
+ubik_parse(
+        struct ubik_ast **ast,
+        char *source_name,
+        struct ubik_stream *stream,
+        bool show_errors);

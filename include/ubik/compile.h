@@ -20,6 +20,7 @@
 #pragma once
 #include "ubik/ast.h"
 #include "ubik/gen.h"
+#include "ubik/stream.h"
 #include "ubik/ubik.h"
 
 enum ubik_compile_job_status
@@ -43,8 +44,11 @@ struct ubik_compile_request
 {
         /* the path of the source file, used for reporting errors */
         char *source_name;
+        /* the package that this represents (only required if this is being
+         * enqueued to satisfy an import) */
+        char *package_name;
         /* a stream containing the source code to compile */
-        struct ubik_stream *source;
+        struct ubik_stream source;
         /* the reason for this object to be compiled */
         enum ubik_load_reason reason;
         /* the callback to call once compilation is complete */

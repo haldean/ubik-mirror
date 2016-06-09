@@ -87,7 +87,7 @@ properties:
       when the substrate becomes more fully specified).
 
 Given these, the following proposal is put forward. A module must start
-with the following line (excluding comments, which may proceed it):
+with the following line:
 
     . example-package
 
