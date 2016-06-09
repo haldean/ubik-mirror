@@ -99,7 +99,6 @@ infer_ast(
 no_ignore ubik_error
 ubik_infer_types(
         struct ubik_ast *ast,
-        char *source_name,
         struct ubik_stream *stream)
 {
         size_t i;
@@ -123,7 +122,7 @@ ubik_infer_types(
                                         "\x1b[37m%s:%lu:%lu:\x1b[31m "
                                         "error:\x1b[0m top-level bindings must "
                                         "have explicit type: %s\n",
-                                        source_name,
+                                        ierr->loc.source_name,
                                         ierr->loc.line_start,
                                         ierr->loc.col_start,
                                         ierr->entity_name);

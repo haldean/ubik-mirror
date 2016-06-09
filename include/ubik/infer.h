@@ -25,5 +25,4 @@
 no_ignore ubik_error
 ubik_infer_types(
         struct ubik_ast *ast,
-        char *source_name,
         struct ubik_stream *stream);

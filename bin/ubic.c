@@ -40,6 +40,9 @@
                 goto teardown; \
         } } while(0)
 
+
+static struct ubik_stream out;
+
 void
 usage()
 {
@@ -47,14 +50,19 @@ usage()
         printf("usage: ubikc SOURCE OUT\n");
 }
 
+no_ignore ubik_error
+save_result(const struct ubik_compilation_result *res)
+{
+        return ubik_save(&out, res->graphs, res->n_graphs);
+}
+
 int
 main(int argc, char *argv[])
 {
-        struct ubik_dagc *graph;
-        struct ubik_stream in, out;
+        struct ubik_compilation_env env = {0};
+        struct ubik_compilation_request req;
+        struct ubik_stream in;
         ubik_error err;
-        struct ubik_compilation_env env;
-        char *source_name;
 
         if (argc != 3)
         {
@@ -62,12 +70,13 @@ main(int argc, char *argv[])
                 return EXIT_FAILURE;
         }
 
-        graph = NULL;
-
         c(ubik_start());
 
-        source_name = argv[1];
-        if (ubik_stream_rfile(&in, source_name) != OK)
+        req.source_name = argv[1];
+        req.reason = LOAD_MAIN;
+        req.cb = save_result;
+        req.source = &in;
+        if (ubik_stream_rfile(req.source, req.source_name) != OK)
         {
                 printf("could not open %s for reading\n", argv[1]);
                 return EXIT_FAILURE;
@@ -79,26 +88,15 @@ main(int argc, char *argv[])
         }
 
         c(ubik_compile_env_default(&env));
-        c(ubik_compile(&graph, source_name, &in, &env));
-        c(ubik_save(&out, &graph, 1));
+        c(ubik_compile_enqueue(&env, &req));
+        c(ubik_compile_run(&env));
 
 teardown:
-        ubik_stream_close(&in);
+        ubik_stream_close(req.source);
         ubik_stream_close(&out);
 
         if (ubik_compile_env_free(&env) != OK)
                 printf("error when freeing compile env\n");
-
-        if (graph != NULL)
-        {
-                err = ubik_release(graph);
-                if (err != OK)
-                {
-                        char *expl = ubik_error_explain(err);
-                        printf("error when releasing graph: %s\n", expl);
-                        free(expl);
-                }
-        }
 
         if (ubik_teardown() != OK)
                 printf("error when tearing down runtime\n");
