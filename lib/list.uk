@@ -1,5 +1,5 @@
 . list
-+ boolean
++ *boolean
 
 ^ List a
     = Cons a (List a)
@@ -13,12 +13,23 @@
     }
 
 : contains
-    ^ List a -> a -> boolean:Boolean
+    ^ List a -> a -> Boolean
     = \lst x -> ? lst {
         . Cons head tail => (? {
             . eq head x => True
             .           => contains tail x
         })
         . Nil => False
+    }
+
+: humanize-list
+    ^ List a -> List a
+    = \lst -> {
+        : rec = \x -> ? x {
+            . Cons a xs => (
+                concat (concat " " (humanize a)) (rec xs))
+            . Nil => " "
+        }
+        ! concat "[" (concat (rec lst) "]")
     }
 
