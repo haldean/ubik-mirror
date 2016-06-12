@@ -125,10 +125,28 @@ Of course, this can get pretty verbose pretty quickly:
     : question = ibm/watson/jeopardy:guess-question answer
 
 So with that in mind, you can bind imports to shorter names using
-everyone's favorite bind operator:
+everyone's favorite fat arrow:
 
-    + ibm/watson/jeopardy : jeopardy
+    + ibm/watson/jeopardy => jeopardy
     : question = jeopardy:guess-question answer
+
+You can also import all of the names in a package into the local
+namespace using a brand-new operator, splat:
+
+    + *ibm/watson/jeopardy
+    : better-question = guess-question harder-answer
+
+If you write a package, note that importing with a splat makes the
+imported names accessible in your namespace, so if you write this
+package:
+
+    . weird-science
+    + *ibm/watson/jeopardy
+
+Then someone using your library could do:
+
+    + weird-science
+    : x = weird-science:guess-question "Danny Elfman"
 
 Packages may have an optional "immediate" expression, which is an
 expression proceeded by the immediate operator, "!". This expression is

@@ -72,7 +72,7 @@
 }
 
 %token <token> BIND TYPE IMPLIES GOES_TO LAMBDA IS OPEN_PAR CLOSE_PAR IMMEDIATE
-%token <token> MEMBER OPEN_SCOPE CLOSE_SCOPE GIVEN EXISTS COND ADD
+%token <token> MEMBER OPEN_SCOPE CLOSE_SCOPE GIVEN EXISTS COND ADD SPLAT
 %token <integer> INTEGER
 %token <floating> NUMBER
 %token <string> NAME TYPE_NAME STRING QUALIFIED_NAME QUALIFIED_TYPE_NAME
@@ -176,6 +176,20 @@ import
         alloc($$, 1, struct ubik_ast_import_list);
         $$->canonical = $2;
         $$->name = strdup($2);
+        load_loc($$->loc);
+}
+| ADD NAME IMPLIES NAME
+{
+        alloc($$, 1, struct ubik_ast_import_list);
+        $$->canonical = $2;
+        $$->name = $4;
+        load_loc($$->loc);
+}
+| ADD SPLAT NAME
+{
+        alloc($$, 1, struct ubik_ast_import_list);
+        $$->canonical = $3;
+        $$->name = strdup("");
         load_loc($$->loc);
 }
 ;
