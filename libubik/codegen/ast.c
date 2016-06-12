@@ -556,3 +556,55 @@ ubik_ast_merge_loc(
         res->col_start = size_min(l1->col_start, l2->col_start);
         res->col_end = size_max(l1->col_end, l2->col_end);
 }
+
+no_ignore ubik_error
+ubik_ast_type_expr_copy(
+        struct ubik_ast_type_expr *dst,
+        struct ubik_ast_type_expr *src)
+{
+        ubik_error err;
+
+        dst->type_expr_type = src->type_expr_type;
+        dst->loc = src->loc;
+
+        switch (src->type_expr_type)
+        {
+        case TYPE_EXPR_APPLY:
+        case TYPE_EXPR_ARROW:
+                dst->apply.head = calloc(1, sizeof(struct ubik_ast_type_expr));
+                if (dst->apply.head == NULL)
+                        return ubik_raise(ERR_NO_MEMORY, "copy type expr");
+                dst->apply.tail = calloc(1, sizeof(struct ubik_ast_type_expr));
+                if (dst->apply.tail == NULL)
+                {
+                        free(dst->apply.head);
+                        return ubik_raise(ERR_NO_MEMORY, "copy type expr");
+                }
+                err = ubik_ast_type_expr_copy(dst->apply.head, src->apply.head);
+                if (err != OK)
+                {
+                        free(dst->apply.head);
+                        free(dst->apply.tail);
+                        return err;
+                }
+                err = ubik_ast_type_expr_copy(dst->apply.tail, src->apply.tail);
+                if (err != OK)
+                {
+                        free(dst->apply.head);
+                        free(dst->apply.tail);
+                        return err;
+                }
+                break;
+
+        case TYPE_EXPR_ATOM:
+        case TYPE_EXPR_VAR:
+                dst->name = strdup(src->name);
+                break;
+
+        default:
+                return ubik_raise(
+                        ERR_BAD_TYPE, "bad type expression type in copy");
+        }
+
+        return OK;
+}

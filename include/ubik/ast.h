@@ -312,3 +312,8 @@ ubik_ast_merge_loc(
         struct ubik_ast_loc *res,
         struct ubik_ast_loc *l1,
         struct ubik_ast_loc *l2);
+
+no_ignore ubik_error
+ubik_ast_type_expr_copy(
+        struct ubik_ast_type_expr *dst,
+        struct ubik_ast_type_expr *src);
