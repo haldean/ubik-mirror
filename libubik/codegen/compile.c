@@ -188,9 +188,12 @@ create_import_request(
                         if (err != OK)
                                 goto free_fullpath;
 
-                        err = ubik_parse(&test_ast, fullpath, &in_stream, false);
+                        err = ubik_parse(&test_ast, fullpath, &in_stream, true);
                         if (err != OK)
+                        {
+                                free(fullpath);
                                 continue;
+                        }
 
                         if (strcmp(test_ast->package_name, name) == 0)
                         {

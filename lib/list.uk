@@ -15,10 +15,10 @@
 : contains
     ^ List a -> a -> boolean:Boolean
     = \lst x -> ? lst {
-        . Cons head tail => ? {
+        . Cons head tail => (? {
             . eq head x => True
             .           => contains tail x
-        }
+        })
         . Nil => False
     }
 
