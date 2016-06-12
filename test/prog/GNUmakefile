@@ -7,6 +7,7 @@ tests = \
 	block.uk \
 	fib.uk \
 	hello.uk \
+	import.uk \
 	lambda.uk \
 	lambda-simple.uk \
 	num.uk \
