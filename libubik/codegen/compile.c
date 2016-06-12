@@ -24,6 +24,7 @@
 #include <unistd.h>
 
 #include "ubik/compile.h"
+#include "ubik/import.h"
 #include "ubik/infer.h"
 #include "ubik/parse.h"
 #include "ubik/patterns.h"
@@ -284,6 +285,17 @@ compile_job(
         if (cenv->debug)
         {
                 printf("\npatterns\n");
+                err = ubik_ast_print(job->ast);
+                if (err != OK)
+                        return err;
+        }
+
+        err = ubik_import_add_splats(cenv, job->ast);
+        if (err != OK)
+                return err;
+        if (cenv->debug)
+        {
+                printf("\nsplats\n");
                 err = ubik_ast_print(job->ast);
                 if (err != OK)
                         return err;

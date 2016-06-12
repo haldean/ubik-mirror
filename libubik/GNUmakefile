@@ -9,6 +9,7 @@ c_sources = \
     ./codegen/compile.c \
     ./codegen/gen.c \
     ./codegen/grammar.c \
+    ./codegen/import.c \
     ./codegen/infer.c \
     ./codegen/package.c \
     ./codegen/parse.c \

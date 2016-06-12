@@ -9,6 +9,7 @@ tests = \
 	fib.uk \
 	hello.uk \
 	import.uk \
+	import-splat.uk \
 	lambda.uk \
 	lambda-simple.uk \
 	num.uk \

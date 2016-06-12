@@ -120,7 +120,7 @@ ubik_infer_types(
                         case INFER_ERR_BIND_NO_TYPE:
                                 fprintf(stderr,
                                         "\x1b[37m%s:%lu:%lu:\x1b[31m "
-                                        "error:\x1b[0m top-level bindings must "
+                                        "error:\x1b[0m top-level bindings should "
                                         "have explicit type: %s\n",
                                         ierr->loc.source_name,
                                         ierr->loc.line_start,
@@ -133,9 +133,6 @@ ubik_infer_types(
                         }
                         free(ierr);
                 }
-
-                ubik_vector_free(&ctx.errors);
-                return ubik_raise(ERR_BAD_VALUE, "couldn't infer all types");
         }
 
         ubik_vector_free(&ctx.errors);
