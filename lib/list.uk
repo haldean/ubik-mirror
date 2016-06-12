@@ -1,0 +1,24 @@
+. list
++ boolean
+
+^ List a
+    = Cons a (List a)
+    = Nil
+
+: append
+    ^ List a -> a -> List a
+    = \lst x -> ? lst {
+        . Cons head tail => Cons head (append tail x)
+        . Nil => Cons x Nil
+    }
+
+: contains
+    ^ List a -> a -> boolean:Boolean
+    = \lst x -> ? lst {
+        . Cons head tail => ? {
+            . eq head x => True
+            .           => contains tail x
+        }
+        . Nil => False
+    }
+

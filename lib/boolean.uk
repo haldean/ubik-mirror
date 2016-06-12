@@ -1,0 +1,5 @@
+. boolean
+
+^ Boolean
+    = True
+    = False

@@ -1,0 +1,9 @@
+. ubik-tests/boolean
++ boolean
+
+: x ^ Boolean = boolean:True
+
+! emit (? x {
+    . boolean:True => "yes :)\n"
+    . boolean:False => "no :(\n"
+})
