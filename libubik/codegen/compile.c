@@ -139,6 +139,7 @@ ubik_compile_env_free(struct ubik_compile_env *cenv)
                         if (err != OK)
                                 return err;
                 }
+                ubik_vector_free(&job->dep_graphs);
                 free(job);
         }
         ubik_vector_free(&cenv->to_compile);
@@ -454,6 +455,7 @@ ubik_compile_run(struct ubik_compile_env *cenv)
                         break;
 
                 case COMPILE_DONE:
+                        ubik_vector_free(&job->dep_graphs);
                         free(job);
                         cenv->to_compile.n--;
                         break;
