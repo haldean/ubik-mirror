@@ -270,6 +270,7 @@ compile_job(
         struct ubik_compile_result *res;
         local(resolve_context) struct ubik_resolve_context resolve_ctx = {0};
         local(patterns_context) struct ubik_patterns_context pattern_ctx = {0};
+        size_t i;
         ubik_error err;
 
         err = ubik_patterns_compile_all(job->ast, &pattern_ctx);
@@ -309,14 +310,16 @@ compile_job(
                 return ubik_raise(ERR_NO_MEMORY, "compilation result alloc");
         res->request = job->request;
         res->ast = job->ast;
-        res->graphs = calloc(1, sizeof(struct ubik_dagc *));
+        res->graphs = calloc(1 + job->dep_graphs.n, sizeof(struct ubik_dagc *));
         if (res->graphs == NULL)
         {
                 err = ubik_raise(ERR_NO_MEMORY, "compilation result alloc");
                 goto free_res;
         }
         res->graphs[0] = graph;
-        res->n_graphs = 1;
+        for (i = 0; i < job->dep_graphs.n; i++)
+                res->graphs[i + 1] = job->dep_graphs.elems[i];
+        res->n_graphs = 1 + job->dep_graphs.n;
 
         err = ubik_vector_append(&cenv->compiled, res);
         if (err != OK)
@@ -380,8 +383,10 @@ ensure_imports_ready(
         char *expect;
         char *check;
         size_t i;
+        ubik_error err;
 
         import = job->ast->imports;
+
         while (import != NULL)
         {
                 expect = import->canonical;
@@ -401,6 +406,16 @@ ensure_imports_ready(
                         return ubik_raise(
                                 ERR_UNEXPECTED_FAILURE,
                                 "imports were not satisfied in compilation");
+                for (i = 0; i < result->n_graphs; i++)
+                {
+                        err = ubik_vector_append(
+                                &job->dep_graphs, result->graphs[i]);
+                        if (err != OK)
+                                return err;
+                        err = ubik_take(result->graphs[i]);
+                        if (err != OK)
+                                return err;
+                }
                 import = import->next;
         }
 

@@ -71,9 +71,16 @@ struct ubik_compile_result
 /* Represents an in-progress compilation job. */
 struct ubik_compile_job
 {
+        /* the request that kicked off the job */
         struct ubik_compile_request *request;
+        /* the loaded AST for the source (stored here because jobs are
+         * executed in two phases: loading and compiling, with
+         * compilation of imported packages occurring in between) */
         struct ubik_ast *ast;
+        /* the status of the job */
         enum ubik_compile_job_status status;
+        /* the graphs created by compiling its dependencies */
+        struct ubik_vector dep_graphs;
 };
 
 struct ubik_compile_env
