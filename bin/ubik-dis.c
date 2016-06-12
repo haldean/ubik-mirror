@@ -29,6 +29,7 @@
 #include "ubik/schedule.h"
 #include "ubik/stream.h"
 #include "ubik/timer.h"
+#include "ubik/types.h"
 #include "ubik/util.h"
 #include "ubik/value.h"
 
@@ -41,11 +42,31 @@
                 goto label; \
         } } while(0)
 
+void
+safe_print_str(char *str)
+{
+        while (*str != '\0')
+        {
+                if (*str == '\n')
+                        printf("\\n");
+                else if (*str == '\t')
+                        printf("\\t");
+                else if (*str == '\r')
+                        printf("\\r");
+                else
+                        putchar(*str);
+                str++;
+        }
+}
+
 ubik_error
 emit_graph(struct ubik_dagc *graph)
 {
         size_t i;
         char *buf;
+        size_t len;
+        union ubik_dagc_any_node *n;
+        ubik_error err;
 
         printf("    @%hx tag 0x%04X:", (short) (uintptr_t) graph, graph->tag);
         if (graph->tag & TAG_GRAPH)
@@ -68,12 +89,31 @@ emit_graph(struct ubik_dagc *graph)
 
         for (i = 0; i < graph->n; i++)
         {
-                buf = ubik_node_explain(graph->nodes[i]);
+                n = (union ubik_dagc_any_node *) graph->nodes[i];
+                buf = ubik_node_explain(&n->node);
                 printf("    % 5ld : %s", i, buf);
+                free(buf);
                 if (graph->nodes[i] == graph->result)
                         printf(" result");
+                if (n->node.node_type == DAGC_NODE_CONST)
+                {
+                        buf = ubik_type_explain(n->as_const.type);
+                        if (buf == NULL)
+                        {}
+                        else if (strcmp(buf, "string") == 0)
+                        {
+                                free(buf);
+                                err = ubik_string_read(
+                                        &buf, &len, n->as_const.value.tree);
+                                if (err != OK)
+                                        return err;
+                                printf(" \"");
+                                safe_print_str(buf);
+                                printf("\"");
+                        }
+                        free(buf);
+                }
                 printf("\n");
-                free(buf);
         }
 
         return OK;
