@@ -330,7 +330,13 @@ _compile_block(
                 while (t->expr_type == EXPR_APPLY)
                         t = t->apply.head;
                 ubik_assert(t->expr_type == EXPR_ATOM);
-                pattern_ctor = t->atom->str;
+                if (t->atom->atom_type == ATOM_TYPE_NAME)
+                        pattern_ctor = t->atom->str;
+                else if (t->atom->atom_type == ATOM_QUALIFIED)
+                        pattern_ctor = t->atom->qualified.tail;
+                else return ubik_raise(
+                        ERR_BAD_TYPE,
+                        "pattern atoms should be types or qualified names");
 
                 new_case = calloc(1, sizeof(struct ubik_ast_case));
                 new_case->loc = old_case->loc;
