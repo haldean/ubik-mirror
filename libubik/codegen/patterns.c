@@ -455,6 +455,13 @@ ubik_patterns_compile_all(
                         return err;
         }
 
+        if (ast->immediate != NULL)
+        {
+                err = _compile_all_subexprs(ast->immediate, ctx);
+                if (err != OK)
+                        return err;
+        }
+
         return OK;
 }
 
