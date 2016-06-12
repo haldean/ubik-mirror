@@ -75,7 +75,7 @@
 %token <token> MEMBER OPEN_SCOPE CLOSE_SCOPE GIVEN EXISTS COND ADD
 %token <integer> INTEGER
 %token <floating> NUMBER
-%token <string> NAME TYPE_NAME STRING QUALIFIED_NAME
+%token <string> NAME TYPE_NAME STRING QUALIFIED_NAME QUALIFIED_TYPE_NAME
 
 %type <ast> prog blocks
 %type <binding> binding
@@ -442,6 +442,11 @@ atom
         $$->str = $1;
         load_loc($$->loc);
 }
+| QUALIFIED_TYPE_NAME
+{
+        wrap_err(ubik_ast_atom_new_qualified(&$$, $1));
+        load_loc($$->loc);
+}
 | INTEGER
 {
         alloc($$, 1, struct ubik_ast_atom);
@@ -589,6 +594,17 @@ pattern
         $$->atom = atom;
         $$->loc = atom->loc;
 }
+| QUALIFIED_TYPE_NAME
+{
+        struct ubik_ast_atom *atom;
+        wrap_err(ubik_ast_atom_new_qualified(&atom, $1));
+        load_loc(atom->loc);
+
+        alloc($$, 1, struct ubik_ast_expr);
+        $$->expr_type = EXPR_ATOM;
+        $$->atom = atom;
+        $$->loc = atom->loc;
+}
 ;
 
 top_type_expr
@@ -628,6 +644,13 @@ type_atom
         load_loc($$->loc);
 }
 | TYPE_NAME
+{
+        alloc($$, 1, struct ubik_ast_type_expr);
+        $$->type_expr_type = TYPE_EXPR_ATOM;
+        $$->name = $1;
+        load_loc($$->loc);
+}
+| QUALIFIED_TYPE_NAME
 {
         alloc($$, 1, struct ubik_ast_type_expr);
         $$->type_expr_type = TYPE_EXPR_ATOM;

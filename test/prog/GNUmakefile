@@ -5,6 +5,7 @@ tests = \
 	add.uk \
 	bind.uk \
 	block.uk \
+	boolean.uk \
 	fib.uk \
 	hello.uk \
 	import.uk \

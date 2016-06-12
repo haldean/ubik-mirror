@@ -54,6 +54,7 @@ char *read_string_literal(struct ubik_parse_context *ctx, yyscan_t scanner);
 %option bison-bridge
 %option bison-locations
 
+NAMECHARS [a-zA-Z0-9/_\-']*
 NAME [a-z_][a-zA-Z0-9/_\-']*
 
 %%
@@ -83,6 +84,7 @@ NAME [a-z_][a-zA-Z0-9/_\-']*
 ([0-9]+\.[0-9]*|\.[0-9]+) { yylval->floating = atof(yytext); return NUMBER; }
 {NAME}                    TSTRING(NAME)
 {NAME}:{NAME}             TSTRING(QUALIFIED_NAME)
+{NAME}:[A-Z]{NAME}        TSTRING(QUALIFIED_TYPE_NAME)
 [A-Z][a-zA-Z0-9/']*       TSTRING(TYPE_NAME)
 "\""                      { yylval->string = read_string_literal(ctx, yyscanner);
                             return STRING; }
