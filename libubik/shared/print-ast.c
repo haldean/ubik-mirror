@@ -182,20 +182,24 @@ _print_expr(struct ubik_ast_expr *expr, int indent)
                 return OK;
 
         case EXPR_COND_BLOCK:
-                printf("? ");
+                printf("(?");
                 if (expr->cond_block.block_type == COND_PATTERN)
                 {
+                        printf("pat ");
                         err = _print_expr(
                                 expr->cond_block.to_match, indent + 4);
                         if (err != OK)
                                 return err;
-                        printf(" ");
+                        printf(")");
                 }
+                else
+                        printf("pred)");
                 printf("{\n");
                 err = _print_case_stmts(
                         expr->cond_block.case_stmts, indent + 4);
                 if (err != OK)
                         return err;
+                _indent(indent);
                 printf("}");
                 return OK;
         }
