@@ -52,8 +52,6 @@ emit_graph(struct ubik_dagc *graph)
                 printf(" graph");
         if (graph->tag & TAG_GRAPH_NATIVE)
                 printf(" | native");
-        if (graph->tag & TAG_GRAPH_UNRESOLVED)
-                printf(" | unresolved");
         if (graph->tag & TAG_GRAPH_MODINIT)
                 printf(" | modinit");
 

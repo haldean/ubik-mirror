@@ -63,7 +63,6 @@ ubik_compile_binding(
         err = ubik_bdagc_build(&res, &builder);
         if (err != OK)
                 return err;
-        res->tag |= TAG_GRAPH_UNRESOLVED;
 
         uri = calloc(1, sizeof(struct ubik_uri));
         if (uri == NULL)
@@ -235,7 +234,7 @@ ubik_create_modinit(
         if (err != OK)
                 return err;
 
-        (*modinit)->tag |= TAG_GRAPH_UNRESOLVED | TAG_GRAPH_MODINIT;
+        (*modinit)->tag |= TAG_GRAPH_MODINIT;
         (*modinit)->identity = calloc(1, sizeof(struct ubik_uri));
         err = ubik_uri_package(
                 (*modinit)->identity, ast->package_name, "__modinit");

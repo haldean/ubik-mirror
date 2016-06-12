@@ -443,7 +443,6 @@ _assign_lambda(
         err = ubik_bdagc_build(&subgraph, &builder);
         if (err != OK)
                 return err;
-        subgraph->tag |= TAG_GRAPH_UNRESOLVED;
 
         /* we let the node take the reference that we get by default. */
         ubik_assert(subgraph->refcount == 1);

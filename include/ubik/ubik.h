@@ -52,12 +52,9 @@ typedef long double ubik_float;
 
 /* Graph tags */
 #define TAG_GRAPH_NATIVE      0x0001
-/* an unresolved graph is one that contains URIs that have not been resolved to
- * a specific resource yet. */
-#define TAG_GRAPH_UNRESOLVED  0x0002
 /* a modinit graph represents a graph that should be run when bytecode is
  * loaded. */
-#define TAG_GRAPH_MODINIT     0x0004
+#define TAG_GRAPH_MODINIT     0x0002
 
 /* The maximum Ubik bytecode version that this library supports. */
 #define CURRENT_ENCODING_VERSION 1

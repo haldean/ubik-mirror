@@ -189,7 +189,7 @@ def encode(graphs, expect=None):
 
         for i, graph in enumerate(graphs):
             if i == modinit_i:
-                f.write(struct.pack(">H", 0x2004))
+                f.write(struct.pack(">H", 0x2002))
             else:
                 f.write(struct.pack(">H", 0x2000))
 
