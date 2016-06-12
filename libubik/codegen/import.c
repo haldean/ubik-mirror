@@ -73,10 +73,14 @@ add_splat(
                 new_bind->expr->atom->qualified.tail = strdup(old_bind->name);
                 new_bind->loc = old_bind->loc;
 
+                /* TODO: set type on new_bind, needs a copy-type-expr */
+
                 err = ubik_vector_append(&ast->bindings, new_bind);
                 if (err != OK)
                         return err;
         }
+
+        /* TODO: types */
 
         return OK;
 }
