@@ -50,7 +50,8 @@ enum atom_type
         ATOM_NAME,
         ATOM_QUALIFIED,
         ATOM_TYPE_NAME,
-        ATOM_STRING
+        ATOM_STRING,
+        ATOM_VALUE,
 };
 
 enum ubik_type_type
@@ -94,6 +95,7 @@ struct ubik_ast_atom
                         char *head;
                         char *tail;
                 } qualified;
+                struct ubik_value *value;
         };
         enum atom_type atom_type;
         struct ubik_resolve_name_loc *name_loc;

@@ -26,6 +26,8 @@
 no_ignore static ubik_error
 _free_atom(struct ubik_ast_atom *atom)
 {
+        ubik_error err;
+
         switch (atom->atom_type)
         {
         case ATOM_NAME:
@@ -37,6 +39,13 @@ _free_atom(struct ubik_ast_atom *atom)
         case ATOM_QUALIFIED:
                 free(atom->qualified.head);
                 free(atom->qualified.tail);
+                break;
+
+        case ATOM_VALUE:
+                err = ubik_release(atom->value);
+                if (err != OK)
+                        return err;
+                break;
 
         case ATOM_NUM:
         case ATOM_INT:

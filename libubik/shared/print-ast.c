@@ -19,6 +19,8 @@
 
 #include "ubik/ast.h"
 #include "ubik/resolve.h"
+#include "ubik/stream.h"
+#include "ubik/value.h"
 
 #include <inttypes.h>
 #include <stdio.h>
@@ -41,10 +43,12 @@ _indent(int indent)
 no_ignore static ubik_error
 _print_atom(struct ubik_ast_atom *atom)
 {
+        struct ubik_stream sout;
         size_t i;
         size_t n;
+        ubik_error err;
 
-        if (atom->name_loc != 0)
+        if (atom->name_loc != NULL)
         {
                 switch (atom->name_loc->type)
                 {
@@ -94,6 +98,17 @@ _print_atom(struct ubik_ast_atom *atom)
                                 putchar(atom->str[i]);
                 }
                 printf("\":s");
+                return OK;
+        case ATOM_VALUE:
+                fflush(stdout);
+                err = ubik_stream_wfilep(&sout, stdout);
+                if (err != OK)
+                        return err;
+                err = ubik_value_print(&sout, atom->value);
+                if (err != OK)
+                        return err;
+                fflush(stdout);
+                /* don't close the stream, we don't want to close stdout. */
                 return OK;
         }
 

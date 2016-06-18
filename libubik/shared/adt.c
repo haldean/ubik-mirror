@@ -529,3 +529,79 @@ ubik_adt_create_constructor(
 
         return OK;
 }
+
+no_ignore static ubik_error
+bind_to_ast(struct ubik_ast *ast, struct ubik_ast_type *type)
+{
+        struct ubik_value *type_decl;
+        struct ubik_ast_binding *bind;
+        struct ubik_ast_expr *decl_expr;
+        ubik_error err, rerr;
+
+        err = ubik_value_new(&type_decl);
+        if (err != OK)
+                return err;
+        err = ubik_adt_create_decl(type_decl, type);
+        if (err != OK)
+                goto free_type_decl;
+
+        bind = calloc(1, sizeof(struct ubik_ast_binding));
+        if (bind == NULL)
+                goto free_type_decl;
+
+        decl_expr = calloc(1, sizeof(struct ubik_ast_expr));
+        if (decl_expr == NULL)
+                goto free_bind;
+
+        decl_expr->atom = calloc(1, sizeof(struct ubik_ast_atom));
+        if (decl_expr->atom == NULL)
+                goto free_decl_expr;
+
+        decl_expr->expr_type = EXPR_ATOM;
+        decl_expr->loc = type->loc;
+        decl_expr->atom->atom_type = ATOM_VALUE;
+        decl_expr->atom->loc = type->loc;
+        /* let the expression inherit the ref to type_decl */
+        decl_expr->atom->value = type_decl;
+
+        bind->name = strdup(type->name);
+        bind->expr = decl_expr;
+        bind->loc = type->loc;
+
+        err = ubik_vector_append(&ast->bindings, bind);
+        if (err != OK)
+                goto free_decl_expr_atom;
+        return OK;
+
+free_decl_expr_atom:
+        free(decl_expr->atom);
+free_decl_expr:
+        free(decl_expr);
+free_bind:
+        free(bind);
+free_type_decl:
+        rerr = ubik_release(type_decl);
+
+        return err == NULL ? rerr : err;
+}
+
+no_ignore ubik_error
+ubik_adt_bind_all_to_ast(struct ubik_ast *ast)
+{
+        size_t i;
+        struct ubik_ast_type *type;
+        ubik_error err;
+
+        for (i = 0; i < ast->types.n; i++)
+        {
+                type = (struct ubik_ast_type *) ast->types.elems[i];
+                if (type->type != TYPE_ADT)
+                        continue;
+
+                err = bind_to_ast(ast, type);
+                if (err != OK)
+                        return err;
+        }
+
+        return OK;
+}

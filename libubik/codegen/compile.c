@@ -23,6 +23,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "ubik/adt.h"
 #include "ubik/compile.h"
 #include "ubik/import.h"
 #include "ubik/infer.h"
@@ -285,6 +286,18 @@ compile_job(
         if (cenv->debug)
         {
                 printf("\npatterns\n");
+                err = ubik_ast_print(job->ast);
+                if (err != OK)
+                        return err;
+        }
+
+        err = ubik_adt_bind_all_to_ast(job->ast);
+        if (err != OK)
+                return err;
+
+        if (cenv->debug)
+        {
+                printf("\nadt bindings\n");
                 err = ubik_ast_print(job->ast);
                 if (err != OK)
                         return err;

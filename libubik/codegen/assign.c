@@ -155,6 +155,21 @@ _assign_atom_node(
                 n->as_const.value.tree->left.f = expr->atom->number;
                 return OK;
 
+        case ATOM_VALUE:
+                n->node.node_type = DAGC_NODE_CONST;
+                n->node.id = ctx->next_id++;
+
+                err = ubik_value_new(&n->as_const.type);
+                if (err != OK)
+                        return err;
+                /* TODO: type these! */
+
+                err = ubik_take(expr->atom->value);
+                if (err != OK)
+                        return err;
+                n->as_const.value.tree = expr->atom->value;
+                return OK;
+
         case ATOM_TYPE_NAME:
         case ATOM_NAME:
                 res_type = expr->atom->name_loc->type;
