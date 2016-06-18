@@ -119,7 +119,7 @@ no_ignore static ubik_error
 _print_arg_list(struct ubik_ast_arg_list *arg_list)
 {
         printf("( ");
-        while (arg_list->name != NULL)
+        while (arg_list != NULL && arg_list->name != NULL)
         {
                 printf("%s ", arg_list->name);
                 arg_list = arg_list->next;

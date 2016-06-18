@@ -531,7 +531,7 @@ ubik_adt_create_constructor(
 }
 
 no_ignore static ubik_error
-bind_to_ast(struct ubik_ast *ast, struct ubik_ast_type *type)
+bind_decl(struct ubik_ast *ast, struct ubik_ast_type *type)
 {
         struct ubik_value *type_decl;
         struct ubik_ast_binding *bind;
@@ -547,15 +547,24 @@ bind_to_ast(struct ubik_ast *ast, struct ubik_ast_type *type)
 
         bind = calloc(1, sizeof(struct ubik_ast_binding));
         if (bind == NULL)
+        {
+                err = ubik_raise(ERR_NO_MEMORY, "bind decl");
                 goto free_type_decl;
+        }
 
         decl_expr = calloc(1, sizeof(struct ubik_ast_expr));
         if (decl_expr == NULL)
+        {
+                err = ubik_raise(ERR_NO_MEMORY, "bind decl");
                 goto free_bind;
+        }
 
         decl_expr->atom = calloc(1, sizeof(struct ubik_ast_atom));
         if (decl_expr->atom == NULL)
+        {
+                err = ubik_raise(ERR_NO_MEMORY, "bind decl");
                 goto free_decl_expr;
+        }
 
         decl_expr->expr_type = EXPR_ATOM;
         decl_expr->loc = type->loc;
@@ -585,6 +594,108 @@ free_type_decl:
         return err == NULL ? rerr : err;
 }
 
+no_ignore static ubik_error
+bind_ctor(
+        struct ubik_ast *ast,
+        struct ubik_ast_adt_ctors *ctor)
+{
+        /* a constructor with name X that constructs a type T and has args A1 A2
+         * A3 becomes:
+         *
+         *      : X ^ T = \0 1 2 -> ubik-adt-new-3 T "X" 0 1 2
+         *
+         * We can use numbers as names without worrying about clashing with
+         * anything else in scope; names can be numbers in the compiler and in
+         * the runtime but not in the grammar, which means no user-defined names
+         * can be only numbers.
+         */
+
+        struct ubik_ast_binding *bind;
+        struct ubik_ast_expr *lambda;
+        struct ubik_ast_arg_list *largs;
+        struct ubik_ast_arg_list *last_largs;
+        struct ubik_ast_type_list *cargs;
+        ubik_error err;
+        size_t i;
+
+        bind = calloc(1, sizeof(struct ubik_ast_binding));
+        if (bind == NULL)
+                return ubik_raise(ERR_NO_MEMORY, "bind ctor");
+
+        lambda = calloc(1, sizeof(struct ubik_ast_expr));
+        if (lambda == NULL)
+        {
+                err = ubik_raise(ERR_NO_MEMORY, "bind ctor");
+                goto free_bind;
+        }
+        lambda->expr_type = EXPR_LAMBDA;
+        lambda->loc = ctor->loc;
+
+        cargs = ctor->params;
+        last_largs = NULL;
+        i = 0;
+
+        for (i = 0; cargs != NULL; cargs = cargs->next, i++)
+        {
+                largs = calloc(1, sizeof(struct ubik_ast_arg_list));
+                if (largs == NULL)
+                {
+                        err = ubik_raise(ERR_NO_MEMORY, "bind ctor");
+                        goto free_largs;
+                }
+                asprintf(&largs->name, "%lu", i);
+                largs->next = last_largs;
+                last_largs = largs;
+
+                lambda->lambda.args = largs;
+        }
+        lambda->lambda.body = NULL;
+
+        bind->name = strdup(ctor->name);
+        bind->expr = lambda;
+
+        err = ubik_vector_append(&ast->bindings, bind);
+        if (err != OK)
+                goto free_largs;
+
+        return OK;
+
+free_largs:
+        while (largs != NULL)
+        {
+                last_largs = largs;
+                largs = largs->next;
+                free(last_largs);
+        }
+        free(lambda);
+
+free_bind:
+        free(bind);
+        return err;
+}
+
+no_ignore static ubik_error
+bind_type(struct ubik_ast *ast, struct ubik_ast_type *type)
+{
+        struct ubik_ast_adt_ctors *ctor;
+        ubik_error err;
+
+        err = bind_decl(ast, type);
+        if (err != OK)
+                return err;
+
+        ctor = type->adt.ctors;
+        while (ctor != NULL)
+        {
+                err = bind_ctor(ast, ctor);
+                if (err != OK)
+                        return err;
+                ctor = ctor->next;
+        }
+
+        return OK;
+}
+
 no_ignore ubik_error
 ubik_adt_bind_all_to_ast(struct ubik_ast *ast)
 {
@@ -598,7 +709,7 @@ ubik_adt_bind_all_to_ast(struct ubik_ast *ast)
                 if (type->type != TYPE_ADT)
                         continue;
 
-                err = bind_to_ast(ast, type);
+                err = bind_type(ast, type);
                 if (err != OK)
                         return err;
         }

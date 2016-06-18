@@ -254,7 +254,7 @@ cleanup:
         return err;
 }
 
-no_ignore static ubik_error
+no_ignore ubik_error
 ubik_compile_type(
         struct ubik_ast_type *type,
         char *package_name,
@@ -372,14 +372,6 @@ ubik_gen_graphs(
         err = ubik_env_init(&local_env);
         if (err != OK)
                 return err;
-
-        for (i = 0; i < ast->types.n; i++)
-        {
-                err = ubik_compile_type(
-                        ast->types.elems[i], ast->package_name, &local_env);
-                if (err != OK)
-                        goto cleanup_env;
-        }
 
         for (i = 0; i < ast->bindings.n; i++)
         {
