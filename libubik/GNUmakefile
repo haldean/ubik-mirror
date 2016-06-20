@@ -47,6 +47,7 @@ buildtree_sources = \
 
 CFLAGS := $(CFLAGS) -Itree -I.
 objects = $(patsubst %.c,%.o,$(c_sources))
+deps = $(patsubst %.c,%.d,$(c_sources))
 buildtree_headers = $(patsubst %.tree,%.h,$(buildtree_sources))
 built_headers = $(buildtree_headers) codegen/grammar.h
 
@@ -72,6 +73,7 @@ clean:
 	rm -f libubik.a \
 		$(objects) \
 		$(buildtree_headers) \
+		$(deps) \
 		codegen/grammar.{c,h,output} \
 	       	codegen/token.c
 
