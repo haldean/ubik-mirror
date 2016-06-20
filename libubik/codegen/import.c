@@ -73,19 +73,24 @@ add_splat(
                 new_bind->expr->atom->qualified.tail = strdup(old_bind->name);
                 new_bind->loc = old_bind->loc;
 
-                new_bind->type_expr = calloc(
-                        1, sizeof(struct ubik_ast_type_expr));
-                if (new_bind->type_expr == NULL)
+                if (old_bind->type_expr != NULL)
                 {
-                        free(new_bind->expr->atom);
-                        free(new_bind->expr);
-                        free(new_bind);
-                        return ubik_raise(ERR_NO_MEMORY, "splat binding alloc");
+                        new_bind->type_expr = calloc(
+                                1, sizeof(struct ubik_ast_type_expr));
+                        if (new_bind->type_expr == NULL)
+                        {
+                                free(new_bind->expr->atom);
+                                free(new_bind->expr);
+                                free(new_bind);
+                                return ubik_raise(
+                                        ERR_NO_MEMORY, "splat binding alloc");
+                        }
+                        err = ubik_ast_type_expr_copy(
+                                new_bind->type_expr, old_bind->type_expr);
+                        if (err != OK)
+                                return err;
                 }
-                err = ubik_ast_type_expr_copy(
-                        new_bind->type_expr, old_bind->type_expr);
-                if (err != OK)
-                        return err;
+                else new_bind->type_expr = NULL;
 
                 err = ubik_vector_append(&ast->bindings, new_bind);
                 if (err != OK)
