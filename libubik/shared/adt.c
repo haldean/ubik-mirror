@@ -139,7 +139,7 @@ ubik_adt_inst_size(
         return OK;
 }
 
-no_ignore ubik_error
+no_ignore static ubik_error
 ubik_adt_create_decl(
         struct ubik_value *res,
         struct ubik_ast_type *source)
