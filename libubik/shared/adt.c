@@ -413,6 +413,21 @@ bind_ctor(
         t2->apply.head = t0;
         t2->apply.tail = t1;
 
+        t0 = calloc(1, sizeof(struct ubik_ast_expr));
+        t0->expr_type = EXPR_ATOM;
+        t0->loc = ctor->loc;
+        t0->atom = calloc(1, sizeof(struct ubik_ast_atom));
+        t0->atom->atom_type = ATOM_STRING;
+        t0->atom->str = strdup(ctor->name);
+        t0->atom->loc = ctor->loc;
+
+        t1 = calloc(1, sizeof(struct ubik_ast_expr));
+        t1->expr_type = EXPR_APPLY;
+        t1->loc = ctor->loc;
+        t1->apply.head = t2;
+        t1->apply.tail = t0;
+        t2 = t1;
+
         for (i = 0, cargs = ctor->params;
                         cargs != NULL; cargs = cargs->next, i++)
         {
