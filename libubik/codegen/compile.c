@@ -26,7 +26,6 @@
 #include "ubik/adt.h"
 #include "ubik/compile.h"
 #include "ubik/import.h"
-#include "ubik/infer.h"
 #include "ubik/parse.h"
 #include "ubik/patterns.h"
 #include "ubik/resolve.h"
@@ -324,10 +323,6 @@ compile_job(
                 if (err != OK)
                         return err;
         }
-
-        err = ubik_infer_types(job->ast, &job->request->source);
-        if (err != OK)
-                return err;
 
         err = ubik_gen_graphs(
                 &graph, job->ast, job->request->reason);
