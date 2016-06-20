@@ -414,10 +414,9 @@ _assign_lambda(
         if (err != OK)
                 return err;
 
-        ubik_assert(expr->lambda.args != NULL);
         t = expr->lambda.args;
         i = 0;
-        while (t->name != NULL)
+        while (t != NULL && t->name != NULL)
         {
                 input_node = calloc(1, sizeof(struct ubik_dagc_input));
                 if (input_node == NULL)

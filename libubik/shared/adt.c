@@ -597,6 +597,7 @@ free_type_decl:
 no_ignore static ubik_error
 bind_ctor(
         struct ubik_ast *ast,
+        struct ubik_ast_type *type,
         struct ubik_ast_adt_ctors *ctor)
 {
         /* a constructor with name X that constructs a type T and has args A1 A2
@@ -615,6 +616,9 @@ bind_ctor(
         struct ubik_ast_arg_list *largs;
         struct ubik_ast_arg_list *last_largs;
         struct ubik_ast_type_list *cargs;
+        struct ubik_ast_expr *t0;
+        struct ubik_ast_expr *t1;
+        struct ubik_ast_expr *t2;
         ubik_error err;
         size_t i;
 
@@ -631,11 +635,33 @@ bind_ctor(
         lambda->expr_type = EXPR_LAMBDA;
         lambda->loc = ctor->loc;
 
-        cargs = ctor->params;
         last_largs = NULL;
-        i = 0;
+        for (i = 0, cargs = ctor->params;
+                cargs != NULL; cargs = cargs->next, i++);
 
-        for (i = 0; cargs != NULL; cargs = cargs->next, i++)
+        t0 = calloc(1, sizeof(struct ubik_ast_expr));
+        t0->expr_type = EXPR_ATOM;
+        t0->loc = ctor->loc;
+        t0->atom = calloc(1, sizeof(struct ubik_ast_atom));
+        t0->atom->atom_type = ATOM_NAME;
+        asprintf(&t0->atom->str, "ubik-adt-new-%lu", i);
+        t0->atom->loc = ctor->loc;
+
+        t1 = calloc(1, sizeof(struct ubik_ast_expr));
+        t1->expr_type = EXPR_ATOM;
+        t1->loc = ctor->loc;
+        t1->atom = calloc(1, sizeof(struct ubik_ast_atom));
+        t1->atom->atom_type = ATOM_NAME;
+        t1->atom->str = strdup(type->name);
+        t1->atom->loc = ctor->loc;
+
+        t2 = calloc(1, sizeof(struct ubik_ast_expr));
+        t2->expr_type = EXPR_APPLY;
+        t2->loc = ctor->loc;
+        t2->apply.head = t0;
+        t2->apply.tail = t1;
+
+        for (i = 0, cargs = NULL; cargs != NULL; cargs = cargs->next, i++)
         {
                 largs = calloc(1, sizeof(struct ubik_ast_arg_list));
                 if (largs == NULL)
@@ -649,10 +675,12 @@ bind_ctor(
 
                 lambda->lambda.args = largs;
         }
-        lambda->lambda.body = NULL;
+
+        lambda->lambda.body = t2;
 
         bind->name = strdup(ctor->name);
         bind->expr = lambda;
+        bind->loc = ctor->loc;
 
         err = ubik_vector_append(&ast->bindings, bind);
         if (err != OK)
@@ -687,7 +715,7 @@ bind_type(struct ubik_ast *ast, struct ubik_ast_type *type)
         ctor = type->adt.ctors;
         while (ctor != NULL)
         {
-                err = bind_ctor(ast, ctor);
+                err = bind_ctor(ast, type, ctor);
                 if (err != OK)
                         return err;
                 ctor = ctor->next;

@@ -307,7 +307,7 @@ find_lambdas_and_bind(
         if (expr->expr_type == EXPR_LAMBDA)
         {
                 args = expr->lambda.args;
-                while (args->name != NULL)
+                while (args != NULL && args->name != NULL)
                 {
                         name = calloc(1, sizeof(struct ubik_resolve_name));
                         if (name == NULL)

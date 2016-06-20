@@ -752,6 +752,42 @@ static char *native_names[] = {
         "concat",
         "ubik-adt-ctor-matches?",
         "ubik-adt-get",
+        "ubik-adt-new-0",
+        "ubik-adt-new-1",
+        "ubik-adt-new-2",
+        "ubik-adt-new-3",
+        "ubik-adt-new-4",
+        "ubik-adt-new-5",
+        "ubik-adt-new-6",
+        "ubik-adt-new-7",
+        "ubik-adt-new-8",
+        "ubik-adt-new-9",
+        "ubik-adt-new-10",
+        "ubik-adt-new-11",
+        "ubik-adt-new-12",
+        "ubik-adt-new-13",
+        "ubik-adt-new-14",
+        "ubik-adt-new-15",
+        "ubik-adt-new-16",
+        "ubik-adt-new-17",
+        "ubik-adt-new-18",
+        "ubik-adt-new-19",
+        "ubik-adt-new-20",
+        "ubik-adt-new-21",
+        "ubik-adt-new-22",
+        "ubik-adt-new-23",
+        "ubik-adt-new-24",
+        "ubik-adt-new-25",
+        "ubik-adt-new-26",
+        "ubik-adt-new-27",
+        "ubik-adt-new-28",
+        "ubik-adt-new-29",
+        "ubik-adt-new-30",
+        "ubik-adt-new-31",
+        "ubik-adt-new-32"
+#if UBIK_MAX_ADT_FIELDS != 32
+#error "the list of native funcs needs to be updated"
+#endif
 };
 
 no_ignore ubik_error
