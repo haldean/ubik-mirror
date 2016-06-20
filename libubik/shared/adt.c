@@ -661,7 +661,8 @@ bind_ctor(
         t2->apply.head = t0;
         t2->apply.tail = t1;
 
-        for (i = 0, cargs = NULL; cargs != NULL; cargs = cargs->next, i++)
+        for (i = 0, cargs = ctor->params;
+                        cargs != NULL; cargs = cargs->next, i++)
         {
                 largs = calloc(1, sizeof(struct ubik_ast_arg_list));
                 if (largs == NULL)
@@ -672,8 +673,22 @@ bind_ctor(
                 asprintf(&largs->name, "%lu", i);
                 largs->next = last_largs;
                 last_largs = largs;
-
                 lambda->lambda.args = largs;
+
+                t0 = calloc(1, sizeof(struct ubik_ast_expr));
+                t0->expr_type = EXPR_ATOM;
+                t0->loc = ctor->loc;
+                t0->atom = calloc(1, sizeof(struct ubik_ast_atom));
+                t0->atom->atom_type = ATOM_NAME;
+                t0->atom->loc = ctor->loc;
+                asprintf(&t0->atom->str, "%lu", i);
+
+                t1 = calloc(1, sizeof(struct ubik_ast_expr));
+                t1->expr_type = EXPR_APPLY;
+                t1->loc = ctor->loc;
+                t1->apply.head = t2;
+                t1->apply.tail = t0;
+                t2 = t1;
         }
 
         lambda->lambda.body = t2;
