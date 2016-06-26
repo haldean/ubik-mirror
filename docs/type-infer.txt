@@ -35,90 +35,182 @@ variable. Let's take the following sample Ubik program:
 Which has the following expression-typevar mapping:
 
     t0    \a -> { : y = concat a "hello" ! humanize (length y) }
-    t1    { : y = concat a "hello" ! humanize (length y) }
-    t2    concat a "hello"
-    t3    concat a
-    t4    concat
-    t5    a
-    t6    "hello"
-    t7    humanize (length y)
-    t8    humanize
-    t9    length y
-    t10   length
-    t11   y
+    t1    a
+    t2    { : y = concat a "hello" ! humanize (length y) }
+    t3    concat a "hello"
+    t4    concat a
+    t5    concat
+    t6    a
+    t7    "hello"
+    t8    humanize (length y)
+    t9    humanize
+    t10   length y
+    t11   length
+    t12   y
 
 And thus the first stage is complete. The next stage is to start
 building our fact set. We first introduce type equality constraints for
 literals whose types we know for sure:
 
-    t6  = String
+    t7  = String
 
 We can introduce another fact that represents our knowledge of the
 top-level binding's type:
 
     t0  = String -> Integer
-    t6  = String
+    t7  = String
 
 Then, we can use our knowledge of the externally-imported functions
 concat and length; since these are polymorphic, they introduce new type
 variables. (I'll use the "<" character to mean "element-of", from now on)
 
     t0  = String -> Integer
-    t4  = String -> String -> String
-    t6  = String
-    t8  = t12 -> String
-    t10 = t13 -> Integer
+    t5  = String -> String -> String
+    t7  = String
+    t9  = t12 -> String
+    t11 = t13 -> Integer
     t12 < Printable
     t13 < HasLength
+
+We also know about the types involved, and which type classes they're a
+member of:
+
+    t0  = String -> Integer
+    t5  = String -> String -> String
+    t7  = String
+    t9  = t12 -> String
+    t11 = t13 -> Integer
+    t12 < Printable
+    t13 < HasLength
+    String < Printable
+    String < HasLength
 
 Okay, next phase. Now we introduce facts that are implied by the
 semantics of the program:
 
     t0  = String -> Integer
-    t0  = t1
-    t1  = t7
-    t2  = t3 t6
-    t3  = t4 t5
-    t4  = String -> String -> String
-    t6  = String
-    t7  = t8 t9
-    t8  = t12 -> String
-    t9  = t10 t11
-    t10 = t13 -> Integer
-    t11 = t2
+    t2  = t0 t1
+    t2  = t8
+    t3  = t4 t7
+    t4  = t5 t6
+    t5  = String -> String -> String
+    t6  = t1
+    t7  = String
+    t8  = t9 t10
+    t9  = t12 -> String
+    t10 = t11 t12
+    t11 = t13 -> Integer
+    t12 = t3
     t12 < Printable
     t13 < HasLength
+    String < Printable
+    String < HasLength
 
 There is only one type that does not appear on the left-hand side of a
-type assignment here: t5. This is because we do not know anything a
-priori about t5 itself; we rely on the later solve step to handle
+type assignment here: t1. This is because we do not know anything a
+priori about t1 itself; we rely on the later solve step to handle
 inferring its type from the top-level type, so that we do not need
 global name resolution information during the interpretation phase.
 
-The next step is "flattening"; our goal here is to produce specific
-types and find any type disagreements, if they exist. To do so, we
-examine all variables assigned to specific types and introduce new
-facts, replacing references to that variable with the known specific
-type. In our example, t0, t4, t6, t8 and t10 have specific types, so
-we'll introduce new facts with usages of those replaced (new facts are
-prefixed with an asterisk, specific facts are prefixed with ^):
+The next step is reduction; our goal here is to produce specific
+types and find any type disagreements, if they exist. We have a few
+unification methods at our disposal. The notation here is:
 
-   ^t0  = String -> Integer
-    t0  = t1
-  *^t1  = String -> Integer
-    t1  = t7
-    t2  = t3 t6
-  * t2  = t3 String
-    t3  = t4 t5
-  * t3  = (String -> String -> String) t5
-   ^t4  = String -> String -> String
-   ^t6  = String
-    t7  = t8 t9
-    t8  = t12 -> String
-    t9  = t10 t11
-    t10 = t13 -> Integer
-    t11 = t2
+    prerequisite 1 |
+    prerequisite 2 |
+    prerequisite 3 | conclusions
+
+Which means that, if the prerequisites are all true, the given
+conclusions can be drawn. We use uppercase letters to describe specific
+types, and lowercase letters to describe type variables. Let's start
+with two simple reduction rules
+
+    - apply: unpacking function types:
+            x0 = A -> B |
+            x1 = x0 x2  |  x1 = B , x2 = A
+    - trans: exploiting the transitive property of equality:
+            x0 = x1 |
+            x1 = x2 | x0 = x2
+
+Using the apply rule, we can add new information about t1 and t2 (from
+now on, new facts are marked with a *, and facts used to generate them
+are marked with -):
+
+  - t0  = String -> Integer
+  - t2  = t0 t1
+  * t1  = String
+  * t2  = Integer
+
+Similarly, we can hit these guys up:
+
+  - t4  = t5 t6
+  - t5  = String -> String -> String
+  * t4  = String -> String
+  * t6  = String
+
+  - t8  = t9 t10
+  - t9  = t12 -> String
+  * t8  = String
+  * t10 = t12
+
+  - t10 = t11 t12
+  - t11 = t13 -> Integer
+  * t10 = Integer
+  * t12 = t13
+
+And now our full fact set looks like:
+
+    t0  = String -> Integer
+    t2  = t0 t1
+    t1  = String
+    t2  = Integer
+    t2  = t8
+    t3  = t4 t7
+    t4  = t5 t6
+    t5  = String -> String -> String
+    t4  = String -> String
+    t6  = String
+    t6  = t1
+    t7  = String
+    t8  = t9 t10
+    t9  = t12 -> String
+    t8  = String
+    t10 = t12
+    t10 = t11 t12
+    t11 = t13 -> Integer
+    t10 = Integer
+    t12 = t13
+    t12 = t3
     t12 < Printable
     t13 < HasLength
+    String < Printable
+    String < HasLength
 
-We then 
+Oh look, we can apply more stuff (we already know that t7 is a string,
+so it isn't produced here):
+
+  - t3  = t4 t7
+  - t4  = String -> String
+  * t3  = String
+
+Our goal is to assign to each variable a specific type. So far, we've
+got these guys covered:
+
+    t0  = String -> Integer
+    t1  = String
+    t2  = Integer
+    t3  = String
+    t4  = String -> String
+    t5  = String -> String -> String
+    t6  = String
+    t7  = String
+    t8  = String
+    t10 = Integer
+
+Which means we're missing t9, t11, and t12. t12 is easy; we apply
+the transitive property to t12 = t3 and t3 = String to get t12 = String.
+Now all we're left with is t9 and t11, which are both interesting
+because they're the types of polymorphic functions. These are
+interesting because, while technically we know the "full" type of these
+functions because they're imported, we don't actually have a specific
+type for them. 
