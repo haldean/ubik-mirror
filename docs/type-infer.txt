@@ -1,0 +1,124 @@
+Compile-time Type Inference ============================================
+Haldean Brown                                      First draft: Jun 2016
+                                                  Last updated: Jun 2016
+
+Status: Draft
+
+------------------------------------------------------------------------
+
+A key part of the Ubik compilation process is type checking and type
+inference. Both of these two steps happen in the same AST pass, called
+"inference"; despite it's name, it's also responsible for type checking.
+
+Inference happens module-by-module; since all top-level definitions have
+types specified on them, no cross-module inference must occur. The first
+step for a module is to assign type variables to each expression in the
+AST. The next step is to assign to some of those variables values that
+represent known types (either because the associated expressions are
+source literals or because they are externally imported, and thus we
+know their signature). Next, we introduce constraints that the semanics
+of the program introduce (i.e., "a b" must have a type equal to the type
+of a applied to the type of b). Finally, we attempt to find an
+assignment to variables that provides a "specific" type (i.e., a type
+that does not have any dependence on further variables).
+
+The first step is simple. We assign each node in the AST a unique type
+variable. Let's take the following sample Ubik program:
+
+    : infer-example
+        ^ String -> Integer
+        = \a -> {
+            : y = concat a "hello"
+            ! length y
+        }
+
+Which has the following expression-typevar mapping:
+
+    t0    \a -> { : y = concat a "hello" ! humanize (length y) }
+    t1    { : y = concat a "hello" ! humanize (length y) }
+    t2    concat a "hello"
+    t3    concat a
+    t4    concat
+    t5    a
+    t6    "hello"
+    t7    humanize (length y)
+    t8    humanize
+    t9    length y
+    t10   length
+    t11   y
+
+And thus the first stage is complete. The next stage is to start
+building our fact set. We first introduce type equality constraints for
+literals whose types we know for sure:
+
+    t6  = String
+
+We can introduce another fact that represents our knowledge of the
+top-level binding's type:
+
+    t0  = String -> Integer
+    t6  = String
+
+Then, we can use our knowledge of the externally-imported functions
+concat and length; since these are polymorphic, they introduce new type
+variables. (I'll use the "<" character to mean "element-of", from now on)
+
+    t0  = String -> Integer
+    t4  = String -> String -> String
+    t6  = String
+    t8  = t12 -> String
+    t10 = t13 -> Integer
+    t12 < Printable
+    t13 < HasLength
+
+Okay, next phase. Now we introduce facts that are implied by the
+semantics of the program:
+
+    t0  = String -> Integer
+    t0  = t1
+    t1  = t7
+    t2  = t3 t6
+    t3  = t4 t5
+    t4  = String -> String -> String
+    t6  = String
+    t7  = t8 t9
+    t8  = t12 -> String
+    t9  = t10 t11
+    t10 = t13 -> Integer
+    t11 = t2
+    t12 < Printable
+    t13 < HasLength
+
+There is only one type that does not appear on the left-hand side of a
+type assignment here: t5. This is because we do not know anything a
+priori about t5 itself; we rely on the later solve step to handle
+inferring its type from the top-level type, so that we do not need
+global name resolution information during the interpretation phase.
+
+The next step is "flattening"; our goal here is to produce specific
+types and find any type disagreements, if they exist. To do so, we
+examine all variables assigned to specific types and introduce new
+facts, replacing references to that variable with the known specific
+type. In our example, t0, t4, t6, t8 and t10 have specific types, so
+we'll introduce new facts with usages of those replaced (new facts are
+prefixed with an asterisk, specific facts are prefixed with ^):
+
+   ^t0  = String -> Integer
+    t0  = t1
+  *^t1  = String -> Integer
+    t1  = t7
+    t2  = t3 t6
+  * t2  = t3 String
+    t3  = t4 t5
+  * t3  = (String -> String -> String) t5
+   ^t4  = String -> String -> String
+   ^t6  = String
+    t7  = t8 t9
+    t8  = t12 -> String
+    t9  = t10 t11
+    t10 = t13 -> Integer
+    t11 = t2
+    t12 < Printable
+    t13 < HasLength
+
+We then 
