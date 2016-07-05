@@ -2,7 +2,6 @@ top=../..
 -include ../../res/build-config.mk
 
 tests = \
-	adt-test \
 	buffer-test \
 	env-test \
 	gc-test \
