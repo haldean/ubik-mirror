@@ -1,8 +1,7 @@
 . bad-type
 
-^ Type1 = T1 String
-^ Type2 = T2 String
+^ UserType = T
 
 : bad-type
-    ^ String -> Type1
-    = \x -> T2 x
+    ^ String -> UserType
+    = \x -> x
