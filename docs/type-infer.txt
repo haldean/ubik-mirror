@@ -11,206 +11,141 @@ inference. Both of these two steps happen in the same AST pass, called
 "inference"; despite it's name, it's also responsible for type checking.
 
 Inference happens module-by-module; since all top-level definitions have
-types specified on them, no cross-module inference must occur. The first
-step for a module is to assign type variables to each expression in the
-AST. The next step is to assign to some of those variables values that
-represent known types (either because the associated expressions are
-source literals or because they are externally imported, and thus we
-know their signature). Next, we introduce constraints that the semanics
-of the program introduce (i.e., "a b" must have a type equal to the type
-of a applied to the type of b). Finally, we attempt to find an
-assignment to variables that provides a "specific" type (i.e., a type
-that does not have any dependence on further variables).
+types specified on them, no cross-module inference must occur. Ubik
+only infers types "forwards", meaning that, at the point of declaration,
+the tightest-possible type constraint on a name must be known. In
+general, this shouldn't be a hindrance to a Ubik programmer; the biggest
+"downside" of this is that top-level declarations must be given a type
+by the programmer. The upside of this is a simplified type system that
+can give better errors than a full Hindley-Milner-style type inferencer
+while still providing most of the convenience that such a type engine
+provides.
 
-The first step is simple. We assign each node in the AST a unique type
-variable. Let's take the following sample Ubik program:
+As the inferencer runs over an AST, it builds a set of "deductions" and
+a set of "assertions". "Deductions" are things we know about the type of
+an object; these are set at the time of the object's instantiation. On
+the other hand, "assertions" are things that we hope to be true but
+aren't sure of yet. At the end of AST processing, we ensure that every
+assertion is satisfied by the deductions we made. For type checking, all
+that is required is that the assertions generated are sufficient to
+disallow any nonconformant Ubik program. For type inference, we need a
+set of deduction rules such that we can propogate types forward
+adequately.
 
-    : infer-example
-        ^ String -> Integer
-        = \a -> {
-            : y = concat a "hello"
-            ! length y
-        }
+Before we go any further, I'm going to quickly define some sets so that
+I can be terser throughout the rest of this:
+    - E is the set of all valid Ubik expressions
+    - T is the set of all valid Ubik types
+    - D is the set of all possible derivations. D is equal to E x T: a
+      pair (e, t) means that expression e has type t.
+    - A is the set of all possible assertions. A is also equal to
+      E x T, but its elements have a different semantic meaning; a pair
+      (e, t) means that the type of "e" must be assignable to a type
+      "t".
 
-Which has the following expression-typevar mapping:
+AST inference is expression-based, and each expression has its own set
+of deduction and assertion rules. Essentially what we're doing is making
+a pair of functions over source expressions; if D is the set of all
+derivations, E is the set of all expressions, and A is the set of all
+assertions, we're defining:
 
-    t0    \a -> { : y = concat a "hello" ! humanize (length y) }
-    t1    a
-    t2    { : y = concat a "hello" ! humanize (length y) }
-    t3    concat a "hello"
-    t4    concat a
-    t5    concat
-    t6    a
-    t7    "hello"
-    t8    humanize (length y)
-    t9    humanize
-    t10   length y
-    t11   length
-    t12   y
+    d : E -> 2^D
+    a : E -> 2^A
 
-And thus the first stage is complete. The next stage is to start
-building our fact set. We first introduce type equality constraints for
-literals whose types we know for sure:
+These functions map an expression onto a set of derivations and
+assertions, respectively. The set of derivations for an entire program
+is the union of the sets of all derivations for each expression in the
+program, and likewise with the assertions. Once these sets are built,
+we can determine whether the program is valid through constraint
+satisfaction (which I'll get to later).
 
-    t7  = String
+First let's start by defining d and a. Since everything is
+expression-based, and each expression works a little differently, let's
+break it down by expression type.
 
-We can introduce another fact that represents our knowledge of the
-top-level binding's type:
+------------------------------------------------------------------------
+Atomic expressions
 
-    t0  = String -> Integer
-    t7  = String
+Atoms can be pretty easy; source literals have the type of whatever
+sort of atom they are. Names are a little trickier. Because of that,
+let's break this down a little further into literals and names.
 
-Then, we can use our knowledge of the externally-imported functions
-concat and length; since these are polymorphic, they introduce new type
-variables. (I'll use the "<" character to mean "element-of", from now on)
+Source literals
+As mentioned before, these are easy. Depending on the type of atom, a
+source literal has what we'll call a "literal type" L. Literal integers
+have a literal type of Word, literal strings have type String, literal
+decimal numbers have type Number. The derivation rules for literals are
+therefore:
 
-    t0  = String -> Integer
-    t5  = String -> String -> String
-    t7  = String
-    t9  = t12 -> String
-    t11 = t13 -> Integer
-    t12 < Printable
-    t13 < HasLength
+    d(e) : { (e, L) }
 
-We also know about the types involved, and which type classes they're a
-member of:
+The assertion rules are empty; we know these types precisely:
 
-    t0  = String -> Integer
-    t5  = String -> String -> String
-    t7  = String
-    t9  = t12 -> String
-    t11 = t13 -> Integer
-    t12 < Printable
-    t13 < HasLength
-    String < Printable
-    String < HasLength
+    a(e) : { }
 
-Okay, next phase. Now we introduce facts that are implied by the
-semantics of the program:
+Names
+This is trickier, but not by much. The name that we're dealing with must
+have been defined somewhere else (if that weren't the case, then we
+would have been met with an error in an earlier pass). We go look up
+where that name was defined and find out what type it was, and then say
+the type of this expression is the same as that one. Thus, if e
+has the value of the name n:
 
-    t0  = String -> Integer
-    t2  = t0 t1
-    t2  = t8
-    t3  = t4 t7
-    t4  = t5 t6
-    t5  = String -> String -> String
-    t6  = t1
-    t7  = String
-    t8  = t9 t10
-    t9  = t12 -> String
-    t10 = t11 t12
-    t11 = t13 -> Integer
-    t12 = t3
-    t12 < Printable
-    t13 < HasLength
-    String < Printable
-    String < HasLength
+    d(e) : { (e, resolve_type(n)) }
+    a(e) : { }
 
-There is only one type that does not appear on the left-hand side of a
-type assignment here: t1. This is because we do not know anything a
-priori about t1 itself; we rely on the later solve step to handle
-inferring its type from the top-level type, so that we do not need
-global name resolution information during the interpretation phase.
+------------------------------------------------------------------------
+Function application
 
-The next step is reduction; our goal here is to produce specific
-types and find any type disagreements, if they exist. We have a few
-unification methods at our disposal. The notation here is:
+Alright, let's do something cooler than just copying stuff. This time,
+we have an apply expression; an apply expression has a head ("the
+function", "h") and a tail ("the argument", "t"), and applies the tail
+to the head. The derivation rules for this are pretty simple: we know
+that the derived value will have the type of whatever the function
+returns, and we know that the argument should have the type of the first
+argument to the head's type.
 
-    prerequisite 1 |
-    prerequisite 2 |
-    prerequisite 3 | conclusions
+Let's define two partial functions over types before we give the formal
+definitions for application. Both functions are only defined on
+application expressions; for any other expression they are undefined
+(and in the actual type checker, would cause a type error).
 
-Which means that, if the prerequisites are all true, the given
-conclusions can be drawn. We use uppercase letters to describe specific
-types, and lowercase letters to describe type variables. Let's start
-with two simple reduction rules
+    apply (a -> b) = b
+    head (a -> b) = a
 
-    - apply: unpacking function types:
-            x0 = A -> B |
-            x1 = x0 x2  |  x1 = B , x2 = A
-    - trans: exploiting the transitive property of equality:
-            x0 = x1 |
-            x1 = x2 | x0 = x2
+With those functions defined, we can easily define d and a on
+application expressions. As we said earlier, the return type of the
+function is what we derive our expression's type to be:
 
-Using the apply rule, we can add new information about t1 and t2 (from
-now on, new facts are marked with a *, and facts used to generate them
-are marked with -):
+    d(e) : { (e, apply(type(h))) }
 
-  - t0  = String -> Integer
-  - t2  = t0 t1
-  * t1  = String
-  * t2  = Integer
+And we assert the tail has the type of the head's argument:
 
-Similarly, we can hit these guys up:
+    a(e) : { (t, head(type(h))) }
 
-  - t4  = t5 t6
-  - t5  = String -> String -> String
-  * t4  = String -> String
-  * t6  = String
+------------------------------------------------------------------------
+EXPR_LAMBDA
 
-  - t8  = t9 t10
-  - t9  = t12 -> String
-  * t8  = String
-  * t10 = t12
+THIS DOESN'T WORK. we need some backwards inference if we're going to
+make lambdas work without explicit types on all of them, because you
+have to know how the arguments are going to be used.
+For \a -> b:
 
-  - t10 = t11 t12
-  - t11 = t13 -> Integer
-  * t10 = Integer
-  * t12 = t13
+    d(e) : { (e, type(a) -> type(b)) }
+    a(e) : { (e, type(a) -> type(b)) }
 
-And now our full fact set looks like:
+------------------------------------------------------------------------
+EXPR_BLOCK
 
-    t0  = String -> Integer
-    t2  = t0 t1
-    t1  = String
-    t2  = Integer
-    t2  = t8
-    t3  = t4 t7
-    t4  = t5 t6
-    t5  = String -> String -> String
-    t4  = String -> String
-    t6  = String
-    t6  = t1
-    t7  = String
-    t8  = t9 t10
-    t9  = t12 -> String
-    t8  = String
-    t10 = t12
-    t10 = t11 t12
-    t11 = t13 -> Integer
-    t10 = Integer
-    t12 = t13
-    t12 = t3
-    t12 < Printable
-    t13 < HasLength
-    String < Printable
-    String < HasLength
+For { : a = b ! x }:
 
-Oh look, we can apply more stuff (we already know that t7 is a string,
-so it isn't produced here):
+    d(e) : { (e, type(x)) (a, type(b)) }
+    a(e) : { }
 
-  - t3  = t4 t7
-  - t4  = String -> String
-  * t3  = String
+------------------------------------------------------------------------
+EXPR_COND_BLOCK
 
-Our goal is to assign to each variable a specific type. So far, we've
-got these guys covered:
+For ? x { . p1 => t1 . p2 => t2 }:
 
-    t0  = String -> Integer
-    t1  = String
-    t2  = Integer
-    t3  = String
-    t4  = String -> String
-    t5  = String -> String -> String
-    t6  = String
-    t7  = String
-    t8  = String
-    t10 = Integer
-
-Which means we're missing t9, t11, and t12. t12 is easy; we apply
-the transitive property to t12 = t3 and t3 = String to get t12 = String.
-Now all we're left with is t9 and t11, which are both interesting
-because they're the types of polymorphic functions. These are
-interesting because, while technically we know the "full" type of these
-functions because they're imported, we don't actually have a specific
-type for them. 
+    d(e) : { (e, root(t1, t2)) }
+    a(e) : { (x, type(p1)) (x, type(p2)) }
