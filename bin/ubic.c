@@ -44,10 +44,14 @@
 static struct ubik_stream out;
 
 void
-usage()
+usage(char *argv[])
 {
-        printf("ubikc compiles ubik source code to bytecode\n");
-        printf("usage: ubikc SOURCE OUT\n");
+        printf(
+"ubic compiles ubik source code to bytecode\n"
+"usage: %s SOURCE [OUT]\n\n"
+"If OUT is not specified, the program is fully compiled and the result is\n"
+"thrown away. This is useful if you want to know if a program compiles\n"
+"correctly, but you don't care about the result.\n", argv[0]);
 }
 
 no_ignore ubik_error
@@ -62,26 +66,29 @@ main(int argc, char *argv[])
         struct ubik_compile_env env = {0};
         struct ubik_compile_request req;
         struct ubik_stream in;
+        bool discard_res;
         ubik_error err;
 
-        if (argc != 3)
+        if (argc < 2 || argc > 3)
         {
-                usage();
+                usage(argv);
                 return EXIT_FAILURE;
         }
+        discard_res = argc == 2;
 
         c(ubik_start());
 
         req.source_name = argv[1];
         req.reason = LOAD_MAIN;
-        req.cb = save_result;
+        if (!discard_res)
+                req.cb = save_result;
         req.source = in;
         if (ubik_stream_rfile(&req.source, req.source_name) != OK)
         {
                 printf("could not open %s for reading\n", argv[1]);
                 return EXIT_FAILURE;
         }
-        if (ubik_stream_wfile(&out, argv[2]) != OK)
+        if (!discard_res && ubik_stream_wfile(&out, argv[2]) != OK)
         {
                 printf("could not open %s for writing\n", argv[2]);
                 return EXIT_FAILURE;
