@@ -1,0 +1,8 @@
+. bad-type
+
+^ Type1 = T1 String
+^ Type2 = T2 String
+
+: bad-type
+    ^ String -> Type1
+    = \x -> T2 x

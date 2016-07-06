@@ -2,6 +2,7 @@ top=../..
 -include ../../res/build-config.mk
 
 tests = \
+	bad-type.uk \
 	no-top-type.uk \
 	not-total-pred-block.uk \
 	syntax.uk \
