@@ -1,6 +1,6 @@
 Compile-time Type Inference ============================================
 Haldean Brown                                      First draft: Jun 2016
-                                                  Last updated: Jun 2016
+                                                  Last updated: Jul 2016
 
 Status: Draft
 
