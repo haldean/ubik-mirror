@@ -79,8 +79,7 @@ ubik_parse(
         {
                 if (show_errors)
                 {
-                        fprintf(stderr,
-                                "\x1b[37m%s:%lu:%lu:\x1b[31m error:\x1b[0m %s\n",
+                        printf("\x1b[37m%s:%lu:%lu:\x1b[31m error:\x1b[0m %s\n",
                                 source_name, ctx.err_loc->line_start,
                                 ctx.err_loc->col_start, ctx.err_msg);
                         ubik_streamutil_print_line_char(
