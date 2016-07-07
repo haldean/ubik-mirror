@@ -1,0 +1,81 @@
+/*
+ * passthrough.c: create pass-through streams.
+ * Copyright (C) 2016, Haldean Brown
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ */
+
+#include "ubik/ubik.h"
+#include "ubik/passthrough.h"
+#include "ubik/stream.h"
+
+#include <stdlib.h>
+
+#define pt(gen) ((struct ubik_passthrough *)(gen))
+#define base(gen) pt(gen)->parent
+
+size_t
+pt_read(void *dst, struct ubik_generator *gen, size_t len)
+{
+        return ubik_stream_read(dst, base(gen), len);
+}
+
+size_t
+pt_write(struct ubik_generator *gen, void *src, size_t len)
+{
+        return ubik_stream_write(base(gen), src, len);
+}
+
+size_t
+pt_drop(struct ubik_generator *gen, size_t len)
+{
+        return ubik_stream_drop(base(gen), len);
+}
+
+void
+pt_close(struct ubik_generator *gen)
+{
+        if (pt(gen)->close_passes_through)
+                ubik_stream_close(base(gen));
+}
+
+void
+pt_reset(struct ubik_generator *gen)
+{
+        ubik_stream_reset(base(gen));
+}
+
+no_ignore ubik_error
+ubik_create_passthrough(
+        struct ubik_stream *res,
+        struct ubik_stream *src,
+        bool close_passes_through)
+{
+        struct ubik_passthrough *gen;
+
+        gen = calloc(1, sizeof(struct ubik_passthrough));
+        if (gen == NULL)
+                return ubik_raise(ERR_NO_MEMORY, "passthrough generator");
+        gen->head.read = pt_read;
+        gen->head.write = pt_write;
+        gen->head.drop = pt_drop;
+        gen->head.close = pt_close;
+        gen->head.reset = pt_reset;
+        gen->parent = src;
+        gen->close_passes_through = close_passes_through;
+
+        return ubik_stream_generator(res, &gen->head);
+}
+
