@@ -1,0 +1,13 @@
+#!/bin/bash
+
+which pandoc >/dev/null 2>/dev/null
+if [[ "$?" != "0" ]]
+then
+    echo "this tool requires pandoc to be installed and on your PATH"
+    exit 1
+fi
+
+res_dir=$(dirname "$BASH_SOURCE{0}")
+cat $res_dir/rst/rstheader.html
+pandoc $1
+cat $res_dir/rst/rstfooter.html

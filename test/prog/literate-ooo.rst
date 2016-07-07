@@ -6,12 +6,14 @@ That means things like starting your file with a package declaration, or
 the imports. Like in Python:
 
 .. code:: python
+
     import re
     import os
 
 Or in Java:
 
 .. code:: java
+
     package com.company.department.team.project.subproject.impl.beans;
     import com.google.java.everything;
 
@@ -21,6 +23,7 @@ would fail, because ``x`` isn't defined when ``y``'s initializer is
 evaluated:
 
 .. code:: c
+
     int y = x + 5;
     int x = 4;
 
