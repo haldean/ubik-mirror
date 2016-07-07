@@ -13,6 +13,8 @@ tests = \
 	import-splat.uk \
 	lambda.uk \
 	lambda-simple.uk \
+	literate.rst \
+	literate-simple.ul \
 	num.uk \
 	pattern-bind.uk \
 	pattern-bind-simple.uk \

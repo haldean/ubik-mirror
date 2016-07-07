@@ -218,7 +218,6 @@ fp_lit(struct ubik_generator *gen)
         } while (read == bufsize);
         fclose(f);
 
-        printf("'%s'", contents);
         f = fmemopen(contents, size, "r");
         return f;
 }
