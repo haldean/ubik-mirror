@@ -14,6 +14,7 @@ tests = \
 	lambda.uk \
 	lambda-simple.uk \
 	literate.rst \
+	literate-ooo.rst \
 	literate-simple.ul \
 	num.uk \
 	pattern-bind.uk \

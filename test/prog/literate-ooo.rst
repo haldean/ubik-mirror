@@ -16,16 +16,13 @@ Or in Java:
     import com.google.java.everything;
 
 In still other languages, you have to define all of the stuff you use
-before you use it. Take C for example:
+before you use it. Take C for example; this sequence of assignments
+would fail, because ``x`` isn't defined when ``y``'s initializer is
+evaluated:
 
 .. code:: c
-    // this would fail!
-    // int y = x + 5;
-
-    int x = 4;
-
-    // but this one doesn't:
     int y = x + 5;
+    int x = 4;
 
 But in Ubik, *not so!* In fact, you can define stuff well before you
 specify where it comes from. Without any definitions at all, you can do
