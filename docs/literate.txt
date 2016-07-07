@@ -1,0 +1,88 @@
+Literate Programs in Ubik ==============================================
+Haldean Brown                                      First draft: Jul 2016
+                                                  Last updated: Jul 2016
+
+Status: Draft
+
+------------------------------------------------------------------------
+
+Ubik supports literate programming as a first-class language entity.
+Ubik has a leg up on many mainstream programming languages when it comes
+to literate programming: the ordering of definitions is not significant
+in Ubik, so one can order the statements in a module in whatever order
+makes a better "narrative". That, combined with the fact that a literate
+Ubik file is also valid reStructuredText (reST), means that writing
+literate Ubik is both super-easy and barely dissimilar from normal Ubik.
+
+Literate Ubik files have the extension ".ul" or ".rst"; when an input
+file has one of these extensions, the Ubik compiler correctly skips the
+lines that do not correspond to actual code. Since the file itself is
+already valid reST, no processing of the file needs to happen to turn it
+into a valid markup file (often called "weaving" in the literate
+programming world).
+
+Any code block in a literate Ubik file is considered Ubik source code.
+So this:
+
+    =============================================
+    A package for creating something from nothing
+    =============================================
+    By Haldean Brown
+    ---------------------------------------------
+
+    Something from nothing is a really cool trick. Check out what
+    happens when I do something like this::
+
+        : this ^ imp:Nothing -> imp:Something
+        = \x -> Something "from nothing"
+
+    I did it. I made something from nothing. Check that out. And all I
+    needed to do it were these things:
+
+    .. code:: ubik
+        . something-from-nothing
+        + imp
+
+    Which is not dissimilar from this Java code:
+
+    .. code:: java
+        package something.from.nothing;
+        import imp;
+
+    Or this Go code::
+
+    > package somethingfromnothing;
+    > import imp;
+
+Becomes this Ubik file:
+
+    : this ^ imp:Nothing -> imp:Something
+    = \x -> Something "from nothing"
+    . something-from-nothing
+    + imp
+
+Specifically, the following elements are assumed to be Ubik source
+material:
+
+    - Unquoted literal blocks of all stripes (any of the
+      double-colon-delimited blocks, whether the double colon is on its
+      own line or at the end of the previous).
+    - Code directives where the name of the programming language is
+      explicitly set to "ubik".
+
+If you want code-formatted blocks that aren't treated as Ubik source
+material, you can use a code block with the language set to something
+else (or just unset entirely). You can also use a quoted literal block,
+although you'll end up with the quoting character inside the result.
+
+To avoid a dependency on an entire reST parser, we place a small
+constraint on the specific syntax of the directive line. The code
+directives must start on their own line and match the following regular
+expression:
+
+    \.\. code::[\s]*ubik[\s]*
+
+The code must start on a new line after the directive, and all lines are
+taken until a line with no indentation is found again. This is slightly
+less flexible than the reST spec usually allows you to be, but it
+simplifies the implementation of the weave operation significantly.
