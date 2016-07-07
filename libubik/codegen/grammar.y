@@ -83,7 +83,7 @@
 %type <type_expr> top_type_expr type_expr type_atom
 %type <atom> atom
 %type <arg_list> arg_list
-%type <imports> imports import
+%type <imports> import
 %type <type_def> adt_def alias_def type_def
 %type <type_list> type_list
 %type <adt_ctor> adt_ctor adt_ctors
@@ -128,29 +128,41 @@ int yydebug = 1;
 %%
 
 prog
-: package blocks
+: prog package
 {
-        ctx->ast = $2;
-        ctx->ast->package_name = $1;
+        $1->package_name = $2;
+        $$ = $1;
 }
-| package blocks immediate
+| prog binding
 {
-        ctx->ast = $2;
-        ctx->ast->package_name = $1;
-        ctx->ast->immediate = $3;
+        wrap_err(ubik_ast_bind($1, $2));
+        $$ = $1;
+        merge_loc($$, $$, $2);
 }
-| package imports blocks
+| prog type_def
 {
-        ctx->ast = $3;
-        ctx->ast->package_name = $1;
-        ctx->ast->imports = $2;
+        wrap_err(ubik_ast_add_type($1, $2));
+        $$ = $1;
+        merge_loc($$, $$, $2);
 }
-| package imports blocks immediate
+| prog import
 {
-        ctx->ast = $3;
-        ctx->ast->package_name = $1;
-        ctx->ast->imports = $2;
-        ctx->ast->immediate = $4;
+        $2->next = $1->imports;
+        $1->imports = $2;
+        $$ = $1;
+        merge_loc($$, $$, $2);
+}
+| prog immediate
+{
+        $1->immediate = $2;
+        $$ = $1;
+        merge_loc($$, $$, $2);
+}
+| %empty
+{
+        alloc($$, 1, struct ubik_ast);
+        load_loc($$->loc);
+        ctx->ast = $$;
 }
 ;
 
@@ -159,15 +171,6 @@ package
 {
         $$ = $2;
 }
-;
-
-imports
-: imports import
-{
-        $$ = $2;
-        $$->next = $1;
-}
-| import
 ;
 
 import

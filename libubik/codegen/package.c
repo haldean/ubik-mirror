@@ -19,6 +19,7 @@
 
 #include "ubik/package.h"
 
+#include <stdio.h>
 #include <string.h>
 
 no_ignore static ubik_error
@@ -90,7 +91,12 @@ no_ignore ubik_error
 ubik_package_add_to_scope(struct ubik_ast *ast)
 {
         if (ast->package_name == NULL)
+        {
+                printf("\x1b[37m%s:\x1b[31m error:\x1b[0m module does not "
+                       "specify a package name\n",
+                       ast->loc.source_name);
                 return ubik_raise(
                         ERR_BAD_VALUE, "root AST must have package name");
+        }
         return assign_package(ast, ast->package_name);
 }
