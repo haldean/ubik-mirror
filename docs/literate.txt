@@ -2,7 +2,13 @@ Literate Programs in Ubik ==============================================
 Haldean Brown                                      First draft: Jul 2016
                                                   Last updated: Jul 2016
 
-Status: Draft
+Status: In progress
+To do:
+    - Recognize non-source-material and strip it.
+    - Order-independence between package declaration, blocks, immediate
+      expressions and imports.
+    - Line number directives to preserve line numbers after stripping
+      non-source material.
 
 ------------------------------------------------------------------------
 
