@@ -24,41 +24,42 @@ programming world).
 Any code block in a literate Ubik file is considered Ubik source code.
 So this:
 
-    =============================================
-    A package for creating something from nothing
-    =============================================
-    By Haldean Brown
-    ---------------------------------------------
+    ====================================================
+    Creating nothing from something
+    ====================================================
+    A brief exposition on writing a programming language
+    ----------------------------------------------------
 
-    Something from nothing is a really cool trick. Check out what
-    happens when I do something like this::
+    Something from nothing is a really cool trick, but nothing from
+    something is even cooler. Check out what happens when I do something
+    like this::
 
-        : this ^ imp:Nothing -> imp:Something
-        = \x -> Something "from nothing"
+        : this ^ imp:MaybeThing -> imp:MaybeThing
+        = \x -> imp:Nothing
 
-    I did it. I made something from nothing. Check that out. And all I
+    I did it. I made nothing from something. Check that out. And all I
     needed to do it were these things:
 
     .. code:: ubik
-        . something-from-nothing
+        . the-void
         + imp
 
     Which is not dissimilar from this Java code:
 
     .. code:: java
-        package something.from.nothing;
+        package thevoid;
         import imp;
 
     Or this Go code::
 
-    > package somethingfromnothing;
+    > package thevoid;
     > import imp;
 
 Becomes this Ubik file:
 
-    : this ^ imp:Nothing -> imp:Something
-    = \x -> Something "from nothing"
-    . something-from-nothing
+    : this ^ imp:MaybeThing -> imp:MaybeThing
+    = \x -> imp:Nothing
+    . the-void
     + imp
 
 Specifically, the following elements are assumed to be Ubik source
