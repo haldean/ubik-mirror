@@ -80,7 +80,9 @@ main(int argc, char *argv[])
 
         req.source_name = argv[1];
         req.reason = LOAD_MAIN;
-        if (!discard_res)
+        if (discard_res)
+                req.cb = NULL;
+        else
                 req.cb = save_result;
         req.source = in;
         if (ubik_stream_rfile(&req.source, req.source_name) != OK)
