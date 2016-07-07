@@ -67,6 +67,14 @@ ubik_stream_buffer(struct ubik_stream *sp)
         return sp->buffer == NULL ? ubik_raise(ERR_NO_MEMORY, "buffer") : OK;
 }
 
+no_ignore ubik_error
+ubik_stream_generator(struct ubik_stream *sp, struct ubik_generator *gen)
+{
+        sp->stream_type = STREAM_TYPE_GENERATOR;
+        sp->gen = gen;
+        return OK;
+}
+
 /* Attempts to read the specified number of bytes from the stream, returning the
  * number of bytes read. */
 no_ignore size_t
@@ -84,6 +92,10 @@ ubik_stream_read(void *dst, struct ubik_stream *src, size_t len)
                 memcpy(dst, src->buffer->read, n);
                 src->buffer->read += n;
                 return n;
+        case STREAM_TYPE_GENERATOR:
+                if (src->gen->read != NULL)
+                        return src->gen->read(dst, src->gen, len);
+                return 0;
         }
         return 0;
 }
@@ -104,6 +116,10 @@ ubik_stream_drop(struct ubik_stream *src, size_t len)
                 n = size_min(len, src->buffer->write - src->buffer->read);
                 src->buffer->read += n;
                 return n;
+        case STREAM_TYPE_GENERATOR:
+                if (src->gen->drop != NULL)
+                        return src->gen->drop(src->gen, len);
+                return 0;
         }
         return 0;
 }
@@ -160,6 +176,10 @@ ubik_stream_write(struct ubik_stream *dst, void *src, size_t len)
                 memcpy(dst->buffer->write, src, len);
                 dst->buffer->write += len;
                 return len;
+        case STREAM_TYPE_GENERATOR:
+                if (dst->gen->write != NULL)
+                        return dst->gen->write(dst->gen, src, len);
+                return 0;
         }
         return 0;
 }
@@ -178,6 +198,10 @@ ubik_stream_close(struct ubik_stream *sp)
         case STREAM_TYPE_BUFFER:
                 free(sp->buffer->start);
                 free(sp->buffer);
+                return;
+        case STREAM_TYPE_GENERATOR:
+                if (sp->gen->close != NULL)
+                        sp->gen->close(sp->gen);
                 return;
         }
 }
@@ -217,6 +241,11 @@ ubik_stream_reset(struct ubik_stream *sp)
         case STREAM_TYPE_BUFFER:
                 sp->buffer->read = sp->buffer->start;
                 sp->buffer->write = sp->buffer->start;
+                return;
+
+        case STREAM_TYPE_GENERATOR:
+                if (sp->gen->reset != NULL)
+                        sp->gen->reset(sp->gen);
                 return;
         }
 }

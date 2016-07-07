@@ -23,17 +23,29 @@
 
 #include "ubik/ubik.h"
 
-struct _ubik_buf {
+struct _ubik_buf
+{
         uint8_t *start;
         uint8_t *read;
         uint8_t *write;
         uint8_t *end;
 };
 
-struct ubik_stream {
+struct ubik_generator
+{
+        size_t (*read)(void *dst, struct ubik_generator *, size_t len);
+        size_t (*write)(struct ubik_generator *, void *src, size_t len);
+        size_t (*drop)(struct ubik_generator *, size_t len);
+        void   (*close)(struct ubik_generator *);
+        void   (*reset)(struct ubik_generator *);
+};
+
+struct ubik_stream
+{
         union {
                 FILE *file;
                 struct _ubik_buf *buffer;
+                struct ubik_generator *gen;
         };
         ubik_word stream_type;
 };
@@ -57,6 +69,12 @@ ubik_stream_wfilep(struct ubik_stream *sp, FILE *file);
 /* Opens a stream backed by an in-memory buffer. */
 no_ignore ubik_error
 ubik_stream_buffer(struct ubik_stream *sp);
+
+/* Opens a stream backed by a generator. Note that the generator itself is
+ * responsible for cleaning itself up; it should listen for a call to close and
+ * free itself if necessary. */
+no_ignore ubik_error
+ubik_stream_generator(struct ubik_stream *sp, struct ubik_generator *gen);
 
 /* Attempts to read the specified number of bytes from the stream, returning the
  * number of bytes read. */

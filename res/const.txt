@@ -33,6 +33,7 @@
    rfile.STREAM_TYPE_FILE_R
    wfile.STREAM_TYPE_FILE_W
   buffer.STREAM_TYPE_BUFFER
+     gen.STREAM_TYPE_GENERATOR
 
  eabsent.ERR_ABSENT
  ebvalue.ERR_BAD_VALUE
