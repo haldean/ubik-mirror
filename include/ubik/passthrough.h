@@ -24,18 +24,11 @@
 #include "ubik/stream.h"
 #include <stdbool.h>
 
-struct ubik_passthrough
-{
-        struct ubik_generator head;
-        struct ubik_stream *parent;
-        bool close_passes_through;
-};
-
 /* Creates a pass-through stream. The "close passes through" flag determines
  * whether or not close operations should be passed through to the underlying
  * stream. */
 no_ignore ubik_error
-ubik_create_passthrough(
+ubik_passthrough_new(
         struct ubik_stream *res,
         struct ubik_stream *src,
         bool close_passes_through);

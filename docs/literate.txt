@@ -85,9 +85,9 @@ although you'll end up with the quoting character inside the result.
 To avoid a dependency on an entire reST parser, we place a small
 constraint on the specific syntax of the directive line. The code
 directives must start on their own line and match the following regular
-expression:
+expression, with whitespace appearing at any point in the line:
 
-    \.\. code::[\s]*ubik[\s]*
+    ..code::ubik
 
 The code must start on a new line after the directive, and all lines are
 taken until a line with no indentation is found again. This is slightly

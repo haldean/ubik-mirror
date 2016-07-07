@@ -38,6 +38,7 @@ struct ubik_generator
         size_t (*drop)(struct ubik_generator *, size_t len);
         void   (*close)(struct ubik_generator *);
         void   (*reset)(struct ubik_generator *);
+        FILE * (*fp)(struct ubik_generator *);
 };
 
 struct ubik_stream

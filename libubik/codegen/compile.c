@@ -244,9 +244,7 @@ load_ast(struct ubik_compile_env *cenv, struct ubik_compile_job *job)
         if (err != OK)
                 return err;
 
-        err = ubik_parse(
-                &job->ast, job->request->source_name, &job->request->source,
-                true);
+        err = ubik_parse(&job->ast, job->request->source_name, &woven, true);
         if (err != OK)
         {
                 ubik_stream_close(&woven);

@@ -24,42 +24,55 @@
 #include <stdlib.h>
 
 #define pt(gen) ((struct ubik_passthrough *)(gen))
-#define base(gen) pt(gen)->parent
+#define parent(gen) pt(gen)->parent
+
+struct ubik_passthrough
+{
+        struct ubik_generator head;
+        struct ubik_stream *parent;
+        bool close_passes_through;
+};
 
 size_t
 pt_read(void *dst, struct ubik_generator *gen, size_t len)
 {
-        return ubik_stream_read(dst, base(gen), len);
+        return ubik_stream_read(dst, parent(gen), len);
 }
 
 size_t
 pt_write(struct ubik_generator *gen, void *src, size_t len)
 {
-        return ubik_stream_write(base(gen), src, len);
+        return ubik_stream_write(parent(gen), src, len);
 }
 
 size_t
 pt_drop(struct ubik_generator *gen, size_t len)
 {
-        return ubik_stream_drop(base(gen), len);
+        return ubik_stream_drop(parent(gen), len);
 }
 
 void
 pt_close(struct ubik_generator *gen)
 {
         if (pt(gen)->close_passes_through)
-                ubik_stream_close(base(gen));
+                ubik_stream_close(parent(gen));
         free(gen);
 }
 
 void
 pt_reset(struct ubik_generator *gen)
 {
-        ubik_stream_reset(base(gen));
+        ubik_stream_reset(parent(gen));
+}
+
+FILE *
+pt_fp(struct ubik_generator *gen)
+{
+        return ubik_stream_fp(parent(gen));
 }
 
 no_ignore ubik_error
-ubik_create_passthrough(
+ubik_passthrough_new(
         struct ubik_stream *res,
         struct ubik_stream *src,
         bool close_passes_through)
@@ -74,6 +87,7 @@ ubik_create_passthrough(
         gen->head.drop = pt_drop;
         gen->head.close = pt_close;
         gen->head.reset = pt_reset;
+        gen->head.fp = pt_fp;
         gen->parent = src;
         gen->close_passes_through = close_passes_through;
 

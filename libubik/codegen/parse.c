@@ -49,6 +49,7 @@ ubik_parse(
         int token;
         local(parse_context) struct ubik_parse_context ctx = {0};
         size_t i;
+        FILE *fp;
 
         ctx.source_name = source_name;
         ctx.source_stream = stream;
@@ -57,7 +58,10 @@ ubik_parse(
         if (status != 0)
                 return ubik_raise(ERR_UNEXPECTED_FAILURE, "yylex_init failed");
 
-        yyset_in(ubik_stream_fp(stream), scanner);
+        fp = ubik_stream_fp(stream);
+        if (fp == NULL)
+                return ubik_raise(ERR_BAD_VALUE, "stream has no file pointer");
+        yyset_in(fp, scanner);
 
         ps = yypstate_new();
         do

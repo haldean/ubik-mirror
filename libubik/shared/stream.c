@@ -216,7 +216,7 @@ ubik_stream_fp(struct ubik_stream *sp)
                 return sp->file;
         case STREAM_TYPE_BUFFER:
 #ifdef __MACH__
-                printf("WARNING: ubik_stream_fp unsupported for memory buffers on Darwin");
+                printf("WARNING: buffer has no file pointer on Darwin\n");
                 return NULL;
 #else
                 return fmemopen(
@@ -224,6 +224,10 @@ ubik_stream_fp(struct ubik_stream *sp)
                         sp->buffer->end - sp->buffer->start,
                         "r");
 #endif
+        case STREAM_TYPE_GENERATOR:
+                if (sp->gen->fp == NULL)
+                        return NULL;
+                return sp->gen->fp(sp->gen);
         }
         return NULL;
 }
