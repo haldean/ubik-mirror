@@ -8,6 +8,6 @@ clean:
 	make -C unit clean
 	make -C pyasm clean
 	make -C prog clean
-	make -C err-progs
+	make -C err-progs clean
 
 .PHONY: check clean
