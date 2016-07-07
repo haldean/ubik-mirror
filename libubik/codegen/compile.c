@@ -26,6 +26,7 @@
 #include "ubik/adt.h"
 #include "ubik/compile.h"
 #include "ubik/import.h"
+#include "ubik/literate.h"
 #include "ubik/parse.h"
 #include "ubik/patterns.h"
 #include "ubik/resolve.h"
@@ -236,12 +237,22 @@ load_ast(struct ubik_compile_env *cenv, struct ubik_compile_job *job)
         ubik_error err;
         struct ubik_ast_import_list *import;
         struct ubik_compile_request *req;
+        struct ubik_stream woven;
+
+        err = ubik_literate_weave(
+                &woven, &job->request->source, job->request->source_name);
+        if (err != OK)
+                return err;
 
         err = ubik_parse(
                 &job->ast, job->request->source_name, &job->request->source,
                 true);
         if (err != OK)
+        {
+                ubik_stream_close(&woven);
                 return err;
+        }
+        ubik_stream_close(&woven);
 
         import = job->ast->imports;
         while (import != NULL)

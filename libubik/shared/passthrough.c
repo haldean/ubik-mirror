@@ -49,6 +49,7 @@ pt_close(struct ubik_generator *gen)
 {
         if (pt(gen)->close_passes_through)
                 ubik_stream_close(base(gen));
+        free(gen);
 }
 
 void
