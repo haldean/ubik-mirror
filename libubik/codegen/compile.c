@@ -95,6 +95,17 @@ free_req(struct ubik_compile_request *req)
         free(req);
 }
 
+/* Frees the parts of a job object that are uniquely owned by the job. This
+ * doesn't free the request or the AST, as those are present in the request
+ * holder as well. */
+static void
+free_job(struct ubik_compile_job *job)
+{
+        ubik_vector_free(&job->dep_graphs);
+        ubik_stream_close(&job->woven);
+        free(job);
+}
+
 no_ignore ubik_error
 ubik_compile_env_free(struct ubik_compile_env *cenv)
 {
@@ -141,8 +152,7 @@ ubik_compile_env_free(struct ubik_compile_env *cenv)
                         if (err != OK)
                                 return err;
                 }
-                ubik_vector_free(&job->dep_graphs);
-                free(job);
+                free_job(job);
         }
         ubik_vector_free(&cenv->to_compile);
 
@@ -483,9 +493,7 @@ ubik_compile_run(struct ubik_compile_env *cenv)
                         break;
 
                 case COMPILE_DONE:
-                        ubik_vector_free(&job->dep_graphs);
-                        ubik_stream_close(&job->woven);
-                        free(job);
+                        free_job(job);
                         cenv->to_compile.n--;
                         break;
                 }
