@@ -31,26 +31,37 @@
 #define code_match "..code::ubik\n"
 #define code_match_at 13
 
+#define ls_buf_size 1024
+
 struct literate_state
 {
         struct ubik_generator head;
         struct ubik_stream *base;
 
         /* True if we're inside ubik source material, false otherwise. */
-        bool in_block;
+        bool in_source;
+
         /* The lengths that we've matched the code and colon pattern starts,
          * respectively. When these are equal to code_match_at/colon_match_at,
          * we've successfully matched a block start. */
         size_t code_match_len;
         size_t colon_match_len;
+
         /* True if the last character we saw was a newline. */
         bool just_saw_nl;
-        /* Captures the number of newlines that need to be inserted in order to
-         * make line numbers match up. */
-        size_t nl_to_insert;
+
+        /* If not '\0', then this is a character that needs to be inserted
+         * before any other characters are. */
+        char to_insert;
+
+        /* The buffer that input bytes are read into, so that buffer state can
+         * persist across reads. */
+        char buf[ls_buf_size];
+        size_t buf_loc;
+        size_t buf_end;
 };
 
-#define ls(gen) ((struct literate_state *)gen)
+#define asls(gen) ((struct literate_state *)gen)
 
 static bool
 isws(char c)
@@ -58,152 +69,126 @@ isws(char c)
         return c == ' ' || c == '\t' || c == '\n' || c == '\r';
 }
 
-/* Called to copy source material to a destination buffer until the end of the
- * source material is reached. Returns the amount of source material consumed. */
-static size_t
-copy_in_block(struct literate_state *ls, char *dst, char *src, size_t len)
+/* Called to update in_source in the literate state struct. */
+static void
+feed_source_match(struct literate_state *ls, char s)
 {
-        size_t i;
-        char s;
-
-        ls->just_saw_nl = false;
-        for (i = 0; i < len; i++)
+        if (s == colon_match[ls->colon_match_len])
+                ls->colon_match_len++;
+        else
+                ls->colon_match_len = 0;
+        if (ls->colon_match_len == colon_match_at)
         {
-                s = src[i];
-                if (ls->just_saw_nl && !isws(s))
-                {
-                        ls->in_block = false;
-                        ls->just_saw_nl = false;
-                        break;
-                }
-                *(dst++) = s;
+                ls->colon_match_len = 0;
+                ls->code_match_len = 0;
+                ls->in_source = true;
                 ls->just_saw_nl = s == '\n';
+                return;
         }
 
-        return i;
+        if (s == code_match[ls->code_match_len])
+        {
+                /* The code match must start at the start of a line. */
+                if (ls->code_match_len != 0 || ls->just_saw_nl)
+                        ls->code_match_len++;
+        }
+        /* The code match is whitespace-tolerant, as long as there's no
+         * newlines inside it. */
+        else if (s == '\n' || !isws(s))
+                ls->code_match_len = 0;
+
+        if (ls->code_match_len == code_match_at)
+        {
+                ls->colon_match_len = 0;
+                ls->code_match_len = 0;
+                ls->in_source = true;
+                ls->just_saw_nl = s == '\n';
+                return;
+        }
+
+        ls->just_saw_nl = s == '\n';
 }
 
-/* Called to discard non-source-material. Returns the number of characters
- * discarded. */
+/* Refill the literate-state buffer, returning the number of bytes remaining in
+ * the buffer. */
 static size_t
-find_block_start(
-        struct literate_state *ls,
-        char *src,
-        size_t len)
+refill_buf(struct literate_state *ls)
 {
-        size_t i;
-        char s;
+        ubik_assert(ls->buf_loc <= ls->buf_end);
 
-        for (i = 0; i < len; i++)
+        if (ls->buf_loc < ls->buf_end && ls->buf_loc > 0)
         {
-                s = src[i];
-                if (s == '\n')
-                        ls->nl_to_insert++;
-
-                if (s == colon_match[ls->colon_match_len])
-                        ls->colon_match_len++;
-                else
-                        ls->colon_match_len = 0;
-                if (ls->colon_match_len == colon_match_at)
-                {
-                        ls->colon_match_len = 0;
-                        ls->code_match_len = 0;
-                        ls->in_block = true;
-                        ls->just_saw_nl = s == '\n';
-                        return i;
-                }
-
-                if (s == code_match[ls->code_match_len])
-                {
-                        /* The code match must start at the start of a line. */
-                        if (ls->code_match_len != 0 || ls->just_saw_nl)
-                                ls->code_match_len++;
-                }
-                /* The code match is whitespace-tolerant, as long as there's no
-                 * newlines inside it. */
-                else if (s == '\n' || !isws(s))
-                        ls->code_match_len = 0;
-
-                if (ls->code_match_len == code_match_at)
-                {
-                        ls->colon_match_len = 0;
-                        ls->code_match_len = 0;
-                        ls->in_block = true;
-                        ls->just_saw_nl = s == '\n';
-                        return i;
-                }
-
-                ls->just_saw_nl = s == '\n';
+                /* If there's still some stuff in the buffer, and it's not
+                 * already at the start, copy that to the front of the buffer
+                 * and start filling from there. */
+                memmove(ls->buf, &ls->buf[ls->buf_loc],
+                        ls->buf_end - ls->buf_loc);
+                ls->buf_end -= ls->buf_loc;
+                ls->buf_loc = 0;
         }
-        return i;
+        else
+        {
+                /* Otherwise, reset the buffer's state and start writing from
+                 * the start. */
+                ls->buf_end = 0;
+                ls->buf_loc = 0;
+        }
+
+        /* Now read into the buffer, filling as much of the remaining space as
+         * possible. */
+        ls->buf_end += ubik_stream_read(
+                &ls->buf[ls->buf_end], ls->base, ls_buf_size - ls->buf_end);
+        return ls->buf_end;
 }
 
 static size_t
 read_lit(void *vdst, struct ubik_generator *gen, size_t len)
 {
-        size_t base_read;
+        struct literate_state *ls;
         size_t dst_filled;
-        size_t buf_used;
-        size_t t;
-        size_t iter;
-        char *buf;
         char *dst;
+        char s;
 
         dst = (char *) vdst;
-        buf = calloc(len, 1);
-        if (buf == NULL)
-                return 0;
+        ls = asls(gen);
         dst_filled = 0;
 
-        /* We insert newlines for every newline we ignored, to make sure the
-         * line numbers all match up in the woven result. It seems weird to do
-         * this before we've even updated the variable (which happens in
-         * find_block_start, below) but this can actually persist across calls
-         * to read_lit (if we're unlucky) so we have to do it any time we're
-         * about to write source material to the buffer. */
-        while (ls(gen)->nl_to_insert-- && dst_filled < len)
-                dst[dst_filled++] = '\n';
-
-        /* This iteration variable is just here to make sure that a bug doesn't
-         * cause this to loop forever. This process should never loop more than
-         * a handful of times, but it is totally broken if it tries to run more
-         * than the size of the destination buffer. */
-        for (iter = 0; iter < len; iter++)
+        while (dst_filled < len)
         {
-                base_read = ubik_stream_read(
-                        buf, ls(gen)->base, len - dst_filled);
-                buf_used = 0;
-                while (buf_used < base_read)
+                if (ls->to_insert != '\0')
+                        dst[dst_filled++] = ls->to_insert;
+                if (refill_buf(ls) == 0)
+                        break;
+                for (; ls->buf_loc < ls->buf_end && dst_filled < len; ls->buf_loc++)
                 {
-                        if (ls(gen)->in_block)
+                        s = ls->buf[ls->buf_loc];
+
+                        /* If we just saw a newline and we were in source
+                         * before, we need to make sure we're still in source.
+                         * We're only still in source material if this line
+                         * starts with whitespace. */
+                        if (ls->just_saw_nl && ls->in_source)
+                                if (!isws(s))
+                                        ls->in_source = false;
+
+                        /* If we just saw a newline and we're not in source, we
+                         * need to insert a comment marker at the start of the
+                         * line. */
+                        if (ls->just_saw_nl && !ls->in_source)
                         {
-                                t = copy_in_block(
-                                        ls(gen), dst + dst_filled,
-                                        buf + buf_used, base_read - buf_used);
-                                buf_used += t;
-                                dst_filled += t;
-                                /* If we're still in a block at the end of reading,
-                                 * we're done here. */
-                                if (ls(gen)->in_block)
-                                        goto done;
+                                dst[dst_filled++] = '#';
+                                if (dst_filled == len)
+                                        ls->to_insert = ' ';
+                                else
+                                        dst[dst_filled++] = ' ';
                         }
-                        /* Can't use "else" here, this can change as part of
-                         * copy_in_block. */
-                        if (!ls(gen)->in_block)
-                        {
-                                t = find_block_start(
-                                        ls(gen), buf + buf_used,
-                                        base_read - buf_used);
-                                ubik_assert(t > 0);
-                                buf_used += t;
-                                while (ls(gen)->nl_to_insert-- && dst_filled < len)
-                                        dst[dst_filled++] = '\n';
-                        }
+                        if (dst_filled == len)
+                                break;
+
+                        feed_source_match(ls, s);
+                        dst[dst_filled++] = s;
                 }
         }
-
-done:
-        free(buf);
         return dst_filled;
 }
 
@@ -216,30 +201,29 @@ close_lit(struct ubik_generator *gen)
 static void
 reset_lit(struct ubik_generator *gen)
 {
-        ubik_stream_reset(ls(gen)->base);
-        ls(gen)->in_block = false;
-        ls(gen)->code_match_len = false;
-        ls(gen)->colon_match_len = false;
-        ls(gen)->just_saw_nl = false;
+        ubik_stream_reset(asls(gen)->base);
+        asls(gen)->in_source = false;
+        asls(gen)->code_match_len = false;
+        asls(gen)->colon_match_len = false;
+        asls(gen)->just_saw_nl = true;
 }
 
 static FILE *
 fp_lit(struct ubik_generator *gen)
 {
-#define bufsize 4096
         char *contents;
         size_t size;
-        char buf[bufsize];
+        char buf[ls_buf_size];
         size_t read;
         FILE *f;
 
         f = open_memstream(&contents, &size);
         do
         {
-                read = read_lit(buf, gen, bufsize);
+                read = read_lit(buf, gen, ls_buf_size);
                 if (read > 0)
                         fwrite(buf, 1, read, f);
-        } while (read == bufsize);
+        } while (read > 0);
         fclose(f);
 
         f = fmemopen(contents, size, "r");
@@ -265,22 +249,24 @@ ubik_literate_weave(
         struct ubik_stream *src,
         char *src_filename)
 {
-        struct literate_state *lit;
+        struct literate_state *ls;
 
         if (!is_literate_ext(src_filename))
                 return ubik_passthrough_new(res, src, false);
 
-        lit = calloc(1, sizeof(struct literate_state));
-        if (lit == NULL)
+        ls = calloc(1, sizeof(struct literate_state));
+        if (ls == NULL)
                 return ubik_raise(ERR_NO_MEMORY, "literate state alloc");
 
-        lit->head.read = read_lit;
-        lit->head.write = NULL;
-        lit->head.drop = NULL;
-        lit->head.reset = reset_lit;
-        lit->head.close = close_lit;
-        lit->head.fp = fp_lit;
-        lit->base = src;
-        return ubik_stream_generator(res, &lit->head);
+        ls->head.read = read_lit;
+        ls->head.write = NULL;
+        ls->head.drop = NULL;
+        ls->head.reset = reset_lit;
+        ls->head.close = close_lit;
+        ls->head.fp = fp_lit;
+        ls->base = src;
+        reset_lit(&ls->head);
+
+        return ubik_stream_generator(res, &ls->head);
 }
 
