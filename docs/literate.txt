@@ -2,10 +2,7 @@ Literate Programs in Ubik ==============================================
 Haldean Brown                                      First draft: Jul 2016
                                                   Last updated: Jul 2016
 
-Status: In progress
-To do:
-    - Line number directives to preserve line numbers after stripping
-      non-source material.
+Status: Complete
 
 ------------------------------------------------------------------------
 
