@@ -58,7 +58,7 @@ So this:
     > package thevoid;
     > import imp;
 
-Becomes this Ubik file:
+Is equivalent to this Ubik file:
 
     : this ^ imp:MaybeThing -> imp:MaybeThing
     = \x -> imp:Nothing
@@ -96,3 +96,7 @@ the weave operation significantly. The following markers are all valid:
     .               .code:         :ubik
     ..code::ubi k
 
+Internally, literate code weaving is implemented by commenting out each
+line that is not source material before the stream is even passed to the
+lexer. This is nice and streamable; an implementation of the stream that
+does this is present in libubik/codegen/literate.c.
