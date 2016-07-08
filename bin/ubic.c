@@ -85,10 +85,23 @@ main(int argc, char *argv[])
         else
                 req.cb = save_result;
         req.source = in;
-        if (ubik_stream_rfile(&req.source, req.source_name) != OK)
+
+        if (strcmp(req.source_name, "-") == 0)
         {
-                printf("could not open %s for reading\n", argv[1]);
-                return EXIT_FAILURE;
+                req.source_name = "(stdin)";
+                if (ubik_stream_rfilep(&req.source, stdin) == OK)
+                {
+                        printf("could not open %s for reading\n", argv[1]);
+                        return EXIT_FAILURE;
+                }
+        }
+        else
+        {
+                if (ubik_stream_rfile(&req.source, req.source_name) != OK)
+                {
+                        printf("could not open %s for reading\n", argv[1]);
+                        return EXIT_FAILURE;
+                }
         }
         if (!discard_res && ubik_stream_wfile(&out, argv[2]) != OK)
         {
