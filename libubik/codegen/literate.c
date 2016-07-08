@@ -197,6 +197,10 @@ static void
 reset_lit(struct ubik_generator *gen)
 {
         ubik_stream_reset(ls(gen)->base);
+        ls(gen)->in_block = false;
+        ls(gen)->code_match_len = false;
+        ls(gen)->colon_match_len = false;
+        ls(gen)->just_saw_nl = false;
 }
 
 static FILE *
