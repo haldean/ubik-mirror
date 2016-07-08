@@ -45,6 +45,9 @@ struct literate_state
         size_t colon_match_len;
         /* True if the last character we saw was a newline. */
         bool just_saw_nl;
+        /* Captures the number of newlines that need to be inserted in order to
+         * make line numbers match up. */
+        size_t nl_to_insert;
 };
 
 #define ls(gen) ((struct literate_state *)gen)
@@ -83,7 +86,10 @@ copy_in_block(struct literate_state *ls, char *dst, char *src, size_t len)
 /* Called to discard non-source-material. Returns the number of characters
  * discarded. */
 static size_t
-find_block_start(struct literate_state *ls, char *src, size_t len)
+find_block_start(
+        struct literate_state *ls,
+        char *src,
+        size_t len)
 {
         size_t i;
         char s;
@@ -91,6 +97,8 @@ find_block_start(struct literate_state *ls, char *src, size_t len)
         for (i = 0; i < len; i++)
         {
                 s = src[i];
+                if (s == '\n')
+                        ls->nl_to_insert++;
 
                 if (s == colon_match[ls->colon_match_len])
                         ls->colon_match_len++;
@@ -102,7 +110,7 @@ find_block_start(struct literate_state *ls, char *src, size_t len)
                         ls->code_match_len = 0;
                         ls->in_block = true;
                         ls->just_saw_nl = s == '\n';
-                        return i+1;
+                        return i;
                 }
 
                 if (s == code_match[ls->code_match_len])
@@ -122,7 +130,7 @@ find_block_start(struct literate_state *ls, char *src, size_t len)
                         ls->code_match_len = 0;
                         ls->in_block = true;
                         ls->just_saw_nl = s == '\n';
-                        return i+1;
+                        return i;
                 }
 
                 ls->just_saw_nl = s == '\n';
@@ -147,13 +155,23 @@ read_lit(void *vdst, struct ubik_generator *gen, size_t len)
                 return 0;
         dst_filled = 0;
 
+        /* We insert newlines for every newline we ignored, to make sure the
+         * line numbers all match up in the woven result. It seems weird to do
+         * this before we've even updated the variable (which happens in
+         * find_block_start, below) but this can actually persist across calls
+         * to read_lit (if we're unlucky) so we have to do it any time we're
+         * about to write source material to the buffer. */
+        while (ls(gen)->nl_to_insert-- && dst_filled < len)
+                dst[dst_filled++] = '\n';
+
         /* This iteration variable is just here to make sure that a bug doesn't
          * cause this to loop forever. This process should never loop more than
          * a handful of times, but it is totally broken if it tries to run more
          * than the size of the destination buffer. */
         for (iter = 0; iter < len; iter++)
         {
-                base_read = ubik_stream_read(buf, ls(gen)->base, len);
+                base_read = ubik_stream_read(
+                        buf, ls(gen)->base, len - dst_filled);
                 buf_used = 0;
                 while (buf_used < base_read)
                 {
@@ -178,6 +196,8 @@ read_lit(void *vdst, struct ubik_generator *gen, size_t len)
                                         base_read - buf_used);
                                 ubik_assert(t > 0);
                                 buf_used += t;
+                                while (ls(gen)->nl_to_insert-- && dst_filled < len)
+                                        dst[dst_filled++] = '\n';
                         }
                 }
         }
