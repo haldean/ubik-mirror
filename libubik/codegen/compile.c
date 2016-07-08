@@ -237,20 +237,16 @@ load_ast(struct ubik_compile_env *cenv, struct ubik_compile_job *job)
         ubik_error err;
         struct ubik_ast_import_list *import;
         struct ubik_compile_request *req;
-        struct ubik_stream woven;
 
         err = ubik_literate_weave(
-                &woven, &job->request->source, job->request->source_name);
+                &job->woven, &job->request->source, job->request->source_name);
         if (err != OK)
                 return err;
 
-        err = ubik_parse(&job->ast, job->request->source_name, &woven, true);
+        err = ubik_parse(
+                &job->ast, job->request->source_name, &job->woven, true);
         if (err != OK)
-        {
-                ubik_stream_close(&woven);
                 return err;
-        }
-        ubik_stream_close(&woven);
 
         import = job->ast->imports;
         while (import != NULL)
@@ -488,6 +484,7 @@ ubik_compile_run(struct ubik_compile_env *cenv)
 
                 case COMPILE_DONE:
                         ubik_vector_free(&job->dep_graphs);
+                        ubik_stream_close(&job->woven);
                         free(job);
                         cenv->to_compile.n--;
                         break;

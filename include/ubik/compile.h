@@ -81,6 +81,9 @@ struct ubik_compile_job
         enum ubik_compile_job_status status;
         /* the graphs created by compiling its dependencies */
         struct ubik_vector dep_graphs;
+        /* a stream containing the woven contents of the (potentially-literate)
+         * file. */
+        struct ubik_stream woven;
 };
 
 struct ubik_compile_env
