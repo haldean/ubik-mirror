@@ -61,6 +61,8 @@ _set_name_in_scope(
         size_t i;
         bool found;
 
+        bind = NULL;
+
         for (i = 0; i < scope->names.n && !found; i++)
         {
                 bind = scope->names.elems[i];

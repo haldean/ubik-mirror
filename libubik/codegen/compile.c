@@ -429,6 +429,7 @@ ensure_imports_ready(
         while (import != NULL)
         {
                 expect = import->canonical;
+                result = NULL;
                 for (i = 0; i < cenv->compiled.n; i++)
                 {
                         result = cenv->compiled.elems[i];

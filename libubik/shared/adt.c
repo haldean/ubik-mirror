@@ -387,6 +387,7 @@ bind_ctor(
         lambda->expr_type = EXPR_LAMBDA;
         lambda->loc = ctor->loc;
 
+        largs = NULL;
         last_largs = NULL;
         for (i = 0, cargs = ctor->params;
                 cargs != NULL; cargs = cargs->next, i++);
