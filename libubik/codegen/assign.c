@@ -62,6 +62,7 @@ _set_name_in_scope(
         bool found;
 
         bind = NULL;
+        found = false;
 
         for (i = 0; i < scope->names.n && !found; i++)
         {
