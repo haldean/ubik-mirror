@@ -26,7 +26,7 @@ tests = \
 	zero-arity.uk
 
 all: $(tests)
-	$(BASH) ../run_tests.sh runner.sh $(tests)
+	$(BASH) ../run_tests.sh $(shell pwd)/runner.sh $(tests)
 
 clean:
 	rm -f *.ub
