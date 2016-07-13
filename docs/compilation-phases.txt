@@ -1,0 +1,32 @@
+Compilation Phases for a Module ========================================
+Haldean Brown                                      First draft: Jul 2016
+                                                  Last updated: Jul 2016
+
+------------------------------------------------------------------------
+
+The following phases occur during module compilation
+
+ 1. source material loading
+ 2. parsing
+ 3. compile imported modules
+ 4. add splatted imports
+ 5. infer types
+ 6. compile patterns to boolean predicates
+ 7. convert ADT declarations to functions
+ 8. resolve names
+ 9. generate graphs
+
+These dependencies exist:
+ - Parsing depends on source material loading (1 -> 2)
+ - Compiling imported modules just depends on the parsed data (2 -> 3)
+ - Splatted imports depends on both the AST and imported AST information
+   (2 -> 4, 3 -> 4)
+ - Type inference depends on the AST, imported data, and (potentially)
+   splatted names (2 -> 5, 3 -> 5, 4 -> 5)
+ - Pattern compilation depends on type inference, imports and the AST as
+   well (2 -> 6, 3 -> 6, 4 -> 6, 5 -> 6)
+ - ADT compilation depends on the AST and imports, but it also
+   introduces new names which need to be resolved (2 -> 7, 3 -> 7,
+   4 -> 7, 8 -> 4)
+ - Name resolution only needs the AST and imports (2 -> 8, 3 -> 8, 4 -> 8)
+ - Graph generation depends on everything
