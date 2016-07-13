@@ -20,7 +20,49 @@
 #include "ubik/infer.h"
 #include "ubik/util.h"
 
-no_ignore ubik_error
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+no_ignore static ubik_error
+infer_atom(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
+{
+        unused(ctx);
+
+        expr->type = calloc(1, sizeof(struct ubik_ast_type_expr));
+        if (expr->type == NULL)
+                return ubik_raise(ERR_NO_MEMORY, "atom inference");
+
+        switch (expr->atom->atom_type)
+        {
+        case ATOM_INT:
+                expr->type->type_expr_type = TYPE_EXPR_ATOM;
+                expr->type->name = strdup("Word");
+                return OK;
+
+        case ATOM_NUM:
+                expr->type->type_expr_type = TYPE_EXPR_ATOM;
+                expr->type->name = strdup("Number");
+                return OK;
+
+        case ATOM_STRING:
+                expr->type->type_expr_type = TYPE_EXPR_ATOM;
+                expr->type->name = strdup("String");
+                return OK;
+
+        case ATOM_NAME:
+        case ATOM_QUALIFIED:
+        case ATOM_TYPE_NAME:
+        case ATOM_VALUE:
+                free(expr->type);
+                expr->type = NULL;
+                return OK;
+        }
+
+        return ubik_raise(ERR_BAD_VALUE, "unknown atom type in inference");
+}
+
+no_ignore static ubik_error
 infer_expr(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
 {
         struct ubik_ast *subast;
@@ -28,12 +70,13 @@ infer_expr(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
         size_t n_subexprs;
         size_t i;
         ubik_error err;
-        unused(ctx);
 
         switch (expr->expr_type)
         {
         case EXPR_ATOM:
-                break;
+                err = infer_atom(expr, ctx);
+                if (err != OK)
+                        return err;
 
         case EXPR_APPLY:
         case EXPR_BLOCK:
@@ -62,6 +105,18 @@ infer_expr(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
                         return err;
         }
 
+        if (ctx->debug)
+        {
+                printf("    ");
+                err = ubik_ast_expr_print(expr);
+                printf(" has type ");
+                if (expr->type != NULL)
+                        err = ubik_ast_type_expr_print(expr->type);
+                else
+                        printf("NULL");
+                printf("\n");
+        }
+
         return OK;
 }
 
@@ -71,7 +126,9 @@ ubik_infer(struct ubik_ast *ast, struct ubik_infer_context *ctx)
         struct ubik_ast_binding *bind;
         size_t i;
         ubik_error err;
-        unused(ctx);
+
+        if (ctx->debug)
+                printf("infer\n");
 
         for (i = 0; i < ast->bindings.n; i++)
         {
@@ -80,5 +137,19 @@ ubik_infer(struct ubik_ast *ast, struct ubik_infer_context *ctx)
                 if (err != OK)
                         return err;
         }
+
+        if (ast->immediate != NULL)
+        {
+                err = infer_expr(ast->immediate, ctx);
+                if (err != OK)
+                        return err;
+        }
+
+        return OK;
 }
 
+void
+ubik_infer_context_free(struct ubik_infer_context *ctx)
+{
+        unused(ctx);
+}

@@ -23,7 +23,7 @@
 
 struct ubik_infer_context
 {
-        char empty;
+        bool debug;
 };
 
 /* Infers all types in an AST. */

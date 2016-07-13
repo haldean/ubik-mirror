@@ -24,6 +24,9 @@
 #include <string.h>
 
 no_ignore static ubik_error
+_free_type_expr(struct ubik_ast_type_expr *type_expr);
+
+no_ignore static ubik_error
 _free_atom(struct ubik_ast_atom *atom)
 {
         ubik_error err;
@@ -148,6 +151,13 @@ ubik_ast_expr_free(struct ubik_ast_expr *expr)
 
         if (err != OK)
                 return err;
+
+        if (expr->type != NULL)
+        {
+                err = _free_type_expr(expr->type);
+                if (err != OK)
+                        return err;
+        }
 
         if (expr->gen != NULL)
                 free(expr->gen);

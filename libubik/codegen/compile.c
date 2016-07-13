@@ -295,6 +295,7 @@ compile_job(
         size_t i;
         ubik_error err;
 
+        infer_ctx.debug = cenv->debug;
         err = ubik_infer(job->ast, &infer_ctx);
         if (err != OK)
                 return err;
