@@ -222,8 +222,8 @@ _print_expr(struct ubik_ast_expr *expr, int indent)
         return ubik_raise(ERR_UNKNOWN_TYPE, "unknown expr type");
 }
 
-no_ignore static ubik_error
-_print_type_expr(struct ubik_ast_type_expr *type_expr)
+no_ignore ubik_error
+ubik_ast_type_expr_print(struct ubik_ast_type_expr *type_expr)
 {
         ubik_error err;
 
@@ -233,21 +233,21 @@ _print_type_expr(struct ubik_ast_type_expr *type_expr)
                 printf("%s", type_expr->name);
                 return OK;
         case TYPE_EXPR_ARROW:
-                err = _print_type_expr(type_expr->apply.head);
+                err = ubik_ast_type_expr_print(type_expr->apply.head);
                 if (err != OK)
                         return err;
                 printf(" -> (");
-                err = _print_type_expr(type_expr->apply.tail);
+                err = ubik_ast_type_expr_print(type_expr->apply.tail);
                 if (err != OK)
                         return err;
                 printf(")");
                 return OK;
         case TYPE_EXPR_APPLY:
-                err = _print_type_expr(type_expr->apply.head);
+                err = ubik_ast_type_expr_print(type_expr->apply.head);
                 if (err != OK)
                         return err;
                 printf(" (");
-                err = _print_type_expr(type_expr->apply.tail);
+                err = ubik_ast_type_expr_print(type_expr->apply.tail);
                 if (err != OK)
                         return err;
                 printf(")");
@@ -266,7 +266,7 @@ _print_type_list(struct ubik_ast_type_list *t)
 
         while (t != NULL)
         {
-                err = _print_type_expr(t->type_expr);
+                err = ubik_ast_type_expr_print(t->type_expr);
                 if (err != OK)
                         return err;
                 t = t->next;
@@ -298,7 +298,7 @@ _print_type(struct ubik_ast_type *type, int indent)
                 {
                         _indent(indent + 4);
                         printf(". %s ^ ", m->name);
-                        err = _print_type_expr(m->type);
+                        err = ubik_ast_type_expr_print(m->type);
                         if (err != OK)
                                 return err;
                         m = m->next;
@@ -351,7 +351,7 @@ _print_type(struct ubik_ast_type *type, int indent)
 
         case TYPE_ALIAS:
                 printf(" = ");
-                err = _print_type_expr(type->aliases_to);
+                err = ubik_ast_type_expr_print(type->aliases_to);
                 if (err != OK)
                         return err;
                 printf("\n");
@@ -404,7 +404,7 @@ _print_ast(struct ubik_ast *ast, int indent)
                 if (b->type_expr != NULL)
                 {
                         printf(" ^ ");
-                        err = _print_type_expr(b->type_expr);
+                        err = ubik_ast_type_expr_print(b->type_expr);
                         if (err != OK)
                                 return err;
                 }

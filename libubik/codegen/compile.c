@@ -26,6 +26,7 @@
 #include "ubik/adt.h"
 #include "ubik/compile.h"
 #include "ubik/import.h"
+#include "ubik/infer.h"
 #include "ubik/literate.h"
 #include "ubik/parse.h"
 #include "ubik/patterns.h"
@@ -290,8 +291,13 @@ compile_job(
         struct ubik_compile_result *res;
         local(resolve_context) struct ubik_resolve_context resolve_ctx = {0};
         local(patterns_context) struct ubik_patterns_context pattern_ctx = {0};
+        local(infer_context) struct ubik_infer_context infer_ctx = {0};
         size_t i;
         ubik_error err;
+
+        err = ubik_infer(job->ast, &infer_ctx);
+        if (err != OK)
+                return err;
 
         err = ubik_patterns_compile_all(job->ast, &pattern_ctx);
         if (err != OK)

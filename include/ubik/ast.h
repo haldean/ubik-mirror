@@ -282,6 +282,10 @@ ubik_ast_print(struct ubik_ast *ast);
 no_ignore ubik_error
 ubik_ast_expr_print(struct ubik_ast_expr *expr);
 
+/* Prints a type expression to stdout. */
+no_ignore ubik_error
+ubik_ast_type_expr_print(struct ubik_ast_type_expr *expr);
+
 no_ignore ubik_error
 ubik_ast_bind(
         struct ubik_ast *ast,
