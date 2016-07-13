@@ -289,11 +289,34 @@ compile_job(
 {
         struct ubik_dagc *graph;
         struct ubik_compile_result *res;
+        local(resolve_context) struct ubik_resolve_context preresolve_ctx = {0};
         local(resolve_context) struct ubik_resolve_context resolve_ctx = {0};
         local(patterns_context) struct ubik_patterns_context pattern_ctx = {0};
         local(infer_context) struct ubik_infer_context infer_ctx = {0};
         size_t i;
         ubik_error err;
+
+        err = ubik_import_add_splats(cenv, job->ast);
+        if (err != OK)
+                return err;
+        if (cenv->debug)
+        {
+                printf("\nsplats\n");
+                err = ubik_ast_print(job->ast);
+                if (err != OK)
+                        return err;
+        }
+
+        err = ubik_resolve(job->ast, &preresolve_ctx);
+        if (err != OK)
+                return err;
+        if (cenv->debug)
+        {
+                printf("\npre-resolve\n");
+                err = ubik_ast_print(job->ast);
+                if (err != OK)
+                        return err;
+        }
 
         infer_ctx.debug = cenv->debug;
         err = ubik_infer(job->ast, &infer_ctx);
@@ -324,23 +347,12 @@ compile_job(
                         return err;
         }
 
-        err = ubik_import_add_splats(cenv, job->ast);
-        if (err != OK)
-                return err;
-        if (cenv->debug)
-        {
-                printf("\nsplats\n");
-                err = ubik_ast_print(job->ast);
-                if (err != OK)
-                        return err;
-        }
-
         err = ubik_resolve(job->ast, &resolve_ctx);
         if (err != OK)
                 return err;
         if (cenv->debug)
         {
-                printf("\nresolved\n");
+                printf("\npost-resolved\n");
                 err = ubik_ast_print(job->ast);
                 if (err != OK)
                         return err;
