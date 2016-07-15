@@ -114,48 +114,55 @@ ubik_internal_native_create_op(
         return OK;
 }
 
-static char *native_names[] = {
-        "uadd",
-        "usub",
-        "eq",
-        "emit",
-        "humanize",
-        "concat",
-        "ubik-adt-ctor-matches?",
-        "ubik-adt-get",
-        "ubik-adt-new-0",
-        "ubik-adt-new-1",
-        "ubik-adt-new-2",
-        "ubik-adt-new-3",
-        "ubik-adt-new-4",
-        "ubik-adt-new-5",
-        "ubik-adt-new-6",
-        "ubik-adt-new-7",
-        "ubik-adt-new-8",
-        "ubik-adt-new-9",
-        "ubik-adt-new-10",
-        "ubik-adt-new-11",
-        "ubik-adt-new-12",
-        "ubik-adt-new-13",
-        "ubik-adt-new-14",
-        "ubik-adt-new-15",
-        "ubik-adt-new-16",
-        "ubik-adt-new-17",
-        "ubik-adt-new-18",
-        "ubik-adt-new-19",
-        "ubik-adt-new-20",
-        "ubik-adt-new-21",
-        "ubik-adt-new-22",
-        "ubik-adt-new-23",
-        "ubik-adt-new-24",
-        "ubik-adt-new-25",
-        "ubik-adt-new-26",
-        "ubik-adt-new-27",
-        "ubik-adt-new-28",
-        "ubik-adt-new-29",
-        "ubik-adt-new-30",
-        "ubik-adt-new-31",
-        "ubik-adt-new-32"
+struct native_record
+{
+        char *name;
+        char *type_string;
+        void *type_record;
+};
+
+static struct native_record native_funcs[] = {
+        { "uadd",                   "Word -> Word -> Word",           NULL },
+        { "usub",                   "Word -> Word -> Word",           NULL },
+        { "eq",                     "a -> a -> Boolean | Eq a",       NULL },
+        { "emit",                   "String -> Unit",                 NULL },
+        { "humanize",               "a -> String | Humanize a",       NULL },
+        { "concat",                 "String -> String -> String",     NULL },
+        { "ubik-adt-ctor-matches?", NULL,                             NULL },
+        { "ubik-adt-get",           NULL,                             NULL },
+        { "ubik-adt-new-0",         NULL,                             NULL },
+        { "ubik-adt-new-1",         NULL,                             NULL },
+        { "ubik-adt-new-2",         NULL,                             NULL },
+        { "ubik-adt-new-3",         NULL,                             NULL },
+        { "ubik-adt-new-4",         NULL,                             NULL },
+        { "ubik-adt-new-5",         NULL,                             NULL },
+        { "ubik-adt-new-6",         NULL,                             NULL },
+        { "ubik-adt-new-7",         NULL,                             NULL },
+        { "ubik-adt-new-8",         NULL,                             NULL },
+        { "ubik-adt-new-9",         NULL,                             NULL },
+        { "ubik-adt-new-10",        NULL,                             NULL },
+        { "ubik-adt-new-11",        NULL,                             NULL },
+        { "ubik-adt-new-12",        NULL,                             NULL },
+        { "ubik-adt-new-13",        NULL,                             NULL },
+        { "ubik-adt-new-14",        NULL,                             NULL },
+        { "ubik-adt-new-15",        NULL,                             NULL },
+        { "ubik-adt-new-16",        NULL,                             NULL },
+        { "ubik-adt-new-17",        NULL,                             NULL },
+        { "ubik-adt-new-18",        NULL,                             NULL },
+        { "ubik-adt-new-19",        NULL,                             NULL },
+        { "ubik-adt-new-20",        NULL,                             NULL },
+        { "ubik-adt-new-21",        NULL,                             NULL },
+        { "ubik-adt-new-22",        NULL,                             NULL },
+        { "ubik-adt-new-23",        NULL,                             NULL },
+        { "ubik-adt-new-24",        NULL,                             NULL },
+        { "ubik-adt-new-25",        NULL,                             NULL },
+        { "ubik-adt-new-26",        NULL,                             NULL },
+        { "ubik-adt-new-27",        NULL,                             NULL },
+        { "ubik-adt-new-28",        NULL,                             NULL },
+        { "ubik-adt-new-29",        NULL,                             NULL },
+        { "ubik-adt-new-30",        NULL,                             NULL },
+        { "ubik-adt-new-31",        NULL,                             NULL },
+        { "ubik-adt-new-32",        NULL,                             NULL }
 #if UBIK_MAX_ADT_FIELDS != 32
 #error "the list of native funcs needs to be updated"
 #endif
@@ -210,9 +217,9 @@ ubik_natives_is_defined(char *name)
 {
         size_t i;
         size_t n;
-        n = sizeof(native_names) / sizeof(native_names[0]);
+        n = sizeof(native_funcs) / sizeof(native_funcs[0]);
         for (i = 0; i < n; i++)
-                if (strcmp(native_names[i], name) == 0)
+                if (strcmp(native_funcs[i].name, name) == 0)
                         return true;
         return false;
 }
