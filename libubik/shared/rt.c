@@ -33,6 +33,10 @@ ubik_start()
         if (err != OK)
                 return err;
 
+        err = ubik_natives_cache_types();
+        if (err != OK)
+                return err;
+
         return OK;
 }
 

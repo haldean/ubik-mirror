@@ -22,17 +22,13 @@
 #endif
 
 #include "ubik/adt.h"
-#include "ubik/assert.h"
-#include "ubik/dagc.h"
+#include "ubik/ast.h"
 #include "ubik/env.h"
-#include "ubik/list.h"
 #include "ubik/natives.h"
-#include "ubik/types.h"
+#include "ubik/parse.h"
 #include "ubik/ubik.h"
 #include "ubik/util.h"
-#include "ubik/value.h"
 
-#include <inttypes.h>
 #include <string.h>
 
 extern ubik_error _register_adt_ctor_matches(struct ubik_env *env);
@@ -118,15 +114,15 @@ struct native_record
 {
         char *name;
         char *type_string;
-        void *type_record;
+        struct ubik_ast_type_expr *type_record;
 };
 
 static struct native_record native_funcs[] = {
         { "uadd",                   "Word -> Word -> Word",           NULL },
         { "usub",                   "Word -> Word -> Word",           NULL },
-        { "eq",                     "a -> a -> Boolean | Eq a",       NULL },
+        { "eq",                     NULL,                             NULL },
         { "emit",                   "String -> Unit",                 NULL },
-        { "humanize",               "a -> String | Humanize a",       NULL },
+        { "humanize",               NULL,                             NULL },
         { "concat",                 "String -> String -> String",     NULL },
         { "ubik-adt-ctor-matches?", NULL,                             NULL },
         { "ubik-adt-get",           NULL,                             NULL },
@@ -167,6 +163,44 @@ static struct native_record native_funcs[] = {
 #error "the list of native funcs needs to be updated"
 #endif
 };
+
+no_ignore ubik_error
+ubik_natives_cache_types()
+{
+        size_t i;
+        size_t n;
+        ubik_error err;
+        n = sizeof(native_funcs) / sizeof(native_funcs[0]);
+        for (i = 0; i < n; i++)
+        {
+                if (native_funcs[i].type_string == NULL)
+                        continue;
+                err = ubik_parse_type_expr(
+                        &native_funcs[i].type_record,
+                        native_funcs[i].type_string);
+                if (err != OK)
+                {
+                        printf("couldn't parse type for %s: %s\n",
+                                native_funcs[i].name,
+                                native_funcs[i].type_string);
+                        free(err);
+                        continue;
+                }
+        }
+        return OK;
+}
+
+bool
+ubik_natives_is_defined(char *name)
+{
+        size_t i;
+        size_t n;
+        n = sizeof(native_funcs) / sizeof(native_funcs[0]);
+        for (i = 0; i < n; i++)
+                if (strcmp(native_funcs[i].name, name) == 0)
+                        return true;
+        return false;
+}
 
 no_ignore ubik_error
 ubik_natives_register(struct ubik_env *env)
@@ -210,16 +244,4 @@ ubik_natives_register(struct ubik_env *env)
                 return err;
 
         return OK;
-}
-
-bool
-ubik_natives_is_defined(char *name)
-{
-        size_t i;
-        size_t n;
-        n = sizeof(native_funcs) / sizeof(native_funcs[0]);
-        for (i = 0; i < n; i++)
-                if (strcmp(native_funcs[i].name, name) == 0)
-                        return true;
-        return false;
 }

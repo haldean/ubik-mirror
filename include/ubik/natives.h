@@ -25,6 +25,9 @@
 no_ignore ubik_error
 ubik_natives_register(struct ubik_env *env);
 
+no_ignore ubik_error
+ubik_natives_cache_types();
+
 /* Returns true if the provided name is the name of a native function. */
 bool
 ubik_natives_is_defined(char *);

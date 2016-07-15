@@ -72,12 +72,15 @@
 
         union {
                 struct ubik_ast *prog;
+                struct ubik_ast_type_expr *type_expr;
         } top_result;
 }
 
+%token <token> MATCH_PROG MATCH_TYPE
+
 %token <token> BIND TYPE IMPLIES GOES_TO LAMBDA IS OPEN_PAR CLOSE_PAR IMMEDIATE
 %token <token> MEMBER OPEN_SCOPE CLOSE_SCOPE GIVEN EXISTS COND ADD SPLAT
-%token <token> MATCH_PROG
+
 %token <integer> INTEGER
 %token <floating> NUMBER
 %token <string> NAME TYPE_NAME STRING QUALIFIED_NAME QUALIFIED_TYPE_NAME
@@ -138,6 +141,12 @@ top_result
 {
         $$.prog = $2;
 }
+| MATCH_TYPE top_type_expr
+{
+        $$.type_expr = $2;
+        ctx->type_expr = $2;
+}
+;
 
 prog
 : prog package
