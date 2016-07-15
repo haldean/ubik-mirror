@@ -292,6 +292,63 @@ update_scopes_with_bindings(
 }
 
 no_ignore static ubik_error
+bind_cases(
+        struct ubik_resolve_context *ctx,
+        struct ubik_vector *resolve_names,
+        struct ubik_ast_case *case_stmt)
+{
+        struct ubik_resolve_name *resolve;
+        struct ubik_ast_expr *t;
+        size_t n_args;
+        size_t i;
+        char *name;
+        ubik_error err;
+
+        while (case_stmt != NULL)
+        {
+                if (case_stmt->head == NULL)
+                        break;
+
+                /* we have a tree that is left-associative, which means the topmost node
+                 * represents the application of the last parameter. To figure out how
+                 * to index into the actual object, we count the number of arguments and
+                 * then work our way down from the end. */
+                for (n_args = 0, t = case_stmt->head;
+                        t->expr_type == EXPR_APPLY;
+                        n_args++, t = t->apply.head);
+
+                for (i = n_args - 1, t = case_stmt->head;
+                        t->expr_type == EXPR_APPLY;
+                        i--, t = t->apply.head)
+                {
+                        name = t->apply.tail->atom->str;
+                        if (strcmp(name, "_") == 0)
+                                continue;
+
+                        resolve = calloc(1, sizeof(struct ubik_resolve_name));
+                        if (resolve == NULL)
+                                return ubik_raise(ERR_NO_MEMORY, "args to scope");
+                        err = ubik_vector_append(&ctx->allocs, resolve);
+                        if (err != OK)
+                        {
+                                free(resolve);
+                                return err;
+                        }
+                        resolve->name = name;
+                        resolve->type = RESOLVE_LOCAL;
+
+                        err = ubik_vector_append(resolve_names, resolve);
+                        if (err != OK)
+                                return err;
+                }
+
+                case_stmt = case_stmt->next;
+        }
+
+        return OK;
+}
+
+no_ignore static ubik_error
 find_lambdas_and_bind(
         struct ubik_resolve_context *ctx,
         struct ubik_ast_expr *expr)
@@ -326,6 +383,17 @@ find_lambdas_and_bind(
                                 return err;
 
                         args = args->next;
+                }
+        }
+        else if (expr->expr_type == EXPR_COND_BLOCK)
+        {
+                if (expr->cond_block.block_type == COND_PATTERN)
+                {
+                        err = bind_cases(
+                                ctx, &expr->scope->names,
+                                expr->cond_block.case_stmts);
+                        if (err != OK)
+                                return err;
                 }
         }
 
