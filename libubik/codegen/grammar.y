@@ -69,14 +69,20 @@
         struct ubik_ast_adt_ctors *adt_ctor;
 
         struct ubik_ast_case *case_stmt;
+
+        union {
+                struct ubik_ast *prog;
+        } top_result;
 }
 
 %token <token> BIND TYPE IMPLIES GOES_TO LAMBDA IS OPEN_PAR CLOSE_PAR IMMEDIATE
 %token <token> MEMBER OPEN_SCOPE CLOSE_SCOPE GIVEN EXISTS COND ADD SPLAT
+%token <token> MATCH_PROG
 %token <integer> INTEGER
 %token <floating> NUMBER
 %token <string> NAME TYPE_NAME STRING QUALIFIED_NAME QUALIFIED_TYPE_NAME
 
+%type <top_result> top_result
 %type <ast> prog blocks
 %type <binding> binding
 %type <expr> expr immediate top_expr cond_block pattern
@@ -126,6 +132,12 @@ int yydebug = 1;
 %}
 
 %%
+
+top_result
+: MATCH_PROG prog
+{
+        $$.prog = $2;
+}
 
 prog
 : prog package

@@ -64,6 +64,7 @@ ubik_parse(
         yyset_in(fp, scanner);
 
         ps = yypstate_new();
+        status = yypush_parse(ps, MATCH_PROG, &val, &loc, &ctx, scanner);
         do
         {
                 token = yylex(&val, &loc, scanner, &ctx);
