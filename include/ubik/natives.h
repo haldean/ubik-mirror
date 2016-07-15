@@ -18,6 +18,7 @@
  */
 
 #pragma once
+#include "ubik/dagc.h"
 #include "ubik/ubik.h"
 #include <stdbool.h>
 
@@ -27,3 +28,14 @@ ubik_natives_register(struct ubik_env *env);
 /* Returns true if the provided name is the name of a native function. */
 bool
 ubik_natives_is_defined(char *);
+
+/* Internal-only convenience functions for native URI definitions. */
+no_ignore ubik_error
+ubik_internal_native_uri(struct ubik_uri **uri, char *name);
+
+no_ignore ubik_error
+ubik_internal_native_create_op(
+        struct ubik_dagc **graph_ptr,
+        size_t arity,
+        ubik_native_evaluator_t evaluator);
+

@@ -42,7 +42,7 @@
 
 #ifdef DEF_BINARY
 
-no_ignore static ubik_error
+no_ignore ubik_error
 _op_name(struct ubik_env *env)
 {
         ubik_error err;
@@ -53,11 +53,11 @@ _op_name(struct ubik_env *env)
         union ubik_value_or_graph ins;
 
         ngraph = NULL;
-        err = _create_op(&ngraph, 2, DEF_OP_EVAL);
+        err = ubik_internal_native_create_op(&ngraph, 2, DEF_OP_EVAL);
         if (err != OK)
                 return err;
 
-        err = _native_uri(&uri, DEF_OP_URI);
+        err = ubik_internal_native_uri(&uri, DEF_OP_URI);
         if (err != OK)
                 return err;
 
@@ -88,7 +88,7 @@ _op_name(struct ubik_env *env)
 
 #elif defined(DEF_UNARY)
 
-no_ignore static ubik_error
+no_ignore ubik_error
 _op_name(struct ubik_env *env)
 {
         ubik_error err;
@@ -99,11 +99,11 @@ _op_name(struct ubik_env *env)
         union ubik_value_or_graph ins;
 
         ngraph = NULL;
-        err = _create_op(&ngraph, 1, DEF_OP_EVAL);
+        err = ubik_internal_native_create_op(&ngraph, 1, DEF_OP_EVAL);
         if (err != OK)
                 return err;
 
-        err = _native_uri(&uri, DEF_OP_URI);
+        err = ubik_internal_native_uri(&uri, DEF_OP_URI);
         if (err != OK)
                 return err;
 

@@ -42,7 +42,11 @@ c_sources = \
     ./shared/uri.c \
     ./shared/util.c \
     ./shared/value.c \
-    ./shared/vector.c
+    ./shared/vector.c \
+    ./shared/natives/native-adt.c \
+    ./shared/natives/native-arithmetic.c \
+    ./shared/natives/native-seq.c \
+    ./shared/natives/native-util.c
 
 buildtree_sources = \
     ./tree/uri-value.tree \
