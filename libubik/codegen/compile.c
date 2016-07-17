@@ -294,7 +294,7 @@ compile_job(
         local(patterns_context) struct ubik_patterns_context pattern_ctx = {0};
         local(infer_context) struct ubik_infer_context infer_ctx = {0};
         size_t i;
-        ubik_error err;
+        ubik_error err, rerr;
 
         err = ubik_import_add_splats(cenv, job->ast);
         if (err != OK)
@@ -358,10 +358,15 @@ compile_job(
                         return err;
         }
 
+        graph = NULL;
         err = ubik_gen_graphs(
                 &graph, job->ast, job->request->reason);
         if (err != OK)
+        {
+                if (graph != NULL)
+                        goto release_graph;
                 return err;
+        }
 
         res = calloc(1, sizeof(struct ubik_compile_result));
         if (res == NULL)
@@ -392,7 +397,9 @@ free_res_graphs:
         free(res->graphs);
 free_res:
         free(res);
-        return err;
+release_graph:
+        rerr = ubik_release(graph);
+        return err == OK ? rerr : err;
 }
 
 no_ignore ubik_error
