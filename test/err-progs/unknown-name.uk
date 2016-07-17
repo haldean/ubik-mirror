@@ -1,3 +1,5 @@
+. err-progs/unknown-name
+
 : test-thing
     ^ Word
     = \x -> uadd (uadd x y) z
