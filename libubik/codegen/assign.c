@@ -23,6 +23,7 @@
 #include "ubik/assert.h"
 #include "ubik/assign.h"
 #include "ubik/dagc.h"
+#include "ubik/feedback.h"
 #include "ubik/resolve.h"
 #include "ubik/streamutil.h"
 #include "ubik/types.h"
@@ -570,17 +571,11 @@ ubik_assign_emit_errors(struct ubik_assign_context *ctx)
                 switch (ass_err->err_type)
                 {
                 case ASSIGN_ERR_PRED_BLOCK_NOT_TOTAL:
-                        fprintf(stderr,
-                                "\x1b[37m%s:%lu:%lu:\x1b[31m "
-                                "error:\x1b[0m last case in predicate block "
-                                "must have an empty head\n",
-                                ass_err->loc.source_name,
-                                ass_err->loc.line_start,
-                                ass_err->loc.col_start);
-                        ubik_streamutil_print_line_char(
-                                ass_err->loc.source,
-                                ass_err->loc.line_start - 1,
-                                ass_err->loc.col_start);
+                        ubik_feedback_error_line(
+                                UBIK_FEEDBACK_ERR,
+                                &ass_err->loc,
+                                "last case in predicate block must have an "
+                                "empty head");
                         break;
                 }
         }
