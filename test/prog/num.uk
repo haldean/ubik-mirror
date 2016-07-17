@@ -2,5 +2,5 @@
 
 : eight
     ^ Number
-    = 8
+    = 8.
 

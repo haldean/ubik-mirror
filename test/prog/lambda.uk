@@ -4,7 +4,7 @@
 # expected output is "0x110x110x11"
 
 : add-7
-        ^ Integer -> Integer
+        ^ Word -> Word
         = uadd 7
 
 : three-string-concat
