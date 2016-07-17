@@ -31,11 +31,15 @@ vheader(
         char *fmt,
         va_list args)
 {
-        fprintf(stderr,
-                "\x1b[37m%s:%lu:%lu:",
-                loc->source_name,
-                loc->line_start,
-                loc->col_start);
+        if (loc->line_start > 0)
+                fprintf(stderr,
+                        "\x1b[37m%s:%lu:%lu:",
+                        loc->source_name,
+                        loc->line_start,
+                        loc->col_start);
+        else
+                fprintf(stderr, "\x1b[37m%s:", loc->source_name);
+
         switch (lvl)
         {
         case UBIK_FEEDBACK_ERR:

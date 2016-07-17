@@ -17,6 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include "ubik/feedback.h"
 #include "ubik/package.h"
 
 #include <stdio.h>
@@ -92,9 +93,9 @@ ubik_package_add_to_scope(struct ubik_ast *ast)
 {
         if (ast->package_name == NULL)
         {
-                printf("\x1b[37m%s:\x1b[31m error:\x1b[0m module does not "
-                       "specify a package name\n",
-                       ast->loc.source_name);
+                ubik_feedback_error_header(
+                        UBIK_FEEDBACK_ERR, &ast->loc,
+                        "module does not specify a package name");
                 return ubik_raise(
                         ERR_BAD_VALUE, "root AST must have package name");
         }

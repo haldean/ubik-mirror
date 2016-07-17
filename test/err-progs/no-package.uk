@@ -1,0 +1,3 @@
+: this-would-be-fine
+    ^ String
+    = "if only there was a package string"
