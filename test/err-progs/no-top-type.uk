@@ -1,3 +1,5 @@
+. err-progs/no-top-type
+
 : this-one-is-okay
     ^ Word
     = 10

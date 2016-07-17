@@ -1,3 +1,5 @@
+. err-progs/syntax
+
 : test-thing
     : out-of-place
     ^ Int
