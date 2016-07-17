@@ -23,7 +23,24 @@
 
 struct ubik_infer_context
 {
+        /* Members are ubik_infer_error pointers */
+        struct ubik_vector errors;
         bool debug;
+};
+
+enum ubik_infer_error_type
+{
+        /* Raised when the head of an application isn't applicable. */
+        INFER_ERR_APPLY_HEAD_UNAPPL = 1,
+        /* Raised when an argument to an application doesn't match the type of
+         * the applicable. */
+        INFER_ERR_FUNC_ARG_INCOMPAT,
+};
+
+struct ubik_infer_error
+{
+        enum ubik_infer_error_type error_type;
+        struct ubik_ast_expr *bad_expr;
 };
 
 /* Infers all types in an AST. */

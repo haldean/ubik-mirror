@@ -26,6 +26,25 @@
 #include <stdlib.h>
 #include <string.h>
 
+static bool
+compatible(
+        struct ubik_ast_type_expr *e1,
+        struct ubik_ast_type_expr *e2,
+        struct ubik_infer_context *ctx)
+{
+        unused(ctx);
+
+        /* TODO: this needs a lot of work. */
+        if (e1->type_expr_type != e2->type_expr_type)
+                return false;
+        if (e1->type_expr_type != TYPE_EXPR_ATOM)
+        {
+                printf("only type atoms can be compared right now\n");
+                return false;
+        }
+        return strcmp(e1->name, e2->name) == 0;
+}
+
 no_ignore static ubik_error
 infer_atom(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
 {
@@ -78,6 +97,44 @@ infer_atom(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
 }
 
 no_ignore static ubik_error
+infer_apply(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
+{
+        struct ubik_ast_type_expr *h;
+        struct ubik_ast_type_expr *t;
+        struct ubik_infer_error *ierr;
+
+        h = expr->apply.head->type;
+        t = expr->apply.tail->type;
+        if (h == NULL || t == NULL)
+                return OK;
+
+        if (h->type_expr_type != TYPE_EXPR_ARROW)
+        {
+                ierr = calloc(1, sizeof(struct ubik_infer_error));
+                if (ierr == NULL)
+                        return ubik_raise(ERR_NO_MEMORY, "infer apply error");
+                ierr->error_type = INFER_ERR_APPLY_HEAD_UNAPPL;
+                ierr->bad_expr = expr;
+                return ubik_vector_append(&ctx->errors, ierr);
+        }
+
+        if (!compatible(h->apply.head, t, ctx))
+        {
+                ierr = calloc(1, sizeof(struct ubik_infer_error));
+                if (ierr == NULL)
+                        return ubik_raise(ERR_NO_MEMORY, "infer apply error");
+                ierr->error_type = INFER_ERR_FUNC_ARG_INCOMPAT;
+                ierr->bad_expr = expr;
+                return ubik_vector_append(&ctx->errors, ierr);
+        }
+
+        expr->type = calloc(1, sizeof(struct ubik_ast_type_expr));
+        if (expr->type == NULL)
+                return ubik_raise(ERR_NO_MEMORY, "atom inference");
+        return ubik_ast_type_expr_copy(expr->type, h->apply.tail);
+}
+
+no_ignore static ubik_error
 infer_expr(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
 {
         struct ubik_ast *subast;
@@ -85,20 +142,6 @@ infer_expr(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
         size_t n_subexprs;
         size_t i;
         ubik_error err;
-
-        switch (expr->expr_type)
-        {
-        case EXPR_ATOM:
-                err = infer_atom(expr, ctx);
-                if (err != OK)
-                        return err;
-
-        case EXPR_APPLY:
-        case EXPR_BLOCK:
-        case EXPR_COND_BLOCK:
-        case EXPR_LAMBDA:
-                break;
-        }
 
         subast = NULL;
         n_subexprs = 0;
@@ -118,6 +161,26 @@ infer_expr(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
                 err = infer_expr(subexprs[i], ctx);
                 if (err != OK)
                         return err;
+        }
+
+        switch (expr->expr_type)
+        {
+        case EXPR_ATOM:
+                err = infer_atom(expr, ctx);
+                if (err != OK)
+                        return err;
+                break;
+
+        case EXPR_APPLY:
+                err = infer_apply(expr, ctx);
+                if (err != OK)
+                        return err;
+                break;
+
+        case EXPR_BLOCK:
+        case EXPR_COND_BLOCK:
+        case EXPR_LAMBDA:
+                break;
         }
 
         if (ctx->debug)
@@ -166,5 +229,5 @@ ubik_infer(struct ubik_ast *ast, struct ubik_infer_context *ctx)
 void
 ubik_infer_context_free(struct ubik_infer_context *ctx)
 {
-        unused(ctx);
+        ubik_vector_free(&ctx->errors);
 }
