@@ -18,8 +18,8 @@
  */
 
 #include <stdlib.h>
+#include "ubik/feedback.h"
 #include "ubik/parse.h"
-#include "ubik/streamutil.h"
 #include "codegen/grammar.h"
 
 /* autotools doesn't yet support flex headers, so we have to declare these
@@ -84,15 +84,8 @@ ubik_parse(
         if (ctx.err_loc != NULL)
         {
                 if (show_errors)
-                {
-                        printf("\x1b[37m%s:%lu:%lu:\x1b[31m error:\x1b[0m %s\n",
-                                source_name, ctx.err_loc->line_start,
-                                ctx.err_loc->col_start, ctx.err_msg);
-                        ubik_streamutil_print_line_char(
-                                stream,
-                                ctx.err_loc->line_start - 1,
-                                ctx.err_loc->col_start);
-                }
+                        ubik_feedback_error_line(
+                                UBIK_FEEDBACK_ERR, ctx.err_loc, ctx.err_msg);
                 free(ctx.err_loc);
                 free(ctx.err_msg);
         }
