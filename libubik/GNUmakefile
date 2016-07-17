@@ -27,6 +27,7 @@ c_sources = \
     ./shared/env.c \
     ./shared/error.c \
     ./shared/explain.c \
+    ./shared/feedback.c \
     ./shared/list.c \
     ./shared/load.c \
     ./shared/natives.c \

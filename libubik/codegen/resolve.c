@@ -17,6 +17,10 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -25,6 +29,7 @@
 #include "ubik/ast.h"
 #include "ubik/closure.h"
 #include "ubik/env.h"
+#include "ubik/feedback.h"
 #include "ubik/natives.h"
 #include "ubik/package.h"
 #include "ubik/resolve.h"
@@ -684,17 +689,10 @@ ubik_resolve(
                         switch (resolv_err->err_type)
                         {
                         case RESOLVE_ERR_NAME_NOT_FOUND:
-                                fprintf(stderr,
-                                        "\x1b[37m%s:%lu:%lu:\x1b[31m "
-                                        "error:\x1b[0m name not found: %s\n",
-                                        resolv_err->loc.source_name,
-                                        resolv_err->loc.line_start,
-                                        resolv_err->loc.col_start,
+                                ubik_feedback_error_line(
+                                        &resolv_err->loc,
+                                        "name not found: %s",
                                         resolv_err->name);
-                                ubik_streamutil_print_line_char(
-                                        resolv_err->loc.source,
-                                        resolv_err->loc.line_start - 1,
-                                        resolv_err->loc.col_start);
                         }
                 }
                 return ubik_raise(ERR_BAD_VALUE, "couldn't resolve some names");
