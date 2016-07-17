@@ -35,6 +35,11 @@ enum ubik_infer_error_type
         /* Raised when an argument to an application doesn't match the type of
          * the applicable. */
         INFER_ERR_FUNC_ARG_INCOMPAT,
+        /* Raised when we've reached an untypeable expression because of
+         * limitations of the inference engine. This should not be raised on
+         * well-defined source material (but will be, all the time, until the
+         * inference engine is good). */
+        INFER_ERR_UNTYPEABLE,
 };
 
 struct ubik_infer_error

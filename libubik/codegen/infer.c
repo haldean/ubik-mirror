@@ -45,11 +45,41 @@ compatible(
         return strcmp(e1->name, e2->name) == 0;
 }
 
+/* Note: when this function is called, the type object on the expression has
+ * been allocated and zeroed. */
+no_ignore static ubik_error
+infer_native(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
+{
+        struct ubik_infer_error *ierr;
+        ubik_error err;
+
+        err = ubik_natives_get_type(expr->type, expr->atom->str);
+        if (err == OK)
+                return OK;
+        if (err->error_code == ERR_UNKNOWN_TYPE)
+        {
+                free(err);
+                ierr = calloc(1, sizeof(struct ubik_infer_error));
+                if (ierr == NULL)
+                        return ubik_raise(ERR_NO_MEMORY, "infer apply error");
+                ierr->error_type = INFER_ERR_UNTYPEABLE;
+                ierr->bad_expr = expr;
+                return ubik_vector_append(&ctx->errors, ierr);
+        }
+        if (err->error_code == ERR_ABSENT)
+        {
+                free(err);
+                return ubik_raise(
+                        ERR_UNEXPECTED_FAILURE,
+                        "resolver says function is native but it's not in "
+                        "the table");
+        }
+        return err;
+}
+
 no_ignore static ubik_error
 infer_atom(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
 {
-        unused(ctx);
-
         expr->type = calloc(1, sizeof(struct ubik_ast_type_expr));
         if (expr->type == NULL)
                 return ubik_raise(ERR_NO_MEMORY, "atom inference");
@@ -75,8 +105,7 @@ infer_atom(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
                 switch (expr->atom->name_loc->type)
                 {
                 case RESOLVE_NATIVE:
-                        return ubik_natives_get_type(
-                                expr->type, expr->atom->str);
+                        return infer_native(expr, ctx);
 
                 case RESOLVE_LOCAL:
                 case RESOLVE_GLOBAL:
@@ -229,5 +258,8 @@ ubik_infer(struct ubik_ast *ast, struct ubik_infer_context *ctx)
 void
 ubik_infer_context_free(struct ubik_infer_context *ctx)
 {
+        size_t i;
+        for (i = 0; i < ctx->errors.n; i++)
+                free(ctx->errors.elems[i]);
         ubik_vector_free(&ctx->errors);
 }
