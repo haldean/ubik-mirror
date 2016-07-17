@@ -20,11 +20,19 @@
 #include "ubik/ast.h"
 #include "ubik/ubik.h"
 
+enum feedback_level
+{
+        UBIK_FEEDBACK_ERR = 1,
+        UBIK_FEEDBACK_WARN,
+};
+
 /* Prints an error message with all location information, the given message, and
  * the contents of the line on which the error occurred. */
 void
-ubik_feedback_error_line(struct ubik_ast_loc *loc, char *fmt, ...);
+ubik_feedback_error_line(
+        enum feedback_level, struct ubik_ast_loc *loc, char *fmt, ...);
 
 /* Prints an error message with all location information and the given message. */
 void
-ubik_feedback_error_header(struct ubik_ast_loc *loc, char *fmt, ...);
+ubik_feedback_error_header(
+        enum feedback_level, struct ubik_ast_loc *loc, char *fmt, ...);

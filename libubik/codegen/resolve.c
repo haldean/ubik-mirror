@@ -690,9 +690,8 @@ ubik_resolve(
                         {
                         case RESOLVE_ERR_NAME_NOT_FOUND:
                                 ubik_feedback_error_line(
-                                        &resolv_err->loc,
-                                        "name not found: %s",
-                                        resolv_err->name);
+                                        UBIK_FEEDBACK_ERR, &resolv_err->loc,
+                                        "name not found: %s", resolv_err->name);
                         }
                 }
                 return ubik_raise(ERR_BAD_VALUE, "couldn't resolve some names");

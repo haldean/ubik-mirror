@@ -25,32 +25,50 @@
 #include <stdlib.h>
 
 static void
-vheader(struct ubik_ast_loc *loc, char *fmt, va_list args)
+vheader(
+        enum feedback_level lvl,
+        struct ubik_ast_loc *loc,
+        char *fmt,
+        va_list args)
 {
         fprintf(stderr,
-                "\x1b[37m%s:%lu:%lu:\x1b[31m error:\x1b[0m ",
-                loc->source_name, loc->line_start, loc->col_start);
+                "\x1b[37m%s:%lu:%lu:",
+                loc->source_name,
+                loc->line_start,
+                loc->col_start);
+        switch (lvl)
+        {
+        case UBIK_FEEDBACK_ERR:
+                fprintf(stderr, "\x1b[31m error");
+                break;
+        case UBIK_FEEDBACK_WARN:
+                fprintf(stderr, "\x1b[33m warning");
+                break;
+        }
+        fprintf(stderr, ":\x1b[0m ");
         vfprintf(stderr, fmt, args);
         fprintf(stderr, "\n");
 }
 
 void
-ubik_feedback_error_line(struct ubik_ast_loc *loc, char *fmt, ...)
+ubik_feedback_error_line(
+        enum feedback_level lvl, struct ubik_ast_loc *loc, char *fmt, ...)
 {
         va_list ap;
         va_start(ap, fmt);
-        vheader(loc, fmt, ap);
+        vheader(lvl, loc, fmt, ap);
         ubik_streamutil_print_line_char(
                 loc->source, loc->line_start - 1, loc->col_start);
         va_end(ap);
 }
 
 void
-ubik_feedback_error_header(struct ubik_ast_loc *loc, char *fmt, ...)
+ubik_feedback_error_header(
+        enum feedback_level lvl, struct ubik_ast_loc *loc, char *fmt, ...)
 {
         va_list ap;
         va_start(ap, fmt);
-        vheader(loc, fmt, ap);
+        vheader(lvl, loc, fmt, ap);
         va_end(ap);
 }
 

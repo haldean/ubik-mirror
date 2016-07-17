@@ -267,18 +267,21 @@ infer_error_print(struct ubik_infer_error *ierr)
         {
         case INFER_ERR_APPLY_HEAD_UNAPPL:
                 ubik_feedback_error_header(
+                        UBIK_FEEDBACK_ERR,
                         &ierr->bad_expr->loc,
                         "head of function application is not a function:");
                 break;
 
         case INFER_ERR_FUNC_ARG_INCOMPAT:
                 ubik_feedback_error_header(
+                        UBIK_FEEDBACK_ERR,
                         &ierr->bad_expr->loc,
                         "function and argument have incompatible types:");
                 break;
 
         case INFER_ERR_UNTYPEABLE:
                 ubik_feedback_error_header(
+                        UBIK_FEEDBACK_WARN,
                         &ierr->bad_expr->loc,
                         "expression is untypeable with current type inference "
                         "algorithm:");
