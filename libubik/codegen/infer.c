@@ -26,6 +26,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+no_ignore static ubik_error
+infer_ast(struct ubik_ast *ast, struct ubik_infer_context *ctx);
+
 static bool
 compatible(
         struct ubik_ast_type_expr *e1,
@@ -180,7 +183,7 @@ infer_expr(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
 
         if (subast != NULL)
         {
-                err = ubik_infer(subast, ctx);
+                err = infer_ast(subast, ctx);
                 if (err != OK)
                         return err;
         }
@@ -227,15 +230,12 @@ infer_expr(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
         return OK;
 }
 
-no_ignore ubik_error
-ubik_infer(struct ubik_ast *ast, struct ubik_infer_context *ctx)
+no_ignore static ubik_error
+infer_ast(struct ubik_ast *ast, struct ubik_infer_context *ctx)
 {
         struct ubik_ast_binding *bind;
         size_t i;
         ubik_error err;
-
-        if (ctx->debug)
-                printf("\ninfer\n");
 
         for (i = 0; i < ast->bindings.n; i++)
         {
@@ -252,6 +252,57 @@ ubik_infer(struct ubik_ast *ast, struct ubik_infer_context *ctx)
                         return err;
         }
 
+        return OK;
+}
+
+no_ignore static ubik_error
+infer_error_print(struct ubik_infer_error *ierr)
+{
+        switch (ierr->error_type)
+        {
+        case INFER_ERR_APPLY_HEAD_UNAPPL:
+                printf("head of application is not applicable\n");
+                return OK;
+
+        case INFER_ERR_FUNC_ARG_INCOMPAT:
+                printf("function and argument have incompatible types\n");
+                return OK;
+
+        case INFER_ERR_UNTYPEABLE:
+                printf("program is untypeable with current type inference algorithm\n");
+                return OK;
+        }
+        return ubik_raise(ERR_UNKNOWN_TYPE, "unknown inference error type");
+}
+
+no_ignore ubik_error
+ubik_infer(struct ubik_ast *ast, struct ubik_infer_context *ctx)
+{
+        ubik_error err;
+        size_t i;
+        bool fatal;
+        struct ubik_infer_error *ierr;
+
+        if (ctx->debug)
+                printf("\ninfer\n");
+
+        err = infer_ast(ast, ctx);
+        if (err != OK)
+                return err;
+
+        fatal = false;
+        for (i = 0; i < ctx->errors.n; i++)
+        {
+                ierr = (struct ubik_infer_error *) ctx->errors.elems[i];
+                err = infer_error_print(ierr);
+                if (err != OK)
+                        return err;
+                /* TODO: when type inferencer actually works, make
+                 * INFER_ERR_UNTYPEABLE a fatal error too. */
+                fatal |= ierr->error_type != INFER_ERR_UNTYPEABLE;
+        }
+        if (fatal)
+                return ubik_raise(ERR_BAD_TYPE, "program does not type check");
         return OK;
 }
 
