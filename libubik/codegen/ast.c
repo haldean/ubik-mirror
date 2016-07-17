@@ -574,6 +574,8 @@ ubik_ast_merge_loc(
         res->line_end = size_max(l1->line_end, l2->line_end);
         res->col_start = size_min(l1->col_start, l2->col_start);
         res->col_end = size_max(l1->col_end, l2->col_end);
+        res->source_name = l1->source_name;
+        res->source = l1->source;
 }
 
 no_ignore ubik_error

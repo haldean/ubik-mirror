@@ -17,6 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include "ubik/feedback.h"
 #include "ubik/infer.h"
 #include "ubik/natives.h"
 #include "ubik/resolve.h"
@@ -62,6 +63,8 @@ infer_native(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
         if (err->error_code == ERR_UNKNOWN_TYPE)
         {
                 free(err);
+                free(expr->type);
+                expr->type = NULL;
                 ierr = calloc(1, sizeof(struct ubik_infer_error));
                 if (ierr == NULL)
                         return ubik_raise(ERR_NO_MEMORY, "infer apply error");
@@ -258,21 +261,38 @@ infer_ast(struct ubik_ast *ast, struct ubik_infer_context *ctx)
 no_ignore static ubik_error
 infer_error_print(struct ubik_infer_error *ierr)
 {
+        ubik_error err;
+
         switch (ierr->error_type)
         {
         case INFER_ERR_APPLY_HEAD_UNAPPL:
-                printf("head of application is not applicable\n");
-                return OK;
+                ubik_feedback_error_header(
+                        &ierr->bad_expr->loc,
+                        "head of function application is not a function:");
+                break;
 
         case INFER_ERR_FUNC_ARG_INCOMPAT:
-                printf("function and argument have incompatible types\n");
-                return OK;
+                ubik_feedback_error_header(
+                        &ierr->bad_expr->loc,
+                        "function and argument have incompatible types:");
+                break;
 
         case INFER_ERR_UNTYPEABLE:
-                printf("program is untypeable with current type inference algorithm\n");
-                return OK;
+                ubik_feedback_error_header(
+                        &ierr->bad_expr->loc,
+                        "expression is untypeable with current type inference "
+                        "algorithm:");
+                break;
+
+        default:
+                return ubik_raise(
+                        ERR_UNKNOWN_TYPE, "unknown inference error type");
         }
-        return ubik_raise(ERR_UNKNOWN_TYPE, "unknown inference error type");
+        printf("\t");
+        err = ubik_ast_expr_print(ierr->bad_expr);
+        printf("\n");
+
+        return err;
 }
 
 no_ignore ubik_error
