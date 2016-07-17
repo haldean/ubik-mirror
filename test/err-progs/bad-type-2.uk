@@ -1,0 +1,5 @@
+. err-prog/bad-type-2
+
+: apply-num
+    ^ Word
+    = 7 8

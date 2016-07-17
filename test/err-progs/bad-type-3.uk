@@ -1,0 +1,9 @@
+. err-progs/bad-type-3
+
+: a-number
+    ^ Word
+    = 7
+
+: another-number
+    ^ Word
+    = a-number 10

@@ -3,6 +3,11 @@ top=../..
 
 tests = \
 	bad-type.uk \
+	bad-type-2.uk \
+	bad-type-3.uk \
+	bad-type-4.uk \
+	literate-line-no.rst \
+	no-package.uk \
 	no-top-type.uk \
 	not-total-pred-block.uk \
 	syntax.uk \
