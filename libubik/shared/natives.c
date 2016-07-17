@@ -121,7 +121,7 @@ static struct native_record native_funcs[] = {
         { "uadd",                   "Word -> Word -> Word",           NULL },
         { "usub",                   "Word -> Word -> Word",           NULL },
         { "eq",                     NULL,                             NULL },
-        { "emit",                   "String -> Unit",                 NULL },
+        { "emit",                   "String -> String",               NULL },
         { "humanize",               NULL,                             NULL },
         { "concat",                 "String -> String -> String",     NULL },
         { "ubik-adt-ctor-matches?", NULL,                             NULL },
@@ -164,14 +164,14 @@ static struct native_record native_funcs[] = {
 #endif
 };
 
+#define N_NATIVE_FUNCS (sizeof(native_funcs) / sizeof(native_funcs[0]))
+
 no_ignore ubik_error
 ubik_natives_cache_types()
 {
         size_t i;
-        size_t n;
         ubik_error err;
-        n = sizeof(native_funcs) / sizeof(native_funcs[0]);
-        for (i = 0; i < n; i++)
+        for (i = 0; i < N_NATIVE_FUNCS; i++)
         {
                 if (native_funcs[i].type_string == NULL)
                         continue;
@@ -194,12 +194,29 @@ bool
 ubik_natives_is_defined(char *name)
 {
         size_t i;
-        size_t n;
-        n = sizeof(native_funcs) / sizeof(native_funcs[0]);
-        for (i = 0; i < n; i++)
+        for (i = 0; i < N_NATIVE_FUNCS; i++)
                 if (strcmp(native_funcs[i].name, name) == 0)
                         return true;
         return false;
+}
+
+no_ignore ubik_error
+ubik_natives_get_type(
+        struct ubik_ast_type_expr *res,
+        char *name)
+{
+        size_t i;
+        for (i = 0; i < N_NATIVE_FUNCS; i++)
+                if (strcmp(native_funcs[i].name, name) == 0)
+                {
+                        if (native_funcs[i].type_record == NULL)
+                                return ubik_raise(
+                                        ERR_UNKNOWN_TYPE,
+                                        "native function has undefined type");
+                        return ubik_ast_type_expr_copy(
+                                res, native_funcs[i].type_record);
+                }
+        return ubik_raise(ERR_ABSENT, "native func undefined");
 }
 
 no_ignore ubik_error

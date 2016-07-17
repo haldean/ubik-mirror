@@ -18,6 +18,7 @@
  */
 
 #pragma once
+#include "ubik/ast.h"
 #include "ubik/dagc.h"
 #include "ubik/ubik.h"
 #include <stdbool.h>
@@ -25,12 +26,24 @@
 no_ignore ubik_error
 ubik_natives_register(struct ubik_env *env);
 
+/* Called to store type objects on each native function in the function
+ * table. Must be called before any operation that checks for native
+ * function types is used. */
 no_ignore ubik_error
 ubik_natives_cache_types();
 
+/* Puts the type of the given native function in the result object.
+ *
+ * If the function is not defined, returns ERR_ABSENT. If the function
+ * is defined but its type is not, returns ERR_UNKNOWN_TYPE. */
+no_ignore ubik_error
+ubik_natives_get_type(
+        struct ubik_ast_type_expr *res,
+        char *func_name);
+
 /* Returns true if the provided name is the name of a native function. */
 bool
-ubik_natives_is_defined(char *);
+ubik_natives_is_defined(char *func_name);
 
 /* Internal-only convenience functions for native URI definitions. */
 no_ignore ubik_error

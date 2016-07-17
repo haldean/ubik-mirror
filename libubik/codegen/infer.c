@@ -18,6 +18,8 @@
  */
 
 #include "ubik/infer.h"
+#include "ubik/natives.h"
+#include "ubik/resolve.h"
 #include "ubik/util.h"
 
 #include <stdio.h>
@@ -51,6 +53,19 @@ infer_atom(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
                 return OK;
 
         case ATOM_NAME:
+                switch (expr->atom->name_loc->type)
+                {
+                case RESOLVE_NATIVE:
+                        return ubik_natives_get_type(
+                                expr->type, expr->atom->str);
+
+                case RESOLVE_LOCAL:
+                case RESOLVE_GLOBAL:
+                case RESOLVE_CLOSURE:
+                        break;
+                }
+                /* let unknown names fall through. */
+
         case ATOM_QUALIFIED:
         case ATOM_TYPE_NAME:
         case ATOM_VALUE:
@@ -128,7 +143,7 @@ ubik_infer(struct ubik_ast *ast, struct ubik_infer_context *ctx)
         ubik_error err;
 
         if (ctx->debug)
-                printf("infer\n");
+                printf("\ninfer\n");
 
         for (i = 0; i < ast->bindings.n; i++)
         {
