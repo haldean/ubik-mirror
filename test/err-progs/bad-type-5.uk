@@ -1,0 +1,5 @@
+. err-prog/bad-type-5
+
+: apply-num
+    ^ String
+    = 7

@@ -237,6 +237,7 @@ no_ignore static ubik_error
 infer_ast(struct ubik_ast *ast, struct ubik_infer_context *ctx)
 {
         struct ubik_ast_binding *bind;
+        struct ubik_infer_error *ierr;
         size_t i;
         ubik_error err;
 
@@ -246,6 +247,17 @@ infer_ast(struct ubik_ast *ast, struct ubik_infer_context *ctx)
                 err = infer_expr(bind->expr, ctx);
                 if (err != OK)
                         return err;
+                if (bind->type_expr != NULL)
+                        if (!compatible(bind->expr->type, bind->type_expr, ctx))
+                        {
+                                ierr = calloc(1, sizeof(struct ubik_infer_error));
+                                if (ierr == NULL)
+                                        return ubik_raise(
+                                                ERR_NO_MEMORY, "infer apply error");
+                                ierr->error_type = INFER_ERR_BIND_TYPE;
+                                ierr->bad_bind = bind;
+                                return ubik_vector_append(&ctx->errors, ierr);
+                        }
         }
 
         if (ast->immediate != NULL)
@@ -270,6 +282,9 @@ infer_error_print(struct ubik_infer_error *ierr)
                         UBIK_FEEDBACK_ERR,
                         &ierr->bad_expr->loc,
                         "head of function application is not a function:");
+                printf("\t");
+                err = ubik_ast_expr_print(ierr->bad_expr);
+                printf("\n");
                 break;
 
         case INFER_ERR_FUNC_ARG_INCOMPAT:
@@ -277,6 +292,9 @@ infer_error_print(struct ubik_infer_error *ierr)
                         UBIK_FEEDBACK_ERR,
                         &ierr->bad_expr->loc,
                         "function and argument have incompatible types:");
+                printf("\t");
+                err = ubik_ast_expr_print(ierr->bad_expr);
+                printf("\n");
                 break;
 
         case INFER_ERR_UNTYPEABLE:
@@ -285,15 +303,28 @@ infer_error_print(struct ubik_infer_error *ierr)
                         &ierr->bad_expr->loc,
                         "expression is untypeable with current type inference "
                         "algorithm:");
+                printf("\t");
+                err = ubik_ast_expr_print(ierr->bad_expr);
+                printf("\n");
+                break;
+
+        case INFER_ERR_BIND_TYPE:
+                ubik_feedback_error_line(
+                        UBIK_FEEDBACK_ERR,
+                        &ierr->bad_bind->loc,
+                        "explicit type of binding and type of bound value "
+                        "disagree");
+                printf("expected type ");
+                err = ubik_ast_type_expr_print(ierr->bad_bind->type_expr);
+                printf(" but value had type ");
+                err = ubik_ast_type_expr_print(ierr->bad_bind->expr->type);
+                printf("\n");
                 break;
 
         default:
                 return ubik_raise(
                         ERR_UNKNOWN_TYPE, "unknown inference error type");
         }
-        printf("\t");
-        err = ubik_ast_expr_print(ierr->bad_expr);
-        printf("\n");
 
         return err;
 }

@@ -40,12 +40,19 @@ enum ubik_infer_error_type
          * well-defined source material (but will be, all the time, until the
          * inference engine is good). */
         INFER_ERR_UNTYPEABLE,
+        /* Raised when a binding's explicit type disagrees with the type of the
+         * bound value. */
+        INFER_ERR_BIND_TYPE,
 };
 
 struct ubik_infer_error
 {
         enum ubik_infer_error_type error_type;
-        struct ubik_ast_expr *bad_expr;
+        union
+        {
+                struct ubik_ast_expr *bad_expr;
+                struct ubik_ast_binding *bad_bind;
+        };
 };
 
 /* Infers all types in an AST. */
