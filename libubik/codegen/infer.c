@@ -41,12 +41,22 @@ compatible(
         /* TODO: this needs a lot of work. */
         if (e1->type_expr_type != e2->type_expr_type)
                 return false;
-        if (e1->type_expr_type != TYPE_EXPR_ATOM)
+        switch (e1->type_expr_type)
         {
-                printf("only type atoms can be compared right now\n");
-                return false;
+        case TYPE_EXPR_ATOM:
+                return strcmp(e1->name, e2->name) == 0;
+
+        case TYPE_EXPR_ARROW:
+                return compatible(e1->apply.head, e2->apply.head, ctx) &&
+                        compatible(e1->apply.tail, e2->apply.tail, ctx);
+
+        case TYPE_EXPR_APPLY:
+        case TYPE_EXPR_VAR:
+                break;
         }
-        return strcmp(e1->name, e2->name) == 0;
+
+        printf("only type atoms and application can be compared right now\n");
+        return false;
 }
 
 /* Note: when this function is called, the type object on the expression has
@@ -247,7 +257,7 @@ infer_ast(struct ubik_ast *ast, struct ubik_infer_context *ctx)
                 err = infer_expr(bind->expr, ctx);
                 if (err != OK)
                         return err;
-                if (bind->type_expr != NULL)
+                if (bind->type_expr != NULL && bind->expr->type != NULL)
                         if (!compatible(bind->expr->type, bind->type_expr, ctx))
                         {
                                 ierr = calloc(1, sizeof(struct ubik_infer_error));
