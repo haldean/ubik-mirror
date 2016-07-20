@@ -29,10 +29,7 @@
 #include <string.h>
 
 #define wrap_err(x) do { ubik_error _err = (x); if (_err != OK) YYABORT; } while (0)
-#define alloc(x, nelem, contents) do { \
-        (x) = calloc(nelem, sizeof(contents)); \
-        if ((x) == NULL) YYABORT; \
-        wrap_err(ubik_vector_append(&ctx->allocs, x)); } while (0)
+#define alloc(x, nelem, contents) ubik_ralloc((void **) &(x), nelem, sizeof(contents), &ctx->region)
 #define load_loc(loc_ptr) do { \
         (loc_ptr).line_start = yyloc.first_line; \
         (loc_ptr).line_end = yyloc.last_line; \

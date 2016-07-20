@@ -22,8 +22,9 @@
 #include "ubik/util.h"
 
 #include <stdlib.h>
+#include <string.h>
 
-#define MIN_REGION_SIZE 4096
+#define ALLOCS_PER_REGION 256
 
 void
 ubik_galloc(void **dst, size_t n, size_t size)
@@ -35,14 +36,14 @@ ubik_galloc(void **dst, size_t n, size_t size)
 static void
 _ralloc(void **dst, size_t size, struct ubik_alloc_region *r)
 {
-        if (size > r->cap - r->used)
+        if (r->used == r->cap)
         {
                 if (r->next == NULL)
                 {
                         r->next = calloc(1, sizeof(struct ubik_alloc_region));
                         ubik_assert(r->next != NULL);
-                        r->next->cap = size_max(size, MIN_REGION_SIZE);
-                        r->next->buf = calloc(r->next->cap, 1);
+                        r->next->cap = ALLOCS_PER_REGION;
+                        r->next->buf = calloc(r->next->cap, sizeof(void *));
                         ubik_assert(r->next->buf != NULL);
                         r->next->heap = true;
                 }
@@ -50,8 +51,8 @@ _ralloc(void **dst, size_t size, struct ubik_alloc_region *r)
                 return;
         }
 
-        *dst = &r->buf[r->used];
-        r->used += size;
+        *dst = calloc(1, size);
+        r->buf[r->used++] = *dst;
 }
 
 void
@@ -67,21 +68,63 @@ ubik_ralloc(void **dst, size_t n, size_t elemsize, struct ubik_alloc_region *r)
 }
 
 void
-ubik_region_start(struct ubik_alloc_region *r)
+ubik_realloc(void **dst, size_t n, size_t elemsize, struct ubik_alloc_region *r)
 {
-        r->buf = calloc(r->cap, 1);
-        r->cap = MIN_REGION_SIZE;
+        void *new_dst;
+        size_t size;
+
+        size = n * elemsize;
+        /* Guards against overflow. */
+        ubik_assert(n != 0 && size / n == elemsize);
+
+        _ralloc(&new_dst, size, r);
+        memcpy(new_dst, *dst, size);
+        *dst = new_dst;
+}
+
+char *
+ubik_strdup(char *str, struct ubik_alloc_region *r)
+{
+        char *new_str;
+        size_t len;
+
+        len = strlen(str);
+        _ralloc((void**) &new_str, len, r);
+        memcpy(new_str, str, len);
+
+        return new_str;
+}
+
+void
+ubik_alloc_start(struct ubik_alloc_region *r)
+{
+        r->cap = ALLOCS_PER_REGION;
+        r->buf = calloc(r->cap, sizeof(void *));
         r->heap = false;
         r->next = NULL;
         r->used = 0;
 }
 
 void
-ubik_region_free(struct ubik_alloc_region *r)
+ubik_alloc_orphan(struct ubik_alloc_region *r)
 {
         free(r->buf);
         if (r->next != NULL)
-                ubik_region_free(r->next);
+                ubik_alloc_free(r->next);
+        if (r->heap)
+                free(r);
+}
+
+void
+ubik_alloc_free(struct ubik_alloc_region *r)
+{
+        size_t i;
+        for (i = 0; i < r->used; i++)
+                if (r->buf[i] != NULL)
+                        free(r->buf[i]);
+        free(r->buf);
+        if (r->next != NULL)
+                ubik_alloc_free(r->next);
         if (r->heap)
                 free(r);
 }

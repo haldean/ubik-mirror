@@ -23,7 +23,7 @@
 
 struct ubik_alloc_region
 {
-        char *buf;
+        void **buf;
         struct ubik_alloc_region *next;
         size_t used;
         size_t cap;
@@ -38,13 +38,27 @@ ubik_galloc(void **dst, size_t n, size_t size);
 void
 ubik_ralloc(void **dst, size_t n, size_t size, struct ubik_alloc_region *r);
 
+/* Reallocates a block to be bigger. This should be used sparingly! The code
+ * does not handle this elegantly; in effect, it doesn't free the original
+ * memory until the region is freed. */
+void
+ubik_realloc(void **dst, size_t n, size_t size, struct ubik_alloc_region *r);
+
+/* Same as strdup, but memory is allocated in the region. */
+char *
+ubik_strdup(char *str, struct ubik_alloc_region *r);
+
 /* Initializes a region. */
 void
-ubik_region_start(struct ubik_alloc_region *r);
+ubik_alloc_start(struct ubik_alloc_region *r);
 
 /* Frees a region and everything inside it. */
 void
-ubik_region_free(struct ubik_alloc_region *r);
+ubik_alloc_free(struct ubik_alloc_region *r);
+
+/* Frees a region but doesn't free the memory inside it. */
+void
+ubik_alloc_orphan(struct ubik_alloc_region *r);
 
 #define ubik_local_region(name) \
         local(region) struct ubik_alloc_region name = {0}; \

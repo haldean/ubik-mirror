@@ -32,8 +32,7 @@
 
 #define TOKEN(x) { yylval->token = x; return x; }
 #define TSTRING(token) { \
-        yylval->string = strdup(yytext); \
-        if (ubik_vector_append(&ctx->allocs, yylval->string) != OK) return 0; \
+        yylval->string = ubik_strdup(yytext, &ctx->region); \
         return token; \
 }
 
@@ -101,17 +100,16 @@ char *
 read_string_literal(struct ubik_parse_context *ctx, yyscan_t scanner)
 {
         char *res;
-        char *temp;
         char last;
         char this;
         size_t n;
         size_t cap;
 
         n = 0;
-        cap = 32;
-        res = calloc(cap, sizeof(char));
+        cap = 128;
         last = '\0';
         this = '\0';
+        ubik_ralloc((void**) &res, cap, sizeof(char), &ctx->region);
 
         for (;;)
         {
@@ -144,29 +142,11 @@ read_string_literal(struct ubik_parse_context *ctx, yyscan_t scanner)
                 if (n == cap)
                 {
                         cap *= 2;
-                        temp = realloc(res, cap);
-                        if (temp == NULL)
-                        {
-                                free(res);
-                                return NULL;
-                        }
-                        bzero(&temp[n], cap - n);
-                        res = temp;
+                        ubik_realloc((void**) &res, cap, sizeof(char), &ctx->region);
                 }
                 res[n++] = this;
                 last = this;
         }
 
-        temp = realloc(res, n + 1);
-        if (temp == NULL)
-        {
-                free(res);
-                return NULL;
-        }
-        if (ubik_vector_append(&ctx->allocs, temp) != OK)
-        {
-                free(temp);
-                return NULL;
-        }
-        return temp;
+        return res;
 }

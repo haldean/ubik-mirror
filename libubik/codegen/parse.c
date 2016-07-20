@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include "ubik/feedback.h"
 #include "ubik/parse.h"
+#include "ubik/util.h"
 #include "codegen/grammar.h"
 
 /* autotools doesn't yet support flex headers, so we have to declare these
@@ -32,7 +33,7 @@ extern void yy_scan_string(char *, void *);
 void
 ubik_parse_context_free(struct ubik_parse_context *ctx)
 {
-        ubik_vector_free(&ctx->allocs);
+        unused(ctx);
 }
 
 no_ignore ubik_error
@@ -48,12 +49,12 @@ ubik_parse(
         int status;
         int token;
         local(parse_context) struct ubik_parse_context ctx = {0};
-        size_t i;
         void *scanner;
         yypstate *ps;
 
         ctx.source_name = source_name;
         ctx.source_stream = stream;
+        ubik_alloc_start(&ctx.region);
 
         status = yylex_init(&scanner);
         if (status != 0)
@@ -77,6 +78,7 @@ ubik_parse(
 
         if (status == 0)
         {
+                ubik_alloc_orphan(&ctx.region);
                 *ast = ctx.ast;
                 return OK;
         }
@@ -89,8 +91,8 @@ ubik_parse(
                 free(ctx.err_loc);
                 free(ctx.err_msg);
         }
-        for (i = 0; i < ctx.allocs.n; i++)
-                free(ctx.allocs.elems[i]);
+
+        ubik_alloc_free(&ctx.region);
         return ubik_raise(ERR_BAD_VALUE, "could not parse input");
 }
 
@@ -104,9 +106,10 @@ ubik_parse_type_expr(
         int status;
         int token;
         local(parse_context) struct ubik_parse_context ctx = {0};
-        size_t i;
         void *scanner;
         yypstate *ps;
+
+        ubik_alloc_start(&ctx.region);
 
         status = yylex_init(&scanner);
         if (status != 0)
@@ -127,6 +130,7 @@ ubik_parse_type_expr(
 
         if (status == 0)
         {
+                ubik_alloc_orphan(&ctx.region);
                 *type_expr = ctx.type_expr;
                 return OK;
         }
@@ -136,7 +140,6 @@ ubik_parse_type_expr(
                 free(ctx.err_loc);
                 free(ctx.err_msg);
         }
-        for (i = 0; i < ctx.allocs.n; i++)
-                free(ctx.allocs.elems[i]);
+        ubik_alloc_free(&ctx.region);
         return ubik_raise(ERR_BAD_VALUE, "could not parse input");
 }

@@ -20,6 +20,7 @@
 #pragma once
 
 #include "ubik/ubik.h"
+#include "ubik/alloc.h"
 #include "ubik/ast.h"
 #include "ubik/stream.h"
 #include "ubik/vector.h"
@@ -35,9 +36,7 @@ struct ubik_parse_context
         struct ubik_ast_loc *err_loc;
         char *err_msg;
 
-        /* we keep track of everything allocated during parsing so that we can
-         * clean up if the parse fails halfway through. */
-        struct ubik_vector allocs;
+        struct ubik_alloc_region region;
 
         char *source_name;
         struct ubik_stream *source_stream;
