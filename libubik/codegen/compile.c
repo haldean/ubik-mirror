@@ -25,6 +25,7 @@
 
 #include "ubik/adt.h"
 #include "ubik/compile.h"
+#include "ubik/feedback.h"
 #include "ubik/import.h"
 #include "ubik/infer.h"
 #include "ubik/literate.h"
@@ -164,7 +165,8 @@ no_ignore static ubik_error
 create_import_request(
         struct ubik_compile_request *res,
         struct ubik_compile_env *cenv,
-        char *name)
+        char *name,
+        struct ubik_ast_loc *loc)
 {
         struct dirent *test_f;
         struct ubik_stream in_stream;
@@ -235,6 +237,9 @@ create_import_request(
                 closedir(test_dir);
         }
 
+        ubik_feedback_error_line(
+                UBIK_FEEDBACK_ERR, loc,
+                "could not find source for imported package %s", name);
         return ubik_raise(ERR_ABSENT, "couldn't find import source");
 
 free_fullpath:
@@ -263,9 +268,13 @@ load_ast(struct ubik_compile_env *cenv, struct ubik_compile_job *job)
         while (import != NULL)
         {
                 req = calloc(1, sizeof(struct ubik_compile_request));
-                err = create_import_request(req, cenv, import->canonical);
+                err = create_import_request(
+                        req, cenv, import->canonical, &import->loc);
                 if (err != OK)
+                {
+                        free(req);
                         return err;
+                }
                 err = ubik_compile_enqueue(cenv, req);
                 if (err != OK)
                 {
