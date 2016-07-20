@@ -158,6 +158,15 @@ ubik_adt_create_decl(
         struct ubik_value *t;
         ubik_error err;
 
+        src_params = source->adt.params;
+        if (src_params != NULL)
+                return ubik_raise(ERR_NOT_IMPLEMENTED, "no params on ADTs yet");
+
+        src_constraints = source->adt.constraints;
+        if (src_constraints != NULL)
+                return ubik_raise(
+                        ERR_NOT_IMPLEMENTED, "no constraints on ADTs yet");
+
         err = ubik_value_new(&dst_name);
         if (err != OK)
                 return err;
@@ -173,21 +182,12 @@ ubik_adt_create_decl(
         if (err != OK)
                 return err;
 
-        src_params = source->adt.params;
-        if (src_params != NULL)
-                return ubik_raise(ERR_NOT_IMPLEMENTED, "no params on ADTs yet");
-
         err = ubik_value_new(&dst_constraints);
         if (err != OK)
                 return err;
         err = ubik_list_create_empty(dst_constraints);
         if (err != OK)
                 return err;
-
-        src_constraints = source->adt.constraints;
-        if (src_constraints != NULL)
-                return ubik_raise(
-                        ERR_NOT_IMPLEMENTED, "no constraints on ADTs yet");
 
         err = ubik_value_new(&dst_ctors);
         if (err != OK)
