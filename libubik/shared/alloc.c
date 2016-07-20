@@ -80,6 +80,8 @@ void
 ubik_region_free(struct ubik_alloc_region *r)
 {
         free(r->buf);
+        if (r->next != NULL)
+                ubik_region_free(r->next);
         if (r->heap)
                 free(r);
 }
