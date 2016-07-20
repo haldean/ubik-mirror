@@ -22,6 +22,7 @@ c_sources = \
     ./rt/schedule.c \
     ./rt/timer.c \
     ./shared/adt.c \
+    ./shared/alloc.c \
     ./shared/assert.c \
     ./shared/dagc.c \
     ./shared/env.c \
