@@ -89,8 +89,8 @@ ubik_strdup(char *str, struct ubik_alloc_region *r)
         size_t len;
 
         len = strlen(str);
-        _ralloc((void**) &new_str, len, r);
-        memcpy(new_str, str, len);
+        _ralloc((void**) &new_str, len + 1, r);
+        memcpy(new_str, str, len + 1);
 
         return new_str;
 }
@@ -110,7 +110,7 @@ ubik_alloc_orphan(struct ubik_alloc_region *r)
 {
         free(r->buf);
         if (r->next != NULL)
-                ubik_alloc_free(r->next);
+                ubik_alloc_orphan(r->next);
         if (r->heap)
                 free(r);
 }
