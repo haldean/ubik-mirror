@@ -39,6 +39,7 @@ ubik_parse_context_free(struct ubik_parse_context *ctx)
 no_ignore ubik_error
 ubik_parse(
         struct ubik_ast **ast,
+        struct ubik_alloc_region *r,
         char *source_name,
         struct ubik_stream *stream,
         bool show_errors)
@@ -54,7 +55,7 @@ ubik_parse(
 
         ctx.source_name = source_name;
         ctx.source_stream = stream;
-        ubik_alloc_start(&ctx.region);
+        ctx.region = r;
 
         status = yylex_init(&scanner);
         if (status != 0)
@@ -78,7 +79,6 @@ ubik_parse(
 
         if (status == 0)
         {
-                ubik_alloc_orphan(&ctx.region);
                 *ast = ctx.ast;
                 return OK;
         }
@@ -92,13 +92,13 @@ ubik_parse(
                 free(ctx.err_msg);
         }
 
-        ubik_alloc_free(&ctx.region);
         return ubik_raise(ERR_BAD_VALUE, "could not parse input");
 }
 
 no_ignore ubik_error
 ubik_parse_type_expr(
         struct ubik_ast_type_expr **type_expr,
+        struct ubik_alloc_region *r,
         char *source)
 {
         YYLTYPE loc = {0};
@@ -109,7 +109,7 @@ ubik_parse_type_expr(
         void *scanner;
         yypstate *ps;
 
-        ubik_alloc_start(&ctx.region);
+        ctx.region = r;
 
         status = yylex_init(&scanner);
         if (status != 0)
@@ -130,7 +130,6 @@ ubik_parse_type_expr(
 
         if (status == 0)
         {
-                ubik_alloc_orphan(&ctx.region);
                 *type_expr = ctx.type_expr;
                 return OK;
         }
@@ -140,6 +139,5 @@ ubik_parse_type_expr(
                 free(ctx.err_loc);
                 free(ctx.err_msg);
         }
-        ubik_alloc_free(&ctx.region);
         return ubik_raise(ERR_BAD_VALUE, "could not parse input");
 }

@@ -17,8 +17,8 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#pragma once
 #include "ubik/ubik.h"
-
 #include <stdbool.h>
 
 struct ubik_alloc_region
@@ -34,7 +34,8 @@ struct ubik_alloc_region
 void
 ubik_galloc(void **dst, size_t n, size_t size);
 
-/* Perform a region allocation that is freed when the region is freed. */
+/* Perform a region allocation that is freed when the region is freed. A NULL
+ * region makes ralloc behave the same as galloc. */
 void
 ubik_ralloc(void **dst, size_t n, size_t size, struct ubik_alloc_region *r);
 
@@ -44,7 +45,8 @@ ubik_ralloc(void **dst, size_t n, size_t size, struct ubik_alloc_region *r);
 void
 ubik_realloc(void **dst, size_t n, size_t size, struct ubik_alloc_region *r);
 
-/* Same as strdup, but memory is allocated in the region. */
+/* Same as strdup, but memory is allocated in the region. If the region is NULL,
+ * this is exactly like strdup. */
 char *
 ubik_strdup(char *str, struct ubik_alloc_region *r);
 
@@ -60,6 +62,13 @@ ubik_alloc_free(struct ubik_alloc_region *r);
 void
 ubik_alloc_orphan(struct ubik_alloc_region *r);
 
+/* Ties the child to the parent region; the child region is orphaned and its
+ * allocations are given to the parent. */
+void
+ubik_alloc_reparent(
+        struct ubik_alloc_region *parent,
+        struct ubik_alloc_region *child);
+
 #define ubik_local_region(name) \
-        local(region) struct ubik_alloc_region name = {0}; \
-        ubik_region_start(&name);
+        local(alloc) struct ubik_alloc_region name = {0}; \
+        ubik_alloc_start(&name);

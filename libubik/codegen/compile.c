@@ -100,14 +100,6 @@ free_req(struct ubik_compile_request *req)
 /* Frees the parts of a job object that are uniquely owned by the job. This
  * doesn't free the request or the AST, as those are present in the request
  * holder as well. */
-static void
-free_job(struct ubik_compile_job *job)
-{
-        ubik_vector_free(&job->dep_graphs);
-        ubik_stream_close(&job->woven);
-        free(job);
-}
-
 no_ignore ubik_error
 ubik_compile_env_free(struct ubik_compile_env *cenv)
 {
@@ -126,20 +118,15 @@ ubik_compile_env_free(struct ubik_compile_env *cenv)
         {
                 res = cenv->compiled.elems[i];
 
-                free_req(res->request);
-
-                err = ubik_ast_free(res->ast);
-                if (err != OK)
-                        return err;
-
                 for (j = 0; j < res->n_graphs; j++)
                 {
                         err = ubik_release(res->graphs[j]);
                         if (err != OK)
                                 return err;
                 }
-                free(res->graphs);
 
+                free_req(res->request);
+                ubik_alloc_free(&res->region);
                 free(res);
         }
         ubik_vector_free(&cenv->compiled);
@@ -148,13 +135,8 @@ ubik_compile_env_free(struct ubik_compile_env *cenv)
         {
                 job = cenv->to_compile.elems[i];
                 free_req(job->request);
-                if (job->ast != NULL)
-                {
-                        err = ubik_ast_free(job->ast);
-                        if (err != OK)
-                                return err;
-                }
-                free_job(job);
+                ubik_alloc_free(&job->region);
+                free(job);
         }
         ubik_vector_free(&cenv->to_compile);
 
@@ -190,6 +172,8 @@ create_import_request(
 
                 while ((test_f = readdir(test_dir)) != NULL)
                 {
+                        ubik_local_region(r);
+
                         if (!ubik_string_endswith(test_f->d_name, ".uk"))
                                 continue;
 
@@ -203,7 +187,8 @@ create_import_request(
                         if (err != OK)
                                 goto free_fullpath;
 
-                        err = ubik_parse(&test_ast, fullpath, &in_stream, true);
+                        err = ubik_parse(
+                                &test_ast, &r, fullpath, &in_stream, true);
                         if (err != OK)
                         {
                                 free(fullpath);
@@ -212,10 +197,6 @@ create_import_request(
 
                         if (strcmp(test_ast->package_name, name) == 0)
                         {
-                                err = ubik_ast_free(test_ast);
-                                if (err != OK)
-                                        goto free_fullpath;
-
                                 ubik_stream_reset(&in_stream);
                                 res->source_name = fullpath;
                                 res->package_name = strdup(name);
@@ -226,10 +207,6 @@ create_import_request(
                                 closedir(test_dir);
                                 return OK;
                         }
-
-                        err = ubik_ast_free(test_ast);
-                        if (err != OK)
-                                goto free_fullpath;
 
                         free(fullpath);
                 }
@@ -260,7 +237,8 @@ load_ast(struct ubik_compile_env *cenv, struct ubik_compile_job *job)
                 return err;
 
         err = ubik_parse(
-                &job->ast, job->request->source_name, &job->woven, true);
+                &job->ast, &job->region, job->request->source_name,
+                &job->woven, true);
         if (err != OK)
                 return err;
 
@@ -393,6 +371,8 @@ compile_job(
                 res->graphs[i + 1] = job->dep_graphs.elems[i];
         res->n_graphs = 1 + job->dep_graphs.n;
 
+        res->region = job->region;
+
         err = ubik_vector_append(&cenv->compiled, res);
         if (err != OK)
                 goto free_res_graphs;
@@ -442,6 +422,7 @@ ubik_compile_enqueue(
         job->request = req;
         job->ast = NULL;
         job->status = COMPILE_WAIT_FOR_AST;
+        ubik_alloc_start(&job->region);
 
         return ubik_vector_append(&cenv->to_compile, job);
 }
@@ -529,7 +510,6 @@ ubik_compile_run(struct ubik_compile_env *cenv)
                         break;
 
                 case COMPILE_DONE:
-                        free_job(job);
                         cenv->to_compile.n--;
                         break;
                 }

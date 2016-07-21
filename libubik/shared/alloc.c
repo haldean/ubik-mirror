@@ -60,6 +60,12 @@ ubik_ralloc(void **dst, size_t n, size_t elemsize, struct ubik_alloc_region *r)
 {
         size_t size;
 
+        if (r == NULL)
+        {
+                ubik_galloc(dst, n, elemsize);
+                return;
+        }
+
         size = n * elemsize;
         /* Guards against overflow. */
         ubik_assert(n != 0 && size / n == elemsize);
@@ -88,6 +94,9 @@ ubik_strdup(char *str, struct ubik_alloc_region *r)
         char *new_str;
         size_t len;
 
+        if (r == NULL)
+                return strdup(str);
+
         len = strlen(str);
         _ralloc((void**) &new_str, len + 1, r);
         memcpy(new_str, str, len + 1);
@@ -103,6 +112,17 @@ ubik_alloc_start(struct ubik_alloc_region *r)
         r->heap = false;
         r->next = NULL;
         r->used = 0;
+}
+
+void
+ubik_alloc_reparent(
+        struct ubik_alloc_region *parent,
+        struct ubik_alloc_region *child)
+{
+        struct ubik_alloc_region *t;
+        for (t = child; t->next != NULL; t = t->next);
+        t->next = parent->next;
+        parent->next = child;
 }
 
 void

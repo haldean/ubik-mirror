@@ -36,7 +36,7 @@ struct ubik_parse_context
         struct ubik_ast_loc *err_loc;
         char *err_msg;
 
-        struct ubik_alloc_region region;
+        struct ubik_alloc_region *region;
 
         char *source_name;
         struct ubik_stream *source_stream;
@@ -45,6 +45,7 @@ struct ubik_parse_context
 no_ignore ubik_error
 ubik_parse(
         struct ubik_ast **ast,
+        struct ubik_alloc_region *r,
         char *source_name,
         struct ubik_stream *stream,
         bool show_errors);
@@ -52,4 +53,5 @@ ubik_parse(
 no_ignore ubik_error
 ubik_parse_type_expr(
         struct ubik_ast_type_expr **type_expr,
+        struct ubik_alloc_region *r,
         char *source);

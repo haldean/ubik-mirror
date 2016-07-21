@@ -18,6 +18,7 @@
  */
 
 #pragma once
+#include "ubik/alloc.h"
 #include "ubik/ast.h"
 #include "ubik/gen.h"
 #include "ubik/stream.h"
@@ -66,6 +67,11 @@ struct ubik_compile_result
          * dependency closure */
         struct ubik_dagc **graphs;
         size_t n_graphs;
+
+        /* the region in which all allocations are made for this result; the
+         * memory associated with the result can be freed all at once by freeing
+         * this region. */
+        struct ubik_alloc_region region;
 };
 
 /* Represents an in-progress compilation job. */
@@ -84,6 +90,10 @@ struct ubik_compile_job
         /* a stream containing the woven contents of the (potentially-literate)
          * file. */
         struct ubik_stream woven;
+        /* the region in which all allocations are made for this job; the memory
+         * associated with the job can be freed all at once by freeing this
+         * region. */
+        struct ubik_alloc_region region;
 };
 
 struct ubik_compile_env

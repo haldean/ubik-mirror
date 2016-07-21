@@ -177,6 +177,7 @@ ubik_natives_cache_types()
                         continue;
                 err = ubik_parse_type_expr(
                         &native_funcs[i].type_record,
+                        NULL,
                         native_funcs[i].type_string);
                 if (err != OK)
                 {
