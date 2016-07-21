@@ -101,17 +101,17 @@ infer_atom(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
         {
         case ATOM_INT:
                 expr->type->type_expr_type = TYPE_EXPR_ATOM;
-                expr->type->name = strdup("Word");
+                expr->type->name = ubik_strdup("Word", ctx->region);
                 return OK;
 
         case ATOM_NUM:
                 expr->type->type_expr_type = TYPE_EXPR_ATOM;
-                expr->type->name = strdup("Number");
+                expr->type->name = ubik_strdup("Number", ctx->region);
                 return OK;
 
         case ATOM_STRING:
                 expr->type->type_expr_type = TYPE_EXPR_ATOM;
-                expr->type->name = strdup("String");
+                expr->type->name = ubik_strdup("String", ctx->region);
                 return OK;
 
         case ATOM_NAME:
