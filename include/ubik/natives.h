@@ -18,6 +18,7 @@
  */
 
 #pragma once
+#include "ubik/alloc.h"
 #include "ubik/ast.h"
 #include "ubik/dagc.h"
 #include "ubik/ubik.h"
@@ -39,7 +40,8 @@ ubik_natives_cache_types();
 no_ignore ubik_error
 ubik_natives_get_type(
         struct ubik_ast_type_expr *res,
-        char *func_name);
+        char *func_name,
+        struct ubik_alloc_region *r);
 
 /* Returns true if the provided name is the name of a native function. */
 bool

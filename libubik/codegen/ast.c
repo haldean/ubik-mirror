@@ -581,7 +581,8 @@ ubik_ast_merge_loc(
 no_ignore ubik_error
 ubik_ast_type_expr_copy(
         struct ubik_ast_type_expr *dst,
-        struct ubik_ast_type_expr *src)
+        struct ubik_ast_type_expr *src,
+        struct ubik_alloc_region *r)
 {
         ubik_error err;
 
@@ -592,34 +593,23 @@ ubik_ast_type_expr_copy(
         {
         case TYPE_EXPR_APPLY:
         case TYPE_EXPR_ARROW:
-                dst->apply.head = calloc(1, sizeof(struct ubik_ast_type_expr));
-                if (dst->apply.head == NULL)
-                        return ubik_raise(ERR_NO_MEMORY, "copy type expr");
-                dst->apply.tail = calloc(1, sizeof(struct ubik_ast_type_expr));
-                if (dst->apply.tail == NULL)
-                {
-                        free(dst->apply.head);
-                        return ubik_raise(ERR_NO_MEMORY, "copy type expr");
-                }
-                err = ubik_ast_type_expr_copy(dst->apply.head, src->apply.head);
+                ubik_alloc1(&dst->apply.head, struct ubik_ast_type_expr, r);
+                err = ubik_ast_type_expr_copy(
+                        dst->apply.head, src->apply.head, r);
                 if (err != OK)
-                {
-                        free(dst->apply.head);
-                        free(dst->apply.tail);
                         return err;
-                }
-                err = ubik_ast_type_expr_copy(dst->apply.tail, src->apply.tail);
+
+                ubik_alloc1(&dst->apply.tail, struct ubik_ast_type_expr, r);
+                err = ubik_ast_type_expr_copy(
+                        dst->apply.tail, src->apply.tail, r);
                 if (err != OK)
-                {
-                        free(dst->apply.head);
-                        free(dst->apply.tail);
                         return err;
-                }
+
                 break;
 
         case TYPE_EXPR_ATOM:
         case TYPE_EXPR_VAR:
-                dst->name = strdup(src->name);
+                dst->name = ubik_strdup(src->name, r);
                 break;
 
         default:

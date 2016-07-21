@@ -67,7 +67,7 @@ infer_native(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
         struct ubik_infer_error *ierr;
         ubik_error err;
 
-        err = ubik_natives_get_type(expr->type, expr->atom->str);
+        err = ubik_natives_get_type(expr->type, expr->atom->str, ctx->region);
         if (err == OK)
                 return OK;
         if (err->error_code == ERR_UNKNOWN_TYPE)
@@ -167,7 +167,7 @@ infer_apply(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
         }
 
         ubik_alloc1(&expr->type, struct ubik_ast_type_expr, ctx->region);
-        return ubik_ast_type_expr_copy(expr->type, h->apply.tail);
+        return ubik_ast_type_expr_copy(expr->type, h->apply.tail, ctx->region);
 }
 
 no_ignore static ubik_error

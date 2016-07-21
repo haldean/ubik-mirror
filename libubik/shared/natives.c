@@ -204,7 +204,8 @@ ubik_natives_is_defined(char *name)
 no_ignore ubik_error
 ubik_natives_get_type(
         struct ubik_ast_type_expr *res,
-        char *name)
+        char *name,
+        struct ubik_alloc_region *r)
 {
         size_t i;
         for (i = 0; i < N_NATIVE_FUNCS; i++)
@@ -215,7 +216,7 @@ ubik_natives_get_type(
                                         ERR_UNKNOWN_TYPE,
                                         "native function has undefined type");
                         return ubik_ast_type_expr_copy(
-                                res, native_funcs[i].type_record);
+                                res, native_funcs[i].type_record, r);
                 }
         return ubik_raise(ERR_ABSENT, "native func undefined");
 }

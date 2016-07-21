@@ -86,7 +86,7 @@ add_splat(
                                         ERR_NO_MEMORY, "splat binding alloc");
                         }
                         err = ubik_ast_type_expr_copy(
-                                new_bind->type_expr, old_bind->type_expr);
+                                new_bind->type_expr, old_bind->type_expr, NULL);
                         if (err != OK)
                                 return err;
                 }

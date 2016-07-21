@@ -18,6 +18,7 @@
  */
 
 #pragma once
+#include "ubik/alloc.h"
 #include "ubik/ubik.h"
 #include "ubik/vector.h"
 
@@ -319,7 +320,10 @@ ubik_ast_merge_loc(
         struct ubik_ast_loc *l1,
         struct ubik_ast_loc *l2);
 
+/* Copy src to dst. If region is not NULL, the copy is allocated in the given
+ * region. */
 no_ignore ubik_error
 ubik_ast_type_expr_copy(
         struct ubik_ast_type_expr *dst,
-        struct ubik_ast_type_expr *src);
+        struct ubik_ast_type_expr *src,
+        struct ubik_alloc_region *r);
