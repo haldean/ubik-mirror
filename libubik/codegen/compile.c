@@ -306,6 +306,7 @@ compile_job(
         }
 
         infer_ctx.debug = cenv->debug;
+        infer_ctx.region = &job->region;
         err = ubik_infer(job->ast, &infer_ctx);
         if (err != OK)
                 return err;

@@ -72,3 +72,6 @@ ubik_alloc_reparent(
 #define ubik_local_region(name) \
         local(alloc) struct ubik_alloc_region name = {0}; \
         ubik_alloc_start(&name);
+
+#define ubik_alloc1(dst, kind, region) \
+        ubik_ralloc((void **) dst, 1, sizeof(kind), region)

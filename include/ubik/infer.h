@@ -18,13 +18,16 @@
  */
 
 #pragma once
-#include "ubik/ubik.h"
+#include "ubik/alloc.h"
 #include "ubik/ast.h"
+#include "ubik/ubik.h"
 
 struct ubik_infer_context
 {
         /* Members are ubik_infer_error pointers */
         struct ubik_vector errors;
+
+        struct ubik_alloc_region *region;
         bool debug;
 };
 
@@ -57,7 +60,9 @@ struct ubik_infer_error
 
 /* Infers all types in an AST. */
 no_ignore ubik_error
-ubik_infer(struct ubik_ast *ast, struct ubik_infer_context *ctx);
+ubik_infer(
+        struct ubik_ast *ast,
+        struct ubik_infer_context *ctx);
 
 void
 ubik_infer_context_free(struct ubik_infer_context *ctx);
