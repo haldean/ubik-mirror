@@ -31,14 +31,16 @@ ubik_string_split(
         size_t *n_out,
         char *in,
         size_t n_in,
-        char delim);
+        char delim,
+        struct ubik_alloc_region *region);
 
 /* Joins two NULL-terminated path segments into a single path. */
 no_ignore ubik_error
 ubik_string_path_concat(
         char **out,
         char *first,
-        char *second);
+        char *second,
+        struct ubik_alloc_region *region);
 
 /* Returns true if the given string ends with the given suffix. */
 bool

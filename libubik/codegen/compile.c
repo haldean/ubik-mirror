@@ -80,7 +80,8 @@ ubik_compile_env_default(struct ubik_compile_env *cenv)
                         &cenv->n_include_dirs,
                         include_dirs,
                         strlen(include_dirs),
-                        ':');
+                        ':',
+                        NULL);
                 if (err != OK)
                         return err;
         }
@@ -159,8 +160,7 @@ create_import_request(
                 if (test_dir == NULL)
                 {
                         perror("couldn't open include directory");
-                        err = ubik_raise(ERR_SYSTEM, "open include directory");
-                        goto free_fullpath;
+                        return ubik_raise(ERR_SYSTEM, "open include directory");
                 }
 
                 while ((test_f = readdir(test_dir)) != NULL)
@@ -172,27 +172,27 @@ create_import_request(
 
                         err = ubik_string_path_concat(
                                 &fullpath, cenv->include_dirs[i],
-                                test_f->d_name);
+                                test_f->d_name, &r);
                         if (err != OK)
-                                goto free_fullpath;
+                                return err;
 
                         err = ubik_stream_rfile(&in_stream, fullpath);
                         if (err != OK)
-                                goto free_fullpath;
+                                return err;
 
                         err = ubik_parse(
                                 &test_ast, &r, fullpath, &in_stream, true);
                         if (err != OK)
-                        {
-                                free(fullpath);
                                 continue;
-                        }
 
                         if (strcmp(test_ast->package_name, name) == 0)
                         {
                                 ubik_stream_reset(&in_stream);
-                                res->source_name = fullpath;
-                                res->package_name = strdup(name);
+                                ubik_alloc_start(&res->region);
+                                res->source_name = ubik_strdup(
+                                        fullpath, &res->region);
+                                res->package_name = ubik_strdup(
+                                        name, &res->region);
                                 res->source = in_stream;
                                 res->reason = LOAD_IMPORTED;
                                 res->cb = NULL;
@@ -200,8 +200,6 @@ create_import_request(
                                 closedir(test_dir);
                                 return OK;
                         }
-
-                        free(fullpath);
                 }
 
                 closedir(test_dir);
@@ -211,10 +209,6 @@ create_import_request(
                 UBIK_FEEDBACK_ERR, loc,
                 "could not find source for imported package %s", name);
         return ubik_raise(ERR_ABSENT, "couldn't find import source");
-
-free_fullpath:
-        free(fullpath);
-        return err;
 }
 
 no_ignore static ubik_error

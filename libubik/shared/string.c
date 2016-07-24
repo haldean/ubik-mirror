@@ -36,7 +36,8 @@ ubik_string_split(
         size_t *n_out_p,
         char *in,
         size_t n_in,
-        char delim)
+        char delim,
+        struct ubik_alloc_region *region)
 {
         size_t i;
         size_t j;
@@ -52,14 +53,16 @@ ubik_string_split(
         }
 
         next_start = 0;
-        out = calloc(n_out, sizeof(char *));
+        ubik_ralloc((void **) &out, n_out, sizeof(char *), region);
         for (i = 0; i < n_out; i++)
         {
                 for (j = next_start; j < n_in && in[j] != delim; j++);
                 if (in[j] != delim && i != n_out - 1)
                         return ubik_raise(
                                 ERR_UNEXPECTED_FAILURE, "string split delim");
-                out[i] = calloc(j - next_start + 1, sizeof(char));
+                ubik_ralloc(
+                        (void **) &out[i], j - next_start + 1,
+                        sizeof(char), region);
                 memcpy(out[i], &in[next_start], j - next_start);
                 next_start = j + 1;
         }
@@ -74,7 +77,8 @@ no_ignore ubik_error
 ubik_string_path_concat(
         char **out_p,
         char *first,
-        char *second)
+        char *second,
+        struct ubik_alloc_region *region)
 {
         char *out;
         char path_sep;
@@ -114,7 +118,9 @@ ubik_string_path_concat(
                 path_sep_len = 0;
         }
 
-        out = calloc(first_len + second_len + path_sep_len + 1, sizeof(char));
+        ubik_ralloc(
+                (void **) &out, first_len + second_len + path_sep_len + 1,
+                sizeof(char), region);
 
         strcpy(out, first);
         if (path_sep_len)
