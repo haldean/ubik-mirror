@@ -20,13 +20,12 @@
 #pragma once
 #include "ubik/dagc.h"
 #include "ubik/ubik.h"
+#include "ubik/vector.h"
 
 struct ubik_graph_builder
 {
-        struct ubik_dagc_node **nodes;
-        size_t n_nodes;
-        size_t cap_nodes;
-
+        /* members are ubik_dagc_node pointers */
+        struct ubik_vector nodes;
         struct ubik_dagc_node *result;
 };
 

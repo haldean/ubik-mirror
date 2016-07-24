@@ -217,12 +217,12 @@ ubik_create_modinit(
                 ast->immediate->gen->is_terminal = true;
                 builder.result = ast->immediate->gen;
         }
-        else if (builder.n_nodes > 0)
+        else if (builder.nodes.n > 0)
         {
                 /* All graphs have to have a result, so we just pick one here.
                  * We'll end up executing all of them anyway, and nothing reads
                  * the modinit's result. */
-                builder.result = builder.nodes[builder.n_nodes - 1];
+                builder.result = builder.nodes.elems[builder.nodes.n - 1];
         }
         else
         {

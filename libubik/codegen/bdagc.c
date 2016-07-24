@@ -26,9 +26,7 @@
 no_ignore ubik_error
 ubik_bdagc_init(struct ubik_graph_builder *b)
 {
-        b->nodes = NULL;
-        b->n_nodes = 0;
-        b->cap_nodes = 0;
+        bzero(&b->nodes, sizeof(b->nodes));
         b->result = NULL;
         return OK;
 }
@@ -39,22 +37,7 @@ ubik_bdagc_push_node(
         struct ubik_graph_builder *b,
         struct ubik_dagc_node *node)
 {
-        size_t new_cap;
-        struct ubik_dagc_node **temp;
-
-        if (b->n_nodes == b->cap_nodes)
-        {
-                new_cap = b->cap_nodes == 0 ? 8 : b->cap_nodes * 2;
-                temp = realloc(
-                        b->nodes, new_cap * sizeof(struct ubik_dagc_node *));
-                if (temp == NULL)
-                        return ubik_raise(ERR_NO_MEMORY, "bdagc push node");
-                b->nodes = temp;
-                b->cap_nodes = new_cap;
-        }
-
-        b->nodes[b->n_nodes++] = node;
-        return OK;
+        return ubik_vector_append(&b->nodes, node);
 }
 
 /* Builds the graph. */
@@ -68,26 +51,29 @@ ubik_bdagc_build(
         size_t node_size;
         struct ubik_dagc *graph;
 
-        err = ubik_dagc_alloc(&graph, b->n_nodes, sizeof(struct ubik_dagc), NULL);
+        err = ubik_dagc_alloc(
+                &graph, b->nodes.n, sizeof(struct ubik_dagc), NULL);
         if (err != OK)
                 return err;
 
         ubik_assert(b->result != NULL);
         graph->result = NULL;
 
-        for (i = 0; i < b->n_nodes; i++)
+        for (i = 0; i < b->nodes.n; i++)
         {
-                err = ubik_dagc_node_sizeof(&node_size, b->nodes[i]);
+                err = ubik_dagc_node_sizeof(&node_size, b->nodes.elems[i]);
                 if (err != OK)
                         return err;
-                memcpy(graph->nodes[i], b->nodes[i], node_size);
+                memcpy(graph->nodes[i], b->nodes.elems[i], node_size);
 
                 err = ubik_dagc_replace_node_refs(
-                        graph->nodes[i], b->nodes, graph->nodes, b->n_nodes);
+                        graph->nodes[i],
+                        (struct ubik_dagc_node **) b->nodes.elems,
+                        graph->nodes, b->nodes.n);
                 if (err != OK)
                         return err;
 
-                if (b->nodes[i] == b->result)
+                if (b->nodes.elems[i] == b->result)
                         graph->result = graph->nodes[i];
         }
 
@@ -106,5 +92,5 @@ ubik_bdagc_build(
 void
 ubik_bdagc_free(struct ubik_graph_builder *b)
 {
-        free(b->nodes);
+        ubik_vector_free(&b->nodes);
 }
