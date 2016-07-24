@@ -39,9 +39,8 @@ ubik_galloc(void **dst, size_t n, size_t size);
 void
 ubik_ralloc(void **dst, size_t n, size_t size, struct ubik_alloc_region *r);
 
-/* Reallocates a block to be bigger. This should be used sparingly! The code
- * does not handle this elegantly; in effect, it doesn't free the original
- * memory until the region is freed. */
+/* Reallocates a block to be bigger. All additional memory beyond what was
+ * already allocated is left uninitialized. */
 void
 ubik_realloc(void **dst, size_t n, size_t size, struct ubik_alloc_region *r);
 

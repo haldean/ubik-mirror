@@ -25,31 +25,26 @@
 no_ignore ubik_error
 ubik_vector_ensure_size(struct ubik_vector *v, size_t size)
 {
-        size_t new_cap;
-        void **new_elems;
-
         if (v->cap >= size)
                 return OK;
 
         if (v->cap == 0)
         {
-                v->elems = calloc(size_max(8, size), sizeof(void *));
-                if (v->elems == NULL)
-                        return ubik_raise(ERR_NO_MEMORY, "vector alloc");
-                v->cap = 8;
+                v->cap = size_max(8, size);
+                ubik_ralloc(
+                        (void **) &v->elems,
+                        v->cap,
+                        sizeof(void *),
+                        v->region);
                 return OK;
         }
 
-        new_cap = size_max(v->cap * 2, size);
-        new_elems = realloc(v->elems, new_cap * sizeof(void *));
-        if (new_elems == NULL)
-                return ubik_raise(ERR_NO_MEMORY, "vector alloc");
-        v->elems = new_elems;
-
-        /* Zero out the new elements (if only there were a crealloc */
-        bzero(&v->elems[v->cap], new_cap - v->cap);
-
-        v->cap = new_cap;
+        v->cap = size_max(v->cap * 2, size);
+        ubik_realloc(
+                (void **) &v->elems,
+                v->cap,
+                sizeof(void *),
+                v->region);
         return OK;
 }
 

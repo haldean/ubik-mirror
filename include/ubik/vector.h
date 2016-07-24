@@ -18,14 +18,17 @@
  */
 
 #pragma once
-#include <stdint.h>
+#include "ubik/alloc.h"
 #include "ubik/ubik.h"
+
+#include <stdint.h>
 
 struct ubik_vector
 {
         void **elems;
         size_t n;
         size_t cap;
+        struct ubik_alloc_region *region;
 };
 
 /* Ensures that the vector has the capacity to hold at least the given size. */

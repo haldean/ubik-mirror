@@ -78,14 +78,37 @@ ubik_realloc(void **dst, size_t n, size_t elemsize, struct ubik_alloc_region *r)
 {
         void *new_dst;
         size_t size;
+        size_t i;
 
         size = n * elemsize;
         /* Guards against overflow. */
         ubik_assert(n != 0 && size / n == elemsize);
 
-        _ralloc(&new_dst, size, r);
-        memcpy(new_dst, *dst, size);
-        *dst = new_dst;
+        if (r == NULL)
+        {
+                new_dst = realloc(*dst, size);
+                ubik_assert(new_dst != NULL);
+                *dst = new_dst;
+                return;
+        }
+
+        new_dst = realloc(*dst, size);
+
+        for (; r != NULL; r = r->next)
+        {
+                for (i = 0; i < r->used; i++)
+                {
+                        if (r->buf[i] == *dst)
+                        {
+                                r->buf[i] = new_dst;
+                                *dst = new_dst;
+                                return;
+                        }
+                }
+        }
+        /* this should be unreachable; we only get here if the original pointer
+         * was not in any of our regions. */
+        ubik_assert(false);
 }
 
 char *
