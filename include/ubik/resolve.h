@@ -18,8 +18,9 @@
  */
 
 #pragma once
-#include "ubik/ubik.h"
+#include "ubik/alloc.h"
 #include "ubik/ast.h"
+#include "ubik/ubik.h"
 #include "ubik/vector.h"
 
 enum ubik_resolve_type
@@ -101,9 +102,8 @@ struct ubik_resolve_error
 struct ubik_resolve_context
 {
         struct ubik_resolve_scope *native_scope;
-        struct ubik_vector scope_allocs;
-        struct ubik_vector allocs;
         struct ubik_vector errors;
+        struct ubik_alloc_region *region;
 };
 
 no_ignore ubik_error

@@ -277,6 +277,11 @@ compile_job(
         size_t i;
         ubik_error err, rerr;
 
+        infer_ctx.debug = cenv->debug;
+        infer_ctx.region = &job->request->region;
+        preresolve_ctx.region = &job->request->region;
+        resolve_ctx.region = &job->request->region;
+
         err = ubik_import_add_splats(cenv, job->ast);
         if (err != OK)
                 return err;
@@ -299,8 +304,6 @@ compile_job(
                         return err;
         }
 
-        infer_ctx.debug = cenv->debug;
-        infer_ctx.region = &job->request->region;
         err = ubik_infer(job->ast, &infer_ctx);
         if (err != OK)
                 return err;

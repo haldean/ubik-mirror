@@ -86,31 +86,15 @@ assign_initial_scopes(
                 break;
 
         case EXPR_LAMBDA:
-                expr->scope = calloc(1, sizeof(struct ubik_resolve_scope));
-                if (expr->scope == NULL)
-                        return ubik_raise(ERR_NO_MEMORY, "expr scope alloc");
-                err = ubik_vector_append(&ctx->scope_allocs, expr->scope);
-                if (err != OK)
-                {
-                        free(expr->scope);
-                        return err;
-                }
-
+                ubik_alloc1(&expr->scope, struct ubik_resolve_scope, ctx->region);
+                expr->scope->names.region = ctx->region;
                 expr->scope->parent = parent;
                 expr->scope->boundary = BOUNDARY_FUNCTION;
                 break;
 
         case EXPR_BLOCK:
-                expr->scope = calloc(1, sizeof(struct ubik_resolve_scope));
-                if (expr->scope == NULL)
-                        return ubik_raise(ERR_NO_MEMORY, "expr scope alloc");
-                err = ubik_vector_append(&ctx->scope_allocs, expr->scope);
-                if (err != OK)
-                {
-                        free(expr->scope);
-                        return err;
-                }
-
+                ubik_alloc1(&expr->scope, struct ubik_resolve_scope, ctx->region);
+                expr->scope->names.region = ctx->region;
                 expr->scope->parent = parent;
                 expr->scope->boundary = BOUNDARY_BLOCK;
                 break;
@@ -151,15 +135,8 @@ assign_all_initial_scopes(
         struct ubik_ast_binding *bind;
         ubik_error err;
 
-        ast->scope = calloc(1, sizeof(struct ubik_resolve_scope));
-        if (ast->scope == NULL)
-                return ubik_raise(ERR_NO_MEMORY, "ast scope alloc");
-        err = ubik_vector_append(&ctx->scope_allocs, ast->scope);
-        if (err != OK)
-        {
-                free(ast->scope);
-                return err;
-        }
+        ubik_alloc1(&ast->scope, struct ubik_resolve_scope, ctx->region);
+        ast->scope->names.region = ctx->region;
 
         ast->scope->parent = parent;
         ast->scope->boundary = is_root ? BOUNDARY_GLOBAL : BOUNDARY_BLOCK;
@@ -228,16 +205,7 @@ update_scopes_with_bindings(
         for (i = 0; i < ast->bindings.n; i++)
         {
                 bind = ast->bindings.elems[i];
-                name = calloc(1, sizeof(struct ubik_resolve_name));
-                if (name == NULL)
-                        return ubik_raise(ERR_NO_MEMORY, "bind to scope alloc");
-                err = ubik_vector_append(&ctx->allocs, name);
-                if (err != OK)
-                {
-                        free(name);
-                        return err;
-                }
-
+                ubik_alloc1(&name, struct ubik_resolve_name, ctx->region);
                 name->name = bind->name;
                 name->type = ast->scope->boundary == BOUNDARY_GLOBAL
                         ? RESOLVE_GLOBAL
@@ -262,17 +230,7 @@ update_scopes_with_bindings(
                 ctor = type->adt.ctors;
                 while (ctor != NULL)
                 {
-                        name = calloc(1, sizeof(struct ubik_resolve_name));
-                        if (name == NULL)
-                                return ubik_raise(
-                                        ERR_NO_MEMORY, "bind to scope alloc");
-                        err = ubik_vector_append(&ctx->allocs, name);
-                        if (err != OK)
-                        {
-                                free(name);
-                                return err;
-                        }
-
+                        ubik_alloc1(&name, struct ubik_resolve_name, ctx->region);
                         name->name = ctor->name;
                         name->type = ast->scope->boundary == BOUNDARY_GLOBAL
                                 ? RESOLVE_GLOBAL
@@ -330,15 +288,8 @@ bind_cases(
                         if (strcmp(name, "_") == 0)
                                 continue;
 
-                        resolve = calloc(1, sizeof(struct ubik_resolve_name));
-                        if (resolve == NULL)
-                                return ubik_raise(ERR_NO_MEMORY, "args to scope");
-                        err = ubik_vector_append(&ctx->allocs, resolve);
-                        if (err != OK)
-                        {
-                                free(resolve);
-                                return err;
-                        }
+                        ubik_alloc1(
+                                &resolve, struct ubik_resolve_name, ctx->region);
                         resolve->name = name;
                         resolve->type = RESOLVE_LOCAL;
 
@@ -371,15 +322,8 @@ find_lambdas_and_bind(
                 args = expr->lambda.args;
                 while (args != NULL && args->name != NULL)
                 {
-                        name = calloc(1, sizeof(struct ubik_resolve_name));
-                        if (name == NULL)
-                                return ubik_raise(ERR_NO_MEMORY, "args to scope");
-                        err = ubik_vector_append(&ctx->allocs, name);
-                        if (err != OK)
-                        {
-                                free(name);
-                                return err;
-                        }
+                        ubik_alloc1(
+                                &name, struct ubik_resolve_name, ctx->region);
                         name->name = args->name;
                         name->type = RESOLVE_LOCAL;
 
@@ -482,15 +426,8 @@ find_name_resolution_types(
                                   expr->atom->atom_type == ATOM_TYPE_NAME);
         if (needs_resolve)
         {
-                name_loc = calloc(1, sizeof(struct ubik_resolve_name_loc));
-                if (name_loc == NULL)
-                        return ubik_raise(ERR_NO_MEMORY, "name res type");
-                err = ubik_vector_append(&ctx->allocs, name_loc);
-                if (err != OK)
-                {
-                        free(name_loc);
-                        return err;
-                }
+                ubik_alloc1(
+                        &name_loc, struct ubik_resolve_name_loc, ctx->region);
                 expr->atom->name_loc = name_loc;
 
                 name = expr->atom->str;
@@ -591,30 +528,12 @@ add_uri_to_scope(void *ctx_v, struct ubik_env *env, struct ubik_uri *uri)
 {
         struct ubik_resolve_context *ctx;
         struct ubik_resolve_name *name;
-        ubik_error err;
         unused(env);
 
         ctx = ctx_v;
 
-        name = calloc(1, sizeof(struct ubik_resolve_name));
-        if (name == NULL)
-                return ubik_raise(ERR_NO_MEMORY, "add uri to scope");
-        err = ubik_vector_append(&ctx->allocs, name);
-        if (err != OK)
-        {
-                free(name);
-                return err;
-        }
-
-        name->name = strdup(uri->name);
-        err = ubik_vector_append(&ctx->allocs, name->name);
-        if (err != OK)
-        {
-                free(name->name);
-                free(name);
-                return err;
-        }
-
+        ubik_alloc1(&name, struct ubik_resolve_name, ctx->region);
+        name->name = ubik_strdup(uri->name, ctx->region);
         name->type = RESOLVE_GLOBAL;
         return ubik_vector_append(&ctx->native_scope->names, name);
 }
@@ -625,9 +544,8 @@ create_native_scope(struct ubik_resolve_context *ctx)
         struct ubik_env env = {0};
         ubik_error err;
 
-        ctx->native_scope = calloc(1, sizeof(struct ubik_resolve_scope));
-        if (ctx->native_scope == NULL)
-                return ubik_raise(ERR_NO_MEMORY, "native scope alloc");
+        ubik_alloc1(&ctx->native_scope, struct ubik_resolve_scope, ctx->region);
+        ctx->native_scope->names.region = ctx->region;
 
         err = ubik_natives_register(&env);
         if (err != OK)
@@ -669,7 +587,7 @@ ubik_resolve(
         if (err != OK)
                 return err;
 
-        err = ubik_package_add_to_scope(ast);
+        err = ubik_package_add_to_scope(ctx->region, ast);
         if (err != OK)
                 return err;
 
@@ -708,45 +626,19 @@ ubik_resolve_context_missing_name(
         struct ubik_resolve_error *resolv_err;
         ubik_error err;
 
-        resolv_err = calloc(1, sizeof(struct ubik_resolve_error));
-        if (resolv_err == NULL)
-                return ubik_raise(ERR_NO_MEMORY, "resolve error alloc");
-
+        ubik_alloc1(&resolv_err, struct ubik_resolve_error, ctx->region);
         resolv_err->err_type = RESOLVE_ERR_NAME_NOT_FOUND;
         resolv_err->name = name;
         resolv_err->loc = loc;
 
         err = ubik_vector_append(&ctx->errors, resolv_err);
         if (err != OK)
-        {
-                free(resolv_err);
                 return err;
-        }
         return OK;
 }
 
 void
 ubik_resolve_context_free(struct ubik_resolve_context *ctx)
 {
-        struct ubik_resolve_scope *scope;
-        size_t i;
-
-        ubik_vector_free(&ctx->native_scope->names);
-        free(ctx->native_scope);
-
-        for (i = 0; i < ctx->scope_allocs.n; i++)
-        {
-                scope = ctx->scope_allocs.elems[i];
-                ubik_vector_free(&scope->names);
-                free(scope);
-        }
-        ubik_vector_free(&ctx->scope_allocs);
-
-        for (i = 0; i < ctx->allocs.n; i++)
-                free(ctx->allocs.elems[i]);
-        ubik_vector_free(&ctx->allocs);
-
-        for (i = 0; i < ctx->errors.n; i++)
-                free(ctx->errors.elems[i]);
-        ubik_vector_free(&ctx->errors);
+        unused(ctx);
 }

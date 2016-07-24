@@ -17,10 +17,14 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include "ubik/ubik.h"
+#pragma once
+#include "ubik/alloc.h"
 #include "ubik/ast.h"
 #include "ubik/resolve.h"
+#include "ubik/ubik.h"
 
 /* Sets the appropriate package name on all scopes in an AST. */
 no_ignore ubik_error
-ubik_package_add_to_scope(struct ubik_ast *ast);
+ubik_package_add_to_scope(
+        struct ubik_alloc_region *r,
+        struct ubik_ast *ast);

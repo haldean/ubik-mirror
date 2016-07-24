@@ -74,66 +74,31 @@ apply_closure(
 {
         struct ubik_ast_expr *apply;
         struct ubik_ast_expr *name;
-        ubik_error err;
 
         (*lambda)->scope->needs_closure_appl = false;
 
-        /* damn this is a lot of work. */
-        name = calloc(1, sizeof(struct ubik_ast_expr));
-        if (name == NULL)
-                return ubik_raise(ERR_NO_MEMORY, "closure name alloc");
+        ubik_alloc1(&name, struct ubik_ast_expr, ctx->region);
         name->expr_type = EXPR_ATOM;
 
-        name->atom = calloc(1, sizeof(struct ubik_ast_atom));
-        if (name->atom == NULL)
-        {
-                err = ubik_raise(ERR_NO_MEMORY, "closure name alloc");
-                goto free1;
-        }
+        ubik_alloc1(&name->atom, struct ubik_ast_atom, ctx->region);
         name->atom->atom_type = ATOM_NAME;
-        name->atom->name_loc = calloc(1, sizeof(struct ubik_resolve_name_loc));
-        if (name->atom->name_loc == NULL)
-        {
-                err = ubik_raise(ERR_NO_MEMORY, "closure name alloc");
-                goto free2;
-        }
-        err = ubik_vector_append(&ctx->allocs, name->atom->name_loc);
-        if (err != OK)
-                goto free3;
-        name->atom->name_loc->type = RESOLVE_LOCAL;
 
-        name->atom->str = strdup(resolving_name);
-        if (name->atom->str == NULL)
-        {
-                err = ubik_raise(ERR_NO_MEMORY, "closure name alloc");
-                goto free3;
-        }
+        ubik_alloc1(
+                &name->atom->name_loc, struct ubik_resolve_name_loc,
+                ctx->region);
+        name->atom->name_loc->type = RESOLVE_LOCAL;
+        name->atom->str = ubik_strdup(resolving_name, ctx->region);
 
         name->scope = (*lambda)->scope->parent;
 
-        apply = calloc(1, sizeof(struct ubik_ast_expr));
-        if (apply == NULL)
-        {
-                err = ubik_raise(ERR_NO_MEMORY, "closure apply alloc");
-                goto free3;
-        }
+        ubik_alloc1(&apply, struct ubik_ast_expr, ctx->region);
         apply->expr_type = EXPR_APPLY;
-
         apply->scope = (*lambda)->scope->parent;
-
         apply->apply.head = *lambda;
         apply->apply.tail = name;
 
         *lambda = apply;
         return OK;
-
-free3:
-        free(name->atom->name_loc);
-free2:
-        free(name->atom);
-free1:
-        free(name);
-        return err;
 }
 
 no_ignore static ubik_error
@@ -271,22 +236,14 @@ break_all:
 
         if (expr->expr_type == EXPR_LAMBDA)
         {
-                args = calloc(1, sizeof(struct ubik_ast_arg_list));
-                args->name = strdup(resolving_name);
+                ubik_alloc1(&args, struct ubik_ast_arg_list, ctx->region);
+                args->name = ubik_strdup(resolving_name, ctx->region);
                 args->next = expr->lambda.args;
 
                 expr->lambda.args = args;
                 expr->scope->needs_closure_appl = true;
 
-                rname = calloc(1, sizeof(struct ubik_resolve_name));
-                if (rname == NULL)
-                        return ubik_raise(ERR_NO_MEMORY, "args to scope");
-                err = ubik_vector_append(&ctx->allocs, rname);
-                if (err != OK)
-                {
-                        free(rname);
-                        return err;
-                }
+                ubik_alloc1(&rname, struct ubik_resolve_name, ctx->region);
                 rname->name = args->name;
                 rname->type = RESOLVE_LOCAL;
 

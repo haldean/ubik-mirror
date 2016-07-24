@@ -24,10 +24,16 @@
 #include <string.h>
 
 no_ignore static ubik_error
-assign_package(struct ubik_ast *ast, char *package_name);
+assign_package(
+        struct ubik_alloc_region *r,
+        struct ubik_ast *ast,
+        char *package_name);
 
 no_ignore static ubik_error
-assign_package_expr(struct ubik_ast_expr *expr, char *package_name)
+assign_package_expr(
+        struct ubik_alloc_region *r,
+        struct ubik_ast_expr *expr,
+        char *package_name)
 {
         struct ubik_ast *subast;
         struct ubik_ast_expr *subexprs[UBIK_MAX_SUBEXPRS];
@@ -43,13 +49,13 @@ assign_package_expr(struct ubik_ast_expr *expr, char *package_name)
 
         for (i = 0; i < n_subexprs; i++)
         {
-                err = assign_package_expr(subexprs[i], package_name);
+                err = assign_package_expr(r, subexprs[i], package_name);
                 if (err != OK)
                         return err;
         }
         if (subast != NULL)
         {
-                err = assign_package(subast, package_name);
+                err = assign_package(r, subast, package_name);
                 if (err != OK)
                         return err;
         }
@@ -57,14 +63,17 @@ assign_package_expr(struct ubik_ast_expr *expr, char *package_name)
 }
 
 no_ignore static ubik_error
-assign_package(struct ubik_ast *ast, char *package_name)
+assign_package(
+        struct ubik_alloc_region *r,
+        struct ubik_ast *ast,
+        char *package_name)
 {
         struct ubik_ast_binding *bind;
         size_t i;
         ubik_error err;
 
         if (ast->package_name == NULL)
-                ast->package_name = strdup(package_name);
+                ast->package_name = ubik_strdup(package_name, r);
         else if (strcmp(package_name, ast->package_name) != 0)
                 return ubik_raise(
                         ERR_BAD_VALUE,
@@ -73,14 +82,14 @@ assign_package(struct ubik_ast *ast, char *package_name)
         for (i = 0; i < ast->bindings.n; i++)
         {
                 bind = ast->bindings.elems[i];
-                err = assign_package_expr(bind->expr, package_name);
+                err = assign_package_expr(r, bind->expr, package_name);
                 if (err != OK)
                         return err;
         }
 
         if (ast->immediate != NULL)
         {
-                err = assign_package_expr(ast->immediate, package_name);
+                err = assign_package_expr(r, ast->immediate, package_name);
                 if (err != OK)
                         return err;
         }
@@ -89,7 +98,7 @@ assign_package(struct ubik_ast *ast, char *package_name)
 }
 
 no_ignore ubik_error
-ubik_package_add_to_scope(struct ubik_ast *ast)
+ubik_package_add_to_scope(struct ubik_alloc_region *r, struct ubik_ast *ast)
 {
         if (ast->package_name == NULL)
         {
@@ -99,5 +108,5 @@ ubik_package_add_to_scope(struct ubik_ast *ast)
                 return ubik_raise(
                         ERR_BAD_VALUE, "root AST must have package name");
         }
-        return assign_package(ast, ast->package_name);
+        return assign_package(r, ast, ast->package_name);
 }
