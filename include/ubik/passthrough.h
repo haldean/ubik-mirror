@@ -21,6 +21,7 @@
  * stream. These make certain abstractions a lot easier, at the cost of a
  * slightly slower read/write rate because of an extra function call. */
 
+#include "ubik/alloc.h"
 #include "ubik/stream.h"
 #include <stdbool.h>
 
@@ -31,4 +32,5 @@ no_ignore ubik_error
 ubik_passthrough_new(
         struct ubik_stream *res,
         struct ubik_stream *src,
-        bool close_passes_through);
+        bool close_passes_through,
+        struct ubik_alloc_region *r);

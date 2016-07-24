@@ -75,13 +75,12 @@ no_ignore ubik_error
 ubik_passthrough_new(
         struct ubik_stream *res,
         struct ubik_stream *src,
-        bool close_passes_through)
+        bool close_passes_through,
+        struct ubik_alloc_region *r)
 {
         struct ubik_passthrough *gen;
 
-        gen = calloc(1, sizeof(struct ubik_passthrough));
-        if (gen == NULL)
-                return ubik_raise(ERR_NO_MEMORY, "passthrough generator");
+        ubik_alloc1(&gen, struct ubik_passthrough, r);
         gen->head.read = pt_read;
         gen->head.write = pt_write;
         gen->head.drop = pt_drop;

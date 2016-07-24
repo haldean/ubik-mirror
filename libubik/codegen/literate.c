@@ -247,17 +247,15 @@ no_ignore ubik_error
 ubik_literate_weave(
         struct ubik_stream *res,
         struct ubik_stream *src,
-        char *src_filename)
+        char *src_filename,
+        struct ubik_alloc_region *r)
 {
         struct literate_state *ls;
 
         if (!is_literate_ext(src_filename))
-                return ubik_passthrough_new(res, src, false);
+                return ubik_passthrough_new(res, src, false, r);
 
-        ls = calloc(1, sizeof(struct literate_state));
-        if (ls == NULL)
-                return ubik_raise(ERR_NO_MEMORY, "literate state alloc");
-
+        ubik_alloc1(&ls, struct literate_state, r);
         ls->head.read = read_lit;
         ls->head.write = NULL;
         ls->head.drop = NULL;

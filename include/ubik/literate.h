@@ -18,6 +18,7 @@
  */
 
 #pragma once
+#include "ubik/alloc.h"
 #include "ubik/ubik.h"
 
 /* Turns a stream from Ubik source or literate Ubik source into raw Ubik source
@@ -28,4 +29,5 @@ no_ignore ubik_error
 ubik_literate_weave(
         struct ubik_stream *res,
         struct ubik_stream *src,
-        char *src_filename);
+        char *src_filename,
+        struct ubik_alloc_region *r);

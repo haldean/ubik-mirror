@@ -225,7 +225,8 @@ load_ast(struct ubik_compile_env *cenv, struct ubik_compile_job *job)
         struct ubik_compile_request *req;
 
         err = ubik_literate_weave(
-                &job->woven, &job->request->source, job->request->source_name);
+                &job->woven, &job->request->source, job->request->source_name,
+                &job->request->region);
         if (err != OK)
                 return err;
 
