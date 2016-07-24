@@ -19,6 +19,7 @@
 
 #include "ubik/feedback.h"
 #include "ubik/package.h"
+#include "ubik/string.h"
 
 #include <stdio.h>
 #include <string.h>

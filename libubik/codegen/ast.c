@@ -19,6 +19,7 @@
 
 #include "ubik/assert.h"
 #include "ubik/ast.h"
+#include "ubik/string.h"
 
 #include <stdlib.h>
 #include <string.h>

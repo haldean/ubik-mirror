@@ -17,9 +17,16 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+
+#include <stdarg.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include "ubik/assert.h"
 #include "ubik/string.h"
 
 
@@ -130,4 +137,37 @@ ubik_string_endswith(char *haystack, char *needle)
         if (strncmp(&haystack[hlen - nlen], needle, nlen) == 0)
                 return true;
         return false;
+}
+
+char *
+ubik_strdup(const char *str, struct ubik_alloc_region *r)
+{
+        char *new_str;
+        size_t len;
+
+        if (r == NULL)
+                return strdup(str);
+
+        len = strlen(str);
+        ubik_ralloc((void**) &new_str, len + 1, sizeof(char), r);
+        memcpy(new_str, str, len + 1);
+
+        return new_str;
+}
+
+void
+ubik_asprintf(char **res, struct ubik_alloc_region *r, const char *fmt, ...)
+{
+        char *intermediate;
+        va_list ap;
+        int aspr_res;
+
+        va_start(ap, fmt);
+
+        aspr_res = vasprintf(&intermediate, fmt, ap);
+        ubik_assert(aspr_res >= 0);
+        *res = ubik_strdup(intermediate, r);
+        free(intermediate);
+
+        va_end(ap);
 }

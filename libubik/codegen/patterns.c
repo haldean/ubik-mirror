@@ -27,6 +27,7 @@
 
 #include "ubik/assert.h"
 #include "ubik/patterns.h"
+#include "ubik/string.h"
 #include "ubik/util.h"
 
 #include <string.h>

@@ -23,6 +23,7 @@
 #include "ubik/ast.h"
 #include "ubik/closure.h"
 #include "ubik/resolve.h"
+#include "ubik/string.h"
 
 /* A brief digression into the algorithm at play here.
  *

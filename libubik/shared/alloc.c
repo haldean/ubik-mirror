@@ -111,22 +111,6 @@ ubik_realloc(void **dst, size_t n, size_t elemsize, struct ubik_alloc_region *r)
         ubik_assert(false);
 }
 
-char *
-ubik_strdup(const char *str, struct ubik_alloc_region *r)
-{
-        char *new_str;
-        size_t len;
-
-        if (r == NULL)
-                return strdup(str);
-
-        len = strlen(str);
-        _ralloc((void**) &new_str, len + 1, r);
-        memcpy(new_str, str, len + 1);
-
-        return new_str;
-}
-
 void
 ubik_alloc_start(struct ubik_alloc_region *r)
 {

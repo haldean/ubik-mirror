@@ -34,6 +34,7 @@
 #include "ubik/package.h"
 #include "ubik/resolve.h"
 #include "ubik/streamutil.h"
+#include "ubik/string.h"
 #include "ubik/util.h"
 
 no_ignore ubik_error

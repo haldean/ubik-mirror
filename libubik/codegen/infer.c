@@ -21,6 +21,7 @@
 #include "ubik/infer.h"
 #include "ubik/natives.h"
 #include "ubik/resolve.h"
+#include "ubik/string.h"
 #include "ubik/util.h"
 
 #include <stdio.h>

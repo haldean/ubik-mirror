@@ -17,8 +17,10 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#pragma once
 #include <stdbool.h>
 #include <strings.h>
+#include "ubik/alloc.h"
 #include "ubik/ubik.h"
 
 /* Splits a NULL-terminated string into multiple smaller NULL-terminated
@@ -41,3 +43,14 @@ ubik_string_path_concat(
 /* Returns true if the given string ends with the given suffix. */
 bool
 ubik_string_endswith(char *haystack, char *needle);
+
+/* Same as strdup, but memory is allocated in the region. If the region is NULL,
+ * this is exactly like strdup. */
+char *
+ubik_strdup(const char *str, struct ubik_alloc_region *r);
+
+/* Same as asprintf, but memory is allocated in the region. If the region is
+ * NULL, this is exactly like asprintf with an asserion that the allocation
+ * succeeded. */
+void
+ubik_asprintf(char **res, struct ubik_alloc_region *r, const char *fmt, ...);

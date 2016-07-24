@@ -22,6 +22,7 @@
 #include "ubik/ubik.h"
 #include "ubik/ast.h"
 #include "ubik/parse.h"
+#include "ubik/string.h"
 #include "ubik/util.h"
 
 #include <stdio.h>

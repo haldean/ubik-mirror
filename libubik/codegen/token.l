@@ -20,6 +20,7 @@
 %{
 
 #include "ubik/ast.h"
+#include "ubik/string.h"
 #include "ubik/token.h"
 #include "ubik/parse.h"
 #include "grammar.h"
