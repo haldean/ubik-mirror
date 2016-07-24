@@ -178,7 +178,7 @@ prog
 }
 | %empty
 {
-        alloc($$, 1, struct ubik_ast);
+        ubik_ast_new(&$$, ctx->region);
         load_loc($$->loc);
         ctx->ast = $$;
 }
@@ -218,7 +218,7 @@ import
 blocks
 : %empty
 {
-        alloc($$, 1, struct ubik_ast);
+        ubik_ast_new(&$$, ctx->region);
         load_loc($$->loc);
 }
 | blocks binding

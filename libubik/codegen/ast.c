@@ -619,3 +619,11 @@ ubik_ast_type_expr_copy(
 
         return OK;
 }
+
+void
+ubik_ast_new(struct ubik_ast **ast, struct ubik_alloc_region *region)
+{
+        ubik_alloc1(ast, struct ubik_ast, region);
+        (*ast)->bindings.region = region;
+        (*ast)->types.region = region;
+}

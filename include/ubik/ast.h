@@ -263,8 +263,8 @@ struct ubik_ast
 };
 
 /* Allocates a new AST. */
-no_ignore ubik_error
-ubik_ast_new(struct ubik_ast **ast);
+void
+ubik_ast_new(struct ubik_ast **ast, struct ubik_alloc_region *region);
 
 no_ignore ubik_error
 ubik_ast_free(struct ubik_ast *ast);
