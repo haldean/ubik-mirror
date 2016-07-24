@@ -73,7 +73,6 @@ infer_native(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
         if (err->error_code == ERR_UNKNOWN_TYPE)
         {
                 free(err);
-                free(expr->type);
                 expr->type = NULL;
 
                 ubik_alloc1(&ierr, struct ubik_infer_error, ctx->region);
@@ -130,7 +129,6 @@ infer_atom(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
         case ATOM_QUALIFIED:
         case ATOM_TYPE_NAME:
         case ATOM_VALUE:
-                free(expr->type);
                 expr->type = NULL;
                 return OK;
         }
@@ -339,6 +337,7 @@ ubik_infer(struct ubik_ast *ast, struct ubik_infer_context *ctx)
 
         if (ctx->debug)
                 printf("\ninfer\n");
+        ctx->errors.region = ctx->region;
 
         err = infer_ast(ast, ctx);
         if (err != OK)
@@ -363,5 +362,5 @@ ubik_infer(struct ubik_ast *ast, struct ubik_infer_context *ctx)
 void
 ubik_infer_context_free(struct ubik_infer_context *ctx)
 {
-        ubik_vector_free(&ctx->errors);
+        unused(ctx);
 }
