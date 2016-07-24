@@ -66,7 +66,6 @@ ubik_uri_unknown(
         uri->source_len = 0;
         uri->version = 0;
         uri->scope = SCOPE_UNKNOWN;
-        uri->refcount = 0;
         uri->tag = TAG_URI;
         uri->as_value = NULL;
         return _set_hash(uri);
@@ -89,7 +88,6 @@ ubik_uri_user(
         uri->source_len = 0;
         uri->version = 0;
         uri->scope = SCOPE_USER_DEFINED;
-        uri->refcount = 0;
         uri->tag = TAG_URI;
         uri->as_value = NULL;
         return _set_hash(uri);
@@ -117,7 +115,6 @@ ubik_uri_package(
         uri->source_len = strlen(package_buf);
         uri->version = 0;
         uri->scope = SCOPE_PACKAGE;
-        uri->refcount = 0;
         uri->tag = TAG_URI;
         uri->as_value = NULL;
         return _set_hash(uri);
@@ -140,7 +137,6 @@ ubik_uri_native(
         uri->source_len = 0;
         uri->version = 0;
         uri->scope = SCOPE_NATIVE;
-        uri->refcount = 0;
         uri->tag = TAG_URI;
         uri->as_value = NULL;
         return _set_hash(uri);
