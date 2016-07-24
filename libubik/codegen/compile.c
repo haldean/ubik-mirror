@@ -342,7 +342,7 @@ compile_job(
 
         graph = NULL;
         err = ubik_gen_graphs(
-                &graph, job->ast, job->request->reason);
+                &graph, job->ast, job->request->reason, &job->request->region);
         if (err != OK)
         {
                 if (graph != NULL)

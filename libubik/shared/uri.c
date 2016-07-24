@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "ubik/alloc.h"
 #include "ubik/assert.h"
 #include "ubik/ubik.h"
 #include "ubik/uri.h"
@@ -39,6 +40,13 @@ _set_hash(struct ubik_uri *uri)
                 uri->hash ^= ((uint64_t) uri->source[i] << 32) |
                              ((uint64_t) uri->source[i]);
         return OK;
+}
+
+void
+ubik_uri_alloc(struct ubik_uri **uri)
+{
+        ubik_galloc1(uri, struct ubik_uri);
+        (*uri)->tag = TAG_URI;
 }
 
 no_ignore ubik_error

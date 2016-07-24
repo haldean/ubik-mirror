@@ -30,7 +30,7 @@ struct ubik_graph_builder
 };
 
 no_ignore ubik_error
-ubik_bdagc_init(struct ubik_graph_builder *b);
+ubik_bdagc_init(struct ubik_graph_builder *b, struct ubik_alloc_region *r);
 
 /* Adds a node to the graph. */
 no_ignore ubik_error

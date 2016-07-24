@@ -68,6 +68,7 @@ main(int argc, char *argv[])
         struct ubik_stream in;
         bool discard_res;
         ubik_error err;
+        ubik_error rerr;
 
         if (argc < 2 || argc > 3)
         {
@@ -117,11 +118,13 @@ teardown:
         ubik_stream_close(&req.source);
         ubik_stream_close(&out);
 
-        if (ubik_compile_env_free(&env) != OK)
-                printf("error when freeing compile env\n");
+        if ((rerr = ubik_compile_env_free(&env)) != OK)
+                printf("error when freeing compile env: %s\n",
+                       ubik_error_explain(rerr));
 
-        if (ubik_teardown() != OK)
-                printf("error when tearing down runtime\n");
+        if ((rerr = ubik_teardown()) != OK)
+                printf("error when tearing down runtime: %s\n",
+                       ubik_error_explain(rerr));
 
         return err == OK ? EXIT_SUCCESS : EXIT_FAILURE;
 }

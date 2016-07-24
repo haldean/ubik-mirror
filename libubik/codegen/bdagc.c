@@ -24,9 +24,10 @@
 #include <string.h>
 
 no_ignore ubik_error
-ubik_bdagc_init(struct ubik_graph_builder *b)
+ubik_bdagc_init(struct ubik_graph_builder *b, struct ubik_alloc_region *r)
 {
         bzero(&b->nodes, sizeof(b->nodes));
+        b->nodes.region = r;
         b->result = NULL;
         return OK;
 }
@@ -92,5 +93,5 @@ ubik_bdagc_build(
 void
 ubik_bdagc_free(struct ubik_graph_builder *b)
 {
-        ubik_vector_free(&b->nodes);
+        unused(b);
 }

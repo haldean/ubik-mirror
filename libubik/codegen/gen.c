@@ -49,7 +49,7 @@ ubik_compile_binding(
 
         ubik_error err;
 
-        err = ubik_bdagc_init(&builder);
+        err = ubik_bdagc_init(&builder, ctx->region);
         if (err != OK)
                 return err;
 
@@ -194,7 +194,7 @@ ubik_create_modinit(
         ubik_error err;
         size_t i;
 
-        err = ubik_bdagc_init(&builder);
+        err = ubik_bdagc_init(&builder, ctx->region);
         if (err != OK)
                 return err;
 
@@ -258,12 +258,14 @@ no_ignore ubik_error
 ubik_gen_graphs(
         struct ubik_dagc **res,
         struct ubik_ast *ast,
-        enum ubik_load_reason load_reason)
+        enum ubik_load_reason load_reason,
+        struct ubik_alloc_region *region)
 {
         size_t i;
         ubik_error err, rerr;
         struct ubik_env local_env;
         local(assign_context) struct ubik_assign_context ctx = {0};
+        ctx.region = region;
 
         err = ubik_env_init(&local_env);
         if (err != OK)

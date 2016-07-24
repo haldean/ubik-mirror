@@ -39,10 +39,7 @@ _add_nontotal_predicate_err(
         struct ubik_assign_error *res;
         ubik_error err;
 
-        res = calloc(1, sizeof(struct ubik_assign_error));
-        if (res == NULL)
-                return ubik_raise(ERR_NO_MEMORY, "nontotal pred error alloc");
-
+        ubik_alloc1(&res, struct ubik_assign_error, ctx->region);
         res->err_type = ASSIGN_ERR_PRED_BLOCK_NOT_TOTAL;
         res->loc = loc;
 
@@ -186,7 +183,14 @@ _assign_atom_node(
                         n->node.node_type = DAGC_NODE_LOAD;
                         n->node.id = ctx->next_id++;
 
-                        n->as_load.loc = calloc(1, sizeof(struct ubik_uri));
+                        /* globally allocated and refcounted */
+                        ubik_uri_alloc(&n->as_load.loc);
+                        err = ubik_take(n->as_load.loc);
+                        if (err != OK)
+                        {
+                                free(n->as_load.loc);
+                                return err;
+                        }
 
                         if (res_type == RESOLVE_NATIVE)
                                 err = ubik_uri_native(
@@ -198,10 +202,6 @@ _assign_atom_node(
                                 err = ubik_uri_package(
                                         n->as_load.loc, pkg, expr->atom->str);
                         }
-                        if (err != OK)
-                                return err;
-
-                        err = ubik_take(n->as_load.loc);
                         if (err != OK)
                                 return err;
                         return OK;
@@ -224,7 +224,14 @@ _assign_atom_node(
                 n->node.node_type = DAGC_NODE_LOAD;
                 n->node.id = ctx->next_id++;
 
-                n->as_load.loc = calloc(1, sizeof(struct ubik_uri));
+                /* globally allocated and refcounted */
+                ubik_uri_alloc(&n->as_load.loc);
+                err = ubik_take(n->as_load.loc);
+                if (err != OK)
+                {
+                        free(n->as_load.loc);
+                        return err;
+                }
 
                 err = ubik_uri_package(
                         n->as_load.loc,
@@ -233,9 +240,6 @@ _assign_atom_node(
                 if (err != OK)
                         return err;
 
-                err = ubik_take(n->as_load.loc);
-                if (err != OK)
-                        return err;
                 return OK;
 
         case ATOM_STRING:
@@ -284,9 +288,7 @@ _assign_pred_case(
         union ubik_dagc_any_node *n;
         ubik_error err;
 
-        n = calloc(1, sizeof(union ubik_dagc_any_node));
-        if (n == NULL)
-                return ubik_raise(ERR_NO_MEMORY, "pred node alloc");
+        ubik_alloc1(&n, union ubik_dagc_any_node, ctx->region);
 
         if (case_stmt->next != NULL)
         {
@@ -414,7 +416,7 @@ _assign_lambda(
         size_t i;
         ubik_error err;
 
-        err = ubik_bdagc_init(&builder);
+        err = ubik_bdagc_init(&builder, ctx->region);
         if (err != OK)
                 return err;
 
@@ -422,12 +424,7 @@ _assign_lambda(
         i = 0;
         while (t != NULL && t->name != NULL)
         {
-                input_node = calloc(1, sizeof(struct ubik_dagc_input));
-                if (input_node == NULL)
-                {
-                        ubik_bdagc_free(&builder);
-                        return ubik_raise(ERR_NO_MEMORY, "input node alloc");
-                }
+                ubik_alloc1(&input_node, struct ubik_dagc_input, ctx->region);
                 input_node->head.node_type = DAGC_NODE_INPUT;
                 input_node->head.id = ctx->next_id++;
                 input_node->arg_num = i++;
@@ -490,40 +487,40 @@ ubik_assign_nodes(
         union ubik_dagc_any_node *n;
         ubik_error err;
 
-        n = calloc(1, sizeof(union ubik_dagc_any_node));
+        ubik_alloc1(&n, union ubik_dagc_any_node, ctx->region);
 
         switch (expr->expr_type)
         {
         case EXPR_ATOM:
                 err = _assign_atom_node(ctx, n, expr);
                 if (err != OK)
-                        goto failed;
+                        return err;
                 break;
 
         case EXPR_APPLY:
                 err = ubik_assign_nodes(ctx, builder, expr->apply.head);
                 if (err != OK)
-                        goto failed;
+                        return err;
 
                 err = ubik_assign_nodes(ctx, builder, expr->apply.tail);
                 if (err != OK)
-                        goto failed;
+                        return err;
 
                 err = _assign_apply_node(ctx, n, expr);
                 if (err != OK)
-                        goto failed;
+                        return err;
                 break;
 
         case EXPR_LAMBDA:
                 err = _assign_lambda(ctx, n, expr);
                 if (err != OK)
-                        goto failed;
+                        return err;
                 break;
 
         case EXPR_BLOCK:
                 err = _assign_block(ctx, n, builder, expr);
                 if (err != OK)
-                        goto failed;
+                        return err;
                 break;
 
         case EXPR_COND_BLOCK:
@@ -532,19 +529,19 @@ ubik_assign_nodes(
                 case COND_PREDICATE:
                         err = _assign_pred_block(ctx, n, builder, expr);
                         if (err != OK)
-                                goto failed;
+                                return err;
                         break;
                 case COND_PATTERN:
                         err = ubik_raise(
                                 ERR_UNEXPECTED_FAILURE,
                                 "pattern blocks should have been transformed");
-                        goto failed;
+                        return err;
                 }
                 break;
 
         default:
                 err = ubik_raise(ERR_UNKNOWN_TYPE, "compile assign node");
-                goto failed;
+                return err;
         }
 
         err = ubik_bdagc_push_node(builder, &n->node);
@@ -553,10 +550,6 @@ ubik_assign_nodes(
         expr->gen = &n->node;
 
         return OK;
-
-failed:
-        free(n);
-        return err;
 }
 
 bool

@@ -40,7 +40,9 @@ void
 ubik_ralloc(void **dst, size_t n, size_t size, struct ubik_alloc_region *r);
 
 /* Reallocates a block to be bigger. All additional memory beyond what was
- * already allocated is left uninitialized. */
+ * already allocated is left uninitialized. If region is NULL, behaves exactly
+ * like normal realloc, except with overflow prevention and an assertion that
+ * the realloc succeeded. */
 void
 ubik_realloc(void **dst, size_t n, size_t size, struct ubik_alloc_region *r);
 
@@ -74,3 +76,5 @@ ubik_alloc_reparent(
 
 #define ubik_alloc1(dst, kind, region) \
         ubik_ralloc((void **) dst, 1, sizeof(kind), region)
+#define ubik_galloc1(dst, kind) \
+        ubik_ralloc((void **) dst, 1, sizeof(kind), NULL)
