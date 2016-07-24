@@ -83,14 +83,9 @@ ubik_parse(
                 return OK;
         }
 
-        if (ctx.err_loc != NULL)
-        {
-                if (show_errors)
-                        ubik_feedback_error_line(
-                                UBIK_FEEDBACK_ERR, ctx.err_loc, ctx.err_msg);
-                free(ctx.err_loc);
-                free(ctx.err_msg);
-        }
+        if (ctx.err_loc != NULL && show_errors)
+                ubik_feedback_error_line(
+                        UBIK_FEEDBACK_ERR, ctx.err_loc, ctx.err_msg);
 
         return ubik_raise(ERR_BAD_VALUE, "could not parse input");
 }
@@ -134,10 +129,5 @@ ubik_parse_type_expr(
                 return OK;
         }
 
-        if (ctx.err_loc != NULL)
-        {
-                free(ctx.err_loc);
-                free(ctx.err_msg);
-        }
         return ubik_raise(ERR_BAD_VALUE, "could not parse input");
 }

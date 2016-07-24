@@ -572,6 +572,8 @@ ubik_resolve(
         ubik_error err;
         size_t i;
 
+        ctx->errors.region = ctx->region;
+
         err = create_native_scope(ctx);
         if (err != OK)
                 return err;

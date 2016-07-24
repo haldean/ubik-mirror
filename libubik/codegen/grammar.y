@@ -707,8 +707,7 @@ yyerror(
         YYLTYPE yyloc;
         unused(scanner);
 
-        ctx->err_loc = calloc(1, sizeof(struct ubik_ast_loc));
-
+        ubik_alloc1(&ctx->err_loc, struct ubik_ast_loc, ctx->region);
         yyloc = *loc;
         load_loc(*ctx->err_loc);
         ctx->err_msg = ubik_strdup(err, ctx->region);

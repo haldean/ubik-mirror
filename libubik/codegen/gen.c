@@ -266,6 +266,7 @@ ubik_gen_graphs(
         struct ubik_env local_env;
         local(assign_context) struct ubik_assign_context ctx = {0};
         ctx.region = region;
+        ctx.errors.region = region;
 
         err = ubik_env_init(&local_env);
         if (err != OK)

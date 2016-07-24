@@ -579,10 +579,5 @@ ubik_assign_emit_errors(struct ubik_assign_context *ctx)
 void
 ubik_assign_context_free(struct ubik_assign_context *ctx)
 {
-        size_t i;
-        for (i = 0; i < ctx->errors.n; i++)
-        {
-                free(ctx->errors.elems[i]);
-        }
-        ubik_vector_free(&ctx->errors);
+        unused(ctx);
 }
