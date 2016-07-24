@@ -17,7 +17,9 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#pragma once
 #include "ubik/ubik.h"
+#include "ubik/alloc.h"
 #include "ubik/ast.h"
 #include "ubik/compile.h"
 
@@ -25,4 +27,5 @@
 no_ignore ubik_error
 ubik_import_add_splats(
         struct ubik_compile_env *cenv,
-        struct ubik_ast *ast);
+        struct ubik_ast *ast,
+        struct ubik_alloc_region *region);

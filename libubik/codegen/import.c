@@ -18,6 +18,8 @@
  */
 
 #include "ubik/import.h"
+#include "ubik/string.h"
+
 #include <string.h>
 #include <stdlib.h>
 
@@ -25,7 +27,8 @@ no_ignore ubik_error
 add_splat(
         struct ubik_compile_env *cenv,
         struct ubik_ast *ast,
-        char *canonical)
+        char *canonical,
+        struct ubik_alloc_region *region)
 {
         struct ubik_compile_result *cres;
         struct ubik_ast_binding *new_bind;
@@ -50,43 +53,32 @@ add_splat(
         for (i = 0; i < cres->ast->bindings.n; i++)
         {
                 old_bind = cres->ast->bindings.elems[i];
-                new_bind = calloc(1, sizeof(struct ubik_ast_binding));
-                if (new_bind == NULL)
-                        return ubik_raise(ERR_NO_MEMORY, "splat binding alloc");
-                new_bind->name = strdup(old_bind->name);
-                new_bind->expr = calloc(1, sizeof(struct ubik_ast_expr));
-                if (new_bind->expr == NULL)
-                {
-                        free(new_bind);
-                        return ubik_raise(ERR_NO_MEMORY, "splat binding alloc");
-                }
-                new_bind->expr->expr_type = EXPR_ATOM;
-                new_bind->expr->atom = calloc(1, sizeof(struct ubik_ast_atom));
-                if (new_bind->expr->atom == NULL)
-                {
-                        free(new_bind->expr);
-                        free(new_bind);
-                        return ubik_raise(ERR_NO_MEMORY, "splat binding alloc");
-                }
-                new_bind->expr->atom->atom_type = ATOM_QUALIFIED;
-                new_bind->expr->atom->qualified.head = strdup(canonical);
-                new_bind->expr->atom->qualified.tail = strdup(old_bind->name);
+
+                ubik_alloc1(&new_bind, struct ubik_ast_binding, region);
+                new_bind->name = ubik_strdup(old_bind->name, region);
                 new_bind->loc = old_bind->loc;
+
+                ubik_alloc1(&new_bind->expr, struct ubik_ast_expr, region);
+                new_bind->expr->expr_type = EXPR_ATOM;
+                new_bind->expr->loc = old_bind->loc;
+
+                ubik_alloc1(&new_bind->expr->atom, struct ubik_ast_atom, region);
+                new_bind->expr->atom->atom_type = ATOM_QUALIFIED;
+                new_bind->expr->atom->qualified.head =
+                        ubik_strdup(canonical, region);
+                new_bind->expr->atom->qualified.tail =
+                        ubik_strdup(old_bind->name, region);
+                new_bind->expr->atom->loc = old_bind->loc;
 
                 if (old_bind->type_expr != NULL)
                 {
-                        new_bind->type_expr = calloc(
-                                1, sizeof(struct ubik_ast_type_expr));
-                        if (new_bind->type_expr == NULL)
-                        {
-                                free(new_bind->expr->atom);
-                                free(new_bind->expr);
-                                free(new_bind);
-                                return ubik_raise(
-                                        ERR_NO_MEMORY, "splat binding alloc");
-                        }
+                        ubik_alloc1(
+                                &new_bind->type_expr,
+                                struct ubik_ast_type_expr,
+                                region);
                         err = ubik_ast_type_expr_copy(
-                                new_bind->type_expr, old_bind->type_expr, NULL);
+                                new_bind->type_expr, old_bind->type_expr,
+                                region);
                         if (err != OK)
                                 return err;
                 }
@@ -97,15 +89,14 @@ add_splat(
                         return err;
         }
 
-        /* TODO: types */
-
         return OK;
 }
 
 no_ignore ubik_error
 ubik_import_add_splats(
         struct ubik_compile_env *cenv,
-        struct ubik_ast *ast)
+        struct ubik_ast *ast,
+        struct ubik_alloc_region *region)
 {
         struct ubik_ast_import_list *import;
         ubik_error err;
@@ -115,7 +106,7 @@ ubik_import_add_splats(
         {
                 if (strcmp(import->name, "") == 0)
                 {
-                        err = add_splat(cenv, ast, import->canonical);
+                        err = add_splat(cenv, ast, import->canonical, region);
                         if (err != OK)
                                 return err;
                 }

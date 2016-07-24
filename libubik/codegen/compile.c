@@ -279,7 +279,7 @@ compile_job(
         resolve_ctx.region = &job->request->region;
         adt_ctx.region = &job->request->region;
 
-        err = ubik_import_add_splats(cenv, job->ast);
+        err = ubik_import_add_splats(cenv, job->ast, &job->request->region);
         if (err != OK)
                 return err;
         if (cenv->debug)
