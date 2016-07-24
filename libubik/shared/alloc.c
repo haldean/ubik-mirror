@@ -112,7 +112,7 @@ ubik_realloc(void **dst, size_t n, size_t elemsize, struct ubik_alloc_region *r)
 }
 
 char *
-ubik_strdup(char *str, struct ubik_alloc_region *r)
+ubik_strdup(const char *str, struct ubik_alloc_region *r)
 {
         char *new_str;
         size_t len;

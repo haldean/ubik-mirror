@@ -300,7 +300,8 @@ ubik_ast_add_type(
 no_ignore ubik_error
 ubik_ast_atom_new_qualified(
         struct ubik_ast_atom **atom,
-        char *name);
+        char *name,
+        struct ubik_alloc_region *r);
 
 no_ignore ubik_error
 ubik_ast_import(

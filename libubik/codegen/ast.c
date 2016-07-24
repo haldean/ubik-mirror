@@ -426,7 +426,8 @@ ubik_ast_add_type(struct ubik_ast *ast, struct ubik_ast_type *type)
 no_ignore ubik_error
 ubik_ast_atom_new_qualified(
         struct ubik_ast_atom **atom,
-        char *name)
+        char *name,
+        struct ubik_alloc_region *r)
 {
         size_t head_len;
         size_t tail_len;
@@ -449,22 +450,18 @@ ubik_ast_atom_new_qualified(
         ubik_assert(head_len > 0);
         ubik_assert(tail_len > 0);
 
-        *atom = calloc(1, sizeof(struct ubik_ast_atom));
-        if (*atom == NULL)
-                return ubik_raise(ERR_NO_MEMORY, "new qualified name");
+        ubik_alloc1(atom, struct ubik_ast_atom, r);
         (*atom)->atom_type = ATOM_QUALIFIED;
 
-        (*atom)->qualified.head = calloc(head_len + 1, sizeof(char));
-        if ((*atom)->qualified.head == NULL)
-                return ubik_raise(ERR_NO_MEMORY, "qualified alloc");
+        ubik_ralloc(
+                (void **) &(*atom)->qualified.head,
+                head_len + 1, sizeof(char), r);
         memcpy((*atom)->qualified.head, name, head_len);
 
-        (*atom)->qualified.tail = calloc(tail_len + 1, sizeof(char));
-        if ((*atom)->qualified.tail == NULL)
-                return ubik_raise(ERR_NO_MEMORY, "qualified alloc");
+        ubik_ralloc(
+                (void **) &(*atom)->qualified.tail,
+                tail_len + 1, sizeof(char), r);
         memcpy((*atom)->qualified.tail, &name[head_len + 1], tail_len);
-
-        free(name);
 
         return OK;
 }

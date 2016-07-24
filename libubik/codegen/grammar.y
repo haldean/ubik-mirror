@@ -196,7 +196,7 @@ import
 {
         alloc($$, 1, struct ubik_ast_import_list);
         $$->canonical = $2;
-        $$->name = strdup($2);
+        $$->name = ubik_strdup($2, ctx->region);
         load_loc($$->loc);
 }
 | ADD NAME IMPLIES NAME
@@ -210,7 +210,7 @@ import
 {
         alloc($$, 1, struct ubik_ast_import_list);
         $$->canonical = $3;
-        $$->name = strdup("");
+        $$->name = ubik_strdup("", ctx->region);
         load_loc($$->loc);
 }
 ;
@@ -467,7 +467,7 @@ atom
 }
 | QUALIFIED_NAME
 {
-        wrap_err(ubik_ast_atom_new_qualified(&$$, $1));
+        wrap_err(ubik_ast_atom_new_qualified(&$$, $1, ctx->region));
         load_loc($$->loc);
 }
 | TYPE_NAME
@@ -479,7 +479,7 @@ atom
 }
 | QUALIFIED_TYPE_NAME
 {
-        wrap_err(ubik_ast_atom_new_qualified(&$$, $1));
+        wrap_err(ubik_ast_atom_new_qualified(&$$, $1, ctx->region));
         load_loc($$->loc);
 }
 | INTEGER
@@ -632,7 +632,7 @@ pattern
 | QUALIFIED_TYPE_NAME
 {
         struct ubik_ast_atom *atom;
-        wrap_err(ubik_ast_atom_new_qualified(&atom, $1));
+        wrap_err(ubik_ast_atom_new_qualified(&atom, $1, ctx->region));
         load_loc(atom->loc);
 
         alloc($$, 1, struct ubik_ast_expr);
@@ -710,5 +710,5 @@ yyerror(
 
         yyloc = *loc;
         load_loc(*ctx->err_loc);
-        ctx->err_msg = strdup(err);
+        ctx->err_msg = ubik_strdup(err, ctx->region);
 }
