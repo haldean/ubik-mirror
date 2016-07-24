@@ -26,12 +26,13 @@
  */
 
 #pragma once
+#include "ubik/alloc.h"
 #include "ubik/ast.h"
 #include "ubik/ubik.h"
 
 struct ubik_patterns_context
 {
-        void *unused;
+        struct ubik_alloc_region *region;
 };
 
 /* Transforms pattern blocks into equivalent predicate blocks. */
