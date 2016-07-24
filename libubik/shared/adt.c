@@ -292,14 +292,16 @@ bind_decl(
         struct ubik_value *type_decl;
         struct ubik_ast_binding *bind;
         struct ubik_ast_expr *decl_expr;
-        ubik_error err, rerr;
+        ubik_error err;
 
         err = ubik_value_new(&type_decl);
         if (err != OK)
                 return err;
+        ubik_ref_steal(type_decl, ctx->region);
+
         err = ubik_adt_create_decl(type_decl, type);
         if (err != OK)
-                goto free_type_decl;
+                return err;
 
         ubik_alloc1(&decl_expr, struct ubik_ast_expr, ctx->region);
         ubik_alloc1(&decl_expr->atom, struct ubik_ast_atom, ctx->region);
@@ -317,12 +319,8 @@ bind_decl(
 
         err = ubik_vector_append(&ast->bindings, bind);
         if (err != OK)
-                goto free_type_decl;
+                return err;
         return OK;
-
-free_type_decl:
-        rerr = ubik_release(type_decl);
-        return err == NULL ? rerr : err;
 }
 
 no_ignore static ubik_error
