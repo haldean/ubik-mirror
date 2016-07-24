@@ -127,7 +127,6 @@ ubik_compile_env_free(struct ubik_compile_env *cenv)
 
                 free_req(res->request);
                 ubik_alloc_free(&res->region);
-                free(res);
         }
         ubik_vector_free(&cenv->compiled);
 
@@ -361,12 +360,9 @@ compile_job(
                 return ubik_raise(ERR_NO_MEMORY, "compilation result alloc");
         res->request = job->request;
         res->ast = job->ast;
-        res->graphs = calloc(1 + job->dep_graphs.n, sizeof(struct ubik_dagc *));
-        if (res->graphs == NULL)
-        {
-                err = ubik_raise(ERR_NO_MEMORY, "compilation result alloc");
-                goto free_res;
-        }
+        ubik_ralloc(
+                (void**) &res->graphs, 1 + job->dep_graphs.n,
+                sizeof(struct ubik_dagc *), &job->region);
         res->graphs[0] = graph;
         for (i = 0; i < job->dep_graphs.n; i++)
                 res->graphs[i + 1] = job->dep_graphs.elems[i];
@@ -376,17 +372,13 @@ compile_job(
 
         err = ubik_vector_append(&cenv->compiled, res);
         if (err != OK)
-                goto free_res_graphs;
+                goto release_graph;
 
         if (job->request->cb != NULL)
                 job->request->cb(res);
         job->status = COMPILE_DONE;
         return OK;
 
-free_res_graphs:
-        free(res->graphs);
-free_res:
-        free(res);
 release_graph:
         rerr = ubik_release(graph);
         return err == OK ? rerr : err;
