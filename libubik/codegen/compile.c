@@ -91,9 +91,7 @@ ubik_compile_env_default(struct ubik_compile_env *cenv)
 static void
 free_req(struct ubik_compile_request *req)
 {
-        free(req->source_name);
-        if (req->package_name != NULL)
-                free(req->package_name);
+        ubik_alloc_free(&req->region);
         free(req);
 }
 
@@ -124,9 +122,7 @@ ubik_compile_env_free(struct ubik_compile_env *cenv)
                         if (err != OK)
                                 return err;
                 }
-
                 free_req(res->request);
-                ubik_alloc_free(&res->region);
         }
         ubik_vector_free(&cenv->compiled);
 
@@ -134,8 +130,6 @@ ubik_compile_env_free(struct ubik_compile_env *cenv)
         {
                 job = cenv->to_compile.elems[i];
                 free_req(job->request);
-                ubik_alloc_free(&job->region);
-                free(job);
         }
         ubik_vector_free(&cenv->to_compile);
 
@@ -236,7 +230,7 @@ load_ast(struct ubik_compile_env *cenv, struct ubik_compile_job *job)
                 return err;
 
         err = ubik_parse(
-                &job->ast, &job->region, job->request->source_name,
+                &job->ast, &job->request->region, job->request->source_name,
                 &job->woven, true);
         if (err != OK)
                 return err;
@@ -305,7 +299,7 @@ compile_job(
         }
 
         infer_ctx.debug = cenv->debug;
-        infer_ctx.region = &job->region;
+        infer_ctx.region = &job->request->region;
         err = ubik_infer(job->ast, &infer_ctx);
         if (err != OK)
                 return err;
@@ -355,30 +349,28 @@ compile_job(
                 return err;
         }
 
-        res = calloc(1, sizeof(struct ubik_compile_result));
-        if (res == NULL)
-                return ubik_raise(ERR_NO_MEMORY, "compilation result alloc");
+        ubik_alloc1(&res, struct ubik_compile_result, &job->request->region);
         res->request = job->request;
         res->ast = job->ast;
         ubik_ralloc(
                 (void**) &res->graphs, 1 + job->dep_graphs.n,
-                sizeof(struct ubik_dagc *), &job->region);
+                sizeof(struct ubik_dagc *), &job->request->region);
         res->graphs[0] = graph;
         for (i = 0; i < job->dep_graphs.n; i++)
                 res->graphs[i + 1] = job->dep_graphs.elems[i];
         res->n_graphs = 1 + job->dep_graphs.n;
 
-        res->region = job->region;
-
         err = ubik_vector_append(&cenv->compiled, res);
         if (err != OK)
-                goto release_graph;
+                goto free_res;
 
         if (job->request->cb != NULL)
                 job->request->cb(res);
         job->status = COMPILE_DONE;
         return OK;
 
+free_res:
+        free(res);
 release_graph:
         rerr = ubik_release(graph);
         return err == OK ? rerr : err;
@@ -395,27 +387,22 @@ ubik_compile_enqueue(
         req = calloc(1, sizeof(struct ubik_compile_request));
         if (req == NULL)
                 return ubik_raise(ERR_NO_MEMORY, "enqueue compilation request");
+        ubik_alloc_start(&req->region);
 
-        job = calloc(1, sizeof(struct ubik_compile_job));
-        if (job == NULL)
-        {
-                free(req);
-                return ubik_raise(ERR_NO_MEMORY, "enqueue compilation request");
-        }
-
-        req->source_name = strdup(userreq->source_name);
+        req->source_name = ubik_strdup(userreq->source_name, &req->region);
         if (userreq->package_name != NULL)
-                req->package_name = strdup(userreq->package_name);
+                req->package_name = ubik_strdup(
+                        userreq->package_name, &req->region);
         else
                 req->package_name = NULL;
         req->source = userreq->source;
         req->reason = userreq->reason;
         req->cb = userreq->cb;
 
+        ubik_alloc1(&job, struct ubik_compile_job, &req->region);
         job->request = req;
         job->ast = NULL;
         job->status = COMPILE_WAIT_FOR_AST;
-        ubik_alloc_start(&job->region);
 
         return ubik_vector_append(&cenv->to_compile, job);
 }

@@ -64,7 +64,7 @@ int
 main(int argc, char *argv[])
 {
         struct ubik_compile_env env = {0};
-        struct ubik_compile_request req;
+        struct ubik_compile_request req = {0};
         struct ubik_stream in;
         bool discard_res;
         ubik_error err;

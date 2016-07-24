@@ -54,6 +54,11 @@ struct ubik_compile_request
         enum ubik_load_reason reason;
         /* the callback to call once compilation is complete */
         ubik_compile_cb cb;
+
+        /* the region in which all allocations are made when handling this
+         * request; the memory associated with the result can be freed all at
+         * once by freeing this region. */
+        struct ubik_alloc_region region;
 };
 
 /* Represents the final result of compilation. */
@@ -67,11 +72,6 @@ struct ubik_compile_result
          * dependency closure */
         struct ubik_dagc **graphs;
         size_t n_graphs;
-
-        /* the region in which all allocations are made for this result; the
-         * memory associated with the result can be freed all at once by freeing
-         * this region. */
-        struct ubik_alloc_region region;
 };
 
 /* Represents an in-progress compilation job. */
@@ -90,10 +90,6 @@ struct ubik_compile_job
         /* a stream containing the woven contents of the (potentially-literate)
          * file. */
         struct ubik_stream woven;
-        /* the region in which all allocations are made for this job; the memory
-         * associated with the job can be freed all at once by freeing this
-         * region. */
-        struct ubik_alloc_region region;
 };
 
 struct ubik_compile_env
