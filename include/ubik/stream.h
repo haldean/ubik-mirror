@@ -21,6 +21,7 @@
 
 #include <stdio.h>
 
+#include "ubik/alloc.h"
 #include "ubik/ubik.h"
 
 struct _ubik_buf
@@ -29,6 +30,7 @@ struct _ubik_buf
         uint8_t *read;
         uint8_t *write;
         uint8_t *end;
+        struct ubik_alloc_region *region;
 };
 
 struct ubik_generator
@@ -69,7 +71,7 @@ ubik_stream_wfilep(struct ubik_stream *sp, FILE *file);
 
 /* Opens a stream backed by an in-memory buffer. */
 no_ignore ubik_error
-ubik_stream_buffer(struct ubik_stream *sp);
+ubik_stream_buffer(struct ubik_stream *sp, struct ubik_alloc_region *region);
 
 /* Opens a stream backed by a generator. Note that the generator itself is
  * responsible for cleaning itself up; it should listen for a call to close and

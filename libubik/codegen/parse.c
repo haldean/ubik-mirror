@@ -17,15 +17,19 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include <stdlib.h>
+#include "ubik/assert.h"
 #include "ubik/feedback.h"
 #include "ubik/parse.h"
+#include "ubik/stream.h"
 #include "ubik/util.h"
 #include "codegen/grammar.h"
 
+#include <stdlib.h>
+#include <string.h>
+
 /* autotools doesn't yet support flex headers, so we have to declare these
  * extern instead. */
-extern int  yylex_init(void *);
+extern int  yylex_init_extra(struct ubik_parse_context *, void *);
 extern void yylex_destroy(void *);
 extern void yyset_in(FILE *, void *);
 extern void yy_scan_string(char *, void *);
@@ -44,7 +48,6 @@ ubik_parse(
         struct ubik_stream *stream,
         bool show_errors)
 {
-        FILE *fp;
         YYLTYPE loc = {0};
         YYSTYPE val;
         int status;
@@ -57,14 +60,8 @@ ubik_parse(
         ctx.source_stream = stream;
         ctx.region = r;
 
-        status = yylex_init(&scanner);
-        if (status != 0)
+        if (yylex_init_extra(&ctx, &scanner) != 0)
                 return ubik_raise(ERR_UNEXPECTED_FAILURE, "yylex_init failed");
-
-        fp = ubik_stream_fp(stream);
-        if (fp == NULL)
-                return ubik_raise(ERR_BAD_VALUE, "stream has no file pointer");
-        yyset_in(fp, scanner);
 
         ps = yypstate_new();
         status = yypush_parse(ps, MATCH_PROG, &val, &loc, &ctx, scanner);
@@ -103,14 +100,27 @@ ubik_parse_type_expr(
         local(parse_context) struct ubik_parse_context ctx = {0};
         void *scanner;
         yypstate *ps;
+        struct ubik_stream stream;
+        size_t source_len;
+        size_t written;
+        ubik_error err;
+        ubik_local_region(buffer_region);
 
         ctx.region = r;
+        ctx.source_stream = &stream;
 
-        status = yylex_init(&scanner);
-        if (status != 0)
+        source_len = strlen(source);
+        err = ubik_stream_buffer(&stream, &buffer_region);
+        if (err != OK)
+                return err;
+
+        written = ubik_stream_write(&stream, source, source_len);
+        if (written != source_len)
+                return ubik_raise(
+                        ERR_UNEXPECTED_FAILURE, "didn't write full source");
+
+        if (yylex_init_extra(&ctx, &scanner) != 0)
                 return ubik_raise(ERR_UNEXPECTED_FAILURE, "yylex_init failed");
-
-        yy_scan_string(source, scanner);
 
         ps = yypstate_new();
         status = yypush_parse(ps, MATCH_TYPE, &val, &loc, &ctx, scanner);

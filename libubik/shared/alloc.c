@@ -102,6 +102,12 @@ ubik_realloc(void **dst, size_t n, size_t elemsize, struct ubik_alloc_region *r)
         size_t size;
         size_t i;
 
+        if (*dst == NULL)
+        {
+                ubik_ralloc(dst, n, elemsize, r);
+                return;
+        }
+
         size = n * elemsize;
         /* Guards against overflow. */
         ubik_assert(n != 0 && size / n == elemsize);

@@ -60,11 +60,12 @@ ubik_stream_wfilep(struct ubik_stream *sp, FILE *file)
 
 /* Opens a stream backed by an in-memory buffer. */
 no_ignore ubik_error
-ubik_stream_buffer(struct ubik_stream *sp)
+ubik_stream_buffer(struct ubik_stream *sp, struct ubik_alloc_region *region)
 {
         sp->stream_type = STREAM_TYPE_BUFFER;
-        sp->buffer = calloc(1, sizeof(struct _ubik_buf));
-        return sp->buffer == NULL ? ubik_raise(ERR_NO_MEMORY, "buffer") : OK;
+        ubik_alloc1(&sp->buffer, struct _ubik_buf, region);
+        sp->buffer->region = region;
+        return OK;
 }
 
 no_ignore ubik_error
@@ -131,17 +132,13 @@ _buf_realloc(struct _ubik_buf *buf, size_t req_len)
 {
         size_t n;
         uint8_t *old_start;
-        uint8_t *new_start;
 
         old_start = buf->start;
 
         n = buf->end - buf->start;
         n = size_max(n * n, n + req_len);
 
-        new_start = realloc(buf->start, n);
-        if (new_start == NULL)
-                return ubik_raise(ERR_NO_MEMORY, "buffer stream realloc");
-        buf->start = new_start;
+        ubik_realloc((void **) &buf->start, n, 1, buf->region);
         buf->read = buf->start + (buf->read - old_start);
         buf->write = buf->start + (buf->write - old_start);
         buf->end = buf->start + n;

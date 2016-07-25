@@ -43,7 +43,12 @@
         yyget_lloc(yyscanner)->last_column = yycolumn + yyleng - 1; \
         yycolumn += yyleng; } while (0);
 
+#define YY_EXTRA_TYPE struct ubik_parse_context *
+
+#define YY_INPUT(buf, result, max_size) result = get_input(yyg->yyextra_r, buf, max_size);
+
 char *read_string_literal(struct ubik_parse_context *ctx, yyscan_t scanner);
+static size_t get_input(struct ubik_parse_context *ctx, char *buf, size_t max_size);
 
 %}
 
@@ -90,7 +95,7 @@ NAME [a-z_][a-zA-Z0-9/_\-']*
 "\""                      { yylval->string = read_string_literal(ctx, yyscanner);
                             return STRING; }
 
-.                         { printf("%d: invalid character %s\n",
+.                         { printf("%d: invalid character '%s'\n",
                                    yylineno, yytext);
                             return yytext[0]; }
 
@@ -151,4 +156,12 @@ read_string_literal(struct ubik_parse_context *ctx, yyscan_t scanner)
         }
 
         return res;
+}
+
+static size_t
+get_input(struct ubik_parse_context *ctx, char *buf, size_t max_size)
+{
+        size_t read;
+        read = ubik_stream_read(buf, ctx->source_stream, max_size);
+        return read;
 }
