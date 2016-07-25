@@ -203,32 +203,6 @@ ubik_stream_close(struct ubik_stream *sp)
         }
 }
 
-FILE *
-ubik_stream_fp(struct ubik_stream *sp)
-{
-        switch (sp->stream_type)
-        {
-        case STREAM_TYPE_FILE_R:
-        case STREAM_TYPE_FILE_W:
-                return sp->file;
-        case STREAM_TYPE_BUFFER:
-#ifdef __MACH__
-                printf("WARNING: buffer has no file pointer on Darwin\n");
-                return NULL;
-#else
-                return fmemopen(
-                        sp->buffer->start,
-                        sp->buffer->end - sp->buffer->start,
-                        "r");
-#endif
-        case STREAM_TYPE_GENERATOR:
-                if (sp->gen->fp == NULL)
-                        return NULL;
-                return sp->gen->fp(sp->gen);
-        }
-        return NULL;
-}
-
 void
 ubik_stream_reset(struct ubik_stream *sp)
 {

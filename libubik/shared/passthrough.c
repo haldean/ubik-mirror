@@ -65,12 +65,6 @@ pt_reset(struct ubik_generator *gen)
         ubik_stream_reset(parent(gen));
 }
 
-FILE *
-pt_fp(struct ubik_generator *gen)
-{
-        return ubik_stream_fp(parent(gen));
-}
-
 no_ignore ubik_error
 ubik_passthrough_new(
         struct ubik_stream *res,
@@ -86,7 +80,6 @@ ubik_passthrough_new(
         gen->head.drop = pt_drop;
         gen->head.close = pt_close;
         gen->head.reset = pt_reset;
-        gen->head.fp = pt_fp;
         gen->parent = src;
         gen->close_passes_through = close_passes_through;
 

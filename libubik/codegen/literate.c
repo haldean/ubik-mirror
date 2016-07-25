@@ -208,28 +208,6 @@ reset_lit(struct ubik_generator *gen)
         asls(gen)->just_saw_nl = true;
 }
 
-static FILE *
-fp_lit(struct ubik_generator *gen)
-{
-        char *contents;
-        size_t size;
-        char buf[ls_buf_size];
-        size_t read;
-        FILE *f;
-
-        f = open_memstream(&contents, &size);
-        do
-        {
-                read = read_lit(buf, gen, ls_buf_size);
-                if (read > 0)
-                        fwrite(buf, 1, read, f);
-        } while (read > 0);
-        fclose(f);
-
-        f = fmemopen(contents, size, "r");
-        return f;
-}
-
 static bool
 is_literate_ext(char *src_filename)
 {
@@ -261,7 +239,6 @@ ubik_literate_weave(
         ls->head.drop = NULL;
         ls->head.reset = reset_lit;
         ls->head.close = close_lit;
-        ls->head.fp = fp_lit;
         ls->base = src;
         reset_lit(&ls->head);
 

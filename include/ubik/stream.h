@@ -40,7 +40,6 @@ struct ubik_generator
         size_t (*drop)(struct ubik_generator *, size_t len);
         void   (*close)(struct ubik_generator *);
         void   (*reset)(struct ubik_generator *);
-        FILE * (*fp)(struct ubik_generator *);
 };
 
 struct ubik_stream
@@ -93,14 +92,6 @@ ubik_stream_write(struct ubik_stream *dst, void *src, size_t len);
  * dropped successfully. */
 no_ignore size_t
 ubik_stream_drop(struct ubik_stream *src, size_t len);
-
-/* Gets a file pointer representing the contents of the stream.
- *
- * If the stream has been read from or written to, you should not make
- * assumptions about the location of the read/write heads in this stream;
- * instead, you should seek it to wherever you need the stream head to be. */
-FILE *
-ubik_stream_fp(struct ubik_stream *sp);
 
 /* Resets a stream to the start.
  *
