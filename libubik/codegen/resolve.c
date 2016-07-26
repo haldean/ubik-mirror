@@ -37,6 +37,14 @@
 #include "ubik/string.h"
 #include "ubik/util.h"
 
+struct ubik_resolve_context
+{
+        struct ubik_resolve_scope *native_scope;
+        struct ubik_vector errors;
+        struct ubik_alloc_region *region;
+        struct ubik_stream *feedback;
+};
+
 no_ignore ubik_error
 assign_all_initial_scopes(
         struct ubik_resolve_context *ctx,
@@ -566,52 +574,55 @@ create_native_scope(struct ubik_resolve_context *ctx)
 no_ignore ubik_error
 ubik_resolve(
         struct ubik_ast *ast,
-        struct ubik_resolve_context *ctx)
+        struct ubik_compile_request *req)
 {
+        struct ubik_resolve_context ctx = {0};
         struct ubik_resolve_error *resolv_err;
         ubik_error err;
         size_t i;
 
-        ctx->errors.region = ctx->region;
+        ctx.region = &req->region;
+        ctx.feedback = req->feedback;
+        ctx.errors.region = ctx.region;
 
-        err = create_native_scope(ctx);
+        err = create_native_scope(&ctx);
         if (err != OK)
                 return err;
 
-        err = assign_all_initial_scopes(ctx, ast, ctx->native_scope, true);
+        err = assign_all_initial_scopes(&ctx, ast, ctx.native_scope, true);
         if (err != OK)
                 return err;
 
-        err = update_scopes_with_bindings(ctx, ast);
+        err = update_scopes_with_bindings(&ctx, ast);
         if (err != OK)
                 return err;
 
-        err = update_scopes_with_args(ctx, ast);
+        err = update_scopes_with_args(&ctx, ast);
         if (err != OK)
                 return err;
 
-        err = ubik_package_add_to_scope(ctx, ast);
+        err = ubik_package_add_to_scope(ast, req);
         if (err != OK)
                 return err;
 
-        err = update_names_with_resolution_types(ctx, ast);
+        err = update_names_with_resolution_types(&ctx, ast);
         if (err != OK)
                 return err;
 
-        err = ubik_reduce_closures(ctx, ast);
+        err = ubik_reduce_closures(ast, req);
         if (err != OK)
                 return err;
 
-        if (ctx->errors.n != 0)
+        if (ctx.errors.n != 0)
         {
-                for (i = 0; i < ctx->errors.n; i++)
+                for (i = 0; i < ctx.errors.n; i++)
                 {
-                        resolv_err = ctx->errors.elems[i];
+                        resolv_err = ctx.errors.elems[i];
                         switch (resolv_err->err_type)
                         {
                         case RESOLVE_ERR_NAME_NOT_FOUND:
                                 ubik_feedback_error_line(
-                                        ctx->feedback, UBIK_FEEDBACK_ERR,
+                                        ctx.feedback, UBIK_FEEDBACK_ERR,
                                         &resolv_err->loc, "name not found: %s",
                                         resolv_err->name);
                         }
@@ -639,10 +650,4 @@ ubik_resolve_context_missing_name(
         if (err != OK)
                 return err;
         return OK;
-}
-
-void
-ubik_resolve_context_free(struct ubik_resolve_context *ctx)
-{
-        unused(ctx);
 }

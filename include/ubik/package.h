@@ -18,13 +18,13 @@
  */
 
 #pragma once
-#include "ubik/alloc.h"
 #include "ubik/ast.h"
+#include "ubik/compile.h"
 #include "ubik/resolve.h"
 #include "ubik/ubik.h"
 
 /* Sets the appropriate package name on all scopes in an AST. */
 no_ignore ubik_error
 ubik_package_add_to_scope(
-        struct ubik_resolve_context *ctx,
-        struct ubik_ast *ast);
+        struct ubik_ast *ast,
+        struct ubik_compile_request *req);

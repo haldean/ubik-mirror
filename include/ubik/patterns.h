@@ -26,21 +26,12 @@
  */
 
 #pragma once
-#include "ubik/alloc.h"
 #include "ubik/ast.h"
+#include "ubik/compile.h"
 #include "ubik/ubik.h"
-
-struct ubik_patterns_context
-{
-        struct ubik_stream *feedback;
-        struct ubik_alloc_region *region;
-};
 
 /* Transforms pattern blocks into equivalent predicate blocks. */
 no_ignore ubik_error
 ubik_patterns_compile_all(
         struct ubik_ast *ast,
-        struct ubik_patterns_context *ctx);
-
-void
-ubik_patterns_context_free(struct ubik_patterns_context *c);
+        struct ubik_compile_request *req);

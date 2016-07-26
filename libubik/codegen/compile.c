@@ -268,9 +268,6 @@ compile_job(
 {
         struct ubik_dagc *graph;
         struct ubik_compile_result *res;
-        local(resolve_context) struct ubik_resolve_context preresolve_ctx = {0};
-        local(resolve_context) struct ubik_resolve_context resolve_ctx = {0};
-        local(patterns_context) struct ubik_patterns_context pattern_ctx = {0};
         local(infer_context) struct ubik_infer_context infer_ctx = {0};
         local(adt_bind_context) struct ubik_adt_bind_context adt_ctx = {0};
         local(assign_context) struct ubik_assign_context assign_ctx = {0};
@@ -287,15 +284,6 @@ compile_job(
         infer_ctx.feedback = job->request->feedback;
         infer_ctx.region = &job->request->region;
 
-        pattern_ctx.feedback = job->request->feedback;
-        pattern_ctx.region = &job->request->region;
-
-        preresolve_ctx.feedback = job->request->feedback;
-        preresolve_ctx.region = &job->request->region;
-
-        resolve_ctx.feedback = job->request->feedback;
-        resolve_ctx.region = &job->request->region;
-
         err = ubik_import_add_splats(cenv, job->ast, &job->request->region);
         if (err != OK)
                 return err;
@@ -307,7 +295,7 @@ compile_job(
                         return err;
         }
 
-        err = ubik_resolve(job->ast, &preresolve_ctx);
+        err = ubik_resolve(job->ast, job->request);
         if (err != OK)
                 return err;
         if (cenv->debug)
@@ -322,7 +310,7 @@ compile_job(
         if (err != OK)
                 return err;
 
-        err = ubik_patterns_compile_all(job->ast, &pattern_ctx);
+        err = ubik_patterns_compile_all(job->ast, job->request);
         if (err != OK)
                 return err;
 
@@ -346,7 +334,7 @@ compile_job(
                         return err;
         }
 
-        err = ubik_resolve(job->ast, &resolve_ctx);
+        err = ubik_resolve(job->ast, job->request);
         if (err != OK)
                 return err;
         if (cenv->debug)

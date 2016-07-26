@@ -27,5 +27,5 @@
  * architecture document. */
 no_ignore ubik_error
 ubik_reduce_closures(
-        struct ubik_resolve_context *ctx,
-        struct ubik_ast *ast);
+        struct ubik_ast *ast,
+        struct ubik_compile_request *req);

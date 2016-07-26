@@ -69,30 +69,30 @@
 
 no_ignore static ubik_error
 apply_closure(
-        struct ubik_resolve_context *ctx,
         struct ubik_ast_expr **lambda,
-        char *resolving_name)
+        char *resolving_name,
+        struct ubik_compile_request *req)
 {
         struct ubik_ast_expr *apply;
         struct ubik_ast_expr *name;
 
         (*lambda)->scope->needs_closure_appl = false;
 
-        ubik_alloc1(&name, struct ubik_ast_expr, ctx->region);
+        ubik_alloc1(&name, struct ubik_ast_expr, &req->region);
         name->expr_type = EXPR_ATOM;
 
-        ubik_alloc1(&name->atom, struct ubik_ast_atom, ctx->region);
+        ubik_alloc1(&name->atom, struct ubik_ast_atom, &req->region);
         name->atom->atom_type = ATOM_NAME;
 
         ubik_alloc1(
                 &name->atom->name_loc, struct ubik_resolve_name_loc,
-                ctx->region);
+                &req->region);
         name->atom->name_loc->type = RESOLVE_LOCAL;
-        name->atom->str = ubik_strdup(resolving_name, ctx->region);
+        name->atom->str = ubik_strdup(resolving_name, &req->region);
 
         name->scope = (*lambda)->scope->parent;
 
-        ubik_alloc1(&apply, struct ubik_ast_expr, ctx->region);
+        ubik_alloc1(&apply, struct ubik_ast_expr, &req->region);
         apply->expr_type = EXPR_APPLY;
         apply->scope = (*lambda)->scope->parent;
         apply->apply.head = *lambda;
@@ -105,8 +105,8 @@ apply_closure(
 no_ignore static ubik_error
 apply_downwards_transform(
         char *resolving_name,
-        struct ubik_resolve_context *ctx,
-        struct ubik_ast_expr **expr_ref)
+        struct ubik_ast_expr **expr_ref,
+        struct ubik_compile_request *req)
 {
         struct ubik_ast *subast;
         ubik_error err;
@@ -119,7 +119,7 @@ apply_downwards_transform(
 
         if (expr->scope->needs_closure_appl)
         {
-                err = apply_closure(ctx, expr_ref, resolving_name);
+                err = apply_closure(expr_ref, resolving_name, req);
                 if (err != OK)
                         return err;
                 expr = *expr_ref;
@@ -129,7 +129,7 @@ apply_downwards_transform(
          * proper refs into the pointers themselves so we can mutate these
          * things. */
         #define apply_down(x) do { \
-                err = apply_downwards_transform(resolving_name, ctx, &x); \
+                err = apply_downwards_transform(resolving_name, &x, req); \
                 if (err != OK) return err; } while (0)
         subast = NULL;
         switch (expr->expr_type)
@@ -178,7 +178,7 @@ apply_downwards_transform(
                         struct ubik_ast_binding *bind;
                         bind = subast->bindings.elems[i];
                         err = apply_downwards_transform(
-                                resolving_name, ctx, &bind->expr);
+                                resolving_name, &bind->expr, req);
                         if (err != OK)
                                 return err;
                 }
@@ -186,7 +186,7 @@ apply_downwards_transform(
                 if (subast->immediate != NULL)
                 {
                         err = apply_downwards_transform(
-                                resolving_name, ctx, &subast->immediate);
+                                resolving_name, &subast->immediate, req);
                         if (err != OK)
                                 return err;
                 }
@@ -197,8 +197,8 @@ apply_downwards_transform(
 no_ignore static ubik_error
 apply_upwards_transform(
         char **resolving_name_ref,
-        struct ubik_resolve_context *ctx,
-        struct ubik_ast_expr **expr_ref)
+        struct ubik_ast_expr **expr_ref,
+        struct ubik_compile_request *req)
 {
         char *resolving_name;
         bool is_top;
@@ -237,14 +237,14 @@ break_all:
 
         if (expr->expr_type == EXPR_LAMBDA)
         {
-                ubik_alloc1(&args, struct ubik_ast_arg_list, ctx->region);
-                args->name = ubik_strdup(resolving_name, ctx->region);
+                ubik_alloc1(&args, struct ubik_ast_arg_list, &req->region);
+                args->name = ubik_strdup(resolving_name, &req->region);
                 args->next = expr->lambda.args;
 
                 expr->lambda.args = args;
                 expr->scope->needs_closure_appl = true;
 
-                ubik_alloc1(&rname, struct ubik_resolve_name, ctx->region);
+                ubik_alloc1(&rname, struct ubik_resolve_name, &req->region);
                 rname->name = args->name;
                 rname->type = RESOLVE_LOCAL;
 
@@ -256,7 +256,7 @@ break_all:
         if (is_top)
         {
                 *resolving_name_ref = NULL;
-                return apply_downwards_transform(resolving_name, ctx, expr_ref);
+                return apply_downwards_transform(resolving_name, expr_ref, req);
         }
         return OK;
 }
@@ -275,15 +275,15 @@ no_ignore static ubik_error
 traverse_ast(
         char **resolving_name,
         bool *changed,
-        struct ubik_resolve_context *ctx,
-        struct ubik_ast *ast);
+        struct ubik_ast *ast,
+        struct ubik_compile_request *req);
 
 no_ignore static ubik_error
 traverse_expr(
         char **resolving_name,
         bool *changed,
-        struct ubik_resolve_context *ctx,
-        struct ubik_ast_expr **expr_ref)
+        struct ubik_ast_expr **expr_ref,
+        struct ubik_compile_request *req)
 {
         struct ubik_ast *subast;
         struct ubik_ast_expr *expr;
@@ -310,27 +310,27 @@ traverse_expr(
         for (i = 0; i < n_subexprs; i++)
         {
                 err = traverse_expr(
-                        resolving_name, changed, ctx, &subexprs[i]);
+                        resolving_name, changed, &subexprs[i], req);
                 if (err != OK)
                         return err;
                 if (*resolving_name != NULL)
                 {
                         err = apply_upwards_transform(
-                                resolving_name, ctx, expr_ref);
+                                resolving_name, expr_ref, req);
                         return err;
                 }
         }
 
         if (subast != NULL)
         {
-                err = traverse_ast(resolving_name, changed, ctx, subast);
+                err = traverse_ast(resolving_name, changed, subast, req);
                 if (err != OK)
                         return err;
 
                 if (*resolving_name != NULL)
                 {
                         err = apply_upwards_transform(
-                                resolving_name, ctx, expr_ref);
+                                resolving_name, expr_ref, req);
                         return err;
                 }
         }
@@ -341,8 +341,8 @@ no_ignore static ubik_error
 traverse_ast(
         char **resolving_name,
         bool *changed,
-        struct ubik_resolve_context *ctx,
-        struct ubik_ast *ast)
+        struct ubik_ast *ast,
+        struct ubik_compile_request *req)
 {
         size_t i;
         ubik_error err;
@@ -353,7 +353,7 @@ traverse_ast(
 
                 bind = ast->bindings.elems[i];
                 err = traverse_expr(
-                        resolving_name, changed, ctx, &bind->expr);
+                        resolving_name, changed, &bind->expr, req);
                 if (err != OK)
                         return err;
         }
@@ -361,7 +361,7 @@ traverse_ast(
         if (ast->immediate != NULL)
         {
                 err = traverse_expr(
-                        resolving_name, changed, ctx, &ast->immediate);
+                        resolving_name, changed, &ast->immediate, req);
                 if (err != OK)
                         return err;
         }
@@ -371,8 +371,8 @@ traverse_ast(
 
 no_ignore ubik_error
 ubik_reduce_closures(
-        struct ubik_resolve_context *ctx,
-        struct ubik_ast *ast)
+        struct ubik_ast *ast,
+        struct ubik_compile_request *req)
 {
         char *resolving_name;
         bool changed;
@@ -383,7 +383,7 @@ ubik_reduce_closures(
                 changed = false;
                 resolving_name = NULL;
 
-                err = traverse_ast(&resolving_name, &changed, ctx, ast);
+                err = traverse_ast(&resolving_name, &changed, ast, req);
                 if (err != OK)
                         return err;
                 ubik_assert(resolving_name == NULL);

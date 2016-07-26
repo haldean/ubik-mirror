@@ -20,6 +20,7 @@
 #pragma once
 #include "ubik/alloc.h"
 #include "ubik/ast.h"
+#include "ubik/compile.h"
 #include "ubik/ubik.h"
 #include "ubik/vector.h"
 
@@ -99,18 +100,7 @@ struct ubik_resolve_error
         struct ubik_ast_loc loc;
 };
 
-struct ubik_resolve_context
-{
-        struct ubik_resolve_scope *native_scope;
-        struct ubik_vector errors;
-        struct ubik_alloc_region *region;
-        struct ubik_stream *feedback;
-};
-
 no_ignore ubik_error
 ubik_resolve(
         struct ubik_ast *ast,
-        struct ubik_resolve_context *ctx);
-
-void
-ubik_resolve_context_free(struct ubik_resolve_context *ctx);
+        struct ubik_compile_request *req);
