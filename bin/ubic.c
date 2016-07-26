@@ -65,7 +65,7 @@ main(int argc, char *argv[])
 {
         struct ubik_compile_env env = {0};
         struct ubik_compile_request req = {0};
-        struct ubik_stream in;
+        struct ubik_stream feedback;
         bool discard_res;
         ubik_error err;
         ubik_error rerr;
@@ -76,6 +76,13 @@ main(int argc, char *argv[])
                 return EXIT_FAILURE;
         }
         discard_res = argc == 2;
+        err = OK;
+
+        if (ubik_stream_wfilep(&feedback, stderr) != OK)
+        {
+                printf("couldn't open stdout for writing\n");
+                return EXIT_FAILURE;
+        }
 
         c(ubik_start());
 
@@ -85,14 +92,14 @@ main(int argc, char *argv[])
                 req.cb = NULL;
         else
                 req.cb = save_result;
-        req.source = in;
+        req.feedback = &feedback;
 
         if (strcmp(req.source_name, "-") == 0)
         {
                 req.source_name = "(stdin)";
-                if (ubik_stream_rfilep(&req.source, stdin) == OK)
+                if (ubik_stream_rfilep(&req.source, stdin) != OK)
                 {
-                        printf("could not open %s for reading\n", argv[1]);
+                        printf("could not open stdin for reading\n");
                         return EXIT_FAILURE;
                 }
         }
