@@ -38,6 +38,10 @@ struct literate_state
         struct ubik_generator head;
         struct ubik_stream *base;
 
+        /* True if the stream is unliterate and doesn't need weaving, false if
+         * it needs to be woven. */
+        bool raw;
+
         /* True if we're inside ubik source material, false otherwise. */
         bool in_source;
 
@@ -146,12 +150,31 @@ read_lit(void *vdst, struct ubik_generator *gen, size_t len)
 {
         struct literate_state *ls;
         size_t dst_filled;
+        size_t to_copy;
         char *dst;
         char s;
 
         dst = (char *) vdst;
         ls = asls(gen);
         dst_filled = 0;
+
+        if (ls->raw)
+        {
+                while (dst_filled < len)
+                {
+                        to_copy = size_min(
+                                len - dst_filled,
+                                ls->buf_end - ls->buf_loc);
+                        memcpy(dst, &ls->buf[ls->buf_loc], to_copy);
+
+                        ls->buf_loc += to_copy;
+                        dst_filled += to_copy;
+
+                        if (refill_buf(ls) == 0)
+                                break;
+                }
+                return dst_filled;
+        }
 
         while (dst_filled < len)
         {
@@ -230,9 +253,6 @@ ubik_literate_weave(
 {
         struct literate_state *ls;
 
-        if (!is_literate_ext(src_filename))
-                return ubik_passthrough_new(res, src, false, r);
-
         ubik_alloc1(&ls, struct literate_state, r);
         ls->head.read = read_lit;
         ls->head.write = NULL;
@@ -240,6 +260,7 @@ ubik_literate_weave(
         ls->head.reset = reset_lit;
         ls->head.close = close_lit;
         ls->base = src;
+        ls->raw = !is_literate_ext(src_filename);
         reset_lit(&ls->head);
 
         return ubik_stream_generator(res, &ls->head);
