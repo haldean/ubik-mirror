@@ -27,6 +27,7 @@
 #include "ubik/assign.h"
 #include "ubik/compile.h"
 #include "ubik/feedback.h"
+#include "ubik/gen.h"
 #include "ubik/import.h"
 #include "ubik/infer.h"
 #include "ubik/literate.h"
@@ -270,15 +271,11 @@ compile_job(
         struct ubik_compile_result *res;
         local(infer_context) struct ubik_infer_context infer_ctx = {0};
         local(adt_bind_context) struct ubik_adt_bind_context adt_ctx = {0};
-        local(assign_context) struct ubik_assign_context assign_ctx = {0};
         size_t i;
         ubik_error err, rerr;
 
         adt_ctx.feedback = job->request->feedback;
         adt_ctx.region = &job->request->region;
-
-        assign_ctx.feedback = job->request->feedback;
-        assign_ctx.region = &job->request->region;
 
         infer_ctx.debug = cenv->debug;
         infer_ctx.feedback = job->request->feedback;
@@ -346,8 +343,7 @@ compile_job(
         }
 
         graph = NULL;
-        err = ubik_gen_graphs(
-                &graph, job->ast, job->request->reason, &assign_ctx);
+        err = ubik_gen_graphs(&graph, job->ast, job->request);
         if (err != OK)
         {
                 if (graph != NULL)

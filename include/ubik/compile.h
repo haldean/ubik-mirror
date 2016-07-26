@@ -20,7 +20,6 @@
 #pragma once
 #include "ubik/alloc.h"
 #include "ubik/ast.h"
-#include "ubik/gen.h"
 #include "ubik/stream.h"
 #include "ubik/ubik.h"
 
@@ -30,6 +29,13 @@ enum ubik_compile_job_status
         COMPILE_WAIT_FOR_IMPORTS,
         COMPILE_READY,
         COMPILE_DONE,
+};
+
+enum ubik_load_reason
+{
+        LOAD_MAIN = 1,
+        LOAD_IMPORTED,
+        LOAD_BLOCK
 };
 
 struct ubik_compile_result;

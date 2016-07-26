@@ -258,14 +258,16 @@ no_ignore ubik_error
 ubik_gen_graphs(
         struct ubik_dagc **res,
         struct ubik_ast *ast,
-        enum ubik_load_reason load_reason,
-        struct ubik_assign_context *ctx)
+        struct ubik_compile_request *req)
 {
         size_t i;
         ubik_error err, rerr;
         struct ubik_env local_env;
+        local(assign_context) struct ubik_assign_context ctx = {0};
 
-        ctx->errors.region = ctx->region;
+        ctx.region = &req->region;
+        ctx.feedback = req->feedback;
+        ctx.errors.region = &req->region;
 
         err = ubik_env_init(&local_env);
         if (err != OK)
@@ -274,14 +276,13 @@ ubik_gen_graphs(
         for (i = 0; i < ast->bindings.n; i++)
         {
                 err = ubik_compile_binding(
-                        ast->bindings.elems[i],
-                        &local_env, ctx);
+                        ast->bindings.elems[i], &local_env, &ctx);
                 if (err != OK)
                         goto cleanup_env;
         }
 
         err = ubik_create_modinit(
-                res, ast, &local_env, load_reason, ctx);
+                res, ast, &local_env, req->reason, &ctx);
         if (err != OK)
         {
                 if (err->error_code == ERR_NO_DATA)
@@ -289,7 +290,7 @@ ubik_gen_graphs(
                 goto cleanup_env;
         }
 
-        if (ubik_assign_emit_errors(ctx))
+        if (ubik_assign_emit_errors(&ctx))
         {
                 err = ubik_raise(
                         ERR_BAD_VALUE,

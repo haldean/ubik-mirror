@@ -20,15 +20,9 @@
 #pragma once
 #include "ubik/assign.h"
 #include "ubik/ast.h"
+#include "ubik/compile.h"
 #include "ubik/ubik.h"
 #include "ubik/uri.h"
-
-enum ubik_load_reason
-{
-        LOAD_MAIN = 1,
-        LOAD_IMPORTED,
-        LOAD_BLOCK
-};
 
 /* Compiles a single compilation unit down to a series of graphs.
  * Just one graph is returned here: the modinit graph. All other graphs are
@@ -41,5 +35,4 @@ no_ignore ubik_error
 ubik_gen_graphs(
         struct ubik_dagc **res,
         struct ubik_ast *ast,
-        enum ubik_load_reason load_reason,
-        struct ubik_assign_context *ctx);
+        struct ubik_compile_request *req);
