@@ -28,19 +28,23 @@ path_concat()
 {
         char *out;
 
-        assert(ubik_string_path_concat(&out, "/", "test_file") == OK);
+        assert(ubik_string_path_concat(
+                &out, "/", "test_file", NULL) == OK);
         assert(strcmp(out, "/test_file") == 0);
         free(out);
 
-        assert(ubik_string_path_concat(&out, "/hello/", "/test_file") == OK);
+        assert(ubik_string_path_concat(
+                &out, "/hello/", "/test_file", NULL) == OK);
         assert(strcmp(out, "/hello/test_file") == 0);
         free(out);
 
-        assert(ubik_string_path_concat(&out, "", "test_file") == OK);
+        assert(ubik_string_path_concat(
+                &out, "", "test_file", NULL) == OK);
         assert(strcmp(out, "test_file") == 0);
         free(out);
 
-        assert(ubik_string_path_concat(&out, "./one/two/three", "four") == OK);
+        assert(ubik_string_path_concat(
+                &out, "./one/two/three", "four", NULL) == OK);
         assert(strcmp(out, "./one/two/three/four") == 0);
         free(out);
 

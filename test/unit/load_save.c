@@ -30,7 +30,7 @@ load_save()
         struct ubik_stream s;
         struct ubik_value *u, *v;
 
-        assert(ubik_stream_buffer(&s) == OK);
+        assert(ubik_stream_buffer(&s, NULL) == OK);
 
         /*
          *              0

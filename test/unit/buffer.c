@@ -28,7 +28,7 @@ buffer()
         char c[20];
         size_t n;
 
-        assert(ubik_stream_buffer(&s) == OK);
+        assert(ubik_stream_buffer(&s, NULL) == OK);
 
         n = ubik_stream_write(&s, (char[]){0, 1, 2, 3, 4}, 5);
         assert(n == 5);
