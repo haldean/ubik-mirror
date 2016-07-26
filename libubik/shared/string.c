@@ -198,4 +198,5 @@ ubik_vfprintf(struct ubik_stream *s, const char *fmt, va_list args)
         ubik_assert(aspr_res >= 0);
         len = aspr_res;
         ubik_assert(ubik_stream_write(s, formatted, len) == len);
+        free(formatted);
 }
