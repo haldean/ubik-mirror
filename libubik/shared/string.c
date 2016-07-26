@@ -177,3 +177,25 @@ ubik_asprintf(char **res, struct ubik_alloc_region *r, const char *fmt, ...)
 
         va_end(ap);
 }
+
+void __attribute__((format(printf, 2, 3)))
+ubik_fprintf(struct ubik_stream *s, const char *fmt, ...)
+{
+        va_list ap;
+        va_start(ap, fmt);
+        ubik_vfprintf(s, fmt, ap);
+        va_end(ap);
+}
+
+void
+ubik_vfprintf(struct ubik_stream *s, const char *fmt, va_list args)
+{
+        char *formatted;
+        size_t len;
+        int aspr_res;
+
+        aspr_res = vasprintf(&formatted, fmt, args);
+        ubik_assert(aspr_res >= 0);
+        len = aspr_res;
+        ubik_assert(ubik_stream_write(s, formatted, len) == len);
+}

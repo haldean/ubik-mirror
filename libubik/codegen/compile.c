@@ -404,7 +404,7 @@ ubik_compile_enqueue(
 
         if (userreq->feedback == NULL)
                 printf("warning: compilation feedback unavailable, no feedback "
-                       "stream provided");
+                       "stream provided\n");
 
         req = calloc(1, sizeof(struct ubik_compile_request));
         if (req == NULL)
