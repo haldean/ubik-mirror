@@ -18,6 +18,7 @@
  */
 
 #include "ubik/ast.h"
+#include "ubik/stream.h"
 #include "ubik/ubik.h"
 
 enum feedback_level
@@ -28,11 +29,13 @@ enum feedback_level
 
 /* Prints an error message with all location information, the given message, and
  * the contents of the line on which the error occurred. */
-void
+void __attribute__((format(printf, 4, 5)))
 ubik_feedback_error_line(
-        enum feedback_level, struct ubik_ast_loc *loc, char *fmt, ...);
+        struct ubik_stream *s, enum feedback_level, struct ubik_ast_loc *loc,
+        char *fmt, ...);
 
 /* Prints an error message with all location information and the given message. */
-void
+void __attribute__((format(printf, 4, 5)))
 ubik_feedback_error_header(
-        enum feedback_level, struct ubik_ast_loc *loc, char *fmt, ...);
+        struct ubik_stream *s, enum feedback_level, struct ubik_ast_loc *loc,
+        char *fmt, ...);

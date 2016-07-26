@@ -24,6 +24,7 @@
 #include <unistd.h>
 
 #include "ubik/adt.h"
+#include "ubik/assign.h"
 #include "ubik/compile.h"
 #include "ubik/feedback.h"
 #include "ubik/import.h"
@@ -142,6 +143,7 @@ create_import_request(
         struct ubik_compile_request *res,
         struct ubik_compile_env *cenv,
         char *name,
+        struct ubik_compile_request *parent,
         struct ubik_ast_loc *loc)
 {
         struct dirent *test_f;
@@ -181,7 +183,7 @@ create_import_request(
                                 return err;
 
                         err = ubik_parse(
-                                &test_ast, &r, fullpath, &in_stream, true);
+                                &test_ast, &r, NULL, fullpath, &in_stream);
                         if (err != OK)
                                 continue;
 
@@ -196,6 +198,7 @@ create_import_request(
                                 res->source = in_stream;
                                 res->reason = LOAD_IMPORTED;
                                 res->cb = NULL;
+                                res->feedback = parent->feedback;
 
                                 closedir(test_dir);
                                 return OK;
@@ -206,7 +209,7 @@ create_import_request(
         }
 
         ubik_feedback_error_line(
-                UBIK_FEEDBACK_ERR, loc,
+                parent->feedback, UBIK_FEEDBACK_ERR, loc,
                 "could not find source for imported package %s", name);
         return ubik_raise(ERR_ABSENT, "couldn't find import source");
 }
@@ -225,8 +228,8 @@ load_ast(struct ubik_compile_env *cenv, struct ubik_compile_job *job)
                 return err;
 
         err = ubik_parse(
-                &job->ast, &job->request->region, job->request->source_name,
-                &job->woven, true);
+                &job->ast, &job->request->region, job->request->feedback,
+                job->request->source_name, &job->woven);
         if (err != OK)
                 return err;
 
@@ -235,7 +238,8 @@ load_ast(struct ubik_compile_env *cenv, struct ubik_compile_job *job)
         {
                 req = calloc(1, sizeof(struct ubik_compile_request));
                 err = create_import_request(
-                        req, cenv, import->canonical, &import->loc);
+                        req, cenv, import->canonical, job->request,
+                        &import->loc);
                 if (err != OK)
                 {
                         free(req);
@@ -269,15 +273,28 @@ compile_job(
         local(patterns_context) struct ubik_patterns_context pattern_ctx = {0};
         local(infer_context) struct ubik_infer_context infer_ctx = {0};
         local(adt_bind_context) struct ubik_adt_bind_context adt_ctx = {0};
+        local(assign_context) struct ubik_assign_context assign_ctx = {0};
         size_t i;
         ubik_error err, rerr;
 
-        infer_ctx.debug = cenv->debug;
-        infer_ctx.region = &job->request->region;
-        pattern_ctx.region = &job->request->region;
-        preresolve_ctx.region = &job->request->region;
-        resolve_ctx.region = &job->request->region;
+        adt_ctx.feedback = job->request->feedback;
         adt_ctx.region = &job->request->region;
+
+        assign_ctx.feedback = job->request->feedback;
+        assign_ctx.region = &job->request->region;
+
+        infer_ctx.debug = cenv->debug;
+        infer_ctx.feedback = job->request->feedback;
+        infer_ctx.region = &job->request->region;
+
+        pattern_ctx.feedback = job->request->feedback;
+        pattern_ctx.region = &job->request->region;
+
+        preresolve_ctx.feedback = job->request->feedback;
+        preresolve_ctx.region = &job->request->region;
+
+        resolve_ctx.feedback = job->request->feedback;
+        resolve_ctx.region = &job->request->region;
 
         err = ubik_import_add_splats(cenv, job->ast, &job->request->region);
         if (err != OK)
@@ -342,7 +359,7 @@ compile_job(
 
         graph = NULL;
         err = ubik_gen_graphs(
-                &graph, job->ast, job->request->reason, &job->request->region);
+                &graph, job->ast, job->request->reason, &assign_ctx);
         if (err != OK)
         {
                 if (graph != NULL)
@@ -385,6 +402,10 @@ ubik_compile_enqueue(
         struct ubik_compile_request *req;
         struct ubik_compile_job *job;
 
+        if (userreq->feedback == NULL)
+                printf("warning: compilation feedback unavailable, no feedback "
+                       "stream provided");
+
         req = calloc(1, sizeof(struct ubik_compile_request));
         if (req == NULL)
                 return ubik_raise(ERR_NO_MEMORY, "enqueue compilation request");
@@ -399,6 +420,7 @@ ubik_compile_enqueue(
         req->source = userreq->source;
         req->reason = userreq->reason;
         req->cb = userreq->cb;
+        req->feedback = userreq->feedback;
 
         ubik_alloc1(&job, struct ubik_compile_job, &req->region);
         job->request = req;

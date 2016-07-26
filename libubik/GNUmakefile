@@ -32,7 +32,6 @@ c_sources = \
     ./shared/list.c \
     ./shared/load.c \
     ./shared/natives.c \
-    ./shared/passthrough.c \
     ./shared/pointerset.c \
     ./shared/print-ast.c \
     ./shared/rt.c \

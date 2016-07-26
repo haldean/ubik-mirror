@@ -24,10 +24,13 @@
 
 struct ubik_infer_context
 {
-        /* Members are ubik_infer_error pointers */
+        /* members are ubik_infer_error pointers. */
         struct ubik_vector errors;
-
+        /* all memory is allocated in this region. */
         struct ubik_alloc_region *region;
+        /* all feedback is sent to this stream. */
+        struct ubik_stream *feedback;
+        /* if set, debugging information is printed during the run. */
         bool debug;
 };
 

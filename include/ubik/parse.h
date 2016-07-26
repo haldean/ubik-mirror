@@ -18,11 +18,11 @@
  */
 
 #pragma once
-
-#include "ubik/ubik.h"
 #include "ubik/alloc.h"
 #include "ubik/ast.h"
+#include "ubik/compile.h"
 #include "ubik/stream.h"
+#include "ubik/ubik.h"
 #include "ubik/vector.h"
 
 struct ubik_parse_context
@@ -46,9 +46,9 @@ no_ignore ubik_error
 ubik_parse(
         struct ubik_ast **ast,
         struct ubik_alloc_region *r,
+        struct ubik_stream *feedback,
         char *source_name,
-        struct ubik_stream *stream,
-        bool show_errors);
+        struct ubik_stream *stream);
 
 no_ignore ubik_error
 ubik_parse_type_expr(

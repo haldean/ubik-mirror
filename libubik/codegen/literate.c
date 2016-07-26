@@ -19,7 +19,6 @@
 
 #include "ubik/assert.h"
 #include "ubik/literate.h"
-#include "ubik/passthrough.h"
 #include "ubik/stream.h"
 
 #include <stdbool.h>

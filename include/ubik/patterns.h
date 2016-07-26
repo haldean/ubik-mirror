@@ -32,6 +32,7 @@
 
 struct ubik_patterns_context
 {
+        struct ubik_stream *feedback;
         struct ubik_alloc_region *region;
 };
 

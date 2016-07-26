@@ -99,15 +99,17 @@ assign_package(
 }
 
 no_ignore ubik_error
-ubik_package_add_to_scope(struct ubik_alloc_region *r, struct ubik_ast *ast)
+ubik_package_add_to_scope(
+        struct ubik_resolve_context *ctx,
+        struct ubik_ast *ast)
 {
         if (ast->package_name == NULL)
         {
                 ubik_feedback_error_header(
-                        UBIK_FEEDBACK_ERR, &ast->loc,
+                        ctx->feedback, UBIK_FEEDBACK_ERR, &ast->loc,
                         "module does not specify a package name");
                 return ubik_raise(
                         ERR_BAD_VALUE, "root AST must have package name");
         }
-        return assign_package(r, ast, ast->package_name);
+        return assign_package(ctx->region, ast, ast->package_name);
 }

@@ -19,6 +19,7 @@
 
 #include "ubik/feedback.h"
 #include "ubik/streamutil.h"
+#include "ubik/string.h"
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -26,41 +27,47 @@
 
 static void
 vheader(
+        struct ubik_stream *stream,
         enum feedback_level lvl,
         struct ubik_ast_loc *loc,
         char *fmt,
         va_list args)
 {
         if (loc->line_start > 0)
-                fprintf(stderr,
+                ubik_fprintf(
+                        stream,
                         "\x1b[37m%s:%lu:%lu:",
                         loc->source_name,
                         loc->line_start,
                         loc->col_start);
         else
-                fprintf(stderr, "\x1b[37m%s:", loc->source_name);
+                ubik_fprintf(stream, "\x1b[37m%s:", loc->source_name);
 
         switch (lvl)
         {
         case UBIK_FEEDBACK_ERR:
-                fprintf(stderr, "\x1b[31m error");
+                ubik_fprintf(stream, "\x1b[31m error");
                 break;
         case UBIK_FEEDBACK_WARN:
-                fprintf(stderr, "\x1b[33m warning");
+                ubik_fprintf(stream, "\x1b[33m warning");
                 break;
         }
-        fprintf(stderr, ":\x1b[0m ");
-        vfprintf(stderr, fmt, args);
-        fprintf(stderr, "\n");
+        ubik_fprintf(stream, ":\x1b[0m ");
+        ubik_vfprintf(stream, fmt, args);
+        ubik_fprintf(stream, "\n");
 }
 
 void
 ubik_feedback_error_line(
-        enum feedback_level lvl, struct ubik_ast_loc *loc, char *fmt, ...)
+        struct ubik_stream *stream,
+        enum feedback_level lvl,
+        struct ubik_ast_loc *loc,
+        char *fmt,
+        ...)
 {
         va_list ap;
         va_start(ap, fmt);
-        vheader(lvl, loc, fmt, ap);
+        vheader(stream, lvl, loc, fmt, ap);
         ubik_streamutil_print_line_char(
                 loc->source, loc->line_start - 1, loc->col_start);
         va_end(ap);
@@ -68,11 +75,15 @@ ubik_feedback_error_line(
 
 void
 ubik_feedback_error_header(
-        enum feedback_level lvl, struct ubik_ast_loc *loc, char *fmt, ...)
+        struct ubik_stream *stream,
+        enum feedback_level lvl,
+        struct ubik_ast_loc *loc,
+        char *fmt,
+        ...)
 {
         va_list ap;
         va_start(ap, fmt);
-        vheader(lvl, loc, fmt, ap);
+        vheader(stream, lvl, loc, fmt, ap);
         va_end(ap);
 }
 

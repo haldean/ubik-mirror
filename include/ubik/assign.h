@@ -17,6 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#pragma once
 #include "ubik/alloc.h"
 #include "ubik/ast.h"
 #include "ubik/bdagc.h"
@@ -39,6 +40,7 @@ struct ubik_assign_context
         /* Elements are struct ubik_assign_error * */
         struct ubik_vector errors;
         struct ubik_alloc_region *region;
+        struct ubik_stream *feedback;
 };
 
 void

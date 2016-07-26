@@ -26,5 +26,5 @@
 /* Sets the appropriate package name on all scopes in an AST. */
 no_ignore ubik_error
 ubik_package_add_to_scope(
-        struct ubik_alloc_region *r,
+        struct ubik_resolve_context *ctx,
         struct ubik_ast *ast);

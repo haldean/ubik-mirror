@@ -44,9 +44,9 @@ no_ignore ubik_error
 ubik_parse(
         struct ubik_ast **ast,
         struct ubik_alloc_region *r,
+        struct ubik_stream *feedback,
         char *source_name,
-        struct ubik_stream *stream,
-        bool show_errors)
+        struct ubik_stream *stream)
 {
         YYLTYPE loc = {0};
         YYSTYPE val;
@@ -80,9 +80,9 @@ ubik_parse(
                 return OK;
         }
 
-        if (ctx.err_loc != NULL && show_errors)
+        if (ctx.err_loc != NULL && feedback != NULL)
                 ubik_feedback_error_line(
-                        UBIK_FEEDBACK_ERR, ctx.err_loc, ctx.err_msg);
+                        feedback, UBIK_FEEDBACK_ERR, ctx.err_loc, ctx.err_msg);
 
         return ubik_raise(ERR_BAD_VALUE, "could not parse input");
 }

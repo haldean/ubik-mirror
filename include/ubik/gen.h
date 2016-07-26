@@ -18,8 +18,9 @@
  */
 
 #pragma once
-#include "ubik/ubik.h"
+#include "ubik/assign.h"
 #include "ubik/ast.h"
+#include "ubik/ubik.h"
 #include "ubik/uri.h"
 
 enum ubik_load_reason
@@ -41,4 +42,4 @@ ubik_gen_graphs(
         struct ubik_dagc **res,
         struct ubik_ast *ast,
         enum ubik_load_reason load_reason,
-        struct ubik_alloc_region *region);
+        struct ubik_assign_context *ctx);

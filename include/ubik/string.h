@@ -18,9 +18,12 @@
  */
 
 #pragma once
+#include <stdarg.h>
 #include <stdbool.h>
 #include <strings.h>
+
 #include "ubik/alloc.h"
+#include "ubik/stream.h"
 #include "ubik/ubik.h"
 
 /* Splits a NULL-terminated string into multiple smaller NULL-terminated
@@ -54,5 +57,15 @@ ubik_strdup(const char *str, struct ubik_alloc_region *r);
 /* Same as asprintf, but memory is allocated in the region. If the region is
  * NULL, this is exactly like asprintf with an asserion that the allocation
  * succeeded. */
-void
+void __attribute__((format(printf, 3, 4)))
 ubik_asprintf(char **res, struct ubik_alloc_region *r, const char *fmt, ...);
+
+/* Same as fprintf, but the result is written to a stream instead of a file
+ * pointer. */
+void __attribute__((format(printf, 2, 3)))
+ubik_fprintf(struct ubik_stream *s, const char *fmt, ...);
+
+/* Same as vfprintf, but the result is written to a stream instead of a file
+ * pointer. */
+void
+ubik_vfprintf(struct ubik_stream *s, const char *fmt, va_list args);

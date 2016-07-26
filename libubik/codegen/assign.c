@@ -565,6 +565,7 @@ ubik_assign_emit_errors(struct ubik_assign_context *ctx)
                 {
                 case ASSIGN_ERR_PRED_BLOCK_NOT_TOTAL:
                         ubik_feedback_error_line(
+                                ctx->feedback,
                                 UBIK_FEEDBACK_ERR,
                                 &ass_err->loc,
                                 "last case in predicate block must have an "

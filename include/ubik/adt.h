@@ -78,6 +78,7 @@ ubik_adt_create_constructor(
 
 struct ubik_adt_bind_context
 {
+        struct ubik_stream *feedback;
         struct ubik_alloc_region *region;
 };
 

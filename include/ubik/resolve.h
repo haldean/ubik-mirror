@@ -104,6 +104,7 @@ struct ubik_resolve_context
         struct ubik_resolve_scope *native_scope;
         struct ubik_vector errors;
         struct ubik_alloc_region *region;
+        struct ubik_stream *feedback;
 };
 
 no_ignore ubik_error

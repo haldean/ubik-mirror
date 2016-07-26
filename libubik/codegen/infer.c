@@ -270,7 +270,9 @@ infer_ast(struct ubik_ast *ast, struct ubik_infer_context *ctx)
 }
 
 no_ignore static ubik_error
-infer_error_print(struct ubik_infer_error *ierr)
+infer_error_print(
+        struct ubik_infer_context *ctx,
+        struct ubik_infer_error *ierr)
 {
         ubik_error err;
 
@@ -278,6 +280,7 @@ infer_error_print(struct ubik_infer_error *ierr)
         {
         case INFER_ERR_APPLY_HEAD_UNAPPL:
                 ubik_feedback_error_header(
+                        ctx->feedback,
                         UBIK_FEEDBACK_ERR,
                         &ierr->bad_expr->loc,
                         "head of function application is not a function:");
@@ -288,6 +291,7 @@ infer_error_print(struct ubik_infer_error *ierr)
 
         case INFER_ERR_FUNC_ARG_INCOMPAT:
                 ubik_feedback_error_header(
+                        ctx->feedback,
                         UBIK_FEEDBACK_ERR,
                         &ierr->bad_expr->loc,
                         "function and argument have incompatible types:");
@@ -298,6 +302,7 @@ infer_error_print(struct ubik_infer_error *ierr)
 
         case INFER_ERR_UNTYPEABLE:
                 ubik_feedback_error_header(
+                        ctx->feedback,
                         UBIK_FEEDBACK_WARN,
                         &ierr->bad_expr->loc,
                         "expression is untypeable with current type inference "
@@ -309,6 +314,7 @@ infer_error_print(struct ubik_infer_error *ierr)
 
         case INFER_ERR_BIND_TYPE:
                 ubik_feedback_error_line(
+                        ctx->feedback,
                         UBIK_FEEDBACK_ERR,
                         &ierr->bad_bind->loc,
                         "explicit type of binding and type of bound value "
@@ -348,7 +354,7 @@ ubik_infer(struct ubik_ast *ast, struct ubik_infer_context *ctx)
         for (i = 0; i < ctx->errors.n; i++)
         {
                 ierr = (struct ubik_infer_error *) ctx->errors.elems[i];
-                err = infer_error_print(ierr);
+                err = infer_error_print(ctx, ierr);
                 if (err != OK)
                         return err;
                 /* TODO: when type inferencer actually works, make

@@ -54,7 +54,8 @@ struct ubik_compile_request
         enum ubik_load_reason reason;
         /* the callback to call once compilation is complete */
         ubik_compile_cb cb;
-
+        /* the stream to send feedback information to */
+        struct ubik_stream *feedback;
         /* the region in which all allocations are made when handling this
          * request; the memory associated with the result can be freed all at
          * once by freeing this region. */
