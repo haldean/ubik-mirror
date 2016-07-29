@@ -243,12 +243,21 @@ struct ubik_ast_type
         struct ubik_ast_loc loc;
 };
 
+struct ubik_ast_interface
+{
+        char *name;
+        struct ubik_ast_member_list *members;
+        struct ubik_ast_loc loc;
+};
+
 struct ubik_ast
 {
         /* members are struct ubik_ast_binding pointers */
         struct ubik_vector bindings;
         /* members are struct ubik_ast_type pointers */
         struct ubik_vector types;
+        /* members are struct ubik_ast_interface pointers */
+        struct ubik_vector interfaces;
         /* to run when ast is evaluted */
         struct ubik_ast_expr *immediate;
         /* things this depends on existing */

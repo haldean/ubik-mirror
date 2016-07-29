@@ -66,6 +66,8 @@
         struct ubik_ast_type_constraints *type_constraints;
         struct ubik_ast_adt_ctors *adt_ctor;
 
+        struct ubik_ast_interface *interface;
+
         struct ubik_ast_case *case_stmt;
 
         union {
@@ -77,7 +79,8 @@
 %token <token> MATCH_PROG MATCH_TYPE
 
 %token <token> BIND TYPE IMPLIES GOES_TO LAMBDA IS OPEN_PAR CLOSE_PAR IMMEDIATE
-%token <token> MEMBER OPEN_SCOPE CLOSE_SCOPE GIVEN EXISTS COND ADD SPLAT
+%token <token> MEMBER OPEN_SCOPE CLOSE_SCOPE GIVEN EXISTS COND ADD SPLAT CLASS
+%token <token> DEFINES
 
 %token <integer> INTEGER
 %token <floating> NUMBER
@@ -99,6 +102,8 @@
 %type <case_stmt> pred_case_stmt pred_case_stmts last_pred_case_stmt all_pred_case_stmts
 %type <case_stmt> all_pattern_case_stmts pattern_case_stmt
 %type <string> package
+%type <interface> interface_def
+%type <member_list> interface_members interface_member
 
 %define api.pure full
 %define api.push-pull push
@@ -154,13 +159,13 @@ prog
 }
 | prog binding
 {
-        wrap_err(ubik_ast_bind($1, $2));
+        wrap_err(ubik_vector_append(&$1->bindings, $2));
         $$ = $1;
         merge_loc($$, $$, $2);
 }
 | prog type_def
 {
-        wrap_err(ubik_ast_add_type($1, $2));
+        wrap_err(ubik_vector_append(&$1->types, $2));
         $$ = $1;
         merge_loc($$, $$, $2);
 }
@@ -177,6 +182,12 @@ prog
         $$ = $1;
         merge_loc($$, $$, $2);
 }
+| prog interface_def
+{
+        wrap_err(ubik_vector_append(&$1->interfaces, $2));
+        $$ = $1;
+        merge_loc($$, $$, $2);
+}
 | %empty
 {
         ubik_ast_new(&$$, ctx->region);
@@ -186,7 +197,7 @@ prog
 ;
 
 package
-: MEMBER NAME
+: DEFINES NAME
 {
         $$ = $2;
 }
@@ -224,13 +235,13 @@ blocks
 }
 | blocks binding
 {
-        wrap_err(ubik_ast_bind($1, $2));
+        wrap_err(ubik_vector_append(&$1->bindings, $2));
         $$ = $1;
         merge_loc($$, $$, $2);
 }
 | blocks type_def
 {
-        wrap_err(ubik_ast_add_type($1, $2));
+        wrap_err(ubik_vector_append(&$1->types, $2));
         $$ = $1;
         merge_loc($$, $$, $2);
 }
@@ -693,6 +704,38 @@ type_atom
         $$->name = $1;
         load_loc($$->loc);
 }
+;
+
+interface_def
+: CLASS TYPE_NAME interface_members
+{
+        alloc($$, 1, struct ubik_ast_interface);
+        $$->name = $2;
+        $$->members = $3;
+        load_loc($$->loc);
+        merge_loc($$, $$, $3);
+}
+;
+
+interface_member
+: IS NAME TYPE type_expr
+{
+        alloc($$, 1, struct ubik_ast_member_list);
+        $$->name = $2;
+        $$->type = $4;
+        $$->next = NULL;
+        load_loc($$->loc);
+        merge_loc($$, $$, $4);
+}
+;
+
+interface_members
+: interface_member interface_members
+{
+        $$ = $1;
+        $$->next = $2;
+}
+| interface_member
 ;
 
 %%

@@ -413,18 +413,6 @@ ubik_ast_free(struct ubik_ast *ast)
 }
 
 no_ignore ubik_error
-ubik_ast_bind(struct ubik_ast *ast, struct ubik_ast_binding *bind)
-{
-        return ubik_vector_append(&ast->bindings, bind);
-}
-
-no_ignore ubik_error
-ubik_ast_add_type(struct ubik_ast *ast, struct ubik_ast_type *type)
-{
-        return ubik_vector_append(&ast->types, type);
-}
-
-no_ignore ubik_error
 ubik_ast_atom_new_qualified(
         struct ubik_ast_atom **atom,
         char *name,
@@ -624,4 +612,5 @@ ubik_ast_new(struct ubik_ast **ast, struct ubik_alloc_region *region)
         ubik_alloc1(ast, struct ubik_ast, region);
         (*ast)->bindings.region = region;
         (*ast)->types.region = region;
+        (*ast)->interfaces.region = region;
 }

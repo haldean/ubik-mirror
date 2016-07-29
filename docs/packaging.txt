@@ -89,7 +89,7 @@ properties:
 Given these, the following proposal is put forward. A module must start
 with the following line:
 
-    . example-package
+    ~ example-package
 
 Which specifies that the bindings in the current file are all members of
 the "example-package" package. The same package can then specify the
@@ -97,7 +97,7 @@ other packages that it depends on, by using lines that begin with the
 "add" operator. For example, this would add the "io" and "list" modules
 as dependencies of the package:
 
-    . example-package
+    ~ example-package
     + io
     + list
 
@@ -110,7 +110,7 @@ like "ibm/deep-blue", "ibm/watson", and "ibm/watson/jeopardy", but the
 relationship between them would be purely textual. They would be
 imported as:
 
-    . brain-trust
+    ~ brain-trust
     + ibm/deep-blue
     + ibm/watson
     + ibm/watson/jeopardy
@@ -140,7 +140,7 @@ If you write a package, note that importing with a splat makes the
 imported names accessible in your namespace, so if you write this
 package:
 
-    . weird-science
+    ~ weird-science
     + *ibm/watson/jeopardy
 
 Then someone using your library could do:
