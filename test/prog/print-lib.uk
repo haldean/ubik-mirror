@@ -1,5 +1,5 @@
 # this provides a printing library for peeps
-. ubik-tests/print-lib
+~ ubik-tests/print-lib
 
 : number
     ^ Word -> Word

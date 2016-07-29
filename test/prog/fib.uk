@@ -1,4 +1,4 @@
-. ubik-tests/fib
+~ ubik-tests/fib
 
 : fib
     ^ Word -> Word

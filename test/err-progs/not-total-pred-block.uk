@@ -1,4 +1,4 @@
-. err-progs/not-total-pred-block
+~ err-progs/not-total-pred-block
 
 ! emit (concat (? {
     . eq 10 30 => "wrong 1"

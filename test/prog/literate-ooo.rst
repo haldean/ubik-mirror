@@ -43,7 +43,7 @@ But we haven't even defined ``y`` yet! We can then go on to define ``y``
 In fact, you can do that even before you specify what package you're
 defining::
 
-    . ubik-tests/literate-out-of-order
+    ~ ubik-tests/literate-out-of-order
 
 In fact, this file is a runnable Ubik program, and those things should
 execute just fine. When you run it, the number "9" should be printed to

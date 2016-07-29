@@ -1,4 +1,4 @@
-. err-progs/bad-type-3
+~ err-progs/bad-type-3
 
 : a-number
     ^ Word

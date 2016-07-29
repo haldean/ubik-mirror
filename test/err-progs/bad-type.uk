@@ -1,4 +1,4 @@
-. err-progs/bad-type
+~ err-progs/bad-type
 
 ^ UserType = T
 

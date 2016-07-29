@@ -1,4 +1,4 @@
-. ubik-tests/pred-block
+~ ubik-tests/pred-block
 
 ! emit (concat (? {
     . eq 10 30 => "wrong 1"

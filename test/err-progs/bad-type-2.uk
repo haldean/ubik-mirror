@@ -1,4 +1,4 @@
-. err-prog/bad-type-2
+~ err-prog/bad-type-2
 
 : apply-num
     ^ Word

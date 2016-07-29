@@ -1,4 +1,4 @@
-. ubik-tests/num
+~ ubik-tests/num
 
 : eight
     ^ Number

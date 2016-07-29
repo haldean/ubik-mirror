@@ -1,4 +1,4 @@
-. ubik-tests/pattern-bind-simple
+~ ubik-tests/pattern-bind-simple
 
 ^ StringH
     = StringHolder String

@@ -1,4 +1,4 @@
-. ubik-tests/lambda-simple
+~ ubik-tests/lambda-simple
 
 : l
     ^ Word -> String

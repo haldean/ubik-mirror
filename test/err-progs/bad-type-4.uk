@@ -1,4 +1,4 @@
-. err-progs/bad-type-4
+~ err-progs/bad-type-4
 
 : take-a-string
     ^ String -> String

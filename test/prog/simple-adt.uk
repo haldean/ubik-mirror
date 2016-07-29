@@ -1,4 +1,4 @@
-. ubik-tests/simple-adt
+~ ubik-tests/simple-adt
 
 ^ Expr
     = Const String

@@ -1,4 +1,4 @@
-. ubik-tests/boolean
+~ ubik-tests/boolean
 + *boolean
 
 : x ^ Boolean = True

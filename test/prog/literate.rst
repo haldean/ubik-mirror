@@ -7,7 +7,7 @@ A treatise
 Ubik programmers are all disciplined people. Because of that, they
 always start their modules with the appropriate preamble::
 
-    . ubik-literate
+    ~ ubik-literate
 
 With the preamble written, they will often define a simple function like
 this one.

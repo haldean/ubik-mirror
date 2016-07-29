@@ -1,4 +1,4 @@
-. ubik-tests/list
+~ ubik-tests/list
 + *list
 
 : my-list ^ List Word = Cons 1 (Cons 2 (Cons 3 Nil))

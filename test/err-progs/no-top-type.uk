@@ -1,4 +1,4 @@
-. err-progs/no-top-type
+~ err-progs/no-top-type
 
 : this-one-is-okay
     ^ Word

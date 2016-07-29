@@ -1,4 +1,4 @@
-. ubik-tests/block
+~ ubik-tests/block
 
 : a-few-assignments
     ^ String

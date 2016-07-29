@@ -1,4 +1,4 @@
-. err-progs/unknown-name
+~ err-progs/unknown-name
 
 : test-thing
     ^ Word

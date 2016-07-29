@@ -1,4 +1,4 @@
-. ubik-tests/bind
+~ ubik-tests/bind
 
 : hello-world
     ^ Word

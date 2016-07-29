@@ -1,4 +1,4 @@
-. ubik-tests/hello
+~ ubik-tests/hello
 
 ! emit "hello world!
 "

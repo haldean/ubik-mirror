@@ -1,4 +1,4 @@
 a test::
 
-    . ubik-tests/literate-simple
+    ~ ubik-tests/literate-simple
     ! emit "hello literate world\n"

@@ -1,4 +1,4 @@
-. err-prog/bad-type-5
+~ err-prog/bad-type-5
 
 : apply-num
     ^ String

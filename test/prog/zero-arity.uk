@@ -1,5 +1,5 @@
 # test for zero-arity lambdas
-. ubik-tests/zero-arity
+~ ubik-tests/zero-arity
 
 : sixty-six
     ^ Word

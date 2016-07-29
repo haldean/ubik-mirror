@@ -1,4 +1,4 @@
-. ubik-tests/pattern-bind
+~ ubik-tests/pattern-bind
 
 ^ MaybeString
     = Solo String String

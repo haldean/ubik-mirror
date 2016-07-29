@@ -1,4 +1,4 @@
-. err-progs/syntax
+~ err-progs/syntax
 
 : test-thing
     : out-of-place

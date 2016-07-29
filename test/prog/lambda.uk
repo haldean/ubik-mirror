@@ -1,4 +1,4 @@
-. ubik-tests/lambda
+~ ubik-tests/lambda
 
 # test for point-free and point-full function definitions
 # expected output is "0x110x110x11"

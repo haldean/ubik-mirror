@@ -1,4 +1,4 @@
-. ubik-tests/type-decls
+~ ubik-tests/type-decls
 
 ^ Expr a
     | ' Num a

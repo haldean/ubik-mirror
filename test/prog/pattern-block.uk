@@ -1,4 +1,4 @@
-. ubik-tests/pattern-block
+~ ubik-tests/pattern-block
 
 ^ Number
     = Succ Number
