@@ -68,7 +68,8 @@ infer_native(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
         struct ubik_infer_error *ierr;
         ubik_error err;
 
-        err = ubik_natives_get_type(expr->type, expr->atom->str, ctx->region);
+        err = ubik_natives_get_type(
+                expr->type, expr->atom->str, &ctx->req->region);
         if (err == OK)
                 return OK;
         if (err->error_code == ERR_UNKNOWN_TYPE)
@@ -76,7 +77,7 @@ infer_native(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
                 free(err);
                 expr->type = NULL;
 
-                ubik_alloc1(&ierr, struct ubik_infer_error, ctx->region);
+                ubik_alloc1(&ierr, struct ubik_infer_error, &ctx->req->region);
                 ierr->error_type = INFER_ERR_UNTYPEABLE;
                 ierr->bad_expr = expr;
                 return ubik_vector_append(&ctx->errors, ierr);
@@ -95,23 +96,23 @@ infer_native(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
 no_ignore static ubik_error
 infer_atom(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
 {
-        ubik_alloc1(&expr->type, struct ubik_ast_type_expr, ctx->region);
+        ubik_alloc1(&expr->type, struct ubik_ast_type_expr, &ctx->req->region);
 
         switch (expr->atom->atom_type)
         {
         case ATOM_INT:
                 expr->type->type_expr_type = TYPE_EXPR_ATOM;
-                expr->type->name = ubik_strdup("Word", ctx->region);
+                expr->type->name = ubik_strdup("Word", &ctx->req->region);
                 return OK;
 
         case ATOM_NUM:
                 expr->type->type_expr_type = TYPE_EXPR_ATOM;
-                expr->type->name = ubik_strdup("Number", ctx->region);
+                expr->type->name = ubik_strdup("Number", &ctx->req->region);
                 return OK;
 
         case ATOM_STRING:
                 expr->type->type_expr_type = TYPE_EXPR_ATOM;
-                expr->type->name = ubik_strdup("String", ctx->region);
+                expr->type->name = ubik_strdup("String", &ctx->req->region);
                 return OK;
 
         case ATOM_NAME:
@@ -151,7 +152,7 @@ infer_apply(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
 
         if (h->type_expr_type != TYPE_EXPR_ARROW)
         {
-                ubik_alloc1(&ierr, struct ubik_infer_error, ctx->region);
+                ubik_alloc1(&ierr, struct ubik_infer_error, &ctx->req->region);
                 ierr->error_type = INFER_ERR_APPLY_HEAD_UNAPPL;
                 ierr->bad_expr = expr;
                 return ubik_vector_append(&ctx->errors, ierr);
@@ -159,14 +160,14 @@ infer_apply(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
 
         if (!compatible(h->apply.head, t, ctx))
         {
-                ubik_alloc1(&ierr, struct ubik_infer_error, ctx->region);
+                ubik_alloc1(&ierr, struct ubik_infer_error, &ctx->req->region);
                 ierr->error_type = INFER_ERR_FUNC_ARG_INCOMPAT;
                 ierr->bad_expr = expr;
                 return ubik_vector_append(&ctx->errors, ierr);
         }
 
-        ubik_alloc1(&expr->type, struct ubik_ast_type_expr, ctx->region);
-        return ubik_ast_type_expr_copy(expr->type, h->apply.tail, ctx->region);
+        ubik_alloc1(&expr->type, struct ubik_ast_type_expr, &ctx->req->region);
+        return ubik_ast_type_expr_copy(expr->type, h->apply.tail, &ctx->req->region);
 }
 
 no_ignore static ubik_error
@@ -252,7 +253,7 @@ infer_ast(struct ubik_ast *ast, struct ubik_infer_context *ctx)
                         {
                                 ubik_alloc1(
                                         &ierr, struct ubik_infer_error,
-                                        ctx->region);
+                                        &ctx->req->region);
                                 ierr->error_type = INFER_ERR_BIND_TYPE;
                                 ierr->bad_bind = bind;
                                 return ubik_vector_append(&ctx->errors, ierr);
@@ -280,7 +281,7 @@ infer_error_print(
         {
         case INFER_ERR_APPLY_HEAD_UNAPPL:
                 ubik_feedback_error_header(
-                        ctx->feedback,
+                        ctx->req->feedback,
                         UBIK_FEEDBACK_ERR,
                         &ierr->bad_expr->loc,
                         "head of function application is not a function:");
@@ -291,7 +292,7 @@ infer_error_print(
 
         case INFER_ERR_FUNC_ARG_INCOMPAT:
                 ubik_feedback_error_header(
-                        ctx->feedback,
+                        ctx->req->feedback,
                         UBIK_FEEDBACK_ERR,
                         &ierr->bad_expr->loc,
                         "function and argument have incompatible types:");
@@ -302,7 +303,7 @@ infer_error_print(
 
         case INFER_ERR_UNTYPEABLE:
                 ubik_feedback_error_header(
-                        ctx->feedback,
+                        ctx->req->feedback,
                         UBIK_FEEDBACK_WARN,
                         &ierr->bad_expr->loc,
                         "expression is untypeable with current type inference "
@@ -314,7 +315,7 @@ infer_error_print(
 
         case INFER_ERR_BIND_TYPE:
                 ubik_feedback_error_line(
-                        ctx->feedback,
+                        ctx->req->feedback,
                         UBIK_FEEDBACK_ERR,
                         &ierr->bad_bind->loc,
                         "explicit type of binding and type of bound value "
@@ -335,7 +336,9 @@ infer_error_print(
 }
 
 no_ignore ubik_error
-ubik_infer(struct ubik_ast *ast, struct ubik_infer_context *ctx)
+ubik_infer(
+        struct ubik_ast *ast,
+        struct ubik_infer_context *ctx)
 {
         ubik_error err;
         size_t i;
@@ -344,7 +347,7 @@ ubik_infer(struct ubik_ast *ast, struct ubik_infer_context *ctx)
 
         if (ctx->debug)
                 printf("\ninfer\n");
-        ctx->errors.region = ctx->region;
+        ctx->errors.region = &ctx->req->region;
 
         err = infer_ast(ast, ctx);
         if (err != OK)
@@ -369,5 +372,7 @@ ubik_infer(struct ubik_ast *ast, struct ubik_infer_context *ctx)
 void
 ubik_infer_context_free(struct ubik_infer_context *ctx)
 {
+        /* the error vector isn't freed in here, because everything was
+         * allocated in the request's region anyway. */
         unused(ctx);
 }

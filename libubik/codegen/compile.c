@@ -270,16 +270,8 @@ compile_job(
         struct ubik_dagc *graph;
         struct ubik_compile_result *res;
         local(infer_context) struct ubik_infer_context infer_ctx = {0};
-        local(adt_bind_context) struct ubik_adt_bind_context adt_ctx = {0};
         size_t i;
         ubik_error err, rerr;
-
-        adt_ctx.feedback = job->request->feedback;
-        adt_ctx.region = &job->request->region;
-
-        infer_ctx.debug = cenv->debug;
-        infer_ctx.feedback = job->request->feedback;
-        infer_ctx.region = &job->request->region;
 
         err = ubik_import_add_splats(cenv, job->ast, &job->request->region);
         if (err != OK)
@@ -303,6 +295,8 @@ compile_job(
                         return err;
         }
 
+        infer_ctx.req = job->request;
+        infer_ctx.debug = cenv->debug;
         err = ubik_infer(job->ast, &infer_ctx);
         if (err != OK)
                 return err;
@@ -319,7 +313,7 @@ compile_job(
                         return err;
         }
 
-        err = ubik_adt_bind_all_to_ast(job->ast, &adt_ctx);
+        err = ubik_adt_bind_all_to_ast(job->ast, job->request);
         if (err != OK)
                 return err;
 

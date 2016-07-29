@@ -20,18 +20,18 @@
 #pragma once
 #include "ubik/alloc.h"
 #include "ubik/ast.h"
+#include "ubik/compile.h"
 #include "ubik/ubik.h"
 
 struct ubik_infer_context
 {
-        /* members are ubik_infer_error pointers. */
-        struct ubik_vector errors;
-        /* all memory is allocated in this region. */
-        struct ubik_alloc_region *region;
-        /* all feedback is sent to this stream. */
-        struct ubik_stream *feedback;
+        /* the request that's driving this inferrence. Used for memory regions,
+         * feedback methods, etc. */
+        struct ubik_compile_request *req;
         /* if set, debugging information is printed during the run. */
         bool debug;
+        /* members are ubik_infer_error pointers. */
+        struct ubik_vector errors;
 };
 
 enum ubik_infer_error_type

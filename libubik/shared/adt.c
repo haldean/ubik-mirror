@@ -287,7 +287,7 @@ no_ignore static ubik_error
 bind_decl(
         struct ubik_ast *ast,
         struct ubik_ast_type *type,
-        struct ubik_adt_bind_context *ctx)
+        struct ubik_compile_request *req)
 {
         struct ubik_value *type_decl;
         struct ubik_ast_binding *bind;
@@ -297,14 +297,14 @@ bind_decl(
         err = ubik_value_new(&type_decl);
         if (err != OK)
                 return err;
-        ubik_ref_steal(type_decl, ctx->region);
+        ubik_ref_steal(type_decl, &req->region);
 
         err = ubik_adt_create_decl(type_decl, type);
         if (err != OK)
                 return err;
 
-        ubik_alloc1(&decl_expr, struct ubik_ast_expr, ctx->region);
-        ubik_alloc1(&decl_expr->atom, struct ubik_ast_atom, ctx->region);
+        ubik_alloc1(&decl_expr, struct ubik_ast_expr, &req->region);
+        ubik_alloc1(&decl_expr->atom, struct ubik_ast_atom, &req->region);
         decl_expr->expr_type = EXPR_ATOM;
         decl_expr->loc = type->loc;
         decl_expr->atom->atom_type = ATOM_VALUE;
@@ -312,8 +312,8 @@ bind_decl(
         /* let the expression inherit the ref to type_decl */
         decl_expr->atom->value = type_decl;
 
-        ubik_alloc1(&bind, struct ubik_ast_binding, ctx->region);
-        bind->name = ubik_strdup(type->name, ctx->region);
+        ubik_alloc1(&bind, struct ubik_ast_binding, &req->region);
+        bind->name = ubik_strdup(type->name, &req->region);
         bind->expr = decl_expr;
         bind->loc = type->loc;
 
@@ -328,7 +328,7 @@ bind_ctor(
         struct ubik_ast *ast,
         struct ubik_ast_type *type,
         struct ubik_ast_adt_ctors *ctor,
-        struct ubik_adt_bind_context *ctx)
+        struct ubik_compile_request *req)
 {
         /* a constructor with name X that constructs a type T and has args A1 A2
          * A3 becomes:
@@ -352,9 +352,9 @@ bind_ctor(
         ubik_error err;
         size_t i;
 
-        ubik_alloc1(&bind, struct ubik_ast_binding, ctx->region);
+        ubik_alloc1(&bind, struct ubik_ast_binding, &req->region);
 
-        ubik_alloc1(&lambda, struct ubik_ast_expr, ctx->region);
+        ubik_alloc1(&lambda, struct ubik_ast_expr, &req->region);
         lambda->expr_type = EXPR_LAMBDA;
         lambda->loc = ctor->loc;
 
@@ -363,37 +363,37 @@ bind_ctor(
         for (i = 0, cargs = ctor->params;
                 cargs != NULL; cargs = cargs->next, i++);
 
-        ubik_alloc1(&t0, struct ubik_ast_expr, ctx->region);
+        ubik_alloc1(&t0, struct ubik_ast_expr, &req->region);
         t0->expr_type = EXPR_ATOM;
         t0->loc = ctor->loc;
-        ubik_alloc1(&t0->atom, struct ubik_ast_atom, ctx->region);
+        ubik_alloc1(&t0->atom, struct ubik_ast_atom, &req->region);
         t0->atom->atom_type = ATOM_NAME;
-        ubik_asprintf(&t0->atom->str, ctx->region, "ubik-adt-new-%lu", i);
+        ubik_asprintf(&t0->atom->str, &req->region, "ubik-adt-new-%lu", i);
         t0->atom->loc = ctor->loc;
 
-        ubik_alloc1(&t1, struct ubik_ast_expr, ctx->region);
+        ubik_alloc1(&t1, struct ubik_ast_expr, &req->region);
         t1->expr_type = EXPR_ATOM;
         t1->loc = ctor->loc;
-        ubik_alloc1(&t1->atom, struct ubik_ast_atom, ctx->region);
+        ubik_alloc1(&t1->atom, struct ubik_ast_atom, &req->region);
         t1->atom->atom_type = ATOM_NAME;
-        t1->atom->str = ubik_strdup(type->name, ctx->region);
+        t1->atom->str = ubik_strdup(type->name, &req->region);
         t1->atom->loc = ctor->loc;
 
-        ubik_alloc1(&t2, struct ubik_ast_expr, ctx->region);
+        ubik_alloc1(&t2, struct ubik_ast_expr, &req->region);
         t2->expr_type = EXPR_APPLY;
         t2->loc = ctor->loc;
         t2->apply.head = t0;
         t2->apply.tail = t1;
 
-        ubik_alloc1(&t0, struct ubik_ast_expr, ctx->region);
+        ubik_alloc1(&t0, struct ubik_ast_expr, &req->region);
         t0->expr_type = EXPR_ATOM;
         t0->loc = ctor->loc;
-        ubik_alloc1(&t0->atom, struct ubik_ast_atom, ctx->region);
+        ubik_alloc1(&t0->atom, struct ubik_ast_atom, &req->region);
         t0->atom->atom_type = ATOM_STRING;
-        t0->atom->str = ubik_strdup(ctor->name, ctx->region);
+        t0->atom->str = ubik_strdup(ctor->name, &req->region);
         t0->atom->loc = ctor->loc;
 
-        ubik_alloc1(&t1, struct ubik_ast_expr, ctx->region);
+        ubik_alloc1(&t1, struct ubik_ast_expr, &req->region);
         t1->expr_type = EXPR_APPLY;
         t1->loc = ctor->loc;
         t1->apply.head = t2;
@@ -403,21 +403,21 @@ bind_ctor(
         for (i = 0, cargs = ctor->params;
                         cargs != NULL; cargs = cargs->next, i++)
         {
-                ubik_alloc1(&largs, struct ubik_ast_arg_list, ctx->region);
-                ubik_asprintf(&largs->name, ctx->region, "%lu", i);
+                ubik_alloc1(&largs, struct ubik_ast_arg_list, &req->region);
+                ubik_asprintf(&largs->name, &req->region, "%lu", i);
                 largs->next = last_largs;
                 last_largs = largs;
                 lambda->lambda.args = largs;
 
-                ubik_alloc1(&t0, struct ubik_ast_expr, ctx->region);
+                ubik_alloc1(&t0, struct ubik_ast_expr, &req->region);
                 t0->expr_type = EXPR_ATOM;
                 t0->loc = ctor->loc;
-                ubik_alloc1(&t0->atom, struct ubik_ast_atom, ctx->region);
+                ubik_alloc1(&t0->atom, struct ubik_ast_atom, &req->region);
                 t0->atom->atom_type = ATOM_NAME;
                 t0->atom->loc = ctor->loc;
-                ubik_asprintf(&t0->atom->str, ctx->region, "%lu", i);
+                ubik_asprintf(&t0->atom->str, &req->region, "%lu", i);
 
-                ubik_alloc1(&t1, struct ubik_ast_expr, ctx->region);
+                ubik_alloc1(&t1, struct ubik_ast_expr, &req->region);
                 t1->expr_type = EXPR_APPLY;
                 t1->loc = ctor->loc;
                 t1->apply.head = t2;
@@ -427,7 +427,7 @@ bind_ctor(
 
         lambda->lambda.body = t2;
 
-        bind->name = ubik_strdup(ctor->name, ctx->region);
+        bind->name = ubik_strdup(ctor->name, &req->region);
         bind->expr = lambda;
         bind->loc = ctor->loc;
 
@@ -442,19 +442,19 @@ no_ignore static ubik_error
 bind_type(
         struct ubik_ast *ast,
         struct ubik_ast_type *type,
-        struct ubik_adt_bind_context *ctx)
+        struct ubik_compile_request *req)
 {
         struct ubik_ast_adt_ctors *ctor;
         ubik_error err;
 
-        err = bind_decl(ast, type, ctx);
+        err = bind_decl(ast, type, req);
         if (err != OK)
                 return err;
 
         ctor = type->adt.ctors;
         while (ctor != NULL)
         {
-                err = bind_ctor(ast, type, ctor, ctx);
+                err = bind_ctor(ast, type, ctor, req);
                 if (err != OK)
                         return err;
                 ctor = ctor->next;
@@ -466,7 +466,7 @@ bind_type(
 no_ignore ubik_error
 ubik_adt_bind_all_to_ast(
         struct ubik_ast *ast,
-        struct ubik_adt_bind_context *ctx)
+        struct ubik_compile_request *req)
 {
         size_t i;
         struct ubik_ast_type *type;
@@ -478,16 +478,10 @@ ubik_adt_bind_all_to_ast(
                 if (type->type != TYPE_ADT)
                         continue;
 
-                err = bind_type(ast, type, ctx);
+                err = bind_type(ast, type, req);
                 if (err != OK)
                         return err;
         }
 
         return OK;
-}
-
-void
-ubik_adt_bind_context_free(struct ubik_adt_bind_context *ctx)
-{
-        unused(ctx);
 }

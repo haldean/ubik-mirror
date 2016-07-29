@@ -19,6 +19,7 @@
 
 #pragma once
 #include "ubik/ast.h"
+#include "ubik/compile.h"
 #include "ubik/ubik.h"
 
 #define UBIK_MAX_ADT_FIELDS 32
@@ -76,18 +77,9 @@ ubik_adt_create_constructor(
         char *package_name,
         char *constructor_name);
 
-struct ubik_adt_bind_context
-{
-        struct ubik_stream *feedback;
-        struct ubik_alloc_region *region;
-};
-
 /* Adds all ADT bindings to an AST; this creates all of the necessary
  * constructors and data bindings as native bindings. */
 no_ignore ubik_error
 ubik_adt_bind_all_to_ast(
         struct ubik_ast *ast,
-        struct ubik_adt_bind_context *ctx);
-
-void
-ubik_adt_bind_context_free(struct ubik_adt_bind_context *ctx);
+        struct ubik_compile_request *req);
