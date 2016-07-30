@@ -17,6 +17,7 @@ c_sources = \
     ./codegen/patterns.c \
     ./codegen/resolve.c \
     ./codegen/token.c \
+    ./codegen/types.c \
     ./rt/eval.c \
     ./rt/gc.c \
     ./rt/schedule.c \

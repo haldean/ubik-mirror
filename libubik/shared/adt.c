@@ -31,6 +31,7 @@
 #include "ubik/list.h"
 #include "ubik/rttypes.h"
 #include "ubik/string.h"
+#include "ubik/types.h"
 #include "ubik/uri.h"
 #include "ubik/util.h"
 #include "ubik/value.h"

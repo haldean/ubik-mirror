@@ -35,6 +35,7 @@
 #include "ubik/resolve.h"
 #include "ubik/streamutil.h"
 #include "ubik/string.h"
+#include "ubik/types.h"
 #include "ubik/util.h"
 
 struct ubik_resolve_context

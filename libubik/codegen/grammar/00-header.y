@@ -19,10 +19,11 @@
 
 %{
 
-#include "ubik/ubik.h"
 #include "ubik/ast.h"
 #include "ubik/parse.h"
 #include "ubik/string.h"
+#include "ubik/types.h"
+#include "ubik/ubik.h"
 #include "ubik/util.h"
 
 #include <stdio.h>

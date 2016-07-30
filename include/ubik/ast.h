@@ -27,7 +27,7 @@
 /* The maximum number of subexpressions any one expression can have. */
 #define UBIK_MAX_SUBEXPRS 64
 
-enum expr_type
+enum ubik_expr_type
 {
         EXPR_APPLY = 1,
         EXPR_ATOM,
@@ -36,15 +36,7 @@ enum expr_type
         EXPR_COND_BLOCK,
 };
 
-enum ubik_type_expr_type
-{
-        TYPE_EXPR_APPLY = 1,
-        TYPE_EXPR_ATOM,
-        TYPE_EXPR_VAR,
-        TYPE_EXPR_ARROW,
-};
-
-enum atom_type
+enum ubik_atom_type
 {
         ATOM_INT = 1,
         ATOM_NUM,
@@ -53,13 +45,6 @@ enum atom_type
         ATOM_TYPE_NAME,
         ATOM_STRING,
         ATOM_VALUE,
-};
-
-enum ubik_type_type
-{
-        TYPE_RECORD = 1,
-        TYPE_ADT,
-        TYPE_ALIAS,
 };
 
 enum ubik_cond_block_type
@@ -98,7 +83,7 @@ struct ubik_ast_atom
                 } qualified;
                 struct ubik_value *value;
         };
-        enum atom_type atom_type;
+        enum ubik_atom_type atom_type;
         struct ubik_resolve_name_loc *name_loc;
         struct ubik_ast_loc loc;
 };
@@ -148,27 +133,12 @@ struct ubik_ast_expr
                 } cond_block;
                 struct ubik_ast *block;
         };
-        enum expr_type expr_type;
+        enum ubik_expr_type expr_type;
         struct ubik_ast_loc loc;
 
         struct ubik_resolve_scope *scope;
         struct ubik_dagc_node *gen;
         struct ubik_type_expr *type;
-};
-
-struct ubik_type_expr
-{
-        union
-        {
-                char *name;
-                struct
-                {
-                        struct ubik_type_expr *head;
-                        struct ubik_type_expr *tail;
-                } apply;
-        };
-        enum ubik_type_expr_type type_expr_type;
-        struct ubik_ast_loc loc;
 };
 
 struct ubik_ast_binding
@@ -194,70 +164,6 @@ struct ubik_ast_member_list
         struct ubik_ast_expr *value;
         struct ubik_ast_loc loc;
         struct ubik_ast_member_list *next;
-};
-
-struct ubik_type_params
-{
-        char *name;
-        struct ubik_ast_loc loc;
-        struct ubik_type_params *next;
-};
-
-struct ubik_type_constraints
-{
-        char *interface;
-        struct ubik_type_params *params;
-        struct ubik_ast_loc loc;
-        struct ubik_type_constraints *next;
-};
-
-struct ubik_type_list
-{
-        struct ubik_type_expr *type_expr;
-        struct ubik_ast_loc loc;
-        struct ubik_type_list *next;
-};
-
-struct ubik_ast_adt_ctors
-{
-        char *name;
-        struct ubik_type_list *params;
-        struct ubik_ast_loc loc;
-        struct ubik_ast_adt_ctors *next;
-};
-
-struct ubik_type
-{
-        union
-        {
-                struct ubik_ast_member_list *members;
-                struct ubik_type_expr *aliases_to;
-                struct
-                {
-                        struct ubik_type_params *params;
-                        struct ubik_type_constraints *constraints;
-                        struct ubik_ast_adt_ctors *ctors;
-                } adt;
-        };
-        char *name;
-        enum ubik_type_type type;
-        struct ubik_ast_loc loc;
-};
-
-struct ubik_ast_interface
-{
-        char *name;
-        struct ubik_type_params *params;
-        struct ubik_ast_member_list *members;
-        struct ubik_ast_loc loc;
-};
-
-struct ubik_ast_implementation
-{
-        char *iface_name;
-        struct ubik_type_list *params;
-        struct ubik_ast_member_list *members;
-        struct ubik_ast_loc loc;
 };
 
 struct ubik_ast
@@ -304,30 +210,16 @@ ubik_ast_print(struct ubik_ast *ast);
 no_ignore ubik_error
 ubik_ast_expr_print(struct ubik_ast_expr *expr);
 
-/* Prints a type expression to stdout. */
-no_ignore ubik_error
-ubik_type_expr_print(struct ubik_type_expr *expr);
-
 no_ignore ubik_error
 ubik_ast_bind(
         struct ubik_ast *ast,
         struct ubik_ast_binding *bind);
 
 no_ignore ubik_error
-ubik_ast_add_type(
-        struct ubik_ast *ast,
-        struct ubik_type *type);
-
-no_ignore ubik_error
 ubik_ast_atom_new_qualified(
         struct ubik_ast_atom **atom,
         char *name,
         struct ubik_alloc_region *r);
-
-no_ignore ubik_error
-ubik_ast_import(
-        struct ubik_ast *ast,
-        struct ubik_ast_import_list *import_list);
 
 no_ignore ubik_error
 ubik_ast_subexprs(
@@ -341,11 +233,3 @@ ubik_ast_merge_loc(
         struct ubik_ast_loc *res,
         struct ubik_ast_loc *l1,
         struct ubik_ast_loc *l2);
-
-/* Copy src to dst. If region is not NULL, the copy is allocated in the given
- * region. */
-no_ignore ubik_error
-ubik_type_expr_copy(
-        struct ubik_type_expr *dst,
-        struct ubik_type_expr *src,
-        struct ubik_alloc_region *r);

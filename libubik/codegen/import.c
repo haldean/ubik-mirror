@@ -19,6 +19,7 @@
 
 #include "ubik/import.h"
 #include "ubik/string.h"
+#include "ubik/types.h"
 
 #include <string.h>
 #include <stdlib.h>

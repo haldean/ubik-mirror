@@ -22,6 +22,7 @@
 #include "ubik/natives.h"
 #include "ubik/resolve.h"
 #include "ubik/string.h"
+#include "ubik/types.h"
 #include "ubik/util.h"
 
 #include <stdio.h>

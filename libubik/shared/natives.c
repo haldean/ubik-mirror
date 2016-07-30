@@ -22,10 +22,10 @@
 #endif
 
 #include "ubik/adt.h"
-#include "ubik/ast.h"
 #include "ubik/env.h"
 #include "ubik/natives.h"
 #include "ubik/parse.h"
+#include "ubik/types.h"
 #include "ubik/ubik.h"
 #include "ubik/util.h"
 

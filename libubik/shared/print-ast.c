@@ -20,6 +20,7 @@
 #include "ubik/ast.h"
 #include "ubik/resolve.h"
 #include "ubik/stream.h"
+#include "ubik/types.h"
 #include "ubik/value.h"
 
 #include <inttypes.h>
