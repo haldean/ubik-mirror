@@ -1,4 +1,4 @@
-/* vim: set shiftwidth=8 tabstop=8 :
+/* vim: set shiftwidth=8 tabstop=8 filetype=text :
  * grammar.y: ubik language grammar
  * Copyright (C) 2016, Haldean Brown
  *
@@ -152,6 +152,28 @@ pattern
         $$->expr_type = EXPR_ATOM;
         $$->atom = atom;
         $$->loc = atom->loc;
+}
+| pattern SPLAT
+{
+        struct ubik_ast_expr *tail;
+        struct ubik_ast_atom *atom;
+
+        alloc(atom, 1, struct ubik_ast_atom);
+        atom->atom_type = ATOM_NAME;
+        atom->str = ubik_strdup("", ctx->region);
+        load_loc(atom->loc);
+
+        alloc(tail, 1, struct ubik_ast_expr);
+        tail->expr_type = EXPR_ATOM;
+        tail->atom = atom;
+        tail->loc = atom->loc;
+
+        alloc($$, 1, struct ubik_ast_expr);
+        $$->expr_type = EXPR_APPLY;
+        $$->apply.head = $1;
+        $$->apply.tail = tail;
+
+        merge_loc($$, $1, tail);
 }
 ;
 

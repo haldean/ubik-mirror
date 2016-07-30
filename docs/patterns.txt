@@ -50,7 +50,7 @@ Another syntactic example, this time with an ADT with two constructors:
         : shape-name
             ^ Shape -> String
             = \x -> ? x {
-                . Circle center _ => concat "circle " (humanize center)
+                . Circle center * => concat "circle " (humanize center)
                 . Rect lo hi => "rectangle"
             }
 

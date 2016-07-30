@@ -7,7 +7,7 @@
 : is-it-zero
     ^ Number -> String
     = \n -> ? n {
-        . Succ _ => "no"
+        . Succ * => "no"
         . Zero   => "yes"
     }
 

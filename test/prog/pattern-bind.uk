@@ -7,7 +7,7 @@
 : whats-the-string
     ^ MaybeString -> String
     = \s -> ? s {
-        . Solo str _ => str
+        . Solo str * => str
         . Nada => "nothing"
     }
 
