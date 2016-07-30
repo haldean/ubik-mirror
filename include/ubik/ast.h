@@ -246,6 +246,7 @@ struct ubik_ast_type
 struct ubik_ast_interface
 {
         char *name;
+        struct ubik_ast_type_params *params;
         struct ubik_ast_member_list *members;
         struct ubik_ast_loc loc;
 };

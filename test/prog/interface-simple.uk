@@ -1,0 +1,9 @@
+~ ubik-tests/interface-simple
+
+_ Addable a
+    . add ^ a -> a -> a
+
+' Addable Word
+    . add = uadd
+
+! emit (humanize (add 7 7))

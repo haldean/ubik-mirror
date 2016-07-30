@@ -79,8 +79,8 @@
 %token <token> MATCH_PROG MATCH_TYPE
 
 %token <token> BIND TYPE IMPLIES GOES_TO LAMBDA IS OPEN_PAR CLOSE_PAR IMMEDIATE
-%token <token> MEMBER OPEN_SCOPE CLOSE_SCOPE GIVEN EXISTS COND ADD SPLAT CLASS
-%token <token> DEFINES
+%token <token> MEMBER OPEN_SCOPE CLOSE_SCOPE GIVEN EXISTS COND ADD SPLAT
+%token <token> DEFINES INTERFACE
 
 %token <integer> INTEGER
 %token <floating> NUMBER
@@ -707,18 +707,19 @@ type_atom
 ;
 
 interface_def
-: CLASS TYPE_NAME interface_members
+: INTERFACE TYPE_NAME type_params interface_members
 {
         alloc($$, 1, struct ubik_ast_interface);
         $$->name = $2;
-        $$->members = $3;
+        $$->params = $3;
+        $$->members = $4;
         load_loc($$->loc);
-        merge_loc($$, $$, $3);
+        merge_loc($$, $$, $4);
 }
 ;
 
 interface_member
-: IS NAME TYPE type_expr
+: MEMBER NAME TYPE top_type_expr
 {
         alloc($$, 1, struct ubik_ast_member_list);
         $$->name = $2;
