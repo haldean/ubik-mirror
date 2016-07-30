@@ -70,9 +70,12 @@ $(objects): %.o: %.c $(built_headers)
 tree/%.h: tree/%.tree
 	$(PYTHON) ../res/buildtree/buildtree.py $< $@
 
-codegen/grammar/grammar.c codegen/grammar/grammar.h: codegen/grammar/grammar.y
-	$(BISON) --output=codegen/grammar/grammar.c \
-		--defines=codegen/grammar/grammar.h \
+codegen/grammar.y: codegen/grammar/*.y
+	ls -1 codegen/grammar/*.y | sort | xargs cat > $<
+
+codegen/grammar.c codegen/grammar.h: codegen/grammar.y
+	$(BISON) --output=codegen/grammar.c \
+		--defines=codegen/grammar.h \
 		--report=state -Wall -Werror $<
 
 codegen/token.c: codegen/token.l
@@ -83,7 +86,7 @@ clean:
 		$(objects) \
 		$(buildtree_headers) \
 		$(deps) \
-		codegen/grammar/grammar.{c,h,output} \
+		codegen/grammar.{c,h,output,y} \
 	       	codegen/token.c
 
 .PHONY: clean
