@@ -38,3 +38,5 @@ TAGS
 
 afl-out
 core.*
+
+libubik/codegen/grammar.y

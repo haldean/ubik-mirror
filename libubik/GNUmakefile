@@ -57,7 +57,7 @@ CFLAGS := $(CFLAGS) -Itree -I.
 objects = $(patsubst %.c,%.o,$(c_sources))
 deps = $(patsubst %.c,%.d,$(c_sources))
 buildtree_headers = $(patsubst %.tree,%.h,$(buildtree_sources))
-built_headers = $(buildtree_headers) codegen/grammar/grammar.h
+built_headers = $(buildtree_headers) codegen/grammar.h
 
 libubik.a: $(objects)
 	$(AR) rcs $@ $(objects)
@@ -71,7 +71,7 @@ tree/%.h: tree/%.tree
 	$(PYTHON) ../res/buildtree/buildtree.py $< $@
 
 codegen/grammar.y: codegen/grammar/*.y
-	ls -1 codegen/grammar/*.y | sort | xargs cat > $<
+	ls -1 codegen/grammar/*.y | sort | xargs cat > $@
 
 codegen/grammar.c codegen/grammar.h: codegen/grammar.y
 	$(BISON) --output=codegen/grammar.c \
