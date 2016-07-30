@@ -33,8 +33,8 @@ infer_ast(struct ubik_ast *ast, struct ubik_infer_context *ctx);
 
 static bool
 compatible(
-        struct ubik_ast_type_expr *e1,
-        struct ubik_ast_type_expr *e2,
+        struct ubik_type_expr *e1,
+        struct ubik_type_expr *e2,
         struct ubik_infer_context *ctx)
 {
         unused(ctx);
@@ -96,7 +96,7 @@ infer_native(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
 no_ignore static ubik_error
 infer_atom(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
 {
-        ubik_alloc1(&expr->type, struct ubik_ast_type_expr, &ctx->req->region);
+        ubik_alloc1(&expr->type, struct ubik_type_expr, &ctx->req->region);
 
         switch (expr->atom->atom_type)
         {
@@ -141,8 +141,8 @@ infer_atom(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
 no_ignore static ubik_error
 infer_apply(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
 {
-        struct ubik_ast_type_expr *h;
-        struct ubik_ast_type_expr *t;
+        struct ubik_type_expr *h;
+        struct ubik_type_expr *t;
         struct ubik_infer_error *ierr;
 
         h = expr->apply.head->type;
@@ -166,8 +166,8 @@ infer_apply(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
                 return ubik_vector_append(&ctx->errors, ierr);
         }
 
-        ubik_alloc1(&expr->type, struct ubik_ast_type_expr, &ctx->req->region);
-        return ubik_ast_type_expr_copy(expr->type, h->apply.tail, &ctx->req->region);
+        ubik_alloc1(&expr->type, struct ubik_type_expr, &ctx->req->region);
+        return ubik_type_expr_copy(expr->type, h->apply.tail, &ctx->req->region);
 }
 
 no_ignore static ubik_error
@@ -225,7 +225,7 @@ infer_expr(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
                 err = ubik_ast_expr_print(expr);
                 printf(" has type ");
                 if (expr->type != NULL)
-                        err = ubik_ast_type_expr_print(expr->type);
+                        err = ubik_type_expr_print(expr->type);
                 else
                         printf("NULL");
                 printf("\n");
@@ -321,9 +321,9 @@ infer_error_print(
                         "explicit type of binding and type of bound value "
                         "disagree");
                 printf("expected type ");
-                err = ubik_ast_type_expr_print(ierr->bad_bind->type_expr);
+                err = ubik_type_expr_print(ierr->bad_bind->type_expr);
                 printf(" but value had type ");
-                err = ubik_ast_type_expr_print(ierr->bad_bind->expr->type);
+                err = ubik_type_expr_print(ierr->bad_bind->expr->type);
                 printf("\n");
                 break;
 

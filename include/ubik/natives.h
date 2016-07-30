@@ -39,7 +39,7 @@ ubik_natives_cache_types();
  * is defined but its type is not, returns ERR_UNKNOWN_TYPE. */
 no_ignore ubik_error
 ubik_natives_get_type(
-        struct ubik_ast_type_expr *res,
+        struct ubik_type_expr *res,
         char *func_name,
         struct ubik_alloc_region *r);
 

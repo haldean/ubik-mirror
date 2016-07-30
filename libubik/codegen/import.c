@@ -74,9 +74,9 @@ add_splat(
                 {
                         ubik_alloc1(
                                 &new_bind->type_expr,
-                                struct ubik_ast_type_expr,
+                                struct ubik_type_expr,
                                 region);
-                        err = ubik_ast_type_expr_copy(
+                        err = ubik_type_expr_copy(
                                 new_bind->type_expr, old_bind->type_expr,
                                 region);
                         if (err != OK)

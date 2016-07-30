@@ -114,7 +114,7 @@ struct native_record
 {
         char *name;
         char *type_string;
-        struct ubik_ast_type_expr *type_record;
+        struct ubik_type_expr *type_record;
 };
 
 static struct native_record native_funcs[] = {
@@ -203,7 +203,7 @@ ubik_natives_is_defined(char *name)
 
 no_ignore ubik_error
 ubik_natives_get_type(
-        struct ubik_ast_type_expr *res,
+        struct ubik_type_expr *res,
         char *name,
         struct ubik_alloc_region *r)
 {
@@ -215,7 +215,7 @@ ubik_natives_get_type(
                                 return ubik_raise(
                                         ERR_UNKNOWN_TYPE,
                                         "native function has undefined type");
-                        return ubik_ast_type_expr_copy(
+                        return ubik_type_expr_copy(
                                 res, native_funcs[i].type_record, r);
                 }
         return ubik_raise(ERR_ABSENT, "native func undefined");

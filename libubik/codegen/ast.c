@@ -25,7 +25,7 @@
 #include <string.h>
 
 no_ignore static ubik_error
-_free_type_expr(struct ubik_ast_type_expr *type_expr);
+_free_type_expr(struct ubik_type_expr *type_expr);
 
 no_ignore static ubik_error
 _free_atom(struct ubik_ast_atom *atom)
@@ -167,7 +167,7 @@ ubik_ast_expr_free(struct ubik_ast_expr *expr)
 }
 
 no_ignore static ubik_error
-_free_type_expr(struct ubik_ast_type_expr *type_expr)
+_free_type_expr(struct ubik_type_expr *type_expr)
 {
         ubik_error err;
 
@@ -565,9 +565,9 @@ ubik_ast_merge_loc(
 }
 
 no_ignore ubik_error
-ubik_ast_type_expr_copy(
-        struct ubik_ast_type_expr *dst,
-        struct ubik_ast_type_expr *src,
+ubik_type_expr_copy(
+        struct ubik_type_expr *dst,
+        struct ubik_type_expr *src,
         struct ubik_alloc_region *r)
 {
         ubik_error err;
@@ -579,14 +579,14 @@ ubik_ast_type_expr_copy(
         {
         case TYPE_EXPR_APPLY:
         case TYPE_EXPR_ARROW:
-                ubik_alloc1(&dst->apply.head, struct ubik_ast_type_expr, r);
-                err = ubik_ast_type_expr_copy(
+                ubik_alloc1(&dst->apply.head, struct ubik_type_expr, r);
+                err = ubik_type_expr_copy(
                         dst->apply.head, src->apply.head, r);
                 if (err != OK)
                         return err;
 
-                ubik_alloc1(&dst->apply.tail, struct ubik_ast_type_expr, r);
-                err = ubik_ast_type_expr_copy(
+                ubik_alloc1(&dst->apply.tail, struct ubik_type_expr, r);
+                err = ubik_type_expr_copy(
                         dst->apply.tail, src->apply.tail, r);
                 if (err != OK)
                         return err;

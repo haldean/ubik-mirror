@@ -70,7 +70,7 @@ enum ubik_cond_block_type
 
 struct ubik_ast;
 struct ubik_ast_expr;
-struct ubik_ast_type_expr;
+struct ubik_type_expr;
 struct ubik_resolve_scope;
 struct ubik_resolve_name_loc;
 
@@ -153,18 +153,18 @@ struct ubik_ast_expr
 
         struct ubik_resolve_scope *scope;
         struct ubik_dagc_node *gen;
-        struct ubik_ast_type_expr *type;
+        struct ubik_type_expr *type;
 };
 
-struct ubik_ast_type_expr
+struct ubik_type_expr
 {
         union
         {
                 char *name;
                 struct
                 {
-                        struct ubik_ast_type_expr *head;
-                        struct ubik_ast_type_expr *tail;
+                        struct ubik_type_expr *head;
+                        struct ubik_type_expr *tail;
                 } apply;
         };
         enum ubik_type_expr_type type_expr_type;
@@ -175,7 +175,7 @@ struct ubik_ast_binding
 {
         char *name;
         struct ubik_ast_expr *expr;
-        struct ubik_ast_type_expr *type_expr;
+        struct ubik_type_expr *type_expr;
         struct ubik_ast_loc loc;
 };
 
@@ -190,7 +190,7 @@ struct ubik_ast_import_list
 struct ubik_ast_member_list
 {
         char *name;
-        struct ubik_ast_type_expr *type;
+        struct ubik_type_expr *type;
         struct ubik_ast_expr *value;
         struct ubik_ast_loc loc;
         struct ubik_ast_member_list *next;
@@ -213,7 +213,7 @@ struct ubik_ast_type_constraints
 
 struct ubik_ast_type_list
 {
-        struct ubik_ast_type_expr *type_expr;
+        struct ubik_type_expr *type_expr;
         struct ubik_ast_loc loc;
         struct ubik_ast_type_list *next;
 };
@@ -231,7 +231,7 @@ struct ubik_ast_type
         union
         {
                 struct ubik_ast_member_list *members;
-                struct ubik_ast_type_expr *aliases_to;
+                struct ubik_type_expr *aliases_to;
                 struct
                 {
                         struct ubik_ast_type_params *params;
@@ -306,7 +306,7 @@ ubik_ast_expr_print(struct ubik_ast_expr *expr);
 
 /* Prints a type expression to stdout. */
 no_ignore ubik_error
-ubik_ast_type_expr_print(struct ubik_ast_type_expr *expr);
+ubik_type_expr_print(struct ubik_type_expr *expr);
 
 no_ignore ubik_error
 ubik_ast_bind(
@@ -345,7 +345,7 @@ ubik_ast_merge_loc(
 /* Copy src to dst. If region is not NULL, the copy is allocated in the given
  * region. */
 no_ignore ubik_error
-ubik_ast_type_expr_copy(
-        struct ubik_ast_type_expr *dst,
-        struct ubik_ast_type_expr *src,
+ubik_type_expr_copy(
+        struct ubik_type_expr *dst,
+        struct ubik_type_expr *src,
         struct ubik_alloc_region *r);

@@ -30,7 +30,7 @@ struct ubik_parse_context
         union
         {
                 struct ubik_ast *ast;
-                struct ubik_ast_type_expr *type_expr;
+                struct ubik_type_expr *type_expr;
         };
 
         struct ubik_ast_loc *err_loc;
@@ -52,6 +52,6 @@ ubik_parse(
 
 no_ignore ubik_error
 ubik_parse_type_expr(
-        struct ubik_ast_type_expr **type_expr,
+        struct ubik_type_expr **type_expr,
         struct ubik_alloc_region *r,
         char *source);
