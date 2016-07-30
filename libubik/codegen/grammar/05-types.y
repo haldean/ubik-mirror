@@ -26,7 +26,7 @@ type_def
 alias_def
 : BIND TYPE_NAME IS top_type_expr
 {
-        alloc($$, 1, struct ubik_ast_type);
+        alloc($$, 1, struct ubik_type);
         $$->name = $2;
         $$->type = TYPE_ALIAS;
         $$->aliases_to = $4;
@@ -39,7 +39,7 @@ alias_def
 adt_def
 : TYPE TYPE_NAME type_params type_constraints adt_ctors
 {
-        alloc($$, 1, struct ubik_ast_type);
+        alloc($$, 1, struct ubik_type);
         $$->name = $2;
         $$->type = TYPE_ADT;
         $$->adt.params = $3;
@@ -54,7 +54,7 @@ adt_def
 type_params
 : NAME type_params
 {
-        alloc($$, 1, struct ubik_ast_type_params);
+        alloc($$, 1, struct ubik_type_params);
         $$->name = $1;
         $$->next = $2;
         load_loc($$->loc);
@@ -68,7 +68,7 @@ type_params
 type_constraints
 : GIVEN EXISTS TYPE_NAME type_params type_constraints
 {
-        alloc($$, 1, struct ubik_ast_type_constraints);
+        alloc($$, 1, struct ubik_type_constraints);
         $$->interface = $3;
         $$->params = $4;
         $$->next = $5;
@@ -105,14 +105,14 @@ adt_ctor
 type_list
 : type_atom type_list
 {
-        alloc($$, 1, struct ubik_ast_type_list);
+        alloc($$, 1, struct ubik_type_list);
         $$->type_expr = $1;
         $$->next = $2;
         load_loc($$->loc);
 }
 | OPEN_PAR top_type_expr CLOSE_PAR type_list
 {
-        alloc($$, 1, struct ubik_ast_type_list);
+        alloc($$, 1, struct ubik_type_list);
         $$->type_expr = $2;
         $$->next = $4;
         load_loc($$->loc);
@@ -127,7 +127,7 @@ top_type_expr
 : type_expr
 | type_expr GOES_TO top_type_expr
 {
-        alloc($$, 1, struct ubik_ast_type_expr);
+        alloc($$, 1, struct ubik_type_expr);
         $$->type_expr_type = TYPE_EXPR_ARROW;
         $$->apply.head = $1;
         $$->apply.tail = $3;
@@ -138,7 +138,7 @@ top_type_expr
 type_expr
 : type_expr type_atom
 {
-        alloc($$, 1, struct ubik_ast_type_expr);
+        alloc($$, 1, struct ubik_type_expr);
         $$->type_expr_type = TYPE_EXPR_APPLY;
         $$->apply.head = $1;
         $$->apply.tail = $2;
@@ -154,21 +154,21 @@ type_expr
 type_atom
 : NAME
 {
-        alloc($$, 1, struct ubik_ast_type_expr);
+        alloc($$, 1, struct ubik_type_expr);
         $$->type_expr_type = TYPE_EXPR_VAR;
         $$->name = $1;
         load_loc($$->loc);
 }
 | TYPE_NAME
 {
-        alloc($$, 1, struct ubik_ast_type_expr);
+        alloc($$, 1, struct ubik_type_expr);
         $$->type_expr_type = TYPE_EXPR_ATOM;
         $$->name = $1;
         load_loc($$->loc);
 }
 | QUALIFIED_TYPE_NAME
 {
-        alloc($$, 1, struct ubik_ast_type_expr);
+        alloc($$, 1, struct ubik_type_expr);
         $$->type_expr_type = TYPE_EXPR_ATOM;
         $$->name = $1;
         load_loc($$->loc);

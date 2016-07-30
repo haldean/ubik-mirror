@@ -54,16 +54,16 @@
         struct ubik_ast_binding *binding;
         struct ubik_ast_expr *expr;
         struct ubik_ast_atom *atom;
-        struct ubik_ast_type_expr *type_expr;
+        struct ubik_type_expr *type_expr;
         struct ubik_ast_arg_list *arg_list;
         struct ubik_ast_import_list *imports;
 
-        struct ubik_ast_type *type_def;
+        struct ubik_type *type_def;
         struct ubik_ast_member_list *member_list;
 
-        struct ubik_ast_type_list *type_list;
-        struct ubik_ast_type_params *type_params;
-        struct ubik_ast_type_constraints *type_constraints;
+        struct ubik_type_list *type_list;
+        struct ubik_type_params *type_params;
+        struct ubik_type_constraints *type_constraints;
         struct ubik_ast_adt_ctors *adt_ctor;
 
         struct ubik_ast_interface *interface;
@@ -73,7 +73,7 @@
 
         union {
                 struct ubik_ast *prog;
-                struct ubik_ast_type_expr *type_expr;
+                struct ubik_type_expr *type_expr;
         } top_result;
 }
 
