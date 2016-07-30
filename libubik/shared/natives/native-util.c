@@ -17,9 +17,13 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+
 #include "ubik/env.h"
 #include "ubik/natives.h"
-#include "ubik/types.h"
+#include "ubik/rttypes.h"
 #include "ubik/ubik.h"
 #include "ubik/util.h"
 #include "ubik/value.h"

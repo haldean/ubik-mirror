@@ -25,7 +25,7 @@
 #include "ubik/env.h"
 #include "ubik/gen.h"
 #include "ubik/resolve.h"
-#include "ubik/types.h"
+#include "ubik/rttypes.h"
 #include "ubik/ubik.h"
 #include "ubik/uri.h"
 #include "ubik/util.h"

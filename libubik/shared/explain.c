@@ -17,12 +17,16 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 #include "ubik/dagc.h"
-#include "ubik/types.h"
+#include "ubik/rttypes.h"
 #include "ubik/ubik.h"
 #include "ubik/uri.h"
 #include "ubik/util.h"

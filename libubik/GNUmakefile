@@ -35,11 +35,11 @@ c_sources = \
     ./shared/pointerset.c \
     ./shared/print-ast.c \
     ./shared/rt.c \
+    ./shared/rttypes.c \
     ./shared/store.c \
     ./shared/stream.c \
     ./shared/streamutil.c \
     ./shared/string.c \
-    ./shared/types.c \
     ./shared/uri.c \
     ./shared/util.c \
     ./shared/value.c \

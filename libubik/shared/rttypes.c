@@ -1,5 +1,5 @@
 /*
- * types.h: runtime type system for ubik
+ * rttypes.c: runtime type system for ubik
  * Copyright (C) 2016, Haldean Brown
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,8 +17,8 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include "ubik/rttypes.h"
 #include "ubik/ubik.h"
-#include "ubik/types.h"
 #include "ubik/value.h"
 
 #include <stdio.h>

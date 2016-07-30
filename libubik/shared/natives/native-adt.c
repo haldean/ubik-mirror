@@ -26,7 +26,7 @@
 #include "ubik/env.h"
 #include "ubik/list.h"
 #include "ubik/natives.h"
-#include "ubik/types.h"
+#include "ubik/rttypes.h"
 #include "ubik/ubik.h"
 #include "ubik/util.h"
 #include "ubik/value.h"
