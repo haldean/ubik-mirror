@@ -67,6 +67,7 @@
         struct ubik_ast_adt_ctors *adt_ctor;
 
         struct ubik_ast_interface *interface;
+        struct ubik_ast_implementation *implementation;
 
         struct ubik_ast_case *case_stmt;
 
@@ -103,7 +104,8 @@
 %type <case_stmt> all_pattern_case_stmts pattern_case_stmt
 %type <string> package
 %type <interface> interface_def
-%type <member_list> interface_members interface_member
+%type <member_list> interface_members interface_member impl_member impl_members
+%type <implementation> impl_def
 
 %define api.pure full
 %define api.push-pull push
@@ -185,6 +187,12 @@ prog
 | prog interface_def
 {
         wrap_err(ubik_vector_append(&$1->interfaces, $2));
+        $$ = $1;
+        merge_loc($$, $$, $2);
+}
+| prog impl_def
+{
+        wrap_err(ubik_vector_append(&$1->implementations, $2));
         $$ = $1;
         merge_loc($$, $$, $2);
 }
@@ -724,6 +732,7 @@ interface_member
         alloc($$, 1, struct ubik_ast_member_list);
         $$->name = $2;
         $$->type = $4;
+        $$->value = NULL;
         $$->next = NULL;
         load_loc($$->loc);
         merge_loc($$, $$, $4);
@@ -737,6 +746,40 @@ interface_members
         $$->next = $2;
 }
 | interface_member
+;
+
+impl_def
+: EXISTS TYPE_NAME type_list impl_members
+{
+        alloc($$, 1, struct ubik_ast_implementation);
+        $$->iface_name = $2;
+        $$->params = $3;
+        $$->members = $4;
+        load_loc($$->loc);
+        merge_loc($$, $$, $4);
+}
+;
+
+impl_member
+: MEMBER NAME IS top_expr
+{
+        alloc($$, 1, struct ubik_ast_member_list);
+        $$->name = $2;
+        $$->type = NULL;
+        $$->value = $4;
+        $$->next = NULL;
+        load_loc($$->loc);
+        merge_loc($$, $$, $4);
+}
+;
+
+impl_members
+: impl_member impl_members
+{
+        $$ = $1;
+        $$->next = $2;
+}
+| impl_member
 ;
 
 %%
