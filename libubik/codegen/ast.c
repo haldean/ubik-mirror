@@ -238,9 +238,9 @@ _free_member_list(struct ubik_ast_member_list *member_list)
 }
 
 no_ignore static ubik_error
-_free_type_params(struct ubik_ast_type_params *p)
+_free_type_params(struct ubik_type_params *p)
 {
-        struct ubik_ast_type_params *to_free;
+        struct ubik_type_params *to_free;
 
         while (p != NULL)
         {
@@ -253,9 +253,9 @@ _free_type_params(struct ubik_ast_type_params *p)
 }
 
 no_ignore static ubik_error
-_free_type_constraints(struct ubik_ast_type_constraints *c)
+_free_type_constraints(struct ubik_type_constraints *c)
 {
-        struct ubik_ast_type_constraints *to_free;
+        struct ubik_type_constraints *to_free;
         ubik_error err;
 
         while (c != NULL)
@@ -273,9 +273,9 @@ _free_type_constraints(struct ubik_ast_type_constraints *c)
 }
 
 no_ignore static ubik_error
-_free_type_list(struct ubik_ast_type_list *l)
+_free_type_list(struct ubik_type_list *l)
 {
-        struct ubik_ast_type_list *to_free;
+        struct ubik_type_list *to_free;
         ubik_error err;
 
         while (l != NULL)
@@ -312,7 +312,7 @@ _free_adt_ctors(struct ubik_ast_adt_ctors *c)
 }
 
 no_ignore static ubik_error
-_free_type(struct ubik_ast_type *type)
+_free_type(struct ubik_type *type)
 {
         ubik_error err;
 

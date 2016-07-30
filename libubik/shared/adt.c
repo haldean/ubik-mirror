@@ -143,12 +143,12 @@ ubik_adt_inst_size(
 no_ignore static ubik_error
 ubik_adt_create_decl(
         struct ubik_value *res,
-        struct ubik_ast_type *source)
+        struct ubik_type *source)
 {
-        struct ubik_ast_type_params *src_params;
-        struct ubik_ast_type_constraints *src_constraints;
+        struct ubik_type_params *src_params;
+        struct ubik_type_constraints *src_constraints;
         struct ubik_ast_adt_ctors *src_ctors;
-        struct ubik_ast_type_list *src_ctor_param;
+        struct ubik_type_list *src_ctor_param;
 
         struct ubik_value *dst_name;
         struct ubik_value *dst_params;
@@ -286,7 +286,7 @@ ubik_adt_create_decl(
 no_ignore static ubik_error
 bind_decl(
         struct ubik_ast *ast,
-        struct ubik_ast_type *type,
+        struct ubik_type *type,
         struct ubik_compile_request *req)
 {
         struct ubik_value *type_decl;
@@ -326,7 +326,7 @@ bind_decl(
 no_ignore static ubik_error
 bind_ctor(
         struct ubik_ast *ast,
-        struct ubik_ast_type *type,
+        struct ubik_type *type,
         struct ubik_ast_adt_ctors *ctor,
         struct ubik_compile_request *req)
 {
@@ -345,7 +345,7 @@ bind_ctor(
         struct ubik_ast_expr *lambda;
         struct ubik_ast_arg_list *largs;
         struct ubik_ast_arg_list *last_largs;
-        struct ubik_ast_type_list *cargs;
+        struct ubik_type_list *cargs;
         struct ubik_ast_expr *t0;
         struct ubik_ast_expr *t1;
         struct ubik_ast_expr *t2;
@@ -441,7 +441,7 @@ bind_ctor(
 no_ignore static ubik_error
 bind_type(
         struct ubik_ast *ast,
-        struct ubik_ast_type *type,
+        struct ubik_type *type,
         struct ubik_compile_request *req)
 {
         struct ubik_ast_adt_ctors *ctor;
@@ -469,12 +469,12 @@ ubik_adt_bind_all_to_ast(
         struct ubik_compile_request *req)
 {
         size_t i;
-        struct ubik_ast_type *type;
+        struct ubik_type *type;
         ubik_error err;
 
         for (i = 0; i < ast->types.n; i++)
         {
-                type = (struct ubik_ast_type *) ast->types.elems[i];
+                type = (struct ubik_type *) ast->types.elems[i];
                 if (type->type != TYPE_ADT)
                         continue;
 

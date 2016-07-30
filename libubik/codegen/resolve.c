@@ -206,7 +206,7 @@ update_scopes_with_bindings(
 {
         size_t i;
         struct ubik_ast_binding *bind;
-        struct ubik_ast_type *type;
+        struct ubik_type *type;
         struct ubik_ast_adt_ctors *ctor;
         struct ubik_resolve_name *name;
         ubik_error err;

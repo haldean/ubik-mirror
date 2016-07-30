@@ -196,37 +196,37 @@ struct ubik_ast_member_list
         struct ubik_ast_member_list *next;
 };
 
-struct ubik_ast_type_params
+struct ubik_type_params
 {
         char *name;
         struct ubik_ast_loc loc;
-        struct ubik_ast_type_params *next;
+        struct ubik_type_params *next;
 };
 
-struct ubik_ast_type_constraints
+struct ubik_type_constraints
 {
         char *interface;
-        struct ubik_ast_type_params *params;
+        struct ubik_type_params *params;
         struct ubik_ast_loc loc;
-        struct ubik_ast_type_constraints *next;
+        struct ubik_type_constraints *next;
 };
 
-struct ubik_ast_type_list
+struct ubik_type_list
 {
         struct ubik_type_expr *type_expr;
         struct ubik_ast_loc loc;
-        struct ubik_ast_type_list *next;
+        struct ubik_type_list *next;
 };
 
 struct ubik_ast_adt_ctors
 {
         char *name;
-        struct ubik_ast_type_list *params;
+        struct ubik_type_list *params;
         struct ubik_ast_loc loc;
         struct ubik_ast_adt_ctors *next;
 };
 
-struct ubik_ast_type
+struct ubik_type
 {
         union
         {
@@ -234,8 +234,8 @@ struct ubik_ast_type
                 struct ubik_type_expr *aliases_to;
                 struct
                 {
-                        struct ubik_ast_type_params *params;
-                        struct ubik_ast_type_constraints *constraints;
+                        struct ubik_type_params *params;
+                        struct ubik_type_constraints *constraints;
                         struct ubik_ast_adt_ctors *ctors;
                 } adt;
         };
@@ -247,7 +247,7 @@ struct ubik_ast_type
 struct ubik_ast_interface
 {
         char *name;
-        struct ubik_ast_type_params *params;
+        struct ubik_type_params *params;
         struct ubik_ast_member_list *members;
         struct ubik_ast_loc loc;
 };
@@ -255,7 +255,7 @@ struct ubik_ast_interface
 struct ubik_ast_implementation
 {
         char *iface_name;
-        struct ubik_ast_type_list *params;
+        struct ubik_type_list *params;
         struct ubik_ast_member_list *members;
         struct ubik_ast_loc loc;
 };
@@ -264,7 +264,7 @@ struct ubik_ast
 {
         /* members are struct ubik_ast_binding pointers */
         struct ubik_vector bindings;
-        /* members are struct ubik_ast_type pointers */
+        /* members are struct ubik_type pointers */
         struct ubik_vector types;
         /* members are struct ubik_ast_interface pointers */
         struct ubik_vector interfaces;
@@ -316,7 +316,7 @@ ubik_ast_bind(
 no_ignore ubik_error
 ubik_ast_add_type(
         struct ubik_ast *ast,
-        struct ubik_ast_type *type);
+        struct ubik_type *type);
 
 no_ignore ubik_error
 ubik_ast_atom_new_qualified(

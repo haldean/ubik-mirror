@@ -260,7 +260,7 @@ ubik_type_expr_print(struct ubik_type_expr *type_expr)
 }
 
 no_ignore static ubik_error
-_print_type_list(struct ubik_ast_type_list *t)
+_print_type_list(struct ubik_type_list *t)
 {
         ubik_error err;
 
@@ -278,11 +278,11 @@ _print_type_list(struct ubik_ast_type_list *t)
 }
 
 no_ignore static ubik_error
-_print_type(struct ubik_ast_type *type, int indent)
+_print_type(struct ubik_type *type, int indent)
 {
         struct ubik_ast_member_list *m;
-        struct ubik_ast_type_params *p;
-        struct ubik_ast_type_constraints *c;
+        struct ubik_type_params *p;
+        struct ubik_type_constraints *c;
         struct ubik_ast_adt_ctors *ctor;
         ubik_error err;
 
