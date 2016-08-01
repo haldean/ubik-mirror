@@ -26,6 +26,7 @@ enum ubik_type_expr_type
         TYPE_EXPR_ATOM,
         TYPE_EXPR_VAR,
         TYPE_EXPR_ARROW,
+        TYPE_EXPR_CONSTRAINED,
 };
 
 enum ubik_type_type
@@ -45,6 +46,11 @@ struct ubik_type_expr
                         struct ubik_type_expr *head;
                         struct ubik_type_expr *tail;
                 } apply;
+                struct
+                {
+                        struct ubik_type_expr *term;
+                        struct ubik_type_constraints *constraints;
+                } constrained;
         };
         enum ubik_type_expr_type type_expr_type;
         struct ubik_ast_loc loc;

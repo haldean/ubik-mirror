@@ -1,4 +1,4 @@
-/* vim: set shiftwidth=8 tabstop=8 :
+/* vim: set shiftwidth=8 tabstop=8 filetype=text :
  * grammar.y: ubik language grammar
  * Copyright (C) 2016, Haldean Brown
  *
@@ -37,17 +37,29 @@ alias_def
 
 /* Abstract Data Types */
 adt_def
-: TYPE TYPE_NAME type_params type_constraints adt_ctors
+: TYPE TYPE_NAME type_params GIVEN type_constraints adt_ctors
 {
         alloc($$, 1, struct ubik_type);
         $$->name = $2;
         $$->type = TYPE_ADT;
         $$->adt.params = $3;
-        $$->adt.constraints = $4;
-        $$->adt.ctors = $5;
+        $$->adt.constraints = $5;
+        $$->adt.ctors = $6;
 
         load_loc($$->loc);
-        merge_loc($$, $$, $5);
+        merge_loc($$, $$, $6);
+}
+| TYPE TYPE_NAME type_params adt_ctors
+{
+        alloc($$, 1, struct ubik_type);
+        $$->name = $2;
+        $$->type = TYPE_ADT;
+        $$->adt.params = $3;
+        $$->adt.constraints = NULL;
+        $$->adt.ctors = $4;
+
+        load_loc($$->loc);
+        merge_loc($$, $$, $4);
 }
 ;
 
@@ -66,18 +78,23 @@ type_params
 ;
 
 type_constraints
-: GIVEN EXISTS TYPE_NAME type_params type_constraints
+: type_constraint type_constraints
+{
+        $$ = $1;
+        $$->next = $2;
+}
+| type_constraint
+;
+
+type_constraint
+: EXISTS TYPE_NAME type_params
 {
         alloc($$, 1, struct ubik_type_constraints);
-        $$->interface = $3;
-        $$->params = $4;
-        $$->next = $5;
+        $$->interface = $2;
+        $$->params = $3;
+        $$->next = NULL;
         load_loc($$->loc);
-        merge_loc($$, $$, $4);
-}
-| %empty
-{
-        $$ = NULL;
+        merge_loc($$, $$, $3);
 }
 ;
 
@@ -124,8 +141,20 @@ type_list
 ;
 
 top_type_expr
+: type_apply_expr
+| type_apply_expr GIVEN type_constraints
+{
+        alloc($$, 1, struct ubik_type_expr);
+        $$->type_expr_type = TYPE_EXPR_ARROW;
+        $$->constrained.term = $1;
+        $$->constrained.constraints = $3;
+        merge_loc($$, $1, $3);
+}
+;
+
+type_apply_expr
 : type_expr
-| type_expr GOES_TO top_type_expr
+| type_expr GOES_TO type_expr
 {
         alloc($$, 1, struct ubik_type_expr);
         $$->type_expr_type = TYPE_EXPR_ARROW;

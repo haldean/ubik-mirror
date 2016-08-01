@@ -92,7 +92,7 @@
 %type <ast> prog blocks
 %type <binding> binding
 %type <expr> expr immediate top_expr cond_block pattern
-%type <type_expr> top_type_expr type_expr type_atom
+%type <type_expr> top_type_expr type_expr type_atom type_apply_expr
 %type <atom> atom
 %type <arg_list> arg_list
 %type <imports> import
@@ -100,7 +100,7 @@
 %type <type_list> type_list
 %type <adt_ctor> adt_ctor adt_ctors
 %type <type_params> type_params
-%type <type_constraints> type_constraints
+%type <type_constraints> type_constraints type_constraint
 %type <case_stmt> pred_case_stmt pred_case_stmts last_pred_case_stmt all_pred_case_stmts
 %type <case_stmt> all_pattern_case_stmts pattern_case_stmt
 %type <string> package
