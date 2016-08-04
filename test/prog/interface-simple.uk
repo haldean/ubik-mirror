@@ -2,8 +2,7 @@
 
 _ Addable a
     . add ^ a -> a -> a
-
-' Addable Word
+~ Addable Word
     . add = uadd
 
 ! emit (humanize (add 7 7))

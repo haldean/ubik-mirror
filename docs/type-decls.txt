@@ -127,13 +127,13 @@ operators:
         . mult ^ a -> a -> a
 
 Once specified, you can implement the interface by specifying an
-implementation, using the exists and member operators:
+implementation, using the defines and member operators:
 
-    ' Numberish Integer
+    ~ Numberish Integer
         . add = \x, y -> iadd x y
         . mult = \x, y -> imult x y
 
-    ' Numberish Float
+    ~ Numberish Float
         . add = fadd
         . mult = fmult
 
@@ -164,7 +164,7 @@ Just like ADTs, constraints on the type variables can be specified:
 
 You can then implement this with:
 
-    ' NumberList (List Integer) Integer
+    ~ NumberList (List Integer) Integer
         . get = list:get
         . sum = reduce iadd 0
 
@@ -191,7 +191,7 @@ The full grammar of interface definitions is:
 The full grammar of interface implementations is:
 
     impl_def
-        : EXISTS TYPE_NAME parameters members
+        : DEFINES TYPE_NAME parameters members
 
     parameters
         : type_atom parameters
