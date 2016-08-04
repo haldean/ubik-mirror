@@ -151,7 +151,7 @@ top_type_expr
 | type_apply_expr GIVEN type_constraints
 {
         alloc($$, 1, struct ubik_type_expr);
-        $$->type_expr_type = TYPE_EXPR_ARROW;
+        $$->type_expr_type = TYPE_EXPR_CONSTRAINED;
         $$->constrained.term = $1;
         $$->constrained.constraints = $3;
         merge_loc($$, $1, $3);
