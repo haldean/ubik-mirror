@@ -23,33 +23,6 @@
 
 #include <stdlib.h>
 
-no_ignore ubik_error
-ubik_type_expr_free(struct ubik_type_expr *type_expr)
-{
-        ubik_error err;
-
-        switch (type_expr->type_expr_type)
-        {
-        case TYPE_EXPR_ATOM:
-        case TYPE_EXPR_VAR:
-                free(type_expr->name);
-                break;
-
-        case TYPE_EXPR_APPLY:
-        case TYPE_EXPR_ARROW:
-                err = ubik_type_expr_free(type_expr->apply.head);
-                if (err != OK)
-                        return err;
-                err = ubik_type_expr_free(type_expr->apply.tail);
-                if (err != OK)
-                        return err;
-                break;
-        }
-
-        free(type_expr);
-        return OK;
-}
-
 void
 type_params_copy(
         struct ubik_type_params *dst,

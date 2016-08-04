@@ -131,6 +131,3 @@ ubik_type_expr_copy(
         struct ubik_type_expr *dst,
         struct ubik_type_expr *src,
         struct ubik_alloc_region *r);
-
-no_ignore ubik_error
-ubik_type_expr_free(struct ubik_type_expr *expr);
