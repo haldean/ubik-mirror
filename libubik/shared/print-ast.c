@@ -377,6 +377,73 @@ _print_type(struct ubik_type *type, int indent)
         return OK;
 }
 
+no_ignore static ubik_error
+_print_interface(struct ubik_ast_interface *i, int indent)
+{
+        struct ubik_type_params *p;
+        struct ubik_ast_member_list *m;
+        ubik_error err;
+
+        _indent(indent);
+        printf("interface %s\n", i->name);
+
+        _indent(indent + 4);
+        printf("params:");
+        for (p = i->params; p != NULL; p = p->next)
+                printf(" %s", p->name);
+        printf("\n");
+
+        _indent(indent + 4);
+        printf("members:\n");
+        for (m = i->members; m != NULL; m = m->next)
+        {
+                _indent(indent + 8);
+                printf(". %s ^ ", m->name);
+                err = ubik_type_expr_print(m->type);
+                if (err != OK)
+                        return err;
+                printf("\n");
+        }
+
+        return OK;
+}
+
+no_ignore ubik_error
+_print_implementation(struct ubik_ast_implementation *i, int indent)
+{
+        struct ubik_type_list *p;
+        struct ubik_ast_member_list *m;
+        ubik_error err;
+
+        _indent(indent);
+        printf("implementation of %s\n", i->iface_name);
+
+        _indent(indent + 4);
+        printf("params:\n");
+        for (p = i->params; p != NULL; p = p->next)
+        {
+                _indent(indent + 8);
+                err = ubik_type_expr_print(p->type_expr);
+                if (err != OK)
+                        return err;
+                printf("\n");
+        }
+
+        _indent(indent + 4);
+        printf("members:\n");
+        for (m = i->members; m != NULL; m = m->next)
+        {
+                _indent(indent + 8);
+                printf(". %s = ", m->name);
+                err = ubik_ast_expr_print(m->value);
+                if (err != OK)
+                        return err;
+                printf("\n");
+        }
+
+        return OK;
+}
+
 no_ignore ubik_error
 _print_ast(struct ubik_ast *ast, int indent)
 {
@@ -403,6 +470,32 @@ _print_ast(struct ubik_ast *ast, int indent)
                 for (i = 0; i < ast->types.n; i++)
                 {
                         err = _print_type(ast->types.elems[i], indent + 4);
+                        if (err != OK)
+                                return err;
+                }
+        }
+
+        if (ast->interfaces.n > 0)
+        {
+                _indent(indent);
+                printf("%lu interfaces:\n", ast->interfaces.n);
+                for (i = 0; i < ast->interfaces.n; i++)
+                {
+                        err = _print_interface(
+                                ast->interfaces.elems[i], indent + 4);
+                        if (err != OK)
+                                return err;
+                }
+        }
+
+        if (ast->implementations.n > 0)
+        {
+                _indent(indent);
+                printf("%lu implementations:\n", ast->implementations.n);
+                for (i = 0; i < ast->implementations.n; i++)
+                {
+                        err = _print_implementation(
+                                ast->implementations.elems[i], indent + 4);
                         if (err != OK)
                                 return err;
                 }
