@@ -54,6 +54,7 @@ compatible(
 
         case TYPE_EXPR_APPLY:
         case TYPE_EXPR_VAR:
+        case TYPE_EXPR_CONSTRAINED:
                 break;
         }
 
