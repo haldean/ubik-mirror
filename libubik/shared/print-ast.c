@@ -210,7 +210,7 @@ _print_expr(struct ubik_ast_expr *expr, int indent)
                 }
                 else
                         printf("pred)");
-                printf("{\n");
+                printf(" {\n");
                 err = _print_case_stmts(
                         expr->cond_block.case_stmts, indent + 4);
                 if (err != OK)
@@ -435,7 +435,7 @@ _print_implementation(struct ubik_ast_implementation *i, int indent)
         {
                 _indent(indent + 8);
                 printf(". %s = ", m->name);
-                err = ubik_ast_expr_print(m->value);
+                err = _print_expr(m->value, indent + 8);
                 if (err != OK)
                         return err;
                 printf("\n");
