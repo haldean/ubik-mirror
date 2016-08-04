@@ -50,6 +50,47 @@ ubik_type_expr_free(struct ubik_type_expr *type_expr)
         return OK;
 }
 
+void
+type_params_copy(
+        struct ubik_type_params *dst,
+        struct ubik_type_params *src,
+        struct ubik_alloc_region *r)
+{
+        for (; src != NULL; src = src->next)
+        {
+                dst->name = ubik_strdup(src->name, r);
+                dst->loc = src->loc;
+                dst->next = NULL;
+                if (src->next != NULL)
+                {
+                        ubik_alloc1(&dst->next, struct ubik_type_params, r);
+                        dst = dst->next;
+                }
+        }
+}
+
+void
+type_constraints_copy(
+        struct ubik_type_constraints *dst,
+        struct ubik_type_constraints *src,
+        struct ubik_alloc_region *r)
+{
+        for (; src != NULL; src = src->next)
+        {
+                dst->interface = ubik_strdup(src->interface, r);
+                ubik_alloc1(&dst->params, struct ubik_type_params, r);
+                type_params_copy(dst->params, src->params, r);
+                dst->loc = src->loc;
+                dst->next = NULL;
+                if (src->next != NULL)
+                {
+                        ubik_alloc1(
+                                &dst->next, struct ubik_type_constraints, r);
+                        dst = dst->next;
+                }
+        }
+}
+
 no_ignore ubik_error
 ubik_type_expr_copy(
         struct ubik_type_expr *dst,
@@ -63,6 +104,22 @@ ubik_type_expr_copy(
 
         switch (src->type_expr_type)
         {
+        case TYPE_EXPR_CONSTRAINED:
+                ubik_alloc1(&dst->constrained.term, struct ubik_type_expr, r);
+                err = ubik_type_expr_copy(
+                        dst->constrained.term, src->constrained.term, r);
+                if (err != OK)
+                        return err;
+
+                ubik_alloc1(
+                        &dst->constrained.constraints,
+                        struct ubik_type_constraints, r);
+                type_constraints_copy(
+                        dst->constrained.constraints,
+                        src->constrained.constraints, r);
+
+                break;
+
         case TYPE_EXPR_APPLY:
         case TYPE_EXPR_ARROW:
                 ubik_alloc1(&dst->apply.head, struct ubik_type_expr, r);
