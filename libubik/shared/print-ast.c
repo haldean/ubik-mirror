@@ -226,6 +226,8 @@ _print_expr(struct ubik_ast_expr *expr, int indent)
 no_ignore ubik_error
 ubik_type_expr_print(struct ubik_type_expr *type_expr)
 {
+        struct ubik_type_constraints *constr;
+        struct ubik_type_params *params;
         ubik_error err;
 
         switch (type_expr->type_expr_type)
@@ -255,6 +257,20 @@ ubik_type_expr_print(struct ubik_type_expr *type_expr)
                 return OK;
         case TYPE_EXPR_VAR:
                 printf("%s", type_expr->name);
+                return OK;
+        case TYPE_EXPR_CONSTRAINED:
+                err = ubik_type_expr_print(type_expr->constrained.term);
+                if (err != OK)
+                        return err;
+                printf(" |");
+                constr = type_expr->constrained.constraints;
+                for (; constr != NULL; constr = constr->next)
+                {
+                        printf(" ' %s", constr->interface);
+                        params = constr->params;
+                        for (; params != NULL; params = params->next)
+                                printf(" %s", params->name);
+                }
                 return OK;
         }
         return ubik_raise(ERR_UNKNOWN_TYPE, "unknown type expr type");
