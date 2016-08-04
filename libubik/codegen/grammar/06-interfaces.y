@@ -1,4 +1,4 @@
-/* vim: set shiftwidth=8 tabstop=8 :
+/* vim: set shiftwidth=8 tabstop=8 filetype=text :
  * grammar.y: ubik language grammar
  * Copyright (C) 2016, Haldean Brown
  *
@@ -52,7 +52,7 @@ interface_members
 ;
 
 impl_def
-: EXISTS TYPE_NAME type_list impl_members
+: DEFINES TYPE_NAME type_list impl_members
 {
         alloc($$, 1, struct ubik_ast_implementation);
         $$->iface_name = $2;

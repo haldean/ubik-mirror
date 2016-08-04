@@ -99,7 +99,7 @@
 %type <type_def> adt_def alias_def type_def
 %type <type_list> type_list
 %type <adt_ctor> adt_ctor adt_ctors
-%type <type_params> type_params
+%type <type_params> type_params nonempty_type_params
 %type <type_constraints> type_constraints type_constraint
 %type <case_stmt> pred_case_stmt pred_case_stmts last_pred_case_stmt all_pred_case_stmts
 %type <case_stmt> all_pattern_case_stmts pattern_case_stmt

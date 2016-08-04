@@ -71,11 +71,17 @@ type_params
         $$->next = $2;
         load_loc($$->loc);
 }
-| %empty
-{
-        $$ = NULL;
-}
+| %empty { $$ = NULL; }
 ;
+
+nonempty_type_params
+: NAME type_params
+{
+        alloc($$, 1, struct ubik_type_params);
+        $$->name = $1;
+        $$->next = $2;
+        load_loc($$->loc);
+};
 
 type_constraints
 : type_constraint type_constraints
@@ -87,7 +93,7 @@ type_constraints
 ;
 
 type_constraint
-: EXISTS TYPE_NAME type_params
+: EXISTS TYPE_NAME nonempty_type_params
 {
         alloc($$, 1, struct ubik_type_constraints);
         $$->interface = $2;
