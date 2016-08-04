@@ -5,4 +5,8 @@ _ Addable a
 ~ Addable Word
     . add = uadd
 
+: test-bind
+    ^ a | ' Addable a
+    = 8
+
 ! emit (humanize (add 7 7))
