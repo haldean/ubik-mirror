@@ -160,7 +160,7 @@ top_type_expr
 
 type_apply_expr
 : type_expr
-| type_expr GOES_TO type_expr
+| type_expr GOES_TO type_apply_expr
 {
         alloc($$, 1, struct ubik_type_expr);
         $$->type_expr_type = TYPE_EXPR_ARROW;
