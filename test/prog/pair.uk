@@ -1,0 +1,12 @@
+~ ubik-tests/pair
+
+_ Pair root a b
+    . car ^ root -> a
+    . cdr ^ root -> b
+
+^ WordStringPair = WordPair Word String
+
+~ Pair WordPair Word String
+    . car = \ wp -> ? wp { . WordPair w * => w }
+    . cdr = \ wp -> ? wp { . WordPair * s => s }
+
