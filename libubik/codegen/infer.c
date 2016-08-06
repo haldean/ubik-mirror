@@ -322,11 +322,11 @@ infer_error_print(
                         &ierr->bad_bind->loc,
                         "explicit type of binding and type of bound value "
                         "disagree");
-                printf("expected type ");
+                printf("    expected type \x1b[32m");
                 err = ubik_type_expr_print(ierr->bad_bind->type_expr);
-                printf(" but value had type ");
+                printf("\x1b[0m but value had type \x1b[32m");
                 err = ubik_type_expr_print(ierr->bad_bind->expr->type);
-                printf("\n");
+                printf("\x1b[0m\n");
                 break;
 
         default:
