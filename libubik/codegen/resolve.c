@@ -534,41 +534,24 @@ update_names_with_resolution_types(
 }
 
 no_ignore static ubik_error
-add_uri_to_scope(void *ctx_v, struct ubik_env *env, struct ubik_uri *uri)
-{
-        struct ubik_resolve_context *ctx;
-        struct ubik_resolve_name *name;
-        unused(env);
-
-        ctx = ctx_v;
-
-        ubik_alloc1(&name, struct ubik_resolve_name, ctx->region);
-        name->name = ubik_strdup(uri->name, ctx->region);
-        name->type = RESOLVE_GLOBAL;
-        return ubik_vector_append(&ctx->native_scope->names, name);
-}
-
-no_ignore static ubik_error
 create_native_scope(struct ubik_resolve_context *ctx)
 {
-        struct ubik_env env = {0};
+        size_t i;
         ubik_error err;
+        struct ubik_resolve_name *name;
 
         ubik_alloc1(&ctx->native_scope, struct ubik_resolve_scope, ctx->region);
         ctx->native_scope->names.region = ctx->region;
 
-        err = ubik_natives_register(&env);
-        if (err != OK)
-                return err;
-
-        err = ubik_env_iterate(add_uri_to_scope, &env, ctx);
-        if (err != OK)
-                return err;
-
-        err = ubik_env_free(&env);
-        if (err != OK)
-                return err;
-
+        for (i = 0; i < ubik_native_funcs_n; i++)
+        {
+                ubik_alloc1(&name, struct ubik_resolve_name, ctx->region);
+                name->name = ubik_strdup(ubik_native_funcs[i].name, ctx->region);
+                name->type = RESOLVE_GLOBAL;
+                err = ubik_vector_append(&ctx->native_scope->names, name);
+                if (err != OK)
+                        return err;
+        }
         return OK;
 }
 

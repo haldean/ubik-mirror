@@ -110,80 +110,91 @@ ubik_internal_native_create_op(
         return OK;
 }
 
-struct native_record
-{
-        char *name;
-        char *type_string;
-        struct ubik_type_expr *type_record;
-};
-
-static struct native_record native_funcs[] = {
-        { "uadd",                   "Word -> Word -> Word",           NULL },
-        { "usub",                   "Word -> Word -> Word",           NULL },
-        { "eq",                     NULL,                             NULL },
-        { "emit",                   "String -> String",               NULL },
-        { "humanize",               NULL,                             NULL },
-        { "concat",                 "String -> String -> String",     NULL },
-        { "ubik-adt-ctor-matches?", NULL,                             NULL },
-        { "ubik-adt-get",           NULL,                             NULL },
-        { "ubik-adt-new-0",         NULL,                             NULL },
-        { "ubik-adt-new-1",         NULL,                             NULL },
-        { "ubik-adt-new-2",         NULL,                             NULL },
-        { "ubik-adt-new-3",         NULL,                             NULL },
-        { "ubik-adt-new-4",         NULL,                             NULL },
-        { "ubik-adt-new-5",         NULL,                             NULL },
-        { "ubik-adt-new-6",         NULL,                             NULL },
-        { "ubik-adt-new-7",         NULL,                             NULL },
-        { "ubik-adt-new-8",         NULL,                             NULL },
-        { "ubik-adt-new-9",         NULL,                             NULL },
-        { "ubik-adt-new-10",        NULL,                             NULL },
-        { "ubik-adt-new-11",        NULL,                             NULL },
-        { "ubik-adt-new-12",        NULL,                             NULL },
-        { "ubik-adt-new-13",        NULL,                             NULL },
-        { "ubik-adt-new-14",        NULL,                             NULL },
-        { "ubik-adt-new-15",        NULL,                             NULL },
-        { "ubik-adt-new-16",        NULL,                             NULL },
-        { "ubik-adt-new-17",        NULL,                             NULL },
-        { "ubik-adt-new-18",        NULL,                             NULL },
-        { "ubik-adt-new-19",        NULL,                             NULL },
-        { "ubik-adt-new-20",        NULL,                             NULL },
-        { "ubik-adt-new-21",        NULL,                             NULL },
-        { "ubik-adt-new-22",        NULL,                             NULL },
-        { "ubik-adt-new-23",        NULL,                             NULL },
-        { "ubik-adt-new-24",        NULL,                             NULL },
-        { "ubik-adt-new-25",        NULL,                             NULL },
-        { "ubik-adt-new-26",        NULL,                             NULL },
-        { "ubik-adt-new-27",        NULL,                             NULL },
-        { "ubik-adt-new-28",        NULL,                             NULL },
-        { "ubik-adt-new-29",        NULL,                             NULL },
-        { "ubik-adt-new-30",        NULL,                             NULL },
-        { "ubik-adt-new-31",        NULL,                             NULL },
-        { "ubik-adt-new-32",        NULL,                             NULL }
+struct ubik_native_record ubik_native_funcs[] = {
+        { "uadd",                     "Word -> Word -> Word",           NULL },
+        { "usub",                     "Word -> Word -> Word",           NULL },
+        { "eq",                       NULL,                             NULL },
+        { "emit",                     "String -> String",               NULL },
+        { "humanize",                 NULL,                             NULL },
+        { "concat",                   "String -> String -> String",     NULL },
+        { "ubik-adt-ctor-matches?",   NULL,                             NULL },
+        { "ubik-adt-get",             NULL,                             NULL },
+        { "ubik-adt-new-0",           NULL,                             NULL },
+        { "ubik-adt-new-1",           NULL,                             NULL },
+        { "ubik-adt-new-2",           NULL,                             NULL },
+        { "ubik-adt-new-3",           NULL,                             NULL },
+        { "ubik-adt-new-4",           NULL,                             NULL },
+        { "ubik-adt-new-5",           NULL,                             NULL },
+        { "ubik-adt-new-6",           NULL,                             NULL },
+        { "ubik-adt-new-7",           NULL,                             NULL },
+        { "ubik-adt-new-8",           NULL,                             NULL },
+        { "ubik-adt-new-9",           NULL,                             NULL },
+        { "ubik-adt-new-10",          NULL,                             NULL },
+        { "ubik-adt-new-11",          NULL,                             NULL },
+        { "ubik-adt-new-12",          NULL,                             NULL },
+        { "ubik-adt-new-13",          NULL,                             NULL },
+        { "ubik-adt-new-14",          NULL,                             NULL },
+        { "ubik-adt-new-15",          NULL,                             NULL },
+        { "ubik-adt-new-16",          NULL,                             NULL },
+        { "ubik-adt-new-17",          NULL,                             NULL },
+        { "ubik-adt-new-18",          NULL,                             NULL },
+        { "ubik-adt-new-19",          NULL,                             NULL },
+        { "ubik-adt-new-20",          NULL,                             NULL },
+        { "ubik-adt-new-21",          NULL,                             NULL },
+        { "ubik-adt-new-22",          NULL,                             NULL },
+        { "ubik-adt-new-23",          NULL,                             NULL },
+        { "ubik-adt-new-24",          NULL,                             NULL },
+        { "ubik-adt-new-25",          NULL,                             NULL },
+        { "ubik-adt-new-26",          NULL,                             NULL },
+        { "ubik-adt-new-27",          NULL,                             NULL },
+        { "ubik-adt-new-28",          NULL,                             NULL },
+        { "ubik-adt-new-29",          NULL,                             NULL },
+        { "ubik-adt-new-30",          NULL,                             NULL },
+        { "ubik-adt-new-31",          NULL,                             NULL },
+        { "ubik-adt-new-32",          NULL,                             NULL },
 #if UBIK_MAX_ADT_FIELDS != 32
 #error "the list of native funcs needs to be updated"
 #endif
+        { "ubik-multimethod-call-0",  NULL,                             NULL },
+        { "ubik-multimethod-call-1",  NULL,                             NULL },
+        { "ubik-multimethod-call-2",  NULL,                             NULL },
+        { "ubik-multimethod-call-3",  NULL,                             NULL },
+        { "ubik-multimethod-call-4",  NULL,                             NULL },
+        { "ubik-multimethod-call-5",  NULL,                             NULL },
+        { "ubik-multimethod-call-6",  NULL,                             NULL },
+        { "ubik-multimethod-call-7",  NULL,                             NULL },
+        { "ubik-multimethod-call-8",  NULL,                             NULL },
+        { "ubik-multimethod-call-9",  NULL,                             NULL },
+        { "ubik-multimethod-call-10", NULL,                             NULL },
+        { "ubik-multimethod-call-11", NULL,                             NULL },
+        { "ubik-multimethod-call-12", NULL,                             NULL },
+        { "ubik-multimethod-call-13", NULL,                             NULL },
+        { "ubik-multimethod-call-14", NULL,                             NULL },
+        { "ubik-multimethod-call-15", NULL,                             NULL },
+        { "ubik-multimethod-call-16", NULL,                             NULL },
 };
 
-#define N_NATIVE_FUNCS (sizeof(native_funcs) / sizeof(native_funcs[0]))
+const size_t ubik_native_funcs_n =
+        sizeof(ubik_native_funcs) / sizeof(struct ubik_native_record);
 
 no_ignore ubik_error
 ubik_natives_cache_types()
 {
         size_t i;
         ubik_error err;
-        for (i = 0; i < N_NATIVE_FUNCS; i++)
+        for (i = 0; i < ubik_native_funcs_n; i++)
         {
-                if (native_funcs[i].type_string == NULL)
+                if (ubik_native_funcs[i].type_string == NULL)
                         continue;
                 err = ubik_parse_type_expr(
-                        &native_funcs[i].type_record,
+                        &ubik_native_funcs[i].type_record,
                         NULL,
-                        native_funcs[i].type_string);
+                        ubik_native_funcs[i].type_string);
                 if (err != OK)
                 {
                         printf("couldn't parse type for %s: %s\n",
-                                native_funcs[i].name,
-                                native_funcs[i].type_string);
+                                ubik_native_funcs[i].name,
+                                ubik_native_funcs[i].type_string);
                         free(err);
                         continue;
                 }
@@ -195,8 +206,8 @@ bool
 ubik_natives_is_defined(char *name)
 {
         size_t i;
-        for (i = 0; i < N_NATIVE_FUNCS; i++)
-                if (strcmp(native_funcs[i].name, name) == 0)
+        for (i = 0; i < ubik_native_funcs_n; i++)
+                if (strcmp(ubik_native_funcs[i].name, name) == 0)
                         return true;
         return false;
 }
@@ -208,15 +219,15 @@ ubik_natives_get_type(
         struct ubik_alloc_region *r)
 {
         size_t i;
-        for (i = 0; i < N_NATIVE_FUNCS; i++)
-                if (strcmp(native_funcs[i].name, name) == 0)
+        for (i = 0; i < ubik_native_funcs_n; i++)
+                if (strcmp(ubik_native_funcs[i].name, name) == 0)
                 {
-                        if (native_funcs[i].type_record == NULL)
+                        if (ubik_native_funcs[i].type_record == NULL)
                                 return ubik_raise(
                                         ERR_UNKNOWN_TYPE,
                                         "native function has undefined type");
                         return ubik_type_expr_copy(
-                                res, native_funcs[i].type_record, r);
+                                res, ubik_native_funcs[i].type_record, r);
                 }
         return ubik_raise(ERR_ABSENT, "native func undefined");
 }

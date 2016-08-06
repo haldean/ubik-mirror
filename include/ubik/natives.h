@@ -24,6 +24,16 @@
 #include "ubik/ubik.h"
 #include <stdbool.h>
 
+struct ubik_native_record
+{
+        char *name;
+        char *type_string;
+        struct ubik_type_expr *type_record;
+};
+
+extern struct ubik_native_record ubik_native_funcs[];
+extern const size_t ubik_native_funcs_n;
+
 no_ignore ubik_error
 ubik_natives_register(struct ubik_env *env);
 

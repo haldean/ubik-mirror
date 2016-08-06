@@ -11,6 +11,7 @@ c_sources = \
     ./codegen/grammar.c \
     ./codegen/import.c \
     ./codegen/infer.c \
+    ./codegen/interfaces.c \
     ./codegen/literate.c \
     ./codegen/package.c \
     ./codegen/parse.c \
