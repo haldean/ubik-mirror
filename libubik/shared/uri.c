@@ -45,7 +45,7 @@ _set_hash(struct ubik_uri *uri)
 void
 ubik_uri_alloc(struct ubik_uri **uri)
 {
-        ubik_galloc1(uri, struct ubik_uri);
+        ubik_alloc1(uri, struct ubik_uri, NULL);
         (*uri)->tag = TAG_URI;
 }
 
@@ -137,6 +137,23 @@ ubik_uri_native(
         uri->source_len = 0;
         uri->version = 0;
         uri->scope = SCOPE_NATIVE;
+        uri->tag = TAG_URI;
+        uri->as_value = NULL;
+        return _set_hash(uri);
+}
+
+no_ignore ubik_error
+ubik_uri_nocopy(
+        struct ubik_uri *uri,
+        char *package,
+        char *name)
+{
+        uri->name = name;
+        uri->name_len = strlen(name);
+        uri->source = package;
+        uri->source_len = strlen(package);
+        uri->version = 0;
+        uri->scope = SCOPE_PACKAGE;
         uri->tag = TAG_URI;
         uri->as_value = NULL;
         return _set_hash(uri);

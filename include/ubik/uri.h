@@ -65,6 +65,14 @@ ubik_uri_package(
         char *package,
         char *name);
 
+/* Creates a URI for a package-scoped resource, but does not copy in the
+ * name or package. Guaranteed to allocate no memory. */
+no_ignore ubik_error
+ubik_uri_nocopy(
+        struct ubik_uri *uri,
+        char *package,
+        char *name);
+
 /* Creates a URI for a global, runtime-provided resource. */
 no_ignore ubik_error
 ubik_uri_native(
