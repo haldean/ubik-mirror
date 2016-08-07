@@ -200,3 +200,15 @@ ubik_vfprintf(struct ubik_stream *s, const char *fmt, va_list args)
         ubik_assert(ubik_stream_write(s, formatted, len) == len);
         free(formatted);
 }
+
+int
+ubik_strcmp(const char *s1, const char *s2)
+{
+        if (s1 == NULL && s2 == NULL)
+                return 0;
+        if (s1 == NULL)
+                return -1;
+        if (s2 == NULL)
+                return 1;
+        return strcmp(s1, s2);
+}

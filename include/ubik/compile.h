@@ -67,6 +67,9 @@ struct ubik_compile_request
          * request; the memory associated with the result can be freed all at
          * once by freeing this region. */
         struct ubik_alloc_region region;
+        /* a pointer to the global type system for the current compilation
+         * environment. This is filled in on enqueue. */
+        struct ubik_typesystem *type_system;
 };
 
 /* Represents the final result of compilation. */

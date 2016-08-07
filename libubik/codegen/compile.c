@@ -278,6 +278,11 @@ compile_job(
         size_t i;
         ubik_error err, rerr;
 
+        err = ubik_typesystem_load(
+                cenv->type_system, job->ast, job->request);
+        if (err != OK)
+                return err;
+
         err = ubik_import_add_splats(cenv, job->ast, &job->request->region);
         if (err != OK)
                 return err;
@@ -415,6 +420,7 @@ ubik_compile_enqueue(
         req->reason = userreq->reason;
         req->cb = userreq->cb;
         req->feedback = userreq->feedback;
+        req->type_system = cenv->type_system;
 
         ubik_alloc1(&job, struct ubik_compile_job, &req->region);
         job->request = req;

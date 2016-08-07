@@ -97,7 +97,7 @@ ubik_typesystem_load(
                 iface = (struct ubik_ast_interface *) ast->interfaces.elems[i];
                 ubik_alloc1(&tsif, struct ts_type, tsys->region);
                 tsif->name = ubik_strdup(iface->name, tsys->region);
-                tst->package = ubik_strdup(ast->package_name, tsys->region);
+                tsif->package = ubik_strdup(ast->package_name, tsys->region);
                 err = ubik_vector_append(&tsys->interfaces, tsif);
                 if (err != OK)
                         return err;
@@ -113,9 +113,9 @@ ubik_typesystem_load(
                 for (j = 0; j < tsys->interfaces.n; j++)
                 {
                         tsif = tsys->interfaces.elems[j];
-                        if (strcmp(tsif->name, impl->iface_name) != 0)
+                        if (ubik_strcmp(tsif->name, impl->iface_name) != 0)
                                 continue;
-                        if (strcmp(tsif->package, impl->iface_package) != 0)
+                        if (ubik_strcmp(tsif->package, impl->iface_package) != 0)
                                 continue;
                         tsim->iface = tsif;
                         break;

@@ -69,3 +69,9 @@ ubik_fprintf(struct ubik_stream *s, const char *fmt, ...);
  * pointer. */
 void
 ubik_vfprintf(struct ubik_stream *s, const char *fmt, va_list args);
+
+/* Same a strcmp, but two NULL pointers compare equal to one another. When only
+ * one pointer is NULL, the NULL pointer always compares as less than the
+ * non-NULL pointer. */
+int
+ubik_strcmp(const char *s1, const char *s2);
