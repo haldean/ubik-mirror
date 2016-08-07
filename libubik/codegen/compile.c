@@ -293,6 +293,8 @@ compile_job(
                 cenv->type_system, job->ast, job->request);
         if (err != OK)
                 return err;
+        if (cenv->debug)
+                ubik_typesystem_dump(cenv->type_system);
 
         err = ubik_interfaces_compile_all(job->ast, job->request);
         if (err != OK)

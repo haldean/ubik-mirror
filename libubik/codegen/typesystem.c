@@ -17,6 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include "ubik/assert.h"
 #include "ubik/compile.h"
 #include "ubik/feedback.h"
 #include "ubik/string.h"
@@ -35,13 +36,13 @@ struct ts_iface
 {
         char *name;
         char *package;
-        int n_params;
+        size_t n_params;
 };
 
 struct ts_impl
 {
         struct ts_iface *iface;
-        char *params[UBIK_MAX_INTERFACE_PARAMS];
+        struct ubik_type_expr params[UBIK_MAX_INTERFACE_PARAMS];
 };
 
 struct ubik_typesystem
@@ -74,12 +75,17 @@ ubik_typesystem_load(
         struct ubik_type *t;
         struct ubik_ast_interface *iface;
         struct ubik_ast_implementation *impl;
+        struct ubik_type_params *params;
+        struct ubik_type_list *type_list;
+
         struct ts_type *tst;
         struct ts_iface *tsif;
         struct ts_impl *tsim;
+
         char *check_pkg;
         size_t i;
         size_t j;
+        size_t n_params;
         ubik_error err;
 
         for (i = 0; i < ast->types.n; i++)
@@ -96,9 +102,28 @@ ubik_typesystem_load(
         for (i = 0; i < ast->interfaces.n; i++)
         {
                 iface = (struct ubik_ast_interface *) ast->interfaces.elems[i];
-                ubik_alloc1(&tsif, struct ts_type, tsys->region);
+                ubik_alloc1(&tsif, struct ts_iface, tsys->region);
                 tsif->name = ubik_strdup(iface->name, tsys->region);
                 tsif->package = ubik_strdup(ast->package_name, tsys->region);
+                for (params = iface->params, tsif->n_params = 0;
+                        params != NULL;
+                        params = params->next, tsif->n_params++);
+
+                if (tsif->n_params > UBIK_MAX_INTERFACE_PARAMS)
+                {
+                        ubik_feedback_error_line(
+                                req->feedback,
+                                UBIK_FEEDBACK_ERR,
+                                &iface->loc,
+                                "interfaces cannot have more than %d "
+                                "parameters, %s has %lu",
+                                UBIK_MAX_INTERFACE_PARAMS,
+                                iface->name,
+                                tsif->n_params);
+                        return ubik_raise(
+                                ERR_UNKNOWN_TYPE, "too many interface params");
+                }
+
                 err = ubik_vector_append(&tsys->interfaces, tsif);
                 if (err != OK)
                         return err;
@@ -108,7 +133,7 @@ ubik_typesystem_load(
         {
                 impl = (struct ubik_ast_implementation *)
                         ast->implementations.elems[i];
-                ubik_alloc1(&tsim, struct ts_type, tsys->region);
+                ubik_alloc1(&tsim, struct ts_impl, tsys->region);
                 tsim->iface = NULL;
                 check_pkg = impl->iface_package == NULL ?
                         ast->package_name : impl->iface_package;
@@ -135,10 +160,78 @@ ubik_typesystem_load(
                                 ERR_UNKNOWN_TYPE, "impl of unknown interface");
                 }
 
-                err = ubik_vector_append(&tsys->implementations, tsif);
+                for (n_params = 0, type_list = impl->params;
+                        type_list != NULL;
+                        type_list = type_list->next, n_params++);
+                if (n_params != tsim->iface->n_params)
+                {
+                        ubik_feedback_error_line(
+                                req->feedback,
+                                UBIK_FEEDBACK_ERR,
+                                &impl->loc,
+                                "too many interface parameters given, "
+                                "interface %s has %lu parameters, but "
+                                "implementation has %lu",
+                                tsim->iface->name,
+                                tsim->iface->n_params,
+                                n_params);
+                        return ubik_raise(
+                                ERR_UNKNOWN_TYPE, "impl of unknown interface");
+                }
+
+                for (j = 0, type_list = impl->params;
+                        type_list != NULL;
+                        type_list = type_list->next, j++)
+                {
+                        err = ubik_type_expr_copy(
+                                &tsim->params[j],
+                                type_list->type_expr,
+                                tsys->region);
+                        if (err != OK)
+                                return err;
+                }
+
+                err = ubik_vector_append(&tsys->implementations, tsim);
                 if (err != OK)
                         return err;
         }
 
         return OK;
+}
+
+void
+ubik_typesystem_dump(struct ubik_typesystem *tsys)
+{
+        size_t i;
+        size_t j;
+        struct ts_type *type;
+        struct ts_iface *iface;
+        struct ts_impl *impl;
+
+        printf("\n%lu known types:\n", tsys->types.n);
+        for (i = 0; i < tsys->types.n; i++)
+        {
+                type = tsys->types.elems[i];
+                printf("\t%s:%s\n", type->package, type->name);
+        }
+        printf("%lu known interfaces:\n", tsys->interfaces.n);
+        for (i = 0; i < tsys->interfaces.n; i++)
+        {
+                iface = tsys->interfaces.elems[i];
+                printf("\t%s:%s %lu\n",
+                        iface->package, iface->name, iface->n_params);
+        }
+        printf("%lu known implementations:\n", tsys->implementations.n);
+        for (i = 0; i < tsys->implementations.n; i++)
+        {
+                impl = tsys->implementations.elems[i];
+                printf("\t%s:%s", impl->iface->package, impl->iface->name);
+                for (j = 0; j < impl->iface->n_params; j++)
+                {
+                        printf(" ");
+                        ubik_assert(
+                                ubik_type_expr_print(&impl->params[j]) == OK);
+                }
+                printf("\n");
+        }
 }

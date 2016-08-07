@@ -44,3 +44,6 @@ ubik_typesystem_unify(
         struct ubik_typesystem *tsys,
         struct ubik_type_expr *assign_to,
         struct ubik_type_expr *assign_from);
+
+void
+ubik_typesystem_dump(struct ubik_typesystem *tsys);
