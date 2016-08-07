@@ -40,8 +40,9 @@ ubik_typesystem_load(
 
 no_ignore ubik_error
 ubik_typesystem_unify(
-        struct ubik_type_expr *unified,
+        struct ubik_type_expr **unified,
         struct ubik_typesystem *tsys,
+        char *package,
         struct ubik_type_expr *assign_to,
         struct ubik_type_expr *assign_from);
 

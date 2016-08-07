@@ -21,6 +21,7 @@
 #include "ubik/alloc.h"
 #include "ubik/ast.h"
 #include "ubik/compile.h"
+#include "ubik/typesystem.h"
 #include "ubik/ubik.h"
 
 struct ubik_infer_context
@@ -32,6 +33,8 @@ struct ubik_infer_context
         bool debug;
         /* members are ubik_infer_error pointers. */
         struct ubik_vector errors;
+        /* the type system we're inferring inside. */
+        struct ubik_typesystem *type_system;
 };
 
 enum ubik_infer_error_type

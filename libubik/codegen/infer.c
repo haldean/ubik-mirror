@@ -23,6 +23,7 @@
 #include "ubik/resolve.h"
 #include "ubik/string.h"
 #include "ubik/types.h"
+#include "ubik/typesystem.h"
 #include "ubik/util.h"
 
 #include <stdio.h>
@@ -241,6 +242,7 @@ infer_ast(struct ubik_ast *ast, struct ubik_infer_context *ctx)
 {
         struct ubik_ast_binding *bind;
         struct ubik_infer_error *ierr;
+        struct ubik_type_expr *unified;
         size_t i;
         ubik_error err;
 
@@ -251,7 +253,13 @@ infer_ast(struct ubik_ast *ast, struct ubik_infer_context *ctx)
                 if (err != OK)
                         return err;
                 if (bind->type_expr != NULL && bind->expr->type != NULL)
-                        if (!compatible(bind->expr->type, bind->type_expr, ctx))
+                {
+                        err = ubik_typesystem_unify(
+                                &unified, ctx->type_system, bind->type_expr,
+                                bind->expr->type);
+                        if (err != OK)
+                                return err;
+                        if (unified == NULL)
                         {
                                 ubik_alloc1(
                                         &ierr, struct ubik_infer_error,
@@ -260,6 +268,7 @@ infer_ast(struct ubik_ast *ast, struct ubik_infer_context *ctx)
                                 ierr->bad_bind = bind;
                                 return ubik_vector_append(&ctx->errors, ierr);
                         }
+                }
         }
 
         if (ast->immediate != NULL)

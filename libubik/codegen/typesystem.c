@@ -26,6 +26,13 @@
 
 #include <string.h>
 
+enum ts_value_type
+{
+        TS_TYPE = 1,
+        TS_IFACE,
+        TS_IMPL,
+};
+
 struct ts_type
 {
         char *name;
@@ -43,6 +50,17 @@ struct ts_impl
 {
         struct ts_iface *iface;
         struct ubik_type_expr params[UBIK_MAX_INTERFACE_PARAMS];
+};
+
+struct ts_value
+{
+        union
+        {
+                struct ts_type t;
+                struct ts_iface f;
+                struct ts_impl m;
+        };
+        enum ts_value_type vt;
 };
 
 struct ubik_typesystem
@@ -234,4 +252,19 @@ ubik_typesystem_dump(struct ubik_typesystem *tsys)
                 }
                 printf("\n");
         }
+}
+
+no_ignore ubik_error
+ubik_typesystem_unify(
+        struct ubik_type_expr **unified,
+        struct ubik_typesystem *tsys,
+        char *package,
+        struct ubik_type_expr *assign_to,
+        struct ubik_type_expr *assign_from)
+{
+        struct ts_value to;
+        struct ts_value from;
+
+        find(&to, tsys, package, assign_to);
+        find(&from, tsys, package, assign_from);
 }
