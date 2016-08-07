@@ -71,14 +71,15 @@ ubik_typesystem_load(
         struct ubik_ast *ast,
         struct ubik_compile_request *req)
 {
-        size_t i;
-        size_t j;
         struct ubik_type *t;
         struct ubik_ast_interface *iface;
         struct ubik_ast_implementation *impl;
         struct ts_type *tst;
         struct ts_iface *tsif;
         struct ts_impl *tsim;
+        char *check_pkg;
+        size_t i;
+        size_t j;
         ubik_error err;
 
         for (i = 0; i < ast->types.n; i++)
@@ -109,13 +110,15 @@ ubik_typesystem_load(
                         ast->implementations.elems[i];
                 ubik_alloc1(&tsim, struct ts_type, tsys->region);
                 tsim->iface = NULL;
+                check_pkg = impl->iface_package == NULL ?
+                        ast->package_name : impl->iface_package;
 
                 for (j = 0; j < tsys->interfaces.n; j++)
                 {
                         tsif = tsys->interfaces.elems[j];
                         if (ubik_strcmp(tsif->name, impl->iface_name) != 0)
                                 continue;
-                        if (ubik_strcmp(tsif->package, impl->iface_package) != 0)
+                        if (ubik_strcmp(tsif->package, check_pkg) != 0)
                                 continue;
                         tsim->iface = tsif;
                         break;

@@ -278,11 +278,6 @@ compile_job(
         size_t i;
         ubik_error err, rerr;
 
-        err = ubik_typesystem_load(
-                cenv->type_system, job->ast, job->request);
-        if (err != OK)
-                return err;
-
         err = ubik_import_add_splats(cenv, job->ast, &job->request->region);
         if (err != OK)
                 return err;
@@ -293,6 +288,11 @@ compile_job(
                 if (err != OK)
                         return err;
         }
+
+        err = ubik_typesystem_load(
+                cenv->type_system, job->ast, job->request);
+        if (err != OK)
+                return err;
 
         err = ubik_interfaces_compile_all(job->ast, job->request);
         if (err != OK)
