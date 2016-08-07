@@ -40,6 +40,7 @@ enum ubik_load_reason
 
 struct ubik_compile_result;
 struct ubik_compile_request;
+struct ubik_typesystem;
 
 /* Type for functions that are called when compilation of a certain compilation
  * request is complete. */
@@ -112,6 +113,11 @@ struct ubik_compile_env
         struct ubik_vector to_compile;
         /* elements are ubik_compile_result pointers */
         struct ubik_vector compiled;
+
+        /* the type system everything is being compiled inside */
+        struct ubik_typesystem *type_system;
+        /* the compilation environment's allocation region */
+        struct ubik_alloc_region region;
 };
 
 no_ignore ubik_error

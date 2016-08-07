@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "ubik/alloc.h"
 #include "ubik/compile.h"
 #include "ubik/env.h"
 #include "ubik/ubik.h"

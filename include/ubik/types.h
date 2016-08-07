@@ -115,6 +115,7 @@ struct ubik_ast_interface
 struct ubik_ast_implementation
 {
         char *iface_name;
+        char *iface_package;
         struct ubik_type_list *params;
         struct ubik_ast_member_list *members;
         struct ubik_ast_loc loc;

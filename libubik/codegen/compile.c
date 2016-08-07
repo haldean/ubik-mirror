@@ -36,6 +36,7 @@
 #include "ubik/patterns.h"
 #include "ubik/resolve.h"
 #include "ubik/string.h"
+#include "ubik/typesystem.h"
 #include "ubik/util.h"
 
 no_ignore ubik_error
@@ -46,6 +47,8 @@ ubik_compile_env_default(struct ubik_compile_env *cenv)
         char *debug_var;
         bool debug;
         ubik_error err;
+
+        ubik_alloc_start(&cenv->region);
 
         debug_var = getenv("UBIK_DEBUG");
         if (debug_var == NULL)
@@ -61,7 +64,7 @@ ubik_compile_env_default(struct ubik_compile_env *cenv)
         }
         cenv->debug = debug;
 
-        scratch_dir = calloc(512, sizeof(char));
+        ubik_ralloc((void **) &scratch_dir, 512, sizeof(char), &cenv->region);
         if (getcwd(scratch_dir, 500) == NULL)
         {
                 perror("could not open current directory");
@@ -84,10 +87,17 @@ ubik_compile_env_default(struct ubik_compile_env *cenv)
                         include_dirs,
                         strlen(include_dirs),
                         ':',
-                        NULL);
+                        &cenv->region);
                 if (err != OK)
                         return err;
         }
+
+        cenv->to_compile.region = &cenv->region;
+        cenv->compiled.region = &cenv->region;
+
+        err = ubik_typesystem_init(&cenv->type_system, &cenv->region);
+        if (err != OK)
+                return err;
 
         return OK;
 }
@@ -110,12 +120,6 @@ ubik_compile_env_free(struct ubik_compile_env *cenv)
         size_t i, j;
         ubik_error err;
 
-        free(cenv->scratch_dir);
-
-        for (i = 0; i < cenv->n_include_dirs; i++)
-                free(cenv->include_dirs[i]);
-        free(cenv->include_dirs);
-
         for (i = 0; i < cenv->compiled.n; i++)
         {
                 res = cenv->compiled.elems[i];
@@ -128,14 +132,14 @@ ubik_compile_env_free(struct ubik_compile_env *cenv)
                 }
                 free_req(res->request);
         }
-        ubik_vector_free(&cenv->compiled);
 
         for (i = 0; i < cenv->to_compile.n; i++)
         {
                 job = cenv->to_compile.elems[i];
                 free_req(job->request);
         }
-        ubik_vector_free(&cenv->to_compile);
+
+        ubik_alloc_free(&cenv->region);
 
         return OK;
 }
