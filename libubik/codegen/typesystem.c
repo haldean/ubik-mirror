@@ -254,17 +254,154 @@ ubik_typesystem_dump(struct ubik_typesystem *tsys)
         }
 }
 
-no_ignore ubik_error
-ubik_typesystem_unify(
-        struct ubik_type_expr **unified,
+no_ignore static ubik_error
+add_constraints(
+        struct ubik_typesystem_unified *unified,
+        struct ubik_type_constraints *constraints)
+{
+        unused(unified);
+        unused(constraints);
+        return OK;
+}
+
+no_ignore static ubik_error
+assign_atom_to_atom(
+        struct ubik_typesystem_unified *unified,
+        struct ubik_type_expr *to,
+        struct ubik_type_expr *from)
+{
+        if (strcmp(to->name, from->name) == 0)
+        {
+                unified->res = to;
+                unified->success = true;
+        }
+        return OK;
+}
+
+no_ignore static ubik_error
+assign_atom_to_var(
+        struct ubik_typesystem_unified *unified,
+        struct ubik_type_expr *to,
+        struct ubik_type_expr *from)
+{
+        unused(unified);
+        unused(to);
+        unused(from);
+        return OK;
+}
+
+no_ignore static ubik_error
+assign_var_to_atom(
+        struct ubik_typesystem_unified *unified,
+        struct ubik_type_expr *to,
+        struct ubik_type_expr *from)
+{
+        unused(unified);
+        unused(to);
+        unused(from);
+        return OK;
+}
+
+no_ignore static ubik_error
+assign_var_to_var(
+        struct ubik_typesystem_unified *unified,
+        struct ubik_type_expr *to,
+        struct ubik_type_expr *from)
+{
+        unused(unified);
+        unused(to);
+        unused(from);
+        return OK;
+}
+
+no_ignore static ubik_error
+unify(
+        struct ubik_typesystem_unified *unified,
         struct ubik_typesystem *tsys,
         char *package,
         struct ubik_type_expr *assign_to,
         struct ubik_type_expr *assign_from)
 {
-        struct ts_value to;
-        struct ts_value from;
+        ubik_error err;
 
-        find(&to, tsys, package, assign_to);
-        find(&from, tsys, package, assign_from);
+        switch (assign_to->type_expr_type)
+        {
+        case TYPE_EXPR_ATOM:
+                if (assign_from->type_expr_type == TYPE_EXPR_VAR)
+                        return assign_var_to_atom(
+                                unified, assign_to, assign_from);
+                if (assign_from->type_expr_type == TYPE_EXPR_ATOM)
+                        return assign_atom_to_atom(
+                                unified, assign_to, assign_from);
+                return OK;
+
+        case TYPE_EXPR_CONSTRAINED:
+                return ubik_raise(
+                        ERR_BAD_TYPE,
+                        "constrained types should have been stripped out");
+
+        case TYPE_EXPR_APPLY:
+                return OK;
+
+        case TYPE_EXPR_ARROW:
+                if (assign_from->type_expr_type != TYPE_EXPR_ARROW)
+                {
+                        printf("unsupported comparison between arrowy types\n");
+                        return OK;
+                }
+                err = ubik_typesystem_unify(
+                        unified, tsys, package, assign_to->apply.head,
+                        assign_from->apply.head);
+                if (err != OK || !unified->success)
+                        return err;
+                err = ubik_typesystem_unify(
+                        unified, tsys, package, assign_to->apply.tail,
+                        assign_from->apply.tail);
+                return err;
+
+        case TYPE_EXPR_VAR:
+                if (assign_from->type_expr_type == TYPE_EXPR_VAR)
+                        return assign_var_to_var(
+                                unified, assign_to, assign_from);
+                if (assign_from->type_expr_type == TYPE_EXPR_ATOM)
+                        return assign_atom_to_var(
+                                unified, assign_to, assign_from);
+                return OK;
+        }
+
+        return ubik_raise(ERR_BAD_TYPE, "bad type expr type in unify");
+}
+
+
+no_ignore ubik_error
+ubik_typesystem_unify(
+        struct ubik_typesystem_unified *unified,
+        struct ubik_typesystem *tsys,
+        char *package,
+        struct ubik_type_expr *assign_to,
+        struct ubik_type_expr *assign_from)
+{
+        ubik_error err;
+
+        unified->success = false;
+        unified->res = NULL;
+
+        if (assign_to->type_expr_type == TYPE_EXPR_CONSTRAINED)
+        {
+                err = add_constraints(
+                        unified, assign_to->constrained.constraints);
+                if (err != OK)
+                        return err;
+                assign_to = assign_to->constrained.term;
+        }
+        if (assign_from->type_expr_type == TYPE_EXPR_CONSTRAINED)
+        {
+                err = add_constraints(
+                        unified, assign_from->constrained.constraints);
+                if (err != OK)
+                        return err;
+                assign_from = assign_from->constrained.term;
+        }
+
+        return unify(unified, tsys, package, assign_to, assign_from);
 }

@@ -27,6 +27,13 @@
 struct ubik_typesystem;
 struct ubik_compile_request;
 
+struct ubik_typesystem_unified
+{
+        struct ubik_type_expr *res;
+        struct ubik_vector constraints;
+        bool success;
+};
+
 no_ignore ubik_error
 ubik_typesystem_init(
         struct ubik_typesystem **tsys,
@@ -40,7 +47,7 @@ ubik_typesystem_load(
 
 no_ignore ubik_error
 ubik_typesystem_unify(
-        struct ubik_type_expr **unified,
+        struct ubik_typesystem_unified *unified,
         struct ubik_typesystem *tsys,
         char *package,
         struct ubik_type_expr *assign_to,

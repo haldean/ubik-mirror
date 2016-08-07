@@ -242,7 +242,7 @@ infer_ast(struct ubik_ast *ast, struct ubik_infer_context *ctx)
 {
         struct ubik_ast_binding *bind;
         struct ubik_infer_error *ierr;
-        struct ubik_type_expr *unified;
+        struct ubik_typesystem_unified unified;
         size_t i;
         ubik_error err;
 
@@ -255,11 +255,11 @@ infer_ast(struct ubik_ast *ast, struct ubik_infer_context *ctx)
                 if (bind->type_expr != NULL && bind->expr->type != NULL)
                 {
                         err = ubik_typesystem_unify(
-                                &unified, ctx->type_system, bind->type_expr,
-                                bind->expr->type);
+                                &unified, ctx->type_system, ast->package_name,
+                                bind->type_expr, bind->expr->type);
                         if (err != OK)
                                 return err;
-                        if (unified == NULL)
+                        if (!unified.success)
                         {
                                 ubik_alloc1(
                                         &ierr, struct ubik_infer_error,
