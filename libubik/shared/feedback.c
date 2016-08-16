@@ -36,12 +36,12 @@ vheader(
         if (loc->line_start > 0)
                 ubik_fprintf(
                         stream,
-                        "\x1b[37m%s:%lu:%lu:",
+                        "\x1b[36m%s:%lu:%lu:",
                         loc->source_name,
                         loc->line_start,
                         loc->col_start);
         else
-                ubik_fprintf(stream, "\x1b[37m%s:", loc->source_name);
+                ubik_fprintf(stream, "\x1b[36m%s:", loc->source_name);
 
         switch (lvl)
         {
