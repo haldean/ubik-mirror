@@ -12,6 +12,7 @@ tests = \
 	path_concat-test \
 	pointer_set-test \
 	split-test \
+	types-test \
 	uri-test
 
 all: $(tests)

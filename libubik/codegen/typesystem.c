@@ -341,12 +341,9 @@ unify(
                         "constrained types should have been stripped out");
 
         case TYPE_EXPR_APPLY:
-                return OK;
-
-        case TYPE_EXPR_ARROW:
-                if (assign_from->type_expr_type != TYPE_EXPR_ARROW)
+                if (assign_from->type_expr_type != TYPE_EXPR_APPLY)
                 {
-                        printf("unsupported comparison between arrowy types\n");
+                        printf("unsupported comparison between applied types\n");
                         return OK;
                 }
                 err = ubik_typesystem_unify(

@@ -49,11 +49,10 @@ compatible(
         case TYPE_EXPR_ATOM:
                 return strcmp(e1->name, e2->name) == 0;
 
-        case TYPE_EXPR_ARROW:
+        case TYPE_EXPR_APPLY:
                 return compatible(e1->apply.head, e2->apply.head, ctx) &&
                         compatible(e1->apply.tail, e2->apply.tail, ctx);
 
-        case TYPE_EXPR_APPLY:
         case TYPE_EXPR_VAR:
         case TYPE_EXPR_CONSTRAINED:
                 break;
@@ -153,7 +152,7 @@ infer_apply(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
         if (h == NULL || t == NULL)
                 return OK;
 
-        if (h->type_expr_type != TYPE_EXPR_ARROW)
+        if (!ubik_type_is_applyable(h))
         {
                 ubik_alloc1(&ierr, struct ubik_infer_error, &ctx->req->region);
                 ierr->error_type = INFER_ERR_APPLY_HEAD_UNAPPL;
@@ -161,7 +160,7 @@ infer_apply(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
                 return ubik_vector_append(&ctx->errors, ierr);
         }
 
-        if (!compatible(h->apply.head, t, ctx))
+        if (!compatible(h->apply.head->apply.tail, t, ctx))
         {
                 ubik_alloc1(&ierr, struct ubik_infer_error, &ctx->req->region);
                 ierr->error_type = INFER_ERR_FUNC_ARG_INCOMPAT;

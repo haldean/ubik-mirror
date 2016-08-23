@@ -162,9 +162,20 @@ type_apply_expr
 : type_expr
 | type_expr GOES_TO type_apply_expr
 {
+        /* The arrow notation A -> B is just convenient syntax for Function a b;
+        this desugars at compile time */
         alloc($$, 1, struct ubik_type_expr);
-        $$->type_expr_type = TYPE_EXPR_ARROW;
-        $$->apply.head = $1;
+        $$->type_expr_type = TYPE_EXPR_APPLY;
+
+        alloc($$->apply.head, 1, struct ubik_type_expr);
+        $$->apply.head->type_expr_type = TYPE_EXPR_APPLY;
+
+        alloc($$->apply.head->apply.head, 1, struct ubik_type_expr);
+        $$->apply.head->apply.head->type_expr_type = TYPE_EXPR_ATOM;
+        $$->apply.head->apply.head->name = ubik_strdup(
+                UBIK_FUNCTION_CONSTRUCTOR, ctx->region);
+
+        $$->apply.head->apply.tail = $1;
         $$->apply.tail = $3;
         merge_loc($$, $1, $3);
 }

@@ -24,6 +24,8 @@
 #include "ubik/ubik.h"
 #include "ubik/uri.h"
 
+#include <inttypes.h>
+
 no_ignore static ubik_error
 add_multimethod(
         struct ubik_ast *ast,
@@ -31,17 +33,14 @@ add_multimethod(
         struct ubik_compile_request *req)
 {
         struct ubik_ast_expr *e0, *e1, *e2;
-        struct ubik_type_expr *t0;
         struct ubik_ast_binding *bind;
         struct ubik_uri uri;
         struct ubik_ast_arg_list *args;
         ubik_error err;
-        int n_args;
-        int i;
+        uint_fast16_t i;
+        uint_fast16_t n_args;
 
-        for (n_args = 0, t0 = member->type;
-                t0->type_expr_type == TYPE_EXPR_ARROW;
-                n_args++, t0 = t0->apply.tail);
+        n_args = ubik_type_count_arguments(member->type);
 
         err = ubik_uri_nocopy(&uri, ast->package_name, member->name);
         if (err != OK)
@@ -58,7 +57,7 @@ add_multimethod(
         e0->atom->loc = e0->loc;
         ubik_asprintf(
                 &e0->atom->str, &req->region,
-                "ubik-multimethod-call-%d", n_args);
+                "ubik-multimethod-call-%" PRIuFAST16, n_args);
 
         ubik_alloc1(&e1, struct ubik_ast_expr, &req->region);
         e1->expr_type = EXPR_ATOM;
@@ -83,7 +82,7 @@ add_multimethod(
                 ubik_alloc1(&e0->atom, struct ubik_ast_atom, &req->region);
                 e0->atom->atom_type = ATOM_NAME;
                 e0->atom->loc = e0->loc;
-                ubik_asprintf(&e0->atom->str, &req->region, "%d", i);
+                ubik_asprintf(&e0->atom->str, &req->region, "%" PRIuFAST16, i);
 
                 e1 = e2;
 
@@ -98,10 +97,12 @@ add_multimethod(
         e0->expr_type = EXPR_LAMBDA;
         e0->loc = member->loc;
         e0->lambda.args = NULL;
-        for (i = n_args - 1; i >= 0; i--)
+        for (i = 0; i < n_args; i++)
         {
                 ubik_alloc1(&args, struct ubik_ast_arg_list, &req->region);
-                ubik_asprintf(&args->name, &req->region, "%d", i);
+                ubik_asprintf(
+                        &args->name, &req->region, "%" PRIuFAST16,
+                        n_args - i - 1);
                 args->next = e0->lambda.args;
                 e0->lambda.args = args;
         }

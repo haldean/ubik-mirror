@@ -21,12 +21,13 @@
 #include "ubik/ast.h"
 #include "ubik/ubik.h"
 
+extern const char const *UBIK_FUNCTION_CONSTRUCTOR;
+
 enum ubik_type_expr_type
 {
         TYPE_EXPR_APPLY = 1,
         TYPE_EXPR_ATOM,
         TYPE_EXPR_VAR,
-        TYPE_EXPR_ARROW,
         TYPE_EXPR_CONSTRAINED,
 };
 
@@ -133,3 +134,13 @@ ubik_type_expr_copy(
         struct ubik_type_expr *dst,
         struct ubik_type_expr *src,
         struct ubik_alloc_region *r);
+
+/* Returns true if the given type allows for a value to be applied to it. */
+no_ignore bool
+ubik_type_is_applyable(struct ubik_type_expr *type);
+
+/* Returns the number of arguments that a value of a given type accepts. For
+ * types like "a -> b -> c", this returns 3. For types that take no argument,
+ * this returns 0. */
+no_ignore uint_fast16_t
+ubik_type_count_arguments(struct ubik_type_expr *type);

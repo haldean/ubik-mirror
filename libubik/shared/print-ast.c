@@ -235,16 +235,6 @@ ubik_type_expr_print(struct ubik_type_expr *type_expr)
         case TYPE_EXPR_ATOM:
                 printf("%s", type_expr->name);
                 return OK;
-        case TYPE_EXPR_ARROW:
-                err = ubik_type_expr_print(type_expr->apply.head);
-                if (err != OK)
-                        return err;
-                printf(" -> (");
-                err = ubik_type_expr_print(type_expr->apply.tail);
-                if (err != OK)
-                        return err;
-                printf(")");
-                return OK;
         case TYPE_EXPR_APPLY:
                 err = ubik_type_expr_print(type_expr->apply.head);
                 if (err != OK)

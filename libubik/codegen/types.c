@@ -22,6 +22,9 @@
 #include "ubik/ubik.h"
 
 #include <stdlib.h>
+#include <string.h>
+
+const char const *UBIK_FUNCTION_CONSTRUCTOR = "Applyable";
 
 void
 type_params_copy(
@@ -94,7 +97,6 @@ ubik_type_expr_copy(
                 break;
 
         case TYPE_EXPR_APPLY:
-        case TYPE_EXPR_ARROW:
                 ubik_alloc1(&dst->apply.head, struct ubik_type_expr, r);
                 err = ubik_type_expr_copy(
                         dst->apply.head, src->apply.head, r);
@@ -120,4 +122,30 @@ ubik_type_expr_copy(
         }
 
         return OK;
+}
+
+no_ignore bool
+ubik_type_is_applyable(struct ubik_type_expr *type)
+{
+        if (type->type_expr_type != TYPE_EXPR_APPLY)
+                return false;
+        while (type->type_expr_type == TYPE_EXPR_APPLY)
+                type = type->apply.head;
+        if (type->type_expr_type != TYPE_EXPR_ATOM)
+                return false;
+        return strcmp(type->name, UBIK_FUNCTION_CONSTRUCTOR) == 0;
+}
+
+no_ignore uint_fast16_t
+ubik_type_count_arguments(struct ubik_type_expr *type)
+{
+        uint_fast16_t n;
+
+        n = 0;
+        while (ubik_type_is_applyable(type))
+        {
+                n++;
+                type = type->apply.tail;
+        }
+        return n;
 }

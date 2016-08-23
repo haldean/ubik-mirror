@@ -9,4 +9,3 @@ list iterators
 define _GNU_SOURCE in ubik.h, remove it everywhere else
 make sure that pattern blocks match all patterns
 bindings in pattern blocks
-parser should use streams instead of requiring us to convert streams to file pointers
