@@ -1,7 +1,9 @@
-Architecture of the Ubik Runtime =======================================
-Haldean Brown                                      First draft: Nov 2015
-                                                  Last updated: Mar 2016
 
+                     |  |   --     |   |  /
+                     |  |              |   
+                     |  |     --   |   |
+                     |  |          |   |  |
+                      --    ----   |   |  |
 
 This document attempts to fully explain the implementation and behavior
 of the Ubik runtime. When the code and this document disagree, the code
@@ -26,7 +28,7 @@ but the integration tests (in the form of pyasm scripts in
 test/pyasm/*.upy) are pretty comprehensive. You can run all of the
 tests by running `make check`.
 
-To build and test ubik, run the following commands:
+
 
         make check
 
