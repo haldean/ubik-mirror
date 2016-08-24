@@ -43,16 +43,17 @@ l   = 2 * sw + hsw
 # projected dash length (length of k-dash when projected onto x/y axes)
 pdl = min(xw, yh) * .4
 
-logo = svgwrite.Drawing("logo.svg", profile="tiny")
-line = lambda x1, y1, x2, y2: logo.line(
-    (x1, y1), (x2, y2),
-    stroke=fg,
-    stroke_width=sw)
-
 width = max(
     2 * l + 3 * xw + 3 * s + rp,
     yh + 2 * t - hsw)
 t += width - sw - hsw - yh - t
+
+logo = svgwrite.Drawing(
+    "logo.svg", size=(width + sw, width + sw), profile="tiny")
+line = lambda x1, y1, x2, y2: logo.line(
+    (x1, y1), (x2, y2),
+    stroke=fg,
+    stroke_width=sw)
 
 logo.add(logo.rect(
     (hsw, hsw), (width, width),
