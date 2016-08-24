@@ -1,3 +1,10 @@
+"""
+Draws the Ubik logo into logo.svg.
+
+Requires the svgwrite library to be accessible when running.
+Consider this python file the project's first branding guide?
+"""
+
 import svgwrite
 
 #  * L -XW-
@@ -24,8 +31,8 @@ li = 67
 # length of upper dash on I
 ui = 14
 
-fg = '#353556'
-bg = '#f5f5f5'
+fg = "#353556"
+bg = "#f5f5f5"
 
 # half stroke width
 hsw = sw / 2.
@@ -36,7 +43,7 @@ l   = 2 * sw + hsw
 # projected dash length (length of k-dash when projected onto x/y axes)
 pdl = min(xw, yh) * .4
 
-logo = svgwrite.Drawing('logo.svg', profile='tiny')
+logo = svgwrite.Drawing("logo.svg", profile="tiny")
 line = lambda x1, y1, x2, y2: logo.line(
     (x1, y1), (x2, y2),
     stroke=fg,
