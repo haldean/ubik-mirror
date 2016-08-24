@@ -27,14 +27,14 @@
 
 struct ubik_parse_context
 {
+        struct ubik_ast_loc *err_loc;
+        char *err_msg;
+
         union
         {
                 struct ubik_ast *ast;
                 struct ubik_type_expr *type_expr;
         };
-
-        struct ubik_ast_loc *err_loc;
-        char *err_msg;
 
         struct ubik_alloc_region *region;
 
