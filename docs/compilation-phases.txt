@@ -22,13 +22,15 @@ These dependencies exist:
   - Compiling imported modules just depends on the parsed data (2 -> 3)
   - Splatted imports depends on both the AST and imported AST information
     (2 -> 4, 3 -> 4)
-  - Interfaces and implementations only depend on the AST (2 -> 10)
+  - Interfaces and implementations depend on the AST and type inference,
+    because this phase adds untypeable constructs that inference can't
+    deal with. (2 -> 10, 5 -> 10)
   - Type inference depends on the AST, imported data, and (potentially)
     splatted names, and it depends on name resolution to be able to
-    determine known types (2 -> 5, 3 -> 5, 4 -> 5, 8 -> 5, 10 -> 5)
+    determine known types (2 -> 5, 3 -> 5, 4 -> 5, 8 -> 5).
   - Pattern compilation depends on type inference, imports and the AST as
     well. It introduces new names, which means it needs to happen before
-    resolution (2 -> 6, 3 -> 6, 4 -> 6, 5 -> 6, 6 -> 8, 10 -> 5)
+    resolution (2 -> 6, 3 -> 6, 4 -> 6, 5 -> 6, 6 -> 8)
   - ADT compilation depends on the AST and imports, but it also
     introduces new names which need to be resolved (2 -> 7, 3 -> 7,
     4 -> 7, 7 -> 8)
@@ -52,9 +54,9 @@ abuse. So the compilation flow becomes:
    2. parse
    3. import
    4. splat
-   5. interface
-   6. resolve (the "pre-resolve")
-   7. infer
+   5. resolve (the "pre-resolve")
+   6. infer
+   7. interface
    8. pattern
    9. adt
   10  resolve (the "post-resolve")

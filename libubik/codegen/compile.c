@@ -296,17 +296,6 @@ compile_job(
         if (cenv->debug)
                 ubik_typesystem_dump(cenv->type_system);
 
-        err = ubik_interfaces_compile_all(job->ast, job->request);
-        if (err != OK)
-                return err;
-        if (cenv->debug)
-        {
-                printf("\ninterfaces\n");
-                err = ubik_ast_print(job->ast);
-                if (err != OK)
-                        return err;
-        }
-
         err = ubik_resolve(job->ast, job->request);
         if (err != OK)
                 return err;
@@ -320,9 +309,21 @@ compile_job(
 
         infer_ctx.req = job->request;
         infer_ctx.debug = cenv->debug;
+        infer_ctx.type_system = cenv->type_system;
         err = ubik_infer(job->ast, &infer_ctx);
         if (err != OK)
                 return err;
+
+        err = ubik_interfaces_compile_all(job->ast, job->request);
+        if (err != OK)
+                return err;
+        if (cenv->debug)
+        {
+                printf("\ninterfaces\n");
+                err = ubik_ast_print(job->ast);
+                if (err != OK)
+                        return err;
+        }
 
         err = ubik_patterns_compile_all(job->ast, job->request);
         if (err != OK)

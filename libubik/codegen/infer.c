@@ -255,7 +255,8 @@ infer_ast(struct ubik_ast *ast, struct ubik_infer_context *ctx)
                 {
                         err = ubik_typesystem_unify(
                                 &unified, ctx->type_system, ast->package_name,
-                                bind->type_expr, bind->expr->type);
+                                bind->type_expr, bind->expr->type,
+                                &ctx->req->region);
                         if (err != OK)
                                 return err;
                         if (!unified.success)
@@ -265,6 +266,7 @@ infer_ast(struct ubik_ast *ast, struct ubik_infer_context *ctx)
                                         &ctx->req->region);
                                 ierr->error_type = INFER_ERR_BIND_TYPE;
                                 ierr->bad_bind = bind;
+                                ierr->extra_info = unified.failure_info;
                                 return ubik_vector_append(&ctx->errors, ierr);
                         }
                 }
@@ -341,6 +343,9 @@ infer_error_print(
                 return ubik_raise(
                         ERR_UNKNOWN_TYPE, "unknown inference error type");
         }
+
+        if (ierr->extra_info != NULL)
+                printf("    %s\n", ierr->extra_info);
 
         return err;
 }

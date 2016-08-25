@@ -255,63 +255,45 @@ ubik_typesystem_dump(struct ubik_typesystem *tsys)
 }
 
 no_ignore static ubik_error
-add_constraints(
-        struct ubik_typesystem_unified *unified,
-        struct ubik_type_constraints *constraints)
-{
-        unused(unified);
-        unused(constraints);
-        return OK;
-}
-
-no_ignore static ubik_error
 assign_atom_to_atom(
         struct ubik_typesystem_unified *unified,
         struct ubik_type_expr *to,
         struct ubik_type_expr *from)
 {
-        if (strcmp(to->name, from->name) == 0)
+        if (strcmp(to->name, from->name) != 0)
         {
-                unified->res = to;
-                unified->success = true;
+                unified->success = false;
         }
         return OK;
 }
 
 no_ignore static ubik_error
-assign_atom_to_var(
+assign_to_var(
         struct ubik_typesystem_unified *unified,
-        struct ubik_type_expr *to,
-        struct ubik_type_expr *from)
+        struct ubik_type_expr *var,
+        struct ubik_type_expr *expr,
+        struct ubik_alloc_region *region)
 {
-        unused(unified);
-        unused(to);
-        unused(from);
-        return OK;
-}
+        struct ubik_typesystem_subst *sub;
+        size_t i;
 
-no_ignore static ubik_error
-assign_var_to_atom(
-        struct ubik_typesystem_unified *unified,
-        struct ubik_type_expr *to,
-        struct ubik_type_expr *from)
-{
-        unused(unified);
-        unused(to);
-        unused(from);
-        return OK;
-}
-
-no_ignore static ubik_error
-assign_var_to_var(
-        struct ubik_typesystem_unified *unified,
-        struct ubik_type_expr *to,
-        struct ubik_type_expr *from)
-{
-        unused(unified);
-        unused(to);
-        unused(from);
-        return OK;
+        for (i = 0; i < unified->substs.n; i++)
+        {
+                sub = unified->substs.elems[i];
+                if (strcmp(sub->varname, var->name) == 0)
+                {
+                        /* TODO: this is only a failure if the existing
+                        substitution is not allowable. */
+                        unified->success = false;
+                        return ubik_raise(
+                                ERR_BAD_TYPE,
+                                "can't sub the same tyvar multiple times");
+                }
+        }
+        ubik_alloc1(&sub, struct ubik_typesystem_subst, region);
+        sub->varname = var->name;
+        sub->val = expr;
+        return ubik_vector_append(&unified->substs, sub);
 }
 
 no_ignore static ubik_error
@@ -320,7 +302,8 @@ unify(
         struct ubik_typesystem *tsys,
         char *package,
         struct ubik_type_expr *assign_to,
-        struct ubik_type_expr *assign_from)
+        struct ubik_type_expr *assign_from,
+        struct ubik_alloc_region *region)
 {
         ubik_error err;
 
@@ -328,8 +311,8 @@ unify(
         {
         case TYPE_EXPR_ATOM:
                 if (assign_from->type_expr_type == TYPE_EXPR_VAR)
-                        return assign_var_to_atom(
-                                unified, assign_to, assign_from);
+                        return assign_to_var(
+                                unified, assign_from, assign_to, region);
                 if (assign_from->type_expr_type == TYPE_EXPR_ATOM)
                         return assign_atom_to_atom(
                                 unified, assign_to, assign_from);
@@ -346,29 +329,143 @@ unify(
                         printf("unsupported comparison between applied types\n");
                         return OK;
                 }
-                err = ubik_typesystem_unify(
+                err = unify(
                         unified, tsys, package, assign_to->apply.head,
-                        assign_from->apply.head);
+                        assign_from->apply.head, region);
                 if (err != OK || !unified->success)
                         return err;
-                err = ubik_typesystem_unify(
+                err = unify(
                         unified, tsys, package, assign_to->apply.tail,
-                        assign_from->apply.tail);
+                        assign_from->apply.tail, region);
                 return err;
 
         case TYPE_EXPR_VAR:
                 if (assign_from->type_expr_type == TYPE_EXPR_VAR)
-                        return assign_var_to_var(
-                                unified, assign_to, assign_from);
+                        return assign_to_var(
+                                unified, assign_to, assign_from, region);
                 if (assign_from->type_expr_type == TYPE_EXPR_ATOM)
-                        return assign_atom_to_var(
-                                unified, assign_to, assign_from);
+                        return assign_to_var(
+                                unified, assign_to, assign_from, region);
                 return OK;
         }
 
         return ubik_raise(ERR_BAD_TYPE, "bad type expr type in unify");
 }
 
+no_ignore static ubik_error
+add_constraints(
+        struct ubik_typesystem *tsys,
+        struct ubik_vector *cs,
+        struct ubik_type_constraints *expr_cs,
+        struct ubik_alloc_region *region)
+{
+        struct ts_iface *iface;
+        struct ts_impl *impl;
+        struct ubik_type_params *params;
+        ubik_error err;
+        bool found;
+        size_t i;
+
+        while (expr_cs != NULL)
+        {
+                found = false;
+                for (i = 0; i < tsys->interfaces.n; i++)
+                {
+                        iface = tsys->interfaces.elems[i];
+                        /* TODO: actual package handling here. */
+                        if (strcmp(expr_cs->interface, iface->name) == 0)
+                        {
+                                found = true;
+                                break;
+                        }
+                }
+                if (!found)
+                        return ubik_raise(
+                                ERR_BAD_TYPE, "unknown interface in constraint");
+
+                ubik_alloc1(&impl, struct ts_impl, region);
+                impl->iface = iface;
+                params = expr_cs->params;
+
+                for (params = expr_cs->params, i = 0;
+                     params != NULL && i < iface->n_params;
+                     params = params->next, i++)
+                {
+                        impl->params[i].name = ubik_strdup(params->name, region);
+                        impl->params[i].type_expr_type = TYPE_EXPR_VAR;
+                }
+                if (params != NULL || i != iface->n_params)
+                        return ubik_raise(
+                                ERR_BAD_TYPE,
+                                "wrong number of params in constraint");
+
+                err = ubik_vector_append(cs, impl);
+                if (err != OK)
+                        return err;
+                expr_cs = expr_cs->next;
+        }
+        return OK;
+}
+
+no_ignore static ubik_error
+apply_subst(
+        struct ubik_type_expr *expr,
+        struct ubik_typesystem_subst *sub)
+{
+        ubik_error err;
+
+        switch (expr->type_expr_type)
+        {
+        case TYPE_EXPR_ATOM:
+                return OK;
+
+        case TYPE_EXPR_CONSTRAINED:
+                return ubik_raise(
+                        ERR_BAD_TYPE,
+                        "constrained types should have been stripped out");
+
+        case TYPE_EXPR_APPLY:
+                err = apply_subst(expr->apply.head, sub);
+                if (err != OK)
+                        return err;
+                err = apply_subst(expr->apply.tail, sub);
+                return err;
+
+        case TYPE_EXPR_VAR:
+                if (strcmp(expr->name, sub->varname) != 0)
+                        return OK;
+                *expr = *(sub->val);
+                return OK;
+        }
+
+        return ubik_raise(ERR_BAD_TYPE, "bad type expr type in unify");
+}
+
+no_ignore static ubik_error
+replace_var_in_impl(
+        struct ts_impl *constraint,
+        struct ubik_typesystem_subst *sub)
+{
+        size_t i;
+        ubik_error err;
+        for (i = 0; i < constraint->iface->n_params; i++)
+        {
+                err = apply_subst(&constraint->params[i], sub);
+                if (err != OK)
+                        return err;
+        }
+        return OK;
+}
+
+static bool
+impl_entailed(
+        struct ubik_typesystem *tsys,
+        struct ts_impl *constraint)
+{
+        unused(tsys);
+        unused(constraint);
+        return false;
+}
 
 no_ignore ubik_error
 ubik_typesystem_unify(
@@ -376,17 +473,30 @@ ubik_typesystem_unify(
         struct ubik_typesystem *tsys,
         char *package,
         struct ubik_type_expr *assign_to,
-        struct ubik_type_expr *assign_from)
+        struct ubik_type_expr *assign_from,
+        struct ubik_alloc_region *region)
 {
+        struct ubik_typesystem_subst *sub;
+        struct ubik_vector constraints = {0};
+        struct ts_impl *constraint;
         ubik_error err;
+        size_t i, j;
 
-        unified->success = false;
+        ubik_assert(tsys != NULL);
+
+        constraints.region = region;
+
+        unified->substs = (struct ubik_vector) {0};
+        unified->substs.region = region;
+
+        unified->success = true;
         unified->res = NULL;
 
         if (assign_to->type_expr_type == TYPE_EXPR_CONSTRAINED)
         {
                 err = add_constraints(
-                        unified, assign_to->constrained.constraints);
+                        tsys, &constraints, assign_to->constrained.constraints,
+                        region);
                 if (err != OK)
                         return err;
                 assign_to = assign_to->constrained.term;
@@ -394,11 +504,73 @@ ubik_typesystem_unify(
         if (assign_from->type_expr_type == TYPE_EXPR_CONSTRAINED)
         {
                 err = add_constraints(
-                        unified, assign_from->constrained.constraints);
+                        tsys, &constraints, assign_from->constrained.constraints,
+                        region);
                 if (err != OK)
                         return err;
                 assign_from = assign_from->constrained.term;
         }
 
-        return unify(unified, tsys, package, assign_to, assign_from);
+        err = unify(unified, tsys, package, assign_to, assign_from, region);
+
+        /* Check that constraints are satisfied by applying the substitution to
+         * each constraint, and then making sure that implementations exist
+         * for each. */
+        for (i = 0; i < unified->substs.n; i++)
+        {
+                sub = unified->substs.elems[i];
+                for (j = 0; j < constraints.n; j++)
+                {
+                        constraint = constraints.elems[j];
+                        err = replace_var_in_impl(constraint, sub);
+                        if (err != OK)
+                                return err;
+                }
+        }
+
+        for (i = 0; i < constraints.n; i++)
+        {
+                constraint = constraints.elems[i];
+                if (!impl_entailed(tsys, constraint))
+                {
+                        unified->success = false;
+                        ubik_asprintf(
+                                &unified->failure_info,
+                                region,
+                                "could not find an implementation for \x1b[32m%s",
+                                constraint->iface->name);
+                        for (j = 0; j < constraint->iface->n_params; j++)
+                        {
+                                ubik_asprintf(
+                                        &unified->failure_info,
+                                        region,
+                                        "%s %s",
+                                        unified->failure_info,
+                                        constraint->params[j].name);
+                        }
+                        ubik_asprintf(
+                                &unified->failure_info,
+                                region,
+                                "%s\x1b[0m",
+                                unified->failure_info);
+                }
+        }
+
+        printf("unifying ");
+        ubik_assert(ubik_type_expr_print(assign_to) == OK);
+        printf(" and ");
+        ubik_assert(ubik_type_expr_print(assign_from) == OK);
+        printf(" gives subst ");
+        for (i = 0; i < unified->substs.n; i++)
+        {
+                sub = unified->substs.elems[i];
+                printf("(%s => ", sub->varname);
+                ubik_assert(ubik_type_expr_print(sub->val) == OK);
+                printf(") ");
+        }
+        for (i = 0; i < constraints.n; i++)
+        {}
+        printf("\n");
+
+        return err;
 }

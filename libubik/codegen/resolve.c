@@ -209,6 +209,8 @@ update_scopes_with_bindings(
         struct ubik_ast_binding *bind;
         struct ubik_type *type;
         struct ubik_ast_adt_ctors *ctor;
+        struct ubik_ast_member_list *member;
+        struct ubik_ast_interface *iface;
         struct ubik_resolve_name *name;
         ubik_error err;
 
@@ -251,6 +253,26 @@ update_scopes_with_bindings(
                                 return err;
 
                         ctor = ctor->next;
+                }
+        }
+
+        for (i = 0; i < ast->interfaces.n; i++)
+        {
+                iface = ast->interfaces.elems[i];
+                member = iface->members;
+                while (member != NULL)
+                {
+                        ubik_alloc1(&name, struct ubik_resolve_name, ctx->region);
+                        name->name = member->name;
+                        name->type = ast->scope->boundary == BOUNDARY_GLOBAL
+                                ? RESOLVE_GLOBAL
+                                : RESOLVE_LOCAL;
+
+                        err = ubik_vector_append(&ast->scope->names, name);
+                        if (err != OK)
+                                return err;
+
+                        member = member->next;
                 }
         }
 

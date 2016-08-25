@@ -62,6 +62,7 @@ struct ubik_infer_error
                 struct ubik_ast_expr *bad_expr;
                 struct ubik_ast_binding *bad_bind;
         };
+        char *extra_info;
 };
 
 /* Infers all types in an AST. */

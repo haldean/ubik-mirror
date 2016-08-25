@@ -27,11 +27,19 @@
 struct ubik_typesystem;
 struct ubik_compile_request;
 
+struct ubik_typesystem_subst
+{
+        char *varname;
+        struct ubik_type_expr *val;
+};
+
 struct ubik_typesystem_unified
 {
         struct ubik_type_expr *res;
-        struct ubik_vector constraints;
+        /* elements are ubik_typesystem_subst pointers */
+        struct ubik_vector substs;
         bool success;
+        char *failure_info;
 };
 
 no_ignore ubik_error
@@ -51,7 +59,8 @@ ubik_typesystem_unify(
         struct ubik_typesystem *tsys,
         char *package,
         struct ubik_type_expr *assign_to,
-        struct ubik_type_expr *assign_from);
+        struct ubik_type_expr *assign_from,
+        struct ubik_alloc_region *region);
 
 void
 ubik_typesystem_dump(struct ubik_typesystem *tsys);
