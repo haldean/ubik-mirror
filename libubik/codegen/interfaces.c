@@ -133,6 +133,18 @@ compile_interface(
         return OK;
 }
 
+no_ignore static ubik_error
+compile_impl(
+        struct ubik_ast *ast,
+        struct ubik_ast_interface *iface,
+        struct ubik_compile_request *req)
+{
+        unused(ast);
+        unused(iface);
+        unused(req);
+        return OK;
+}
+
 no_ignore ubik_error
 ubik_interfaces_compile_all(
         struct ubik_ast *ast,
@@ -146,6 +158,14 @@ ubik_interfaces_compile_all(
         {
                 iface = (struct ubik_ast_interface *) ast->interfaces.elems[i];
                 err = compile_interface(ast, iface, req);
+                if (err != OK)
+                        return err;
+        }
+
+        for (i = 0; i < ast->implementations.n; i++)
+        {
+                impl = ast->implementations.elems[i];
+                err = compile_impl(ast, impl, req);
                 if (err != OK)
                         return err;
         }
