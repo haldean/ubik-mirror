@@ -256,7 +256,7 @@ infer_ast(struct ubik_ast *ast, struct ubik_infer_context *ctx)
                         err = ubik_typesystem_unify(
                                 &unified, ctx->type_system, ast->package_name,
                                 bind->type_expr, bind->expr->type,
-                                &ctx->req->region);
+                                &ctx->req->region, ctx->debug);
                         if (err != OK)
                                 return err;
                         if (!unified.success)

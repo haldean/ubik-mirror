@@ -60,7 +60,8 @@ ubik_typesystem_unify(
         char *package,
         struct ubik_type_expr *assign_to,
         struct ubik_type_expr *assign_from,
-        struct ubik_alloc_region *region);
+        struct ubik_alloc_region *region,
+        bool debug);
 
 void
 ubik_typesystem_dump(struct ubik_typesystem *tsys);

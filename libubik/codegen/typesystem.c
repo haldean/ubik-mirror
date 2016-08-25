@@ -462,8 +462,38 @@ impl_entailed(
         struct ubik_typesystem *tsys,
         struct ts_impl *constraint)
 {
-        unused(tsys);
-        unused(constraint);
+        struct ts_impl *impl;
+        struct ubik_type_expr *cp;
+        struct ubik_type_expr *ip;
+        size_t i, j;
+        bool match;
+
+        for (i = 0; i < tsys->implementations.n; i++)
+        {
+                impl = tsys->implementations.elems[i];
+                /* Note to self (because I can just see this causing a bug
+                 * later): this is assuming there's a single struct in memory for
+                 * each interface. */
+                if (impl->iface != constraint->iface)
+                        continue;
+
+                match = true;
+                for (j = 0; j < impl->iface->n_params; j++)
+                {
+                        cp = &constraint->params[j];
+                        ip = &impl->params[j];
+                        /* variables in the constraint match anything */
+                        if (cp->type_expr_type == TYPE_EXPR_VAR)
+                                continue;
+                        if (strcmp(ip->name, cp->name) != 0)
+                        {
+                                match = false;
+                                break;
+                        }
+                }
+                if (match)
+                        return true;
+        }
         return false;
 }
 
@@ -474,7 +504,8 @@ ubik_typesystem_unify(
         char *package,
         struct ubik_type_expr *assign_to,
         struct ubik_type_expr *assign_from,
-        struct ubik_alloc_region *region)
+        struct ubik_alloc_region *region,
+        bool debug)
 {
         struct ubik_typesystem_subst *sub;
         struct ubik_vector constraints = {0};
@@ -556,21 +587,31 @@ ubik_typesystem_unify(
                 }
         }
 
-        printf("unifying ");
-        ubik_assert(ubik_type_expr_print(assign_to) == OK);
-        printf(" and ");
-        ubik_assert(ubik_type_expr_print(assign_from) == OK);
-        printf(" gives subst ");
-        for (i = 0; i < unified->substs.n; i++)
+        if (debug)
         {
-                sub = unified->substs.elems[i];
-                printf("(%s => ", sub->varname);
-                ubik_assert(ubik_type_expr_print(sub->val) == OK);
-                printf(") ");
+                printf("    unifying ");
+                ubik_assert(ubik_type_expr_print(assign_to) == OK);
+                printf(" and ");
+                ubik_assert(ubik_type_expr_print(assign_from) == OK);
+                printf(" gives subst ");
+                for (i = 0; i < unified->substs.n; i++)
+                {
+                        sub = unified->substs.elems[i];
+                        printf("(%s => ", sub->varname);
+                        ubik_assert(ubik_type_expr_print(sub->val) == OK);
+                        printf(") ");
+                }
+                for (i = 0; i < constraints.n; i++)
+                {
+                        constraint = constraints.elems[i];
+                        printf("requiring impl %s ", constraint->iface->name);
+                        for (j = 0; j < constraint->iface->n_params; j++)
+                        {
+                                printf("%s ", constraint->params[j].name);
+                        }
+                }
+                printf("\n");
         }
-        for (i = 0; i < constraints.n; i++)
-        {}
-        printf("\n");
 
         return err;
 }
