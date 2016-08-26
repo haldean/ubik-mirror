@@ -34,6 +34,7 @@ resolve()
         struct ubik_stream progstream;
         struct ubik_stream feedback;
         struct ubik_ast_expr *e;
+        struct ubik_resolve_name_loc *x0, *x1, *x2, *x3, *x4;
 
         assert(ubik_stream_wfilep(&feedback, stdout) == OK);
         req.feedback = &feedback;
@@ -50,12 +51,18 @@ resolve()
         /* e here is \x -> uadd x ((\x -> x) x). The xs, by name, are
          * \x0 -> uadd x1 ((\x2 -> x3) x4) */
         e = ((struct ubik_ast_binding *) ast->bindings.elems[0])->expr;
-        /* compare x1 and x4 */
-        assert(e->lambda.body->apply.head->apply.tail->atom->name_loc->def ==
-               e->lambda.body->apply.tail->apply.tail->atom->name_loc->def);
-        /* make sure x1 and x3 are different */
-        assert(e->lambda.body->apply.head->apply.tail->atom->name_loc->def !=
-               e->lambda.body->apply.tail->apply.tail->atom->name_loc->def);
+
+        x0 = e->lambda.args->name_loc;
+        x1 = e->lambda.body->apply.head->apply.tail->atom->name_loc;
+        x2 = e->lambda.body->apply.tail->apply.head->lambda.args->name_loc;
+        x3 = e->lambda.body->apply.tail->apply.head->lambda.body->atom->name_loc;
+        x4 = e->lambda.body->apply.tail->apply.tail->atom->name_loc;
+
+        assert(x0->def == x1->def);
+        assert(x0->def != x2->def);
+        assert(x0->def != x3->def);
+        assert(x0->def == x4->def);
+        assert(x2->def == x3->def);
 
         ubik_alloc_free(&req.region);
         return ok;

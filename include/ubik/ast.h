@@ -93,6 +93,7 @@ struct ubik_ast_arg_list
         char *name;
         struct ubik_ast_arg_list *next;
         struct ubik_dagc_node *gen;
+        struct ubik_resolve_name_loc *name_loc;
         struct ubik_ast_loc loc;
 };
 
