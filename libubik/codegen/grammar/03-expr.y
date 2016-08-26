@@ -54,7 +54,8 @@ top_expr
         $$->lambda.body = $4;
 
         load_loc($$->loc);
-        merge_loc($$, $$, $2);
+        if ($2 != NULL)
+                merge_loc($$, $$, $2);
         merge_loc($$, $$, $4);
 }
 | cond_block
