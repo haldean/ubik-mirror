@@ -188,6 +188,48 @@ infer_apply(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
 }
 
 no_ignore static ubik_error
+infer_lambda(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
+{
+        struct ubik_ast_arg_list *args;
+        struct ubik_type_expr *t0, *t1, *applyable;
+
+        expr->type = expr->lambda.body->type;
+
+        ubik_alloc1(&applyable, struct ubik_type_expr, &ctx->req->region);
+        applyable->type_expr_type = TYPE_EXPR_ATOM;
+        applyable->name = ubik_strdup(
+                UBIK_FUNCTION_CONSTRUCTOR, &ctx->req->region);
+
+        for (args = expr->lambda.args; args != NULL; args = args->next)
+        {
+                /* possible if the argument isn't used anywhere in the body of
+                 * the function */
+                if (args->name_loc->def->inferred_type == NULL)
+                {
+                        ubik_alloc1(
+                                &t0, struct ubik_type_expr, &ctx->req->region);
+                        args->name_loc->def->inferred_type = t0;
+                        ubik_asprintf(
+                                &t0->name, &ctx->req->region, "%u",
+                                ctx->next_tyvar++);
+                        t0->type_expr_type = TYPE_EXPR_VAR;
+                }
+                ubik_alloc1(&t0, struct ubik_type_expr, &ctx->req->region);
+                ubik_alloc1(&t1, struct ubik_type_expr, &ctx->req->region);
+
+                t0->type_expr_type = TYPE_EXPR_APPLY;
+                t0->apply.head = t1;
+                t0->apply.tail = expr->type;
+
+                t1->type_expr_type = TYPE_EXPR_APPLY;
+                t1->apply.head = applyable;
+                t1->apply.tail = args->name_loc->def->inferred_type;
+        }
+
+        return OK;
+}
+
+no_ignore static ubik_error
 infer_expr(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
 {
         struct ubik_ast *subast;
@@ -230,9 +272,14 @@ infer_expr(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
                         return err;
                 break;
 
+        case EXPR_LAMBDA:
+                err = infer_lambda(expr, ctx);
+                if (err != OK)
+                        return err;
+                break;
+
         case EXPR_BLOCK:
         case EXPR_COND_BLOCK:
-        case EXPR_LAMBDA:
                 break;
         }
 
