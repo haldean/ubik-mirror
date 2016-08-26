@@ -45,6 +45,7 @@ struct ubik_resolve_name
         char *name;
         enum ubik_resolve_type type;
         struct ubik_dagc_node *node;
+        struct ubik_type_expr *inferred_type;
 };
 
 struct ubik_resolve_name_loc

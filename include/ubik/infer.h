@@ -35,6 +35,8 @@ struct ubik_infer_context
         struct ubik_vector errors;
         /* the type system we're inferring inside. */
         struct ubik_typesystem *type_system;
+        /* the name of the next type variable to create */
+        uint32_t next_tyvar;
 };
 
 enum ubik_infer_error_type

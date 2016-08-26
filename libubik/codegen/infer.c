@@ -126,6 +126,20 @@ infer_atom(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
                 case RESOLVE_LOCAL:
                 case RESOLVE_GLOBAL:
                 case RESOLVE_CLOSURE:
+                        if (expr->atom->name_loc->def->inferred_type == NULL)
+                        {
+                                ubik_asprintf(
+                                        &expr->type->name,
+                                        &ctx->req->region,
+                                        "%u",
+                                        ctx->next_tyvar++);
+                                expr->type->type_expr_type = TYPE_EXPR_VAR;
+                                expr->atom->name_loc->def->inferred_type =
+                                        expr->type;
+                        }
+                        else
+                                expr->type =
+                                        expr->atom->name_loc->def->inferred_type;
                         break;
                 }
                 /* let unknown names fall through. */
