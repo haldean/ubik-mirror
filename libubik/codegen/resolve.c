@@ -440,7 +440,6 @@ load_global_name(
 {
         name_loc->type = RESOLVE_GLOBAL;
         name_loc->package_name = scope->package_name;
-        name_loc->def = NULL;
 }
 
 no_ignore ubik_error

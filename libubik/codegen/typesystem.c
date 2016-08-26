@@ -267,9 +267,39 @@ assign_atom_to_atom(
         return OK;
 }
 
+/* Resolves two attempted substitutions for the same variable. Returns the
+ * result by modifying res. If the substitution is impossible, res is unmodified
+ * and the success flag in unified is set to false. */
+no_ignore static ubik_error
+resolve_substs(
+        struct ubik_typesystem_subst *res,
+        struct ubik_typesystem_unified *unified,
+        struct ubik_typesystem *tsys,
+        struct ubik_type_expr *expr1,
+        struct ubik_type_expr *expr2,
+        struct ubik_alloc_region *region)
+{
+        struct ubik_typesystem_unified u = {0};
+        ubik_error err;
+
+        err = ubik_typesystem_unify(
+                &u, tsys, NULL, expr1, expr2, region, false);
+        if (err != OK)
+                return err;
+        if (u.success == false)
+        {
+                unified->success = false;
+                unified->failure_info = u.failure_info;
+                return OK;
+        }
+        res->val = u.res;
+        return OK;
+}
+
 no_ignore static ubik_error
 assign_to_var(
         struct ubik_typesystem_unified *unified,
+        struct ubik_typesystem *tsys,
         struct ubik_type_expr *var,
         struct ubik_type_expr *expr,
         struct ubik_alloc_region *region)
@@ -281,14 +311,8 @@ assign_to_var(
         {
                 sub = unified->substs.elems[i];
                 if (strcmp(sub->varname, var->name) == 0)
-                {
-                        /* TODO: this is only a failure if the existing
-                        substitution is not allowable. */
-                        unified->success = false;
-                        return ubik_raise(
-                                ERR_BAD_TYPE,
-                                "can't sub the same tyvar multiple times");
-                }
+                        return resolve_substs(
+                                sub, unified, tsys, expr, sub->val, region);
         }
         ubik_alloc1(&sub, struct ubik_typesystem_subst, region);
         sub->varname = var->name;
@@ -312,7 +336,7 @@ unify(
         case TYPE_EXPR_ATOM:
                 if (assign_from->type_expr_type == TYPE_EXPR_VAR)
                         return assign_to_var(
-                                unified, assign_from, assign_to, region);
+                                unified, tsys, assign_from, assign_to, region);
                 if (assign_from->type_expr_type == TYPE_EXPR_ATOM)
                         return assign_atom_to_atom(
                                 unified, assign_to, assign_from);
@@ -340,12 +364,8 @@ unify(
                 return err;
 
         case TYPE_EXPR_VAR:
-                if (assign_from->type_expr_type == TYPE_EXPR_VAR)
-                        return assign_to_var(
-                                unified, assign_to, assign_from, region);
-                if (assign_from->type_expr_type == TYPE_EXPR_ATOM)
-                        return assign_to_var(
-                                unified, assign_to, assign_from, region);
+                return assign_to_var(
+                        unified, tsys, assign_to, assign_from, region);
                 return OK;
         }
 

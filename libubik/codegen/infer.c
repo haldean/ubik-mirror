@@ -33,6 +33,14 @@
 no_ignore static ubik_error
 infer_ast(struct ubik_ast *ast, struct ubik_infer_context *ctx);
 
+static void
+new_tyvar(struct ubik_type_expr *t, struct ubik_infer_context *ctx)
+{
+        t->type_expr_type = TYPE_EXPR_VAR;
+        ubik_asprintf(
+                &t->name, &ctx->req->region, "_t%u", ctx->next_tyvar++);
+}
+
 static bool
 compatible(
         struct ubik_type_expr *e1,
@@ -128,12 +136,7 @@ infer_atom(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
                 case RESOLVE_CLOSURE:
                         if (expr->atom->name_loc->def->inferred_type == NULL)
                         {
-                                ubik_asprintf(
-                                        &expr->type->name,
-                                        &ctx->req->region,
-                                        "%u",
-                                        ctx->next_tyvar++);
-                                expr->type->type_expr_type = TYPE_EXPR_VAR;
+                                new_tyvar(expr->type, ctx);
                                 expr->atom->name_loc->def->inferred_type =
                                         expr->type;
                                 return OK;
@@ -208,11 +211,8 @@ infer_lambda(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
                 {
                         ubik_alloc1(
                                 &t0, struct ubik_type_expr, &ctx->req->region);
+                        new_tyvar(t0, ctx);
                         args->name_loc->def->inferred_type = t0;
-                        ubik_asprintf(
-                                &t0->name, &ctx->req->region, "%u",
-                                ctx->next_tyvar++);
-                        t0->type_expr_type = TYPE_EXPR_VAR;
                 }
                 ubik_alloc1(&t0, struct ubik_type_expr, &ctx->req->region);
                 ubik_alloc1(&t1, struct ubik_type_expr, &ctx->req->region);
@@ -224,6 +224,8 @@ infer_lambda(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
                 t1->type_expr_type = TYPE_EXPR_APPLY;
                 t1->apply.head = applyable;
                 t1->apply.tail = args->name_loc->def->inferred_type;
+
+                expr->type = t0;
         }
 
         return OK;

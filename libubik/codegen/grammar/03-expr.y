@@ -110,8 +110,7 @@ expr
 arg_list
 : %empty
 {
-        alloc($$, 1, struct ubik_ast_arg_list);
-        load_loc($$->loc);
+        $$ = NULL;
 }
 | NAME arg_list
 {
