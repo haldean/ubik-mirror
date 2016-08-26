@@ -250,6 +250,7 @@ infer_expr(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
         size_t i;
         ubik_error err;
 
+        expr->type = NULL;
         subast = NULL;
         n_subexprs = 0;
         err = ubik_ast_subexprs(&subast, subexprs, &n_subexprs, expr);
@@ -277,6 +278,11 @@ infer_expr(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
                         expr->type = NULL;
                         return OK;
                 }
+        }
+        if (subast != NULL && subast->immediate->type == NULL)
+        {
+                expr->type = NULL;
+                return OK;
         }
 
         switch (expr->expr_type)

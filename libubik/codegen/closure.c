@@ -75,6 +75,8 @@ apply_closure(
 {
         struct ubik_ast_expr *apply;
         struct ubik_ast_expr *name;
+        struct ubik_resolve_name *bind;
+        size_t i;
 
         (*lambda)->scope->needs_closure_appl = false;
 
@@ -84,11 +86,21 @@ apply_closure(
         ubik_alloc1(&name->atom, struct ubik_ast_atom, &req->region);
         name->atom->atom_type = ATOM_NAME;
 
+        for (i = 0; i < (*lambda)->scope->names.n; i++)
+        {
+                bind = (struct ubik_resolve_name *)
+                        (*lambda)->scope->names.elems[i];
+                if (strcmp(bind->name, resolving_name) == 0)
+                        break;
+        }
+        ubik_assert(strcmp(bind->name, resolving_name) == 0);
+
         ubik_alloc1(
                 &name->atom->name_loc, struct ubik_resolve_name_loc,
                 &req->region);
         name->atom->name_loc->type = RESOLVE_LOCAL;
-        name->atom->str = ubik_strdup(resolving_name, &req->region);
+        name->atom->name_loc->def = bind;
+        name->atom->str = resolving_name;
 
         name->scope = (*lambda)->scope->parent;
 
@@ -251,6 +263,12 @@ break_all:
                 err = ubik_vector_append(&expr->scope->names, rname);
                 if (err != OK)
                         return err;
+
+                ubik_alloc1(
+                        &args->name_loc, struct ubik_resolve_name_loc,
+                        &req->region);
+                args->name_loc->type = RESOLVE_LOCAL;
+                args->name_loc->def = rname;
         }
 
         if (is_top)
