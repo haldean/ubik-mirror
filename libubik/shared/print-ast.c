@@ -230,6 +230,12 @@ ubik_type_expr_print(struct ubik_type_expr *type_expr)
         struct ubik_type_params *params;
         ubik_error err;
 
+        if (type_expr == NULL)
+        {
+                printf("NULL");
+                return OK;
+        }
+
         switch (type_expr->type_expr_type)
         {
         case TYPE_EXPR_ATOM:

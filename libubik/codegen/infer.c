@@ -17,6 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include "ubik/assert.h"
 #include "ubik/feedback.h"
 #include "ubik/infer.h"
 #include "ubik/natives.h"
@@ -39,6 +40,34 @@ new_tyvar(struct ubik_type_expr *t, struct ubik_infer_context *ctx)
         t->type_expr_type = TYPE_EXPR_VAR;
         ubik_asprintf(
                 &t->name, &ctx->req->region, "_t%u", ctx->next_tyvar++);
+}
+
+static void
+make_applyable(
+        struct ubik_type_expr **res,
+        struct ubik_type_expr *head,
+        struct ubik_type_expr *tail,
+        struct ubik_infer_context *ctx)
+{
+        struct ubik_type_expr *t0, *t1, *applyable;
+
+        ubik_alloc1(&applyable, struct ubik_type_expr, &ctx->req->region);
+        applyable->type_expr_type = TYPE_EXPR_ATOM;
+        applyable->name = ubik_strdup(
+                UBIK_FUNCTION_CONSTRUCTOR, &ctx->req->region);
+
+        ubik_alloc1(&t0, struct ubik_type_expr, &ctx->req->region);
+        ubik_alloc1(&t1, struct ubik_type_expr, &ctx->req->region);
+
+        t1->type_expr_type = TYPE_EXPR_APPLY;
+        t1->apply.head = applyable;
+        t1->apply.tail = head;
+
+        t0->type_expr_type = TYPE_EXPR_APPLY;
+        t0->apply.head = t1;
+        t0->apply.tail = tail;
+
+        *res = t0;
 }
 
 /* Note: when this function is called, the type object on the expression has
@@ -136,6 +165,7 @@ infer_apply(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
         struct ubik_type_expr *t;
         struct ubik_infer_error *ierr;
         struct ubik_typesystem_unified unified;
+        struct ubik_type_expr *t0, *t1;
         ubik_error err;
 
         h = expr->apply.head->type;
@@ -145,10 +175,23 @@ infer_apply(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
 
         if (!ubik_type_is_applyable(h))
         {
-                ubik_alloc1(&ierr, struct ubik_infer_error, &ctx->req->region);
-                ierr->error_type = INFER_ERR_APPLY_HEAD_UNAPPL;
-                ierr->bad_expr = expr;
-                return ubik_vector_append(&ctx->errors, ierr);
+                if (h->type_expr_type != TYPE_EXPR_VAR)
+                {
+                        ubik_alloc1(
+                                &ierr, struct ubik_infer_error,
+                                &ctx->req->region);
+                        ierr->error_type = INFER_ERR_APPLY_HEAD_UNAPPL;
+                        ierr->bad_expr = expr;
+                        return ubik_vector_append(&ctx->errors, ierr);
+                }
+                ubik_alloc1(&t0, struct ubik_type_expr, &ctx->req->region);
+                new_tyvar(t0, ctx);
+                make_applyable(&t1, t0, t0, ctx);
+
+                ubik_assert(expr->apply.head->expr_type == EXPR_ATOM);
+                expr->apply.head->atom->name_loc->def->inferred_type = t1;
+                expr->apply.head->type = t1;
+                h = t1;
         }
 
         err = ubik_typesystem_unify(
@@ -175,14 +218,9 @@ no_ignore static ubik_error
 infer_lambda(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
 {
         struct ubik_ast_arg_list *args;
-        struct ubik_type_expr *t0, *t1, *applyable;
+        struct ubik_type_expr *t0;
 
         expr->type = expr->lambda.body->type;
-
-        ubik_alloc1(&applyable, struct ubik_type_expr, &ctx->req->region);
-        applyable->type_expr_type = TYPE_EXPR_ATOM;
-        applyable->name = ubik_strdup(
-                UBIK_FUNCTION_CONSTRUCTOR, &ctx->req->region);
 
         for (args = expr->lambda.args; args != NULL; args = args->next)
         {
@@ -195,18 +233,9 @@ infer_lambda(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
                         new_tyvar(t0, ctx);
                         args->name_loc->def->inferred_type = t0;
                 }
-                ubik_alloc1(&t0, struct ubik_type_expr, &ctx->req->region);
-                ubik_alloc1(&t1, struct ubik_type_expr, &ctx->req->region);
-
-                t0->type_expr_type = TYPE_EXPR_APPLY;
-                t0->apply.head = t1;
-                t0->apply.tail = expr->type;
-
-                t1->type_expr_type = TYPE_EXPR_APPLY;
-                t1->apply.head = applyable;
-                t1->apply.tail = args->name_loc->def->inferred_type;
-
-                expr->type = t0;
+                make_applyable(
+                        &expr->type, args->name_loc->def->inferred_type,
+                        expr->type, ctx);
         }
 
         return OK;
@@ -239,6 +268,15 @@ infer_expr(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
                 err = infer_expr(subexprs[i], ctx);
                 if (err != OK)
                         return err;
+        }
+
+        for (i = 0; i < n_subexprs; i++)
+        {
+                if (subexprs[i]->type == NULL)
+                {
+                        expr->type = NULL;
+                        return OK;
+                }
         }
 
         switch (expr->expr_type)
