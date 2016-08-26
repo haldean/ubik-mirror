@@ -223,6 +223,12 @@ update_scopes_with_bindings(
                         ? RESOLVE_GLOBAL
                         : RESOLVE_LOCAL;
 
+                ubik_alloc1(
+                        &bind->name_loc, struct ubik_resolve_name_loc,
+                        ctx->region);
+                bind->name_loc->type = name->type;
+                bind->name_loc->def = name;
+
                 err = ubik_vector_append(&ast->scope->names, name);
                 if (err != OK)
                         return err;

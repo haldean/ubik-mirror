@@ -147,6 +147,7 @@ struct ubik_ast_binding
         char *name;
         struct ubik_ast_expr *expr;
         struct ubik_type_expr *type_expr;
+        struct ubik_resolve_name_loc *name_loc;
         struct ubik_ast_loc loc;
 };
 

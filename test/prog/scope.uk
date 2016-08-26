@@ -1,7 +1,7 @@
 ~ ubik-tests/scope
 
 : so-deep
-    ^ Word -> Word
+    ^ Word -> (Word -> Word)
     = \ x -> {
         : y ^ Word = uadd x 2
         ! \ z -> uadd x (uadd y z)

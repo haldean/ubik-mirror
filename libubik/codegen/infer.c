@@ -334,6 +334,14 @@ infer_ast(struct ubik_ast *ast, struct ubik_infer_context *ctx)
         size_t i;
         ubik_error err;
 
+        /* add types to resolved names first, so that expressions can get at
+         * these immediately. */
+        for (i = 0; i < ast->bindings.n; i++)
+        {
+                bind = ast->bindings.elems[i];
+                bind->name_loc->def->inferred_type = bind->type_expr;
+        }
+
         for (i = 0; i < ast->bindings.n; i++)
         {
                 bind = ast->bindings.elems[i];
