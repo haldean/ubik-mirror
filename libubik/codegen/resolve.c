@@ -343,6 +343,7 @@ find_lambdas_and_bind(
 {
         struct ubik_ast_arg_list *args;
         struct ubik_resolve_name *name;
+        struct ubik_resolve_name_loc *name_loc;
         struct ubik_ast *subast;
         struct ubik_ast_expr *subexprs[UBIK_MAX_SUBEXPRS];
         size_t n_subexprs;
@@ -362,6 +363,13 @@ find_lambdas_and_bind(
                         err = ubik_vector_append(&expr->scope->names, name);
                         if (err != OK)
                                 return err;
+
+                        ubik_alloc1(
+                                &name_loc, struct ubik_resolve_name_loc,
+                                ctx->region);
+                        name_loc->type = RESOLVE_LOCAL;
+                        name_loc->def = name;
+                        args->name_loc = name_loc;
 
                         args = args->next;
                 }
