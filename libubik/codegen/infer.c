@@ -141,7 +141,9 @@ infer_atom(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
                         expr->type = expr->atom->name_loc->def->inferred_type;
                         return OK;
                 }
-                /* let unknown names fall through. */
+                return ubik_raise(
+                        ERR_BAD_VALUE,
+                        "unknown name resolution type in infer");
 
         case ATOM_QUALIFIED:
         case ATOM_TYPE_NAME:
