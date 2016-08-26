@@ -53,6 +53,9 @@ struct ubik_resolve_name_loc
         /* The name of the package that contains this name. This should be the
          * source of the URI used to access this name, if applicable. */
         char *package_name;
+        /* Pointer to the location that defines this name. Shared by all
+        references to the same object. */
+        struct ubik_resolve_name *def;
 };
 
 /* Scope boundaries are used to determine whether something is

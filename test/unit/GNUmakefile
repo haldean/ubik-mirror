@@ -11,6 +11,7 @@ tests = \
 	load_save-test \
 	path_concat-test \
 	pointer_set-test \
+	resolve-test \
 	split-test \
 	types-test \
 	uri-test

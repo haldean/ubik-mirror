@@ -23,6 +23,7 @@
 #include "ubik/types.h"
 #include "ubik/ubik.h"
 #include "ubik/uri.h"
+#include "ubik/util.h"
 
 #include <inttypes.h>
 
@@ -136,7 +137,7 @@ compile_interface(
 no_ignore static ubik_error
 compile_impl(
         struct ubik_ast *ast,
-        struct ubik_ast_interface *iface,
+        struct ubik_ast_implementation *iface,
         struct ubik_compile_request *req)
 {
         unused(ast);
@@ -151,6 +152,7 @@ ubik_interfaces_compile_all(
         struct ubik_compile_request *req)
 {
         struct ubik_ast_interface *iface;
+        struct ubik_ast_implementation *impl;
         ubik_error err;
         size_t i;
 

@@ -432,6 +432,7 @@ load_global_name(
 {
         name_loc->type = RESOLVE_GLOBAL;
         name_loc->package_name = scope->package_name;
+        name_loc->def = NULL;
 }
 
 no_ignore ubik_error
@@ -473,7 +474,10 @@ find_name_resolution_types(
                         {
                                 check_name = scope->names.elems[i];
                                 if (strcmp(name, check_name->name) == 0)
+                                {
                                         found = true;
+                                        name_loc->def = check_name;
+                                }
                         }
                         if (scope->boundary == BOUNDARY_GLOBAL)
                                 highest_bdry = BOUNDARY_GLOBAL;
