@@ -411,6 +411,12 @@ infer_error_print(
                 printf("\t");
                 err = ubik_ast_expr_print(ierr->bad_expr);
                 printf("\n");
+                printf("    inferred type \x1b[32m");
+                err = ubik_type_expr_print(ierr->bad_expr->apply.head->type);
+                printf("\x1b[0m for function.\n");
+                printf("    inferred type \x1b[32m");
+                err = ubik_type_expr_print(ierr->bad_expr->apply.tail->type);
+                printf("\x1b[0m for argument.\n");
                 break;
 
         case INFER_ERR_UNTYPEABLE:
