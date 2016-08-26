@@ -136,11 +136,10 @@ infer_atom(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
                                 expr->type->type_expr_type = TYPE_EXPR_VAR;
                                 expr->atom->name_loc->def->inferred_type =
                                         expr->type;
+                                return OK;
                         }
-                        else
-                                expr->type =
-                                        expr->atom->name_loc->def->inferred_type;
-                        break;
+                        expr->type = expr->atom->name_loc->def->inferred_type;
+                        return OK;
                 }
                 /* let unknown names fall through. */
 
