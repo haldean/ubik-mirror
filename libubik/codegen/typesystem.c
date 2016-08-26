@@ -477,6 +477,24 @@ replace_var_in_impl(
         return OK;
 }
 
+no_ignore ubik_error
+ubik_typesystem_apply_substs(
+        struct ubik_type_expr *t,
+        struct ubik_vector *substs)
+{
+        struct ubik_typesystem_subst *sub;
+        ubik_error err;
+        size_t i;
+        for (i = 0; i < substs->n; i++)
+        {
+                sub = (struct ubik_typesystem_subst *) substs->elems[i];
+                err = apply_subst(t, sub);
+                if (err != OK)
+                        return err;
+        }
+        return OK;
+}
+
 static bool
 impl_entailed(
         struct ubik_typesystem *tsys,
@@ -564,6 +582,11 @@ ubik_typesystem_unify(
 
         err = unify(unified, tsys, package, assign_to, assign_from, region);
 
+        ubik_alloc1(&unified->res, struct ubik_type_expr, region);
+        err = ubik_type_expr_copy(unified->res, assign_to, region);
+        if (err != OK)
+                return err;
+
         /* Check that constraints are satisfied by applying the substitution to
          * each constraint, and then making sure that implementations exist
          * for each. */
@@ -577,6 +600,9 @@ ubik_typesystem_unify(
                         if (err != OK)
                                 return err;
                 }
+                err = apply_subst(unified->res, sub);
+                if (err != OK)
+                        return err;
         }
 
         for (i = 0; i < constraints.n; i++)

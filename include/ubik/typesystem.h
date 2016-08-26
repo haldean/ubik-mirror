@@ -63,5 +63,10 @@ ubik_typesystem_unify(
         struct ubik_alloc_region *region,
         bool debug);
 
+no_ignore ubik_error
+ubik_typesystem_apply_substs(
+        struct ubik_type_expr *t,
+        struct ubik_vector *substs);
+
 void
 ubik_typesystem_dump(struct ubik_typesystem *tsys);

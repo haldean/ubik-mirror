@@ -41,35 +41,6 @@ new_tyvar(struct ubik_type_expr *t, struct ubik_infer_context *ctx)
                 &t->name, &ctx->req->region, "_t%u", ctx->next_tyvar++);
 }
 
-static bool
-compatible(
-        struct ubik_type_expr *e1,
-        struct ubik_type_expr *e2,
-        struct ubik_infer_context *ctx)
-{
-        unused(ctx);
-
-        /* TODO: this needs a lot of work. */
-        if (e1->type_expr_type != e2->type_expr_type)
-                return false;
-        switch (e1->type_expr_type)
-        {
-        case TYPE_EXPR_ATOM:
-                return strcmp(e1->name, e2->name) == 0;
-
-        case TYPE_EXPR_APPLY:
-                return compatible(e1->apply.head, e2->apply.head, ctx) &&
-                        compatible(e1->apply.tail, e2->apply.tail, ctx);
-
-        case TYPE_EXPR_VAR:
-        case TYPE_EXPR_CONSTRAINED:
-                break;
-        }
-
-        printf("only type atoms and application can be compared right now\n");
-        return false;
-}
-
 /* Note: when this function is called, the type object on the expression has
  * been allocated and zeroed. */
 no_ignore static ubik_error
@@ -164,6 +135,8 @@ infer_apply(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
         struct ubik_type_expr *h;
         struct ubik_type_expr *t;
         struct ubik_infer_error *ierr;
+        struct ubik_typesystem_unified unified;
+        ubik_error err;
 
         h = expr->apply.head->type;
         t = expr->apply.tail->type;
@@ -178,16 +151,24 @@ infer_apply(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
                 return ubik_vector_append(&ctx->errors, ierr);
         }
 
-        if (!compatible(h->apply.head->apply.tail, t, ctx))
+        err = ubik_typesystem_unify(
+                &unified, ctx->type_system, NULL,
+                h->apply.head->apply.tail, t, &ctx->req->region, ctx->debug);
+        if (err != OK)
+                return err;
+        if (!unified.success)
         {
                 ubik_alloc1(&ierr, struct ubik_infer_error, &ctx->req->region);
                 ierr->error_type = INFER_ERR_FUNC_ARG_INCOMPAT;
                 ierr->bad_expr = expr;
+                ierr->extra_info = unified.failure_info;
                 return ubik_vector_append(&ctx->errors, ierr);
         }
-
         ubik_alloc1(&expr->type, struct ubik_type_expr, &ctx->req->region);
-        return ubik_type_expr_copy(expr->type, h->apply.tail, &ctx->req->region);
+        err = ubik_type_expr_copy(expr->type, h->apply.tail, &ctx->req->region);
+        if (err != OK)
+                return err;
+        return ubik_typesystem_apply_substs(expr->type, &unified.substs);
 }
 
 no_ignore static ubik_error
