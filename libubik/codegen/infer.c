@@ -394,10 +394,10 @@ infer_error_print(
                         UBIK_FEEDBACK_ERR,
                         &ierr->bad_expr->loc,
                         "head of function application is not a function:");
-                printf("\t");
+                printf("    ");
                 err = ubik_ast_expr_print(ierr->bad_expr);
                 printf("\n");
-                printf("    inferred type \x1b[32m");
+                printf("        inferred type \x1b[32m");
                 err = ubik_type_expr_print(ierr->bad_expr->apply.head->type);
                 printf("\x1b[0m for function head does not take an argument.\n");
                 break;
@@ -408,13 +408,13 @@ infer_error_print(
                         UBIK_FEEDBACK_ERR,
                         &ierr->bad_expr->loc,
                         "function and argument have incompatible types:");
-                printf("\t");
+                printf("    ");
                 err = ubik_ast_expr_print(ierr->bad_expr);
                 printf("\n");
-                printf("    inferred type \x1b[32m");
+                printf("        inferred type \x1b[32m");
                 err = ubik_type_expr_print(ierr->bad_expr->apply.head->type);
                 printf("\x1b[0m for function.\n");
-                printf("    inferred type \x1b[32m");
+                printf("        inferred type \x1b[32m");
                 err = ubik_type_expr_print(ierr->bad_expr->apply.tail->type);
                 printf("\x1b[0m for argument.\n");
                 break;
@@ -426,7 +426,7 @@ infer_error_print(
                         &ierr->bad_expr->loc,
                         "expression is untypeable with current type inference "
                         "algorithm:");
-                printf("\t");
+                printf("    ");
                 err = ubik_ast_expr_print(ierr->bad_expr);
                 printf("\n");
                 break;
@@ -438,7 +438,7 @@ infer_error_print(
                         &ierr->bad_bind->loc,
                         "explicit type of binding and type of bound value "
                         "disagree");
-                printf("    expected type \x1b[32m");
+                printf("        expected type \x1b[32m");
                 err = ubik_type_expr_print(ierr->bad_bind->type_expr);
                 printf("\x1b[0m but value had type \x1b[32m");
                 err = ubik_type_expr_print(ierr->bad_bind->expr->type);
