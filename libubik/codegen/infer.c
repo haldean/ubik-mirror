@@ -32,7 +32,10 @@
 #include <string.h>
 
 no_ignore static ubik_error
-infer_ast(struct ubik_ast *ast, struct ubik_infer_context *ctx);
+infer_ast(
+        struct ubik_ast *ast,
+        bool require_bind_types,
+        struct ubik_infer_context *ctx);
 
 static void
 new_tyvar(struct ubik_type_expr *t, struct ubik_infer_context *ctx)
@@ -259,7 +262,7 @@ infer_expr(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
 
         if (subast != NULL)
         {
-                err = infer_ast(subast, ctx);
+                err = infer_ast(subast, false, ctx);
                 if (err != OK)
                         return err;
         }
@@ -326,7 +329,10 @@ infer_expr(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
 }
 
 no_ignore static ubik_error
-infer_ast(struct ubik_ast *ast, struct ubik_infer_context *ctx)
+infer_ast(
+        struct ubik_ast *ast,
+        bool require_bind_types,
+        struct ubik_infer_context *ctx)
 {
         struct ubik_ast_binding *bind;
         struct ubik_infer_error *ierr;
@@ -339,6 +345,24 @@ infer_ast(struct ubik_ast *ast, struct ubik_infer_context *ctx)
         for (i = 0; i < ast->bindings.n; i++)
         {
                 bind = ast->bindings.elems[i];
+                if (bind->type_expr == NULL && require_bind_types)
+                {
+                        ubik_alloc1(
+                                &ierr, struct ubik_infer_error,
+                                &ctx->req->region);
+                        ierr->error_type = INFER_ERR_TOP_TYPE_MISSING;
+                        ierr->bad_bind = bind;
+                        err = ubik_vector_append(&ctx->errors, ierr);
+                        if (err != OK)
+                                return err;
+                }
+                if (bind->type_expr == NULL)
+                {
+                        ubik_alloc1(
+                                &bind->type_expr, struct ubik_type_expr,
+                                &ctx->req->region);
+                        new_tyvar(bind->type_expr, ctx);
+                }
                 bind->name_loc->def->inferred_type = bind->type_expr;
         }
 
@@ -364,7 +388,9 @@ infer_ast(struct ubik_ast *ast, struct ubik_infer_context *ctx)
                                 ierr->error_type = INFER_ERR_BIND_TYPE;
                                 ierr->bad_bind = bind;
                                 ierr->extra_info = unified.failure_info;
-                                return ubik_vector_append(&ctx->errors, ierr);
+                                err = ubik_vector_append(&ctx->errors, ierr);
+                                if (err != OK)
+                                        return err;
                         }
                 }
         }
@@ -445,6 +471,17 @@ infer_error_print(
                 printf("\x1b[0m\n");
                 break;
 
+        case INFER_ERR_TOP_TYPE_MISSING:
+                ubik_feedback_error_line(
+                        ctx->req->feedback,
+                        UBIK_FEEDBACK_ERR,
+                        &ierr->bad_bind->loc,
+                        "top-level declarations must have an explicit type "
+                        "specified:");
+                printf("        inferred type of expression is \x1b[32m");
+                err = ubik_type_expr_print(ierr->bad_bind->type_expr);
+                printf("\x1b[0m\n");
+
         default:
                 return ubik_raise(
                         ERR_UNKNOWN_TYPE, "unknown inference error type");
@@ -470,7 +507,7 @@ ubik_infer(
                 printf("\ninfer\n");
         ctx->errors.region = &ctx->req->region;
 
-        err = infer_ast(ast, ctx);
+        err = infer_ast(ast, true, ctx);
         if (err != OK)
                 return err;
 

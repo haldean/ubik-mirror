@@ -54,6 +54,8 @@ enum ubik_infer_error_type
         /* Raised when a binding's explicit type disagrees with the type of the
          * bound value. */
         INFER_ERR_BIND_TYPE,
+        /* Raised when a top-level binding doesn't have a specified type. */
+        INFER_ERR_TOP_TYPE_MISSING,
 };
 
 struct ubik_infer_error
