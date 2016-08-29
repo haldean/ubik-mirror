@@ -318,6 +318,10 @@ bind_decl(
         bind->expr = decl_expr;
         bind->loc = type->loc;
 
+        ubik_alloc1(&bind->type_expr, struct ubik_type_expr, &req->region);
+        bind->type_expr->type_expr_type = TYPE_EXPR_ATOM;
+        bind->type_expr->name = ubik_strdup(UBIK_TYPE_CONSTRUCTOR, &req->region);
+
         err = ubik_vector_append(&ast->bindings, bind);
         if (err != OK)
                 return err;
