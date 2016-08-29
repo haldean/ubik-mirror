@@ -560,6 +560,7 @@ ubik_typesystem_unify(
 
         unified->success = true;
         unified->res = NULL;
+        unified->failure_info = NULL;
 
         if (assign_to->type_expr_type == TYPE_EXPR_CONSTRAINED)
         {
