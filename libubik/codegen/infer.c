@@ -45,34 +45,6 @@ new_tyvar(struct ubik_type_expr *t, struct ubik_infer_context *ctx)
                 &t->name, &ctx->req->region, "_t%u", ctx->next_tyvar++);
 }
 
-static void
-make_applyable(
-        struct ubik_type_expr **res,
-        struct ubik_type_expr *head,
-        struct ubik_type_expr *tail,
-        struct ubik_infer_context *ctx)
-{
-        struct ubik_type_expr *t0, *t1, *applyable;
-
-        ubik_alloc1(&applyable, struct ubik_type_expr, &ctx->req->region);
-        applyable->type_expr_type = TYPE_EXPR_ATOM;
-        applyable->name = ubik_strdup(
-                UBIK_FUNCTION_CONSTRUCTOR, &ctx->req->region);
-
-        ubik_alloc1(&t0, struct ubik_type_expr, &ctx->req->region);
-        ubik_alloc1(&t1, struct ubik_type_expr, &ctx->req->region);
-
-        t1->type_expr_type = TYPE_EXPR_APPLY;
-        t1->apply.head = applyable;
-        t1->apply.tail = head;
-
-        t0->type_expr_type = TYPE_EXPR_APPLY;
-        t0->apply.head = t1;
-        t0->apply.tail = tail;
-
-        *res = t0;
-}
-
 /* Note: when this function is called, the type object on the expression has
  * been allocated and zeroed. */
 no_ignore static ubik_error
@@ -189,7 +161,7 @@ infer_apply(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
                 }
                 ubik_alloc1(&t0, struct ubik_type_expr, &ctx->req->region);
                 new_tyvar(t0, ctx);
-                make_applyable(&t1, t0, t0, ctx);
+                ubik_type_make_applyable(&t1, t0, t0, &ctx->req->region);
 
                 ubik_assert(expr->apply.head->expr_type == EXPR_ATOM);
                 expr->apply.head->atom->name_loc->def->inferred_type = t1;
@@ -236,9 +208,9 @@ infer_lambda(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
                         new_tyvar(t0, ctx);
                         args->name_loc->def->inferred_type = t0;
                 }
-                make_applyable(
+                ubik_type_make_applyable(
                         &expr->type, args->name_loc->def->inferred_type,
-                        expr->type, ctx);
+                        expr->type, &ctx->req->region);
         }
 
         return OK;
@@ -355,6 +327,7 @@ infer_ast(
                         err = ubik_vector_append(&ctx->errors, ierr);
                         if (err != OK)
                                 return err;
+                        ierr = NULL;
                 }
                 if (bind->type_expr == NULL)
                 {
@@ -391,6 +364,7 @@ infer_ast(
                                 err = ubik_vector_append(&ctx->errors, ierr);
                                 if (err != OK)
                                         return err;
+                                ierr = NULL;
                         }
                 }
         }
@@ -410,6 +384,17 @@ infer_error_print(
         struct ubik_infer_context *ctx,
         struct ubik_infer_error *ierr)
 {
+        /* TODO: get expression and type expression printing to print to
+         * feedback stream, then stop using printf here. */
+        #if 0
+          #define pf(str)     ubik_fprintf(ctx->req->feedback, str)
+          #define pf1(str, a) ubik_fprintf(ctx->req->feedback, str, a)
+        #else
+          #define pf(str)     printf(str)
+          #define pf1(str, a) printf(str, a)
+        #endif
+
+
         ubik_error err;
 
         switch (ierr->error_type)
@@ -420,12 +405,12 @@ infer_error_print(
                         UBIK_FEEDBACK_ERR,
                         &ierr->bad_expr->loc,
                         "head of function application is not a function:");
-                printf("    ");
+                pf("    ");
                 err = ubik_ast_expr_print(ierr->bad_expr);
-                printf("\n");
-                printf("        inferred type \x1b[32m");
+                pf("\n");
+                pf("        inferred type \x1b[32m");
                 err = ubik_type_expr_print(ierr->bad_expr->apply.head->type);
-                printf("\x1b[0m for function head does not take an argument.\n");
+                pf("\x1b[0m for function head does not take an argument.\n");
                 break;
 
         case INFER_ERR_FUNC_ARG_INCOMPAT:
@@ -434,15 +419,15 @@ infer_error_print(
                         UBIK_FEEDBACK_ERR,
                         &ierr->bad_expr->loc,
                         "function and argument have incompatible types:");
-                printf("    ");
+                pf("    ");
                 err = ubik_ast_expr_print(ierr->bad_expr);
-                printf("\n");
-                printf("        inferred type \x1b[32m");
+                pf("\n");
+                pf("        inferred type \x1b[32m");
                 err = ubik_type_expr_print(ierr->bad_expr->apply.head->type);
-                printf("\x1b[0m for function.\n");
-                printf("        inferred type \x1b[32m");
+                pf("\x1b[0m for function.\n");
+                pf("        inferred type \x1b[32m");
                 err = ubik_type_expr_print(ierr->bad_expr->apply.tail->type);
-                printf("\x1b[0m for argument.\n");
+                pf("\x1b[0m for argument.\n");
                 break;
 
         case INFER_ERR_UNTYPEABLE:
@@ -452,9 +437,9 @@ infer_error_print(
                         &ierr->bad_expr->loc,
                         "expression is untypeable with current type inference "
                         "algorithm:");
-                printf("    ");
+                pf("    ");
                 err = ubik_ast_expr_print(ierr->bad_expr);
-                printf("\n");
+                pf("\n");
                 break;
 
         case INFER_ERR_BIND_TYPE:
@@ -464,11 +449,11 @@ infer_error_print(
                         &ierr->bad_bind->loc,
                         "explicit type of binding and type of bound value "
                         "disagree");
-                printf("        expected type \x1b[32m");
+                pf("        expected type \x1b[32m");
                 err = ubik_type_expr_print(ierr->bad_bind->type_expr);
-                printf("\x1b[0m but value had type \x1b[32m");
+                pf("\x1b[0m but value had type \x1b[32m");
                 err = ubik_type_expr_print(ierr->bad_bind->expr->type);
-                printf("\x1b[0m\n");
+                pf("\x1b[0m\n");
                 break;
 
         case INFER_ERR_TOP_TYPE_MISSING:
@@ -478,9 +463,10 @@ infer_error_print(
                         &ierr->bad_bind->loc,
                         "top-level declarations must have an explicit type "
                         "specified:");
-                printf("        inferred type of expression is \x1b[32m");
+                pf("        inferred type of expression is \x1b[32m");
                 err = ubik_type_expr_print(ierr->bad_bind->type_expr);
-                printf("\x1b[0m\n");
+                pf("\x1b[0m\n");
+                break;
 
         default:
                 return ubik_raise(
@@ -488,7 +474,7 @@ infer_error_print(
         }
 
         if (ierr->extra_info != NULL)
-                printf("    %s\n", ierr->extra_info);
+                pf1("    %s\n", ierr->extra_info);
 
         return err;
 }

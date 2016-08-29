@@ -149,3 +149,31 @@ ubik_type_count_arguments(struct ubik_type_expr *type)
         }
         return n;
 }
+
+void
+ubik_type_make_applyable(
+        struct ubik_type_expr **res,
+        struct ubik_type_expr *head,
+        struct ubik_type_expr *tail,
+        struct ubik_alloc_region *region)
+{
+        struct ubik_type_expr *t0, *t1, *applyable;
+
+        ubik_alloc1(&applyable, struct ubik_type_expr, region);
+        applyable->type_expr_type = TYPE_EXPR_ATOM;
+        applyable->name = ubik_strdup(
+                UBIK_FUNCTION_CONSTRUCTOR, region);
+
+        ubik_alloc1(&t0, struct ubik_type_expr, region);
+        ubik_alloc1(&t1, struct ubik_type_expr, region);
+
+        t1->type_expr_type = TYPE_EXPR_APPLY;
+        t1->apply.head = applyable;
+        t1->apply.tail = head;
+
+        t0->type_expr_type = TYPE_EXPR_APPLY;
+        t0->apply.head = t1;
+        t0->apply.tail = tail;
+
+        *res = t0;
+}

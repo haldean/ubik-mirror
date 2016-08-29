@@ -83,7 +83,8 @@ add_splat(
                         if (err != OK)
                                 return err;
                 }
-                else new_bind->type_expr = NULL;
+                else
+                        new_bind->type_expr = NULL;
 
                 err = ubik_vector_append(&ast->bindings, new_bind);
                 if (err != OK)

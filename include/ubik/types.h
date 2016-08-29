@@ -144,3 +144,11 @@ ubik_type_is_applyable(struct ubik_type_expr *type);
  * this returns 0. */
 no_ignore uint_fast16_t
 ubik_type_count_arguments(struct ubik_type_expr *type);
+
+/* Creates an Applyable that takes the type head and returns the type tail. */
+void
+ubik_type_make_applyable(
+        struct ubik_type_expr **res,
+        struct ubik_type_expr *head,
+        struct ubik_type_expr *tail,
+        struct ubik_alloc_region *region);

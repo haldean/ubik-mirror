@@ -325,6 +325,48 @@ bind_decl(
 }
 
 no_ignore static ubik_error
+make_ctor_type(
+        struct ubik_type_expr *res,
+        struct ubik_type *type,
+        struct ubik_ast_adt_ctors *ctor,
+        struct ubik_compile_request *req)
+{
+        struct ubik_type_expr *t0, *t1;
+        struct ubik_type_list *cargs;
+        struct ubik_vector rev_types = {0};
+        ubik_error err;
+        ssize_t i;
+
+        rev_types.region = &req->region;
+
+        for (cargs = ctor->params; cargs != NULL; cargs = cargs->next)
+        {
+                err = ubik_vector_append(&rev_types, cargs->type_expr);
+                if (err != OK)
+                        return err;
+        }
+
+        ubik_alloc1(&t0, struct ubik_type_expr, &req->region);
+        t0->type_expr_type = TYPE_EXPR_ATOM;
+        t0->name = type->name;
+        err = ubik_vector_append(&rev_types, t0);
+        if (err != OK)
+                return err;
+
+        t0 = NULL;
+        for (i = rev_types.n - 1; i >= 0; i--)
+        {
+                t1 = rev_types.elems[i];
+                if (t0 == NULL)
+                        t0 = t1;
+                else
+                        ubik_type_make_applyable(&t0, t1, t0, &req->region);
+        }
+        *res = *t0;
+        return OK;
+}
+
+no_ignore static ubik_error
 bind_ctor(
         struct ubik_ast *ast,
         struct ubik_type *type,
@@ -426,11 +468,17 @@ bind_ctor(
                 t2 = t1;
         }
 
+        ubik_alloc1(&lambda->type, struct ubik_type_expr, &req->region);
+        err = make_ctor_type(lambda->type, type, ctor, req);
+        if (err != OK)
+                return err;
+
         lambda->lambda.body = t2;
 
         bind->name = ubik_strdup(ctor->name, &req->region);
         bind->expr = lambda;
         bind->loc = ctor->loc;
+        bind->type_expr = lambda->type;
 
         err = ubik_vector_append(&ast->bindings, bind);
         if (err != OK)
