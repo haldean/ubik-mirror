@@ -1,0 +1,8 @@
+~ ubik-tests/infer-hard
+
+: thing ^ String -> String = \x -> {
+  : a = \b -> b
+  : y = a 8
+  : z = a x
+  ! z
+}

@@ -11,6 +11,7 @@ tests = \
 	hello.uk \
 	import.uk \
 	import-splat.uk \
+	infer-hard.uk \
 	lambda.uk \
 	lambda-simple.uk \
 	literate.rst \
