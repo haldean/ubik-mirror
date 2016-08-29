@@ -155,6 +155,7 @@ create_import_request(
         struct dirent *test_f;
         struct ubik_stream in_stream;
         struct ubik_ast *test_ast;
+        struct ubik_ast_loc err_loc = {0};
         DIR *test_dir;
         char *fullpath;
         size_t i;
@@ -191,7 +192,17 @@ create_import_request(
                         err = ubik_parse(
                                 &test_ast, &r, NULL, fullpath, &in_stream);
                         if (err != OK)
+                        {
+                                err_loc.source_name = fullpath;
+                                ubik_feedback_error_header(
+                                        parent->feedback,
+                                        UBIK_FEEDBACK_WARN,
+                                        &err_loc,
+                                        "skipping potential import, failed to "
+                                        "parse file");
+                                free(err);
                                 continue;
+                        }
 
                         if (strcmp(test_ast->package_name, name) == 0)
                         {
