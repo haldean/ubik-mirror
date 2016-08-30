@@ -21,6 +21,8 @@
 #include "ubik/ubik.h"
 #include "unit.h"
 
+#include <strings.h>
+
 
 test_t
 env()
@@ -35,6 +37,10 @@ env()
         char *key;
         struct ubik_uri uris[N_TEST_URIS];
         ubik_error err;
+
+        /* a bug in GCC < 5.0 prevents us from using = {0} to initialize the
+         * uris array. */
+        bzero(uris, sizeof(uris));
 
         assert(ubik_value_new(&v.tree) == OK);
         v.tree->tag = TAG_VALUE | TAG_LEFT_WORD | TAG_RIGHT_WORD;
