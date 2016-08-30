@@ -386,18 +386,11 @@ infer_error_print(
         struct ubik_infer_context *ctx,
         struct ubik_infer_error *ierr)
 {
-        /* TODO: get expression and type expression printing to print to
-         * feedback stream, then stop using printf here. */
-        #if 0
-          #define pf(str)     ubik_fprintf(ctx->req->feedback, str)
-          #define pf1(str, a) ubik_fprintf(ctx->req->feedback, str, a)
-        #else
-          #define pf(str)     printf(str)
-          #define pf1(str, a) printf(str, a)
-        #endif
-
-
+        #define pf(str)     ubik_fprintf(ctx->req->feedback, str)
+        #define pf1(str, a) ubik_fprintf(ctx->req->feedback, str, a)
         ubik_error err;
+
+        err = OK;
 
         switch (ierr->error_type)
         {
@@ -411,7 +404,9 @@ infer_error_print(
                 err = ubik_ast_expr_print(ierr->bad_expr);
                 pf("\n");
                 pf("        inferred type \x1b[32m");
-                err = ubik_type_expr_print(ierr->bad_expr->apply.head->type);
+                ubik_type_expr_pretty(
+                        ctx->req->feedback,
+                        ierr->bad_expr->apply.head->type);
                 pf("\x1b[0m for function head does not take an argument.\n");
                 break;
 
@@ -425,10 +420,14 @@ infer_error_print(
                 err = ubik_ast_expr_print(ierr->bad_expr);
                 pf("\n");
                 pf("        inferred type \x1b[32m");
-                err = ubik_type_expr_print(ierr->bad_expr->apply.head->type);
+                ubik_type_expr_pretty(
+                        ctx->req->feedback,
+                        ierr->bad_expr->apply.head->type);
                 pf("\x1b[0m for function.\n");
                 pf("        inferred type \x1b[32m");
-                err = ubik_type_expr_print(ierr->bad_expr->apply.tail->type);
+                ubik_type_expr_pretty(
+                        ctx->req->feedback,
+                        ierr->bad_expr->apply.tail->type);
                 pf("\x1b[0m for argument.\n");
                 break;
 
@@ -452,9 +451,13 @@ infer_error_print(
                         "explicit type of binding and type of bound value "
                         "disagree");
                 pf("        expected type \x1b[32m");
-                err = ubik_type_expr_print(ierr->bad_bind->type_expr);
+                ubik_type_expr_pretty(
+                        ctx->req->feedback,
+                        ierr->bad_bind->type_expr);
                 pf("\x1b[0m but value had type \x1b[32m");
-                err = ubik_type_expr_print(ierr->bad_bind->expr->type);
+                ubik_type_expr_pretty(
+                        ctx->req->feedback,
+                        ierr->bad_bind->expr->type);
                 pf("\x1b[0m\n");
                 break;
 
@@ -466,7 +469,9 @@ infer_error_print(
                         "top-level declarations must have an explicit type "
                         "specified:");
                 pf("        inferred type of expression is \x1b[32m");
-                err = ubik_type_expr_print(ierr->bad_bind->type_expr);
+                ubik_type_expr_pretty(
+                        ctx->req->feedback,
+                        ierr->bad_bind->type_expr);
                 pf("\x1b[0m\n");
                 break;
 

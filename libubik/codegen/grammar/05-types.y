@@ -190,6 +190,14 @@ type_expr
         $$->apply.tail = $2;
         merge_loc($$, $1, $2);
 }
+| type_expr OPEN_PAR top_type_expr CLOSE_PAR
+{
+        alloc($$, 1, struct ubik_type_expr);
+        $$->type_expr_type = TYPE_EXPR_APPLY;
+        $$->apply.head = $1;
+        $$->apply.tail = $3;
+        merge_loc($$, $1, $3);
+}
 | type_atom
 | OPEN_PAR top_type_expr CLOSE_PAR
 {

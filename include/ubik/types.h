@@ -153,3 +153,9 @@ ubik_type_make_applyable(
         struct ubik_type_expr *head,
         struct ubik_type_expr *tail,
         struct ubik_alloc_region *region);
+
+/* Print a human-friendly description of a type to a stream. */
+void
+ubik_type_expr_pretty(
+        struct ubik_stream *out,
+        struct ubik_type_expr *expr);

@@ -23,6 +23,8 @@
 #include "ubik/ubik.h"
 #include "unit.h"
 
+#include <string.h>
+
 test_t
 count_args()
 {
@@ -40,27 +42,96 @@ count_args()
         assert(ubik_type_count_arguments(t) == 1);
 
         assert(ubik_parse_type_expr(
-                       &t, &r, "a -> (b -> c) -> d") == OK);
+                &t, &r, "a -> (b -> c) -> d") == OK);
         assert(ubik_type_count_arguments(t) == 2);
 
         assert(ubik_parse_type_expr(
-                       &t, &r, "(a -> b -> c) -> d") == OK);
+                &t, &r, "(a -> b -> c) -> d") == OK);
         assert(ubik_type_count_arguments(t) == 1);
 
         assert(ubik_parse_type_expr(
-                       &t, &r, "(a -> b) -> c -> d") == OK);
+                &t, &r, "(a -> b) -> c -> d") == OK);
         assert(ubik_type_count_arguments(t) == 2);
 
         assert(ubik_parse_type_expr(
-                       &t, &r, "a -> b -> (c -> d)") == OK);
+                &t, &r, "a -> b -> (c -> d)") == OK);
         assert(ubik_type_count_arguments(t) == 3);
 
         assert(ubik_parse_type_expr(
-                       &t, &r, "a -> (b -> (c -> d))") == OK);
+                &t, &r, "a -> (b -> (c -> d))") == OK);
         assert(ubik_type_count_arguments(t) == 3);
 
         ubik_alloc_free(&r);
         return ok;
 }
 
-run_single(count_args)
+test_t
+type_expr_pretty()
+{
+        struct ubik_stream s;
+        struct ubik_alloc_region r = {0};
+        struct ubik_type_expr *t;
+        char *typestr;
+        char outstr[512];
+
+        assert(ubik_stream_buffer(&s, &r) == OK);
+
+        typestr = "String";
+        assert(ubik_parse_type_expr(&t, &r, typestr) == OK);
+        ubik_type_expr_pretty(&s, t);
+        assert(ubik_stream_read(outstr, &s, 512) > 0);
+        assert(strncmp(typestr, outstr, strlen(typestr)) == 0);
+        ubik_stream_reset(&s);
+
+        typestr = "String -> Hello";
+        assert(ubik_parse_type_expr(&t, &r, typestr) == OK);
+        ubik_type_expr_pretty(&s, t);
+        assert(ubik_stream_read(outstr, &s, 512) > 0);
+        assert(strncmp(typestr, outstr, strlen(typestr)) == 0);
+        ubik_stream_reset(&s);
+
+        typestr = "Hello World";
+        assert(ubik_parse_type_expr(&t, &r, typestr) == OK);
+        ubik_type_expr_pretty(&s, t);
+        assert(ubik_stream_read(outstr, &s, 512) > 0);
+        assert(strncmp(typestr, outstr, strlen(typestr)) == 0);
+        ubik_stream_reset(&s);
+
+        typestr = "Test a -> b";
+        assert(ubik_parse_type_expr(&t, &r, typestr) == OK);
+        ubik_type_expr_pretty(&s, t);
+        assert(ubik_stream_read(outstr, &s, 512) > 0);
+        assert(strncmp(typestr, outstr, strlen(typestr)) == 0);
+        ubik_stream_reset(&s);
+
+        typestr = "Test (a -> b)";
+        assert(ubik_parse_type_expr(&t, &r, typestr) == OK);
+        ubik_type_expr_pretty(&s, t);
+        assert(ubik_stream_read(outstr, &s, 512) > 0);
+        assert(strncmp(typestr, outstr, strlen(typestr)) == 0);
+        ubik_stream_reset(&s);
+
+        typestr = "Test (a -> b) | ' Thing a";
+        assert(ubik_parse_type_expr(&t, &r, typestr) == OK);
+        ubik_type_expr_pretty(&s, t);
+        assert(ubik_stream_read(outstr, &s, 512) > 0);
+        assert(strncmp(typestr, outstr, strlen(typestr)) == 0);
+        ubik_stream_reset(&s);
+
+        typestr = "Test (a -> b) | ' Thing a ' OtherThing b";
+        assert(ubik_parse_type_expr(&t, &r, typestr) == OK);
+        ubik_type_expr_pretty(&s, t);
+        assert(ubik_stream_read(outstr, &s, 512) > 0);
+        assert(strncmp(typestr, outstr, strlen(typestr)) == 0);
+        ubik_stream_reset(&s);
+
+        return ok;
+}
+
+int main()
+{
+        init();
+        run(count_args);
+        run(type_expr_pretty);
+        finish();
+}

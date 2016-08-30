@@ -178,3 +178,71 @@ ubik_type_make_applyable(
 
         *res = t0;
 }
+
+void
+ubik_type_expr_pretty(
+        struct ubik_stream *out,
+        struct ubik_type_expr *expr)
+{
+        struct ubik_type_expr *s;
+        struct ubik_type_constraints *c;
+        struct ubik_type_params *p;
+
+        switch (expr->type_expr_type)
+        {
+        case TYPE_EXPR_ATOM:
+        case TYPE_EXPR_VAR:
+                ubik_fprintf(out, "%s", expr->name);
+                return;
+
+        case TYPE_EXPR_APPLY:
+                if (ubik_type_is_applyable(expr))
+                {
+                        s = expr->apply.head->apply.tail;
+                        if (ubik_type_is_applyable(s))
+                                ubik_fprintf(out, "(");
+                        ubik_type_expr_pretty(out, s);
+                        if (ubik_type_is_applyable(s))
+                                ubik_fprintf(out, ")");
+                        ubik_fprintf(out, " -> ");
+                        ubik_type_expr_pretty(out, expr->apply.tail);
+                        return;
+                }
+
+                if (ubik_type_is_applyable(expr->apply.head))
+                {
+                        ubik_fprintf(out, "(");
+                        ubik_type_expr_pretty(out, expr->apply.head);
+                        ubik_fprintf(out, ")");
+                }
+                else
+                {
+                        ubik_type_expr_pretty(out, expr->apply.head);
+                }
+                ubik_fprintf(out, " ");
+                if (ubik_type_is_applyable(expr->apply.tail))
+                {
+                        ubik_fprintf(out, "(");
+                        ubik_type_expr_pretty(out, expr->apply.tail);
+                        ubik_fprintf(out, ")");
+                }
+                else
+                {
+                        ubik_type_expr_pretty(out, expr->apply.tail);
+                }
+                return;
+
+        case TYPE_EXPR_CONSTRAINED:
+                ubik_type_expr_pretty(out, expr->constrained.term);
+                ubik_fprintf(out, " |");
+                for (c = expr->constrained.constraints; c != NULL; c = c->next)
+                {
+                        ubik_fprintf(out, " ' %s", c->interface);
+                        for (p = c->params; p != NULL; p = p->next)
+                                ubik_fprintf(out, " %s", p->name);
+                }
+                return;
+        }
+
+        ubik_fprintf(out, "unknown type expression type");
+}
