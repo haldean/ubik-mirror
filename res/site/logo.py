@@ -31,7 +31,7 @@ li = 67
 # length of upper dash on I
 ui = 14
 
-fg = "#353556"
+fg = "#35357f"
 bg = "#f5f5f5"
 
 # half stroke width
@@ -69,8 +69,9 @@ logo.add(line(l + xw, t + yh + hsw, l + xw, t + sw))
 
 # B
 l += xw + s
-logo.add(line(l, t, l + xw / 2, t))
+logo.add(line(l, t - hsw, l, t + yh + hsw))
 logo.add(line(l + xw / 2, t + yh / 2, l + xw, t + yh / 2))
+logo.add(line(l + xw, t + yh / 2 - hsw, l + xw, t + yh + hsw))
 logo.add(line(l, t + yh, l + xw, t + yh))
 
 # I
@@ -82,6 +83,7 @@ logo.add(line(l, t + yh - li, l, t + yh + hsw))
 l += s + hsw
 logo.add(line(l, t - hsw, l, t + yh + hsw))
 logo.add(line(l + xw, t + yh / 2, l + xw, t + yh + hsw))
+logo.add(line(l + xw + hsw, t + yh / 2, l + xw / 2, t + yh / 2))
 logo.add(line(l + xw - pdl, t + pdl, l + xw, t))
 
 logo.save()
