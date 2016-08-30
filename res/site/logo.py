@@ -24,6 +24,7 @@ Consider this python file the project's first branding guide?
 """
 
 import svgwrite
+import sys
 
 #  * L -XW-
 #  T
@@ -34,23 +35,48 @@ import svgwrite
 #  |   2222   7777   9   0  1
 #          -S-
 
-# x-width of letters
-xw = 36
-# y-height of letters
-yh = 100
-# letter spacing
-s  = 24
-# stroke width
-sw = 8
-# right pad on rectangle
-rp = 0
-# length of lower dash on I
-li = 67
-# length of upper dash on I
-ui = 14
+logotype = sys.argv[1] if sys.argv[1:] else "logo"
 
-fg = "#354f7f"
-bg = "#f5f5f5"
+dark  = "#354f7f"
+light = "#f5f5f5"
+
+if logotype == "logo":
+    # x-width of letters
+    xw = 36
+    # y-height of letters
+    yh = 100
+    # letter spacing
+    s  = 24
+    # stroke width
+    sw = 8
+    # right pad on rectangle
+    rp = 0
+    # length of lower dash on I
+    li = 67
+    # length of upper dash on I
+    ui = 14
+    fg = dark
+    bg = light
+elif logotype == "favicon":
+    # x-width of letters
+    xw = 40
+    # y-height of letters
+    yh = 200
+    # letter spacing
+    s  = 24
+    # stroke width
+    sw = 12
+    # right pad on rectangle
+    rp = 0
+    # length of lower dash on I
+    li = 134
+    # length of upper dash on I
+    ui = 28
+    fg = light
+    bg = dark
+else:
+    raise ValueError("unknown logo type %s" % logotype)
+
 
 # half stroke width
 hsw = sw / 2.
@@ -67,7 +93,7 @@ width = max(
 t += width - sw - hsw - yh - t
 
 logo = svgwrite.Drawing(
-    "logo.svg", size=(width + sw, width + sw), profile="tiny")
+    logotype + ".svg", size=(width + sw, width + sw), profile="tiny")
 line = lambda x1, y1, x2, y2: logo.line(
     (x1, y1), (x2, y2),
     stroke=fg,

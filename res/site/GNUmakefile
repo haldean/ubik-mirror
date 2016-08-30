@@ -6,7 +6,10 @@
 all: logo.svg favicon.png
 
 logo.svg: logo.py
-	python logo.py
+	python logo.py logo
 
-favicon.png: logo.svg
-	convert logo.svg favicon.png
+favicon.svg: logo.py
+	python logo.py favicon
+
+favicon.png: favicon.svg
+	inkscape -z -e favicon.png -w 200 -h 200 favicon.svg
