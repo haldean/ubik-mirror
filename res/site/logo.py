@@ -31,7 +31,7 @@ li = 67
 # length of upper dash on I
 ui = 14
 
-fg = "#35357f"
+fg = "#354f7f"
 bg = "#f5f5f5"
 
 # half stroke width
@@ -65,7 +65,7 @@ logo.add(logo.rect(
 # U
 logo.add(line(l, t - hsw, l, t + yh + hsw))
 logo.add(line(l, t + yh, l + xw, t + yh))
-logo.add(line(l + xw, t + yh + hsw, l + xw, t + sw))
+logo.add(line(l + xw, t + yh + hsw, l + xw, t + ui))
 
 # B
 l += xw + s
