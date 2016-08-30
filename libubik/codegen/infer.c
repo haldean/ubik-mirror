@@ -140,7 +140,7 @@ infer_apply(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
         struct ubik_type_expr *t;
         struct ubik_infer_error *ierr;
         struct ubik_typesystem_unified unified;
-        struct ubik_type_expr *t0, *t1;
+        struct ubik_type_expr *t0, *t1, *t2;
         ubik_error err;
 
         h = expr->apply.head->type;
@@ -160,13 +160,15 @@ infer_apply(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
                         return ubik_vector_append(&ctx->errors, ierr);
                 }
                 ubik_alloc1(&t0, struct ubik_type_expr, &ctx->req->region);
+                ubik_alloc1(&t1, struct ubik_type_expr, &ctx->req->region);
                 new_tyvar(t0, ctx);
-                ubik_type_make_applyable(&t1, t0, t0, &ctx->req->region);
+                new_tyvar(t1, ctx);
+                ubik_type_make_applyable(&t2, t0, t1, &ctx->req->region);
 
                 ubik_assert(expr->apply.head->expr_type == EXPR_ATOM);
-                expr->apply.head->atom->name_loc->def->inferred_type = t1;
-                expr->apply.head->type = t1;
-                h = t1;
+                expr->apply.head->atom->name_loc->def->inferred_type = t2;
+                expr->apply.head->type = t2;
+                h = t2;
         }
 
         err = ubik_typesystem_unify(
