@@ -388,9 +388,6 @@ infer_error_print(
 {
         #define pf(str)     ubik_fprintf(ctx->req->feedback, str)
         #define pf1(str, a) ubik_fprintf(ctx->req->feedback, str, a)
-        ubik_error err;
-
-        err = OK;
 
         switch (ierr->error_type)
         {
@@ -400,10 +397,11 @@ infer_error_print(
                         UBIK_FEEDBACK_ERR,
                         &ierr->bad_expr->loc,
                         "head of function application is not a function:");
-                pf("    ");
-                err = ubik_ast_expr_print(ierr->bad_expr);
+                pf("    bad expression:\n        ");
+                ubik_ast_expr_pretty(
+                        ctx->req->feedback, ierr->bad_expr, 0);
                 pf("\n");
-                pf("        inferred type \x1b[32m");
+                pf("    inferred type \x1b[32m");
                 ubik_type_expr_pretty(
                         ctx->req->feedback,
                         ierr->bad_expr->apply.head->type);
@@ -416,15 +414,16 @@ infer_error_print(
                         UBIK_FEEDBACK_ERR,
                         &ierr->bad_expr->loc,
                         "function and argument have incompatible types:");
-                pf("    ");
-                err = ubik_ast_expr_print(ierr->bad_expr);
+                pf("    bad expression:\n        ");
+                ubik_ast_expr_pretty(
+                        ctx->req->feedback, ierr->bad_expr, 8);
                 pf("\n");
-                pf("        inferred type \x1b[32m");
+                pf("    inferred type \x1b[32m");
                 ubik_type_expr_pretty(
                         ctx->req->feedback,
                         ierr->bad_expr->apply.head->type);
                 pf("\x1b[0m for function.\n");
-                pf("        inferred type \x1b[32m");
+                pf("    inferred type \x1b[32m");
                 ubik_type_expr_pretty(
                         ctx->req->feedback,
                         ierr->bad_expr->apply.tail->type);
@@ -438,8 +437,9 @@ infer_error_print(
                         &ierr->bad_expr->loc,
                         "expression is untypeable with current type inference "
                         "algorithm:");
-                pf("    ");
-                err = ubik_ast_expr_print(ierr->bad_expr);
+                pf("    bad expression:\n        ");
+                ubik_ast_expr_pretty(
+                        ctx->req->feedback, ierr->bad_expr, 8);
                 pf("\n");
                 break;
 
@@ -450,7 +450,7 @@ infer_error_print(
                         &ierr->bad_bind->loc,
                         "explicit type of binding and type of bound value "
                         "disagree");
-                pf("        expected type \x1b[32m");
+                pf("    expected type \x1b[32m");
                 ubik_type_expr_pretty(
                         ctx->req->feedback,
                         ierr->bad_bind->type_expr);
@@ -468,7 +468,7 @@ infer_error_print(
                         &ierr->bad_bind->loc,
                         "top-level declarations must have an explicit type "
                         "specified:");
-                pf("        inferred type of expression is \x1b[32m");
+                pf("    inferred type of expression is \x1b[32m");
                 ubik_type_expr_pretty(
                         ctx->req->feedback,
                         ierr->bad_bind->type_expr);
@@ -482,8 +482,7 @@ infer_error_print(
 
         if (ierr->extra_info != NULL)
                 pf1("    %s\n", ierr->extra_info);
-
-        return err;
+        return OK;
 }
 
 no_ignore ubik_error

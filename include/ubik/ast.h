@@ -203,6 +203,13 @@ ubik_ast_print(struct ubik_ast *ast);
 no_ignore ubik_error
 ubik_ast_expr_print(struct ubik_ast_expr *expr);
 
+/* Pretty-prints an expression to a stream. */
+void
+ubik_ast_expr_pretty(
+        struct ubik_stream *out,
+        struct ubik_ast_expr *expr,
+        int start_indent);
+
 no_ignore ubik_error
 ubik_ast_bind(
         struct ubik_ast *ast,
