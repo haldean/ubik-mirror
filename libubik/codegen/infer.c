@@ -320,6 +320,20 @@ no_ignore static ubik_error
 infer_block(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
 {
         struct ubik_infer_error *ierr;
+        struct ubik_ast_binding *bind;
+        size_t i;
+        ubik_error err;
+
+        for (i = 0; i < expr->block->bindings.n; i++)
+        {
+                bind = expr->block->bindings.elems[i];
+                if (bind->type_expr == NULL)
+                        continue;
+                err = ubik_typesystem_apply_substs(
+                        bind->type_expr, &ctx->substs);
+                if (err != OK)
+                        return err;
+        }
 
         if (expr->block->immediate == NULL)
         {
@@ -328,6 +342,11 @@ infer_block(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
                 ierr->bad_expr = expr;
                 return ubik_vector_append(&ctx->errors, ierr);
         }
+
+        err = ubik_typesystem_apply_substs(
+                expr->block->immediate->type, &ctx->substs);
+        if (err != OK)
+                return err;
 
         expr->type = expr->block->immediate->type;
         return OK;
@@ -377,7 +396,8 @@ infer_expr(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
                 if (err != OK)
                         return err;
         }
-        if (subast != NULL && subast->immediate->type == NULL)
+        if (subast != NULL && subast->immediate != NULL &&
+            subast->immediate->type == NULL)
         {
                 err = ubik_typesystem_apply_substs(
                         subast->immediate->type, &ctx->substs);
@@ -426,10 +446,21 @@ infer_expr(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
         }
         else
         {
-                ubik_alloc1(&ierr, struct ubik_infer_error, &ctx->req->region);
-                ierr->error_type = INFER_ERR_UNTYPEABLE;
-                ierr->bad_expr = expr;
-                return ubik_vector_append(&ctx->errors, ierr);
+                /* Only warn about untypeability if we haven't output an error
+                 * about this expression already. */
+                ierr = NULL;
+                if (ctx->errors.n)
+                        ierr = ctx->errors.elems[ctx->errors.n - 1];
+                if (ierr != NULL && ierr->bad_expr != expr)
+                {
+                        ubik_alloc1(
+                                &ierr, struct ubik_infer_error,
+                                &ctx->req->region);
+                        ierr->error_type = INFER_ERR_UNTYPEABLE;
+                        ierr->bad_expr = expr;
+                        return ubik_vector_append(&ctx->errors, ierr);
+                }
+                return OK;
         }
         if (ctx->debug)
         {
