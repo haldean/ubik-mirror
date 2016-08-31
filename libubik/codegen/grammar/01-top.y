@@ -80,25 +80,50 @@ prog
 }
 ;
 
+/* blocks is a list of bindings with a single optional immediate statement
+ * within */
 blocks
-: %empty
+: binding
 {
         ubik_ast_new(&$$, ctx->region);
         load_loc($$->loc);
+        wrap_err(ubik_vector_append(&$$->bindings, $1));
+        merge_loc($$, $$, $1);
 }
-| blocks binding
+| immediate
+{
+        ubik_ast_new(&$$, ctx->region);
+        load_loc($$->loc);
+        $$->immediate = $1;
+        merge_loc($$, $$, $1);
+}
+| binding blocks
+{
+        wrap_err(ubik_vector_append(&$2->bindings, $1));
+        $$ = $2;
+        merge_loc($$, $$, $1);
+}
+| immediate bindings
+{
+        $2->immediate = $1;
+        $$ = $2;
+        merge_loc($$, $$, $1);
+}
+;
+
+bindings
+: binding
+{
+        ubik_ast_new(&$$, ctx->region);
+        wrap_err(ubik_vector_append(&$$->bindings, $1));
+        load_loc($$->loc);
+}
+| bindings binding
 {
         wrap_err(ubik_vector_append(&$1->bindings, $2));
         $$ = $1;
         merge_loc($$, $$, $2);
 }
-| blocks type_def
-{
-        wrap_err(ubik_vector_append(&$1->types, $2));
-        $$ = $1;
-        merge_loc($$, $$, $2);
-}
-;
 
 immediate
 : IMMEDIATE top_expr

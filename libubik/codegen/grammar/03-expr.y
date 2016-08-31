@@ -96,15 +96,13 @@ expr
 {
         $$ = $2;
 }
-| OPEN_SCOPE blocks immediate CLOSE_SCOPE
+| OPEN_SCOPE blocks CLOSE_SCOPE
 {
-        $2->immediate = $3;
         alloc($$, 1, struct ubik_ast_expr);
         $$->expr_type = EXPR_BLOCK;
         $$->block = $2;
         load_loc($$->loc);
         merge_loc($$, $$, $2);
-        merge_loc($$, $$, $3);
 }
 ;
 

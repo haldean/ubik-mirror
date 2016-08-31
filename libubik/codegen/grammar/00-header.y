@@ -89,7 +89,7 @@
 %token <string> NAME TYPE_NAME STRING QUALIFIED_NAME QUALIFIED_TYPE_NAME
 
 %type <top_result> top_result
-%type <ast> prog blocks
+%type <ast> prog blocks bindings
 %type <binding> binding
 %type <expr> expr immediate top_expr cond_block pattern
 %type <type_expr> top_type_expr type_expr type_atom type_apply_expr
