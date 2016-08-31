@@ -373,10 +373,37 @@ _assign_block(
 {
         size_t i;
         struct ubik_ast_binding *bind;
+        union ubik_dagc_any_node *subnode;
         ubik_error err;
 
         if (expr->block->types.n != 0)
                 return ubik_raise(ERR_NOT_IMPLEMENTED, "private types");
+
+        /* first set all of the binding nodes to REF nodes, so that things
+         * can point at the definitions of names before the names actually
+         * exist. This also allows for circular references between binding
+         * expressions. */
+        for (i = 0; i < expr->block->bindings.n; i++)
+        {
+                bind = expr->block->bindings.elems[i];
+
+                ubik_alloc1(&subnode, union ubik_dagc_any_node, ctx->region);
+                subnode->node.node_type = DAGC_NODE_REF;
+                subnode->node.id = ctx->next_id++;
+                /* leave referrent unset; we'll set it after we generate a
+                 * node for this name. */
+
+                err = ubik_bdagc_push_node(builder, &subnode->node);
+                if (err != OK)
+                        return err;
+
+                err = _set_name_in_scope(
+                        expr->block->scope,
+                        bind->name,
+                        &subnode->node);
+                if (err != OK)
+                        return err;
+        }
 
         for (i = 0; i < expr->block->bindings.n; i++)
         {
@@ -385,12 +412,12 @@ _assign_block(
                 if (err != OK)
                         return err;
 
-                err = _set_name_in_scope(
-                        expr->block->scope,
-                        bind->name,
-                        bind->expr->gen);
+                err = _find_name_in_scope(
+                        (struct ubik_dagc_node **) &subnode,
+                        expr->block->scope, bind->name);
                 if (err != OK)
                         return err;
+                subnode->as_ref.referrent = bind->expr->gen;
         }
 
         err = ubik_assign_nodes(ctx, builder, expr->block->immediate);
