@@ -21,10 +21,15 @@
 #include "ubik/ast.h"
 #include "ubik/stream.h"
 #include "ubik/string.h"
+#include "ubik/types.h"
 #include "ubik/util.h"
 
 #include <inttypes.h>
 #include <string.h>
+
+#define indent(i) do { \
+                for (int __i = 0; __i < (i); __i++) ubik_fprintf(out, " "); \
+        } while (0)
 
 static void
 apply_pretty(
@@ -143,9 +148,32 @@ block_pretty(
         struct ubik_ast_expr *expr,
         int start_indent)
 {
-        unused(out);
-        unused(expr);
-        unused(start_indent);
+        struct ubik_ast_binding *bind;
+        size_t i;
+        int in, blockin;
+
+        in = start_indent + 4;
+        ubik_fprintf(out, "{\n");
+
+        for (i = 0; i < expr->block->bindings.n; i++)
+        {
+                blockin = in;
+                bind = expr->block->bindings.elems[i];
+                indent(blockin);
+                ubik_fprintf(out, ": %s ", bind->name);
+                if (bind->type_expr != NULL)
+                {
+                        blockin += 4;
+                        ubik_fprintf(out, "\n");
+                        indent(blockin);
+                        ubik_fprintf(out, "^ ");
+                        ubik_type_expr_pretty(out, bind->type_expr);
+                        ubik_fprintf(out, "\n");
+                        indent(blockin);
+                }
+                ubik_fprintf(out, "= ");
+                ubik_ast_expr_pretty(out, bind->expr, blockin);
+        }
 }
 
 static void

@@ -6,6 +6,9 @@ tests = \
 	bad-type-2.uk \
 	bad-type-3.uk \
 	bad-type-4.uk \
+	bad-type-5.uk \
+	bad-type-6.uk \
+	bad-type-7.uk \
 	literate-line-no.rst \
 	no-package.uk \
 	no-top-type.uk \

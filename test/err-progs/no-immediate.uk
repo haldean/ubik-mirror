@@ -1,0 +1,7 @@
+~ ubik-tests/no-immediate
+
+: test-ast
+  ^ String
+  = {
+    : a = "Hello World"
+  }
