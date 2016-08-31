@@ -1,0 +1,5 @@
+~ ubik-tests/err-progs/bad-type-6
+
+: func-arg-incompat
+  ^ Word
+  = (\x -> uadd x 5) "hello"

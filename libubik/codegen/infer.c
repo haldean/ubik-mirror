@@ -188,7 +188,16 @@ infer_apply(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
         err = ubik_type_expr_copy(expr->type, h->apply.tail, &ctx->req->region);
         if (err != OK)
                 return err;
-        return ubik_typesystem_apply_substs(expr->type, &unified.substs);
+
+        err = ubik_typesystem_apply_substs(expr->type, &unified.substs);
+        if (err != OK)
+                return err;
+
+        err = ubik_vector_extend(&ctx->substs, &unified.substs);
+        if (err != OK)
+                return err;
+
+        return OK;
 }
 
 no_ignore static ubik_error
@@ -215,6 +224,23 @@ infer_lambda(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
                         expr->type, &ctx->req->region);
         }
 
+        return OK;
+}
+
+no_ignore static ubik_error
+infer_block(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
+{
+        struct ubik_infer_error *ierr;
+
+        if (expr->block->immediate == NULL)
+        {
+                ubik_alloc1(&ierr, struct ubik_infer_error, &ctx->req->region);
+                ierr->error_type = INFER_ERR_BLOCK_MISSING_VALUE;
+                ierr->bad_expr = expr;
+                return ubik_vector_append(&ctx->errors, ierr);
+        }
+
+        expr->type = expr->block->immediate->type;
         return OK;
 }
 
@@ -250,6 +276,11 @@ infer_expr(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
 
         for (i = 0; i < n_subexprs; i++)
         {
+                err = ubik_typesystem_apply_substs(
+                        subexprs[i]->type, &ctx->substs);
+                if (err != OK)
+                        return err;
+
                 if (subexprs[i]->type == NULL)
                 {
                         expr->type = NULL;
@@ -258,6 +289,11 @@ infer_expr(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
         }
         if (subast != NULL && subast->immediate->type == NULL)
         {
+                err = ubik_typesystem_apply_substs(
+                        subast->immediate->type, &ctx->substs);
+                if (err != OK)
+                        return err;
+
                 expr->type = NULL;
                 return OK;
         }
@@ -283,10 +319,21 @@ infer_expr(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
                 break;
 
         case EXPR_BLOCK:
+                err = infer_block(expr, ctx);
+                if (err != OK)
+                        return err;
+                break;
+
         case EXPR_COND_BLOCK:
                 break;
         }
 
+        if (expr->type != NULL)
+        {
+                err = ubik_typesystem_apply_substs(expr->type, &ctx->substs);
+                if (err != OK)
+                        return err;
+        }
         if (ctx->debug)
         {
                 printf("    ");
@@ -367,6 +414,13 @@ infer_ast(
                                 if (err != OK)
                                         return err;
                                 ierr = NULL;
+                        }
+                        else
+                        {
+                                err = ubik_vector_extend(
+                                        &ctx->substs, &unified.substs);
+                                if (err != OK)
+                                        return err;
                         }
                 }
         }
@@ -475,6 +529,17 @@ infer_error_print(
                 pf("\x1b[0m\n");
                 break;
 
+        case INFER_ERR_BLOCK_MISSING_VALUE:
+                ubik_feedback_error_line(
+                        ctx->req->feedback,
+                        UBIK_FEEDBACK_ERR,
+                        &ierr->bad_expr->loc,
+                        "block has no defined value");
+                pf("    bad expression:\n        ");
+                ubik_ast_expr_pretty(ctx->req->feedback, ierr->bad_expr, 8);
+                pf("\n");
+                break;
+
         default:
                 return ubik_raise(
                         ERR_UNKNOWN_TYPE, "unknown inference error type");
@@ -498,6 +563,7 @@ ubik_infer(
         if (ctx->debug)
                 printf("\ninfer\n");
         ctx->errors.region = &ctx->req->region;
+        ctx->substs.region = &ctx->req->region;
 
         err = infer_ast(ast, true, ctx);
         if (err != OK)

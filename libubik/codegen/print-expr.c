@@ -129,9 +129,12 @@ lambda_pretty(
         struct ubik_ast_expr *expr,
         int start_indent)
 {
-        unused(out);
-        unused(expr);
-        unused(start_indent);
+        struct ubik_ast_arg_list *args;
+        ubik_fprintf(out, "\u03bb");
+        for (args = expr->lambda.args; args != NULL; args = args->next)
+                ubik_fprintf(out, " %s", args->name);
+        ubik_fprintf(out, " -> ");
+        ubik_ast_expr_pretty(out, expr->lambda.body, start_indent);
 }
 
 static void

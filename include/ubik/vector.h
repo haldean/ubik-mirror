@@ -39,6 +39,10 @@ ubik_vector_ensure_size(struct ubik_vector *, size_t size);
 no_ignore ubik_error
 ubik_vector_append(struct ubik_vector *, void *elem);
 
+/* Adds all elements of one vector onto the end of another vector. */
+no_ignore ubik_error
+ubik_vector_extend(struct ubik_vector *res, struct ubik_vector *other);
+
 /* Frees all memory associated with a vector. */
 void
 ubik_vector_free(struct ubik_vector *);

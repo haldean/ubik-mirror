@@ -22,6 +22,8 @@
 #include "ubik/util.h"
 #include "ubik/vector.h"
 
+#include <string.h>
+
 no_ignore ubik_error
 ubik_vector_ensure_size(struct ubik_vector *v, size_t size)
 {
@@ -58,6 +60,24 @@ ubik_vector_append(struct ubik_vector *v, void *elem)
                 return err;
 
         v->elems[v->n++] = elem;
+        return OK;
+}
+
+no_ignore ubik_error
+ubik_vector_extend(struct ubik_vector *this, struct ubik_vector *other)
+{
+        ubik_error err;
+
+        if (other->n == 0)
+                return OK;
+
+        err = ubik_vector_ensure_size(this, this->n + other->n);
+        if (err != OK)
+                return err;
+
+        memcpy(&this->elems[this->n], other->elems,
+               other->n * sizeof(other->elems[0]));
+        this->n += other->n;
         return OK;
 }
 

@@ -33,6 +33,8 @@ struct ubik_infer_context
         bool debug;
         /* members are ubik_infer_error pointers. */
         struct ubik_vector errors;
+        /* members are ubik_typesystem_subst pointers. */
+        struct ubik_vector substs;
         /* the type system we're inferring inside. */
         struct ubik_typesystem *type_system;
         /* the name of the next type variable to create */
@@ -56,6 +58,8 @@ enum ubik_infer_error_type
         INFER_ERR_BIND_TYPE,
         /* Raised when a top-level binding doesn't have a specified type. */
         INFER_ERR_TOP_TYPE_MISSING,
+        /* Raised when a block doesn't have an immediate value. */
+        INFER_ERR_BLOCK_MISSING_VALUE,
 };
 
 struct ubik_infer_error
