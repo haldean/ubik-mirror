@@ -104,6 +104,7 @@ struct ubik_ast_adt_ctors
         char *name;
         struct ubik_type_list *params;
         struct ubik_ast_loc loc;
+        struct ubik_resolve_name_loc *name_loc;
         struct ubik_ast_adt_ctors *next;
 };
 

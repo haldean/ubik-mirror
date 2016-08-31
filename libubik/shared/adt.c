@@ -328,8 +328,8 @@ bind_decl(
         return OK;
 }
 
-no_ignore static ubik_error
-make_ctor_type(
+no_ignore ubik_error
+ubik_adt_make_ctor_type(
         struct ubik_type_expr *res,
         struct ubik_type *type,
         struct ubik_ast_adt_ctors *ctor,
@@ -473,7 +473,7 @@ bind_ctor(
         }
 
         ubik_alloc1(&lambda->type, struct ubik_type_expr, &req->region);
-        err = make_ctor_type(lambda->type, type, ctor, req);
+        err = ubik_adt_make_ctor_type(lambda->type, type, ctor, req);
         if (err != OK)
                 return err;
 

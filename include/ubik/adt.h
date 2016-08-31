@@ -20,6 +20,7 @@
 #pragma once
 #include "ubik/ast.h"
 #include "ubik/compile.h"
+#include "ubik/types.h"
 #include "ubik/ubik.h"
 
 #define UBIK_MAX_ADT_FIELDS 32
@@ -82,4 +83,13 @@ ubik_adt_create_constructor(
 no_ignore ubik_error
 ubik_adt_bind_all_to_ast(
         struct ubik_ast *ast,
+        struct ubik_compile_request *req);
+
+/* Creates a type expression describing the signature of the given ADT
+ * constructor. */
+no_ignore ubik_error
+ubik_adt_make_ctor_type(
+        struct ubik_type_expr *res,
+        struct ubik_type *type,
+        struct ubik_ast_adt_ctors *ctor,
         struct ubik_compile_request *req);

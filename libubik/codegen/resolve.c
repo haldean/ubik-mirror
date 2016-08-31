@@ -258,6 +258,11 @@ update_scopes_with_bindings(
                         if (err != OK)
                                 return err;
 
+                        ubik_alloc1(
+                                &ctor->name_loc, struct ubik_resolve_name_loc,
+                                ctx->region);
+                        ctor->name_loc->type = name->type;
+                        ctor->name_loc->def = name;
                         ctor = ctor->next;
                 }
         }

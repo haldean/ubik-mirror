@@ -1,0 +1,12 @@
+~ ubik-tests/bad-type-7
+
+^ Test1 = T1 String
+^ Test2 = T2 String
+
+: good-pattern
+  ^ Test1 -> String
+  = \x -> ? x { . T1 s => s }
+
+: bad-pattern
+  ^ Test1 -> String
+  = \x -> ? x { . T2 s => s }

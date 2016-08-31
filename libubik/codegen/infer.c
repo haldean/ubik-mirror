@@ -17,6 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include "ubik/adt.h"
 #include "ubik/assert.h"
 #include "ubik/feedback.h"
 #include "ubik/infer.h"
@@ -175,6 +176,7 @@ infer_atom(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
                 return OK;
 
         case ATOM_NAME:
+        case ATOM_TYPE_NAME:
                 switch (expr->atom->name_loc->type)
                 {
                 case RESOLVE_NATIVE:
@@ -198,7 +200,6 @@ infer_atom(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
                         "unknown name resolution type in infer");
 
         case ATOM_QUALIFIED:
-        case ATOM_TYPE_NAME:
         case ATOM_VALUE:
                 expr->type = NULL;
                 return OK;
@@ -337,6 +338,7 @@ infer_expr(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
 {
         struct ubik_ast *subast;
         struct ubik_ast_expr *subexprs[UBIK_MAX_SUBEXPRS];
+        struct ubik_infer_error *ierr;
         size_t n_subexprs;
         size_t i;
         ubik_error err;
@@ -422,6 +424,13 @@ infer_expr(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
                 if (err != OK)
                         return err;
         }
+        else
+        {
+                ubik_alloc1(&ierr, struct ubik_infer_error, &ctx->req->region);
+                ierr->error_type = INFER_ERR_UNTYPEABLE;
+                ierr->bad_expr = expr;
+                return ubik_vector_append(&ctx->errors, ierr);
+        }
         if (ctx->debug)
         {
                 printf("    ");
@@ -443,11 +452,32 @@ infer_ast(
         bool require_bind_types,
         struct ubik_infer_context *ctx)
 {
+        struct ubik_type *type;
+        struct ubik_ast_adt_ctors *ctor;
         struct ubik_ast_binding *bind;
         struct ubik_infer_error *ierr;
         struct ubik_typesystem_unified unified;
         size_t i;
         ubik_error err;
+
+        /* add type information to type constructors */
+        for (i = 0; i < ast->types.n; i++)
+        {
+                type = ast->types.elems[i];
+                if (type->type != TYPE_ADT)
+                        continue;
+                for (ctor = type->adt.ctors; ctor != NULL; ctor = ctor->next)
+                {
+                        ubik_alloc1(
+                                &ctor->name_loc->def->inferred_type,
+                                struct ubik_type_expr, &ctx->req->region);
+                        err = ubik_adt_make_ctor_type(
+                                ctor->name_loc->def->inferred_type,
+                                type, ctor, ctx->req);
+                        if (err != OK)
+                                return err;
+                }
+        }
 
         /* add types to resolved names first, so that expressions can get at
          * these immediately. */
