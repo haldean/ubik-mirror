@@ -23,7 +23,7 @@
 #include "unit.h"
 #include <stdio.h>
 
-static char testprog[] =
+static char testprog1[] =
         "~ testprog\n: test-resolve\n= \\x -> uadd x ((\\x -> x) x)\n";
 
 test_t
@@ -42,10 +42,10 @@ resolve()
         assert(ubik_stream_buffer(&progstream, &req.region) == OK);
         /* drop the null byte off the end, it makes the lexer unhappy */
         assert(ubik_stream_write(
-                &progstream, testprog, sizeof(testprog) - 1)
-               == sizeof(testprog) - 1);
+                &progstream, testprog1, sizeof(testprog1) - 1)
+               == sizeof(testprog1) - 1);
         assert(ubik_parse(
-                &ast, &req.region, &feedback, "testprog", &progstream) == OK);
+                &ast, &req.region, &feedback, "testprog1", &progstream) == OK);
         assert(ubik_resolve(ast, &req) == OK);
 
         /* e here is \x -> uadd x ((\x -> x) x). The xs, by name, are
@@ -68,4 +68,35 @@ resolve()
         return ok;
 }
 
-run_single(resolve)
+static char testprog2[] = "~ t : b ^ Word = { : x = \\y -> y ! \\z -> x 8 }";
+
+test_t
+closure_regression()
+{
+        struct ubik_compile_request req = {0};
+        struct ubik_ast *ast;
+        struct ubik_stream progstream;
+        struct ubik_stream feedback;
+
+        assert(ubik_stream_wfilep(&feedback, stdout) == OK);
+        req.feedback = &feedback;
+
+        assert(ubik_stream_buffer(&progstream, &req.region) == OK);
+        /* drop the null byte off the end, it makes the lexer unhappy */
+        assert(ubik_stream_write(
+                       &progstream, testprog2, sizeof(testprog2) - 1)
+               == sizeof(testprog2) - 1);
+        assert(ubik_parse(
+                &ast, &req.region, &feedback, "testprog2", &progstream) == OK);
+        assert(ubik_resolve(ast, &req) == OK);
+        return ok;
+}
+
+int
+main()
+{
+        init();
+        run(resolve);
+        run(closure_regression);
+        finish();
+}
