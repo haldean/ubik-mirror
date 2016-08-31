@@ -125,6 +125,7 @@ type_expr_pretty()
         assert(strncmp(typestr, outstr, strlen(typestr)) == 0);
         ubik_stream_reset(&s);
 
+        ubik_alloc_free(&r);
         return ok;
 }
 
