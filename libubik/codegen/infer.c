@@ -364,16 +364,16 @@ infer_expr(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
 
         for (i = 0; i < n_subexprs; i++)
         {
-                err = ubik_typesystem_apply_substs(
-                        subexprs[i]->type, &ctx->substs);
-                if (err != OK)
-                        return err;
-
                 if (subexprs[i]->type == NULL)
                 {
                         expr->type = NULL;
                         return OK;
                 }
+
+                err = ubik_typesystem_apply_substs(
+                        subexprs[i]->type, &ctx->substs);
+                if (err != OK)
+                        return err;
         }
         if (subast != NULL && subast->immediate->type == NULL)
         {
