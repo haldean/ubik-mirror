@@ -451,7 +451,7 @@ infer_expr(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
                 ierr = NULL;
                 if (ctx->errors.n)
                         ierr = ctx->errors.elems[ctx->errors.n - 1];
-                if (ierr != NULL && ierr->bad_expr != expr)
+                if (ierr == NULL || ierr->bad_expr != expr)
                 {
                         ubik_alloc1(
                                 &ierr, struct ubik_infer_error,
