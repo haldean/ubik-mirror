@@ -88,8 +88,10 @@ ubik_ast_subexprs(
         struct ubik_ast_expr *t;
         size_t i;
 
-        *subast = NULL;
-        *n_subexprs = 0;
+        if (subast != NULL)
+                *subast = NULL;
+        if (n_subexprs != NULL)
+                *n_subexprs = 0;
 
         switch (expr->expr_type)
         {
@@ -97,17 +99,26 @@ ubik_ast_subexprs(
                 return OK;
 
         case EXPR_APPLY:
+                if (subexprs == NULL)
+                        return OK;
+
                 subexprs[0] = expr->apply.head;
                 subexprs[1] = expr->apply.tail;
                 *n_subexprs = 2;
                 return OK;
 
         case EXPR_LAMBDA:
+                if (subexprs == NULL)
+                        return OK;
+
                 subexprs[0] = expr->lambda.body;
                 *n_subexprs = 1;
                 return OK;
 
         case EXPR_COND_BLOCK:
+                if (subexprs == NULL)
+                        return OK;
+
                 i = 0;
                 switch (expr->cond_block.block_type)
                 {
@@ -155,6 +166,8 @@ ubik_ast_subexprs(
                 return OK;
 
         case EXPR_BLOCK:
+                if (subast == NULL)
+                        return OK;
                 *subast = expr->block;
                 return OK;
         }

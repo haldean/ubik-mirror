@@ -221,6 +221,12 @@ ubik_ast_atom_new_qualified(
         char *name,
         struct ubik_alloc_region *r);
 
+/* Returns the subexpressions and sub-ASTs of a given expression.
+ * If subexprs is NULL, only the subast is returned. If subast is NULL, only
+ * the subexpressions are returned.
+ *
+ * Note that patterns here count as subexpressions, which is a bit
+ * counterintuitive, but everything works out pretty well when that's true. */
 no_ignore ubik_error
 ubik_ast_subexprs(
         struct ubik_ast **subast,

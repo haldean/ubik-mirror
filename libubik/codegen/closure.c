@@ -69,7 +69,7 @@
 
 no_ignore static ubik_error
 apply_closure(
-        struct ubik_ast_expr **lambda,
+        struct ubik_ast_expr **head,
         char *resolving_name,
         struct ubik_compile_request *req)
 {
@@ -78,7 +78,7 @@ apply_closure(
         struct ubik_resolve_name *bind;
         size_t i;
 
-        (*lambda)->scope->needs_closure_appl = false;
+        (*head)->scope->needs_closure_appl = false;
 
         ubik_alloc1(&name, struct ubik_ast_expr, &req->region);
         name->expr_type = EXPR_ATOM;
@@ -86,10 +86,10 @@ apply_closure(
         ubik_alloc1(&name->atom, struct ubik_ast_atom, &req->region);
         name->atom->atom_type = ATOM_NAME;
 
-        for (i = 0; i < (*lambda)->scope->names.n; i++)
+        for (i = 0; i < (*head)->scope->names.n; i++)
         {
                 bind = (struct ubik_resolve_name *)
-                        (*lambda)->scope->names.elems[i];
+                        (*head)->scope->names.elems[i];
                 if (strcmp(bind->name, resolving_name) == 0)
                         break;
         }
@@ -102,15 +102,15 @@ apply_closure(
         name->atom->name_loc->def = bind;
         name->atom->str = resolving_name;
 
-        name->scope = (*lambda)->scope->parent;
+        name->scope = (*head)->scope->parent;
 
         ubik_alloc1(&apply, struct ubik_ast_expr, &req->region);
         apply->expr_type = EXPR_APPLY;
-        apply->scope = (*lambda)->scope->parent;
-        apply->apply.head = *lambda;
+        apply->scope = (*head)->scope->parent;
+        apply->apply.head = *head;
         apply->apply.tail = name;
 
-        *lambda = apply;
+        *head = apply;
         return OK;
 }
 
@@ -206,6 +206,29 @@ apply_downwards_transform(
         return OK;
 }
 
+/* Returns true if the given name is reachable from the provided scope without
+ * crossing a function boundary. */
+static bool
+is_top_scope(char *resolving_name, struct ubik_resolve_scope *scope)
+{
+        size_t i;
+        do
+        {
+                for (i = 0; i < scope->names.n; i++)
+                {
+                        struct ubik_resolve_name *name;
+                        name = scope->names.elems[i];
+                        if (strcmp(name->name, resolving_name) == 0)
+                                return true;
+                }
+                if (scope->boundary == BOUNDARY_FUNCTION)
+                        return false;
+                scope = scope->parent;
+        } while (scope != NULL);
+
+        return false;
+}
+
 no_ignore static ubik_error
 apply_upwards_transform(
         char **resolving_name_ref,
@@ -214,38 +237,14 @@ apply_upwards_transform(
 {
         char *resolving_name;
         bool is_top;
-        size_t i;
         struct ubik_ast_expr *expr;
         struct ubik_ast_arg_list *args;
-        struct ubik_resolve_scope *scope;
         struct ubik_resolve_name *rname;
         ubik_error err;
+        struct ubik_ast *subast;
 
         resolving_name = *resolving_name_ref;
         expr = *expr_ref;
-
-        /* check to see if we can reach the definition of this name from where
-         * we are, without crossing a boundary. */
-        is_top = false;
-        scope = expr->scope;
-        do
-        {
-                for (i = 0; i < scope->names.n; i++)
-                {
-                        struct ubik_resolve_name *name;
-                        name = scope->names.elems[i];
-                        if (strcmp(name->name, resolving_name) == 0)
-                        {
-                                is_top = true;
-                                goto break_all;
-                        }
-                }
-                if (scope->boundary == BOUNDARY_FUNCTION)
-                        goto break_all;
-                scope = scope->parent;
-        } while (scope != NULL);
-
-break_all:
 
         if (expr->expr_type == EXPR_LAMBDA)
         {
@@ -269,6 +268,20 @@ break_all:
                         &req->region);
                 args->name_loc->type = RESOLVE_LOCAL;
                 args->name_loc->def = rname;
+        }
+
+        /* check to see if we can reach the definition of this name from where
+         * we are, without crossing a boundary. */
+        is_top = is_top_scope(resolving_name, expr->scope);
+        if (!is_top)
+        {
+                err = ubik_ast_subexprs(&subast, NULL, NULL, expr);
+                if (err != OK)
+                        return err;
+                if (subast != NULL)
+                {
+                        is_top = is_top_scope(resolving_name, subast->scope);
+                }
         }
 
         if (is_top)
@@ -303,15 +316,11 @@ traverse_expr(
         struct ubik_ast_expr **expr_ref,
         struct ubik_compile_request *req)
 {
-        struct ubik_ast *subast;
         struct ubik_ast_expr *expr;
-        struct ubik_ast_expr *subexprs[UBIK_MAX_SUBEXPRS];
-        size_t n_subexprs;
-        size_t i;
+        struct ubik_ast_case *case_stmt;
         ubik_error err;
 
         expr = *expr_ref;
-        subast = NULL;
 
         if (is_closure_ref(expr))
         {
@@ -321,14 +330,58 @@ traverse_expr(
                 return OK;
         }
 
-        err = ubik_ast_subexprs(&subast, subexprs, &n_subexprs, expr);
-        if (err != OK)
-                return err;
+        /* can't use subexpr here, because we need the actual ref inside
+         * this expression struct. Taking refs to elements in an array doesn't
+         * help us. */
+        #define traverse(e) do { \
+                err = traverse_expr(resolving_name, changed, &e, req); \
+                if (err != OK) return err; \
+                if (*resolving_name != NULL) { \
+                        err = apply_upwards_transform( \
+                                resolving_name, expr_ref, req); \
+                        if (err != OK) return err; \
+                }} while (0)
 
-        for (i = 0; i < n_subexprs; i++)
+        switch (expr->expr_type)
         {
-                err = traverse_expr(
-                        resolving_name, changed, &subexprs[i], req);
+        case EXPR_ATOM:
+                break;
+
+        case EXPR_APPLY:
+                traverse(expr->apply.head);
+                traverse(expr->apply.tail);
+                break;
+
+        case EXPR_LAMBDA:
+                traverse(expr->lambda.body);
+                break;
+
+        case EXPR_COND_BLOCK:
+                switch (expr->cond_block.block_type)
+                {
+                case COND_PATTERN:
+                        traverse(expr->cond_block.to_match);
+                        break;
+                case COND_PREDICATE:
+                        break;
+                }
+
+                case_stmt = expr->cond_block.case_stmts;
+                while (case_stmt != NULL)
+                {
+                        /* We don't consider patterns expressions, because they
+                         * often need to be treated in a very different way from
+                         * a normal expression. */
+                        if (case_stmt->head != NULL
+                                && expr->cond_block.block_type != COND_PATTERN)
+                                traverse(case_stmt->head);
+                        traverse(case_stmt->tail);
+                        case_stmt = case_stmt->next;
+                }
+                return OK;
+
+        case EXPR_BLOCK:
+                err = traverse_ast(resolving_name, changed, expr->block, req);
                 if (err != OK)
                         return err;
                 if (*resolving_name != NULL)
@@ -337,21 +390,9 @@ traverse_expr(
                                 resolving_name, expr_ref, req);
                         return err;
                 }
+                break;
         }
 
-        if (subast != NULL)
-        {
-                err = traverse_ast(resolving_name, changed, subast, req);
-                if (err != OK)
-                        return err;
-
-                if (*resolving_name != NULL)
-                {
-                        err = apply_upwards_transform(
-                                resolving_name, expr_ref, req);
-                        return err;
-                }
-        }
         return OK;
 }
 

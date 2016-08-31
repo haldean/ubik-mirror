@@ -1,0 +1,9 @@
+~ ubik-tests/bad-type-8
+
+: block-defines-func
+  ^ String
+  = {
+    : func1 = \x -> x
+    : func2 = \y -> y
+    ! \z -> func1 (func2 z)
+  } 7
