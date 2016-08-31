@@ -353,6 +353,14 @@ infer_block(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
 }
 
 no_ignore static ubik_error
+infer_cond_block(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
+{
+        unused(expr);
+        unused(ctx);
+        return OK;
+}
+
+no_ignore static ubik_error
 infer_expr(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
 {
         struct ubik_ast *subast;
@@ -435,6 +443,9 @@ infer_expr(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
                 break;
 
         case EXPR_COND_BLOCK:
+                err = infer_cond_block(expr, ctx);
+                if (err != OK)
+                        return err;
                 break;
         }
 

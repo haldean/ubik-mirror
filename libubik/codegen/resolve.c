@@ -74,6 +74,36 @@ ubik_resolve_context_missing_name(
         char *name,
         struct ubik_ast_loc loc);
 
+/* Assembles a vector of all of the heads of any patterns appearing
+ * in the given pattern block. Elements of "heads" vector are pointers to
+ * struct ubik_ast_expr. */
+no_ignore static ubik_error
+get_pattern_heads(
+        struct ubik_vector *heads,
+        struct ubik_ast_expr *pattern_block)
+{
+        struct ubik_ast_case *case_stmt;
+        struct ubik_ast_expr *t;
+        ubik_error err;
+
+        for (case_stmt = pattern_block->cond_block.case_stmts;
+             case_stmt != NULL;
+             case_stmt = case_stmt->next)
+        {
+                if (case_stmt->head == NULL)
+                        continue;
+                t = case_stmt->head;
+                while (t->expr_type == EXPR_APPLY)
+                        t = t->apply.head;
+                if (t->expr_type != EXPR_ATOM)
+                        return ubik_raise(
+                                ERR_BAD_TYPE, "unexpected pattern expr");
+                err = ubik_vector_append(heads, t);
+                if (err != OK)
+                        return err;
+        }
+        return OK;
+}
 
 no_ignore static ubik_error
 assign_initial_scopes(
@@ -83,6 +113,7 @@ assign_initial_scopes(
 {
         struct ubik_ast *subast;
         struct ubik_ast_expr *subexprs[UBIK_MAX_SUBEXPRS];
+        struct ubik_vector pattern_heads = {0};
         size_t n_subexprs;
         size_t i;
         ubik_error err;
@@ -130,6 +161,23 @@ assign_initial_scopes(
                 err = assign_initial_scopes(ctx, subexprs[i], expr->scope);
                 if (err != OK)
                         return err;
+        }
+
+        if (expr->expr_type == EXPR_COND_BLOCK &&
+            expr->cond_block.block_type == COND_PATTERN)
+        {
+                err = get_pattern_heads(&pattern_heads, expr);
+                if (err != OK)
+                        return err;
+                for (i = 0; i < pattern_heads.n; i++)
+                {
+                        err = assign_initial_scopes(
+                                ctx,
+                                (struct ubik_ast_expr *) pattern_heads.elems[i],
+                                expr->scope);
+                        if (err != OK)
+                                return err;
+                }
         }
         return OK;
 }
@@ -469,6 +517,7 @@ find_name_resolution_types(
         struct ubik_resolve_name_loc *name_loc;
         struct ubik_resolve_scope *scope;
         struct ubik_resolve_name *check_name;
+        struct ubik_vector pattern_heads = {0};
         ubik_error err;
 
         needs_resolve = expr->expr_type == EXPR_ATOM;
@@ -546,6 +595,22 @@ find_name_resolution_types(
                 err = find_name_resolution_types(ctx, subexprs[i]);
                 if (err != OK)
                         return err;
+        }
+
+        if (expr->expr_type == EXPR_COND_BLOCK &&
+                expr->cond_block.block_type == COND_PATTERN)
+        {
+                err = get_pattern_heads(&pattern_heads, expr);
+                if (err != OK)
+                        return err;
+                for (i = 0; i < pattern_heads.n; i++)
+                {
+                        err = find_name_resolution_types(
+                                ctx,
+                                (struct ubik_ast_expr *) pattern_heads.elems[i]);
+                        if (err != OK)
+                                return err;
+                }
         }
         return OK;
 }
