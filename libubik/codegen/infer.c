@@ -45,6 +45,80 @@ new_tyvar(struct ubik_type_expr *t, struct ubik_infer_context *ctx)
                 &t->name, &ctx->req->region, "_t%u", ctx->next_tyvar++);
 }
 
+no_ignore static ubik_error
+free_vars(
+        struct ubik_vector *freevars,
+        struct ubik_type_expr *t)
+{
+        ubik_error err;
+        size_t i;
+
+        switch (t->type_expr_type)
+        {
+        case TYPE_EXPR_ATOM:
+                return OK;
+        case TYPE_EXPR_VAR:
+                /* don't add duplicates */
+                for (i = 0; i < freevars->n; i++)
+                        if (strcmp(freevars->elems[i], t->name) == 0)
+                                return OK;
+                return ubik_vector_append(freevars, t->name);
+        case TYPE_EXPR_APPLY:
+                err = free_vars(freevars, t->apply.head);
+                if (err != OK)
+                        return err;
+                err = free_vars(freevars, t->apply.tail);
+                return err;
+        case TYPE_EXPR_CONSTRAINED:
+                return ubik_raise(
+                        ERR_NOT_IMPLEMENTED,
+                        "free_vars for constrained types");
+        }
+        return ubik_raise(ERR_BAD_TYPE, "unknown type expr type");
+}
+
+no_ignore static ubik_error
+instantiate(
+        struct ubik_type_expr *res,
+        struct ubik_type_expr *t,
+        struct ubik_infer_context *ctx)
+{
+        struct ubik_vector freevars = {0};
+        struct ubik_vector substs = {0};
+        struct ubik_typesystem_subst *sub;
+        size_t i;
+        ubik_error err;
+
+        freevars.region = &ctx->req->region;
+        substs.region = &ctx->req->region;
+
+        err = free_vars(&freevars, t);
+        if (err != OK)
+                return err;
+
+        for (i = 0; i < freevars.n; i++)
+        {
+                ubik_alloc1(
+                        &sub, struct ubik_typesystem_subst, &ctx->req->region);
+                ubik_alloc1(
+                        &sub->val, struct ubik_type_expr, &ctx->req->region);
+                sub->varname = (char *) freevars.elems[i];
+                new_tyvar(sub->val, ctx);
+
+                err = ubik_vector_append(&substs, sub);
+                if (err != OK)
+                        return err;
+        }
+
+        err = ubik_type_expr_copy(res, t, &ctx->req->region);
+        if (err != OK)
+                return err;
+        err = ubik_typesystem_apply_substs(res, &substs);
+        if (err != OK)
+                return err;
+        return OK;
+}
+
 /* Note: when this function is called, the type object on the expression has
  * been allocated and zeroed. */
 no_ignore static ubik_error
@@ -136,8 +210,7 @@ infer_atom(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
 no_ignore static ubik_error
 infer_apply(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
 {
-        struct ubik_type_expr *h;
-        struct ubik_type_expr *t;
+        struct ubik_type_expr *h, *t, *inst;
         struct ubik_infer_error *ierr;
         struct ubik_typesystem_unified unified;
         struct ubik_type_expr *t0, *t1, *t2;
@@ -171,9 +244,23 @@ infer_apply(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
                 h = t2;
         }
 
+        ubik_alloc1(&inst, struct ubik_type_expr, &ctx->req->region);
+        err = instantiate(inst, h, ctx);
+        if (err != OK)
+                return err;
+
+        if (ctx->debug)
+        {
+                printf("    after instantiation, ");
+                ubik_assert(ubik_type_expr_print(h) == OK);
+                printf(" becomes ");
+                ubik_assert(ubik_type_expr_print(inst) == OK);
+                printf("\n");
+        }
+
         err = ubik_typesystem_unify(
                 &unified, ctx->type_system, NULL,
-                h->apply.head->apply.tail, t, &ctx->req->region, ctx->debug);
+                inst->apply.head->apply.tail, t, &ctx->req->region, ctx->debug);
         if (err != OK)
                 return err;
         if (!unified.success)
@@ -185,7 +272,8 @@ infer_apply(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
                 return ubik_vector_append(&ctx->errors, ierr);
         }
         ubik_alloc1(&expr->type, struct ubik_type_expr, &ctx->req->region);
-        err = ubik_type_expr_copy(expr->type, h->apply.tail, &ctx->req->region);
+        err = ubik_type_expr_copy(
+                expr->type, inst->apply.tail, &ctx->req->region);
         if (err != OK)
                 return err;
 
