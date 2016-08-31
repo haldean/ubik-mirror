@@ -150,30 +150,36 @@ block_pretty(
 {
         struct ubik_ast_binding *bind;
         size_t i;
-        int in, blockin;
+        int in;
 
         in = start_indent + 4;
         ubik_fprintf(out, "{\n");
 
         for (i = 0; i < expr->block->bindings.n; i++)
         {
-                blockin = in;
                 bind = expr->block->bindings.elems[i];
-                indent(blockin);
-                ubik_fprintf(out, ": %s ", bind->name);
+                indent(in);
+                ubik_fprintf(out, ": %s", bind->name);
                 if (bind->type_expr != NULL)
                 {
-                        blockin += 4;
-                        ubik_fprintf(out, "\n");
-                        indent(blockin);
-                        ubik_fprintf(out, "^ ");
+                        ubik_fprintf(out, " ^ ");
                         ubik_type_expr_pretty(out, bind->type_expr);
-                        ubik_fprintf(out, "\n");
-                        indent(blockin);
                 }
-                ubik_fprintf(out, "= ");
-                ubik_ast_expr_pretty(out, bind->expr, blockin);
+                ubik_fprintf(out, " = ");
+                ubik_ast_expr_pretty(out, bind->expr, in);
+                ubik_fprintf(out, "\n");
         }
+
+        if (expr->block->immediate != NULL)
+        {
+                indent(in);
+                ubik_fprintf(out, "! ");
+                ubik_ast_expr_pretty(out, expr->block->immediate, in);
+                ubik_fprintf(out, "\n");
+        }
+
+        indent(start_indent);
+        ubik_fprintf(out, "}");
 }
 
 static void
