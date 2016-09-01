@@ -89,6 +89,8 @@ closure_regression()
         assert(ubik_parse(
                 &ast, &req.region, &feedback, "testprog2", &progstream) == OK);
         assert(ubik_resolve(ast, &req) == OK);
+
+        ubik_alloc_free(&req.region);
         return ok;
 }
 
