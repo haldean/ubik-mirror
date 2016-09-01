@@ -166,6 +166,7 @@ assign_initial_scopes(
         if (expr->expr_type == EXPR_COND_BLOCK &&
             expr->cond_block.block_type == COND_PATTERN)
         {
+                pattern_heads.region = ctx->region;
                 err = get_pattern_heads(&pattern_heads, expr);
                 if (err != OK)
                         return err;
@@ -600,6 +601,7 @@ find_name_resolution_types(
         if (expr->expr_type == EXPR_COND_BLOCK &&
                 expr->cond_block.block_type == COND_PATTERN)
         {
+                pattern_heads.region = ctx->region;
                 err = get_pattern_heads(&pattern_heads, expr);
                 if (err != OK)
                         return err;
