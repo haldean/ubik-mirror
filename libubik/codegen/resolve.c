@@ -113,7 +113,7 @@ assign_initial_scopes(
 {
         struct ubik_ast *subast;
         struct ubik_ast_expr *subexprs[UBIK_MAX_SUBEXPRS];
-        struct ubik_vector pattern_heads = {0};
+        struct ubik_ast_case *case_stmt;
         size_t n_subexprs;
         size_t i;
         ubik_error err;
@@ -145,37 +145,55 @@ assign_initial_scopes(
                         ERR_BAD_TYPE, "bad expr type in initial scopes");
         }
 
-        err = ubik_ast_subexprs(&subast, subexprs, &n_subexprs, expr);
-        if (err != OK)
-                return err;
-
-        if (subast != NULL)
-        {
-                err = assign_all_initial_scopes(ctx, subast, expr->scope, false);
-                if (err != OK)
-                        return err;
-        }
-
-        for (i = 0; i < n_subexprs; i++)
-        {
-                err = assign_initial_scopes(ctx, subexprs[i], expr->scope);
-                if (err != OK)
-                        return err;
-        }
-
+        /* pattern blocks need special treatment, because each case introduces a
+         * new scope. */
         if (expr->expr_type == EXPR_COND_BLOCK &&
             expr->cond_block.block_type == COND_PATTERN)
         {
-                pattern_heads.region = ctx->region;
-                err = get_pattern_heads(&pattern_heads, expr);
+                err = assign_initial_scopes(
+                        ctx, expr->cond_block.to_match, expr->scope);
                 if (err != OK)
                         return err;
-                for (i = 0; i < pattern_heads.n; i++)
+
+                for (case_stmt = expr->cond_block.case_stmts;
+                     case_stmt != NULL;
+                     case_stmt = case_stmt->next)
+                {
+                        ubik_alloc1(
+                                &case_stmt->scope, struct ubik_resolve_scope,
+                                ctx->region);
+                        case_stmt->scope->names.region = ctx->region;
+                        case_stmt->scope->parent = expr->scope;
+                        case_stmt->scope->boundary = BOUNDARY_BLOCK;
+
+                        err = assign_initial_scopes(
+                                ctx, case_stmt->head, case_stmt->scope);
+                        if (err != OK)
+                                return err;
+                        err = assign_initial_scopes(
+                                ctx, case_stmt->tail, case_stmt->scope);
+                        if (err != OK)
+                                return err;
+                }
+        }
+        else
+        {
+                err = ubik_ast_subexprs(&subast, subexprs, &n_subexprs, expr);
+                if (err != OK)
+                        return err;
+
+                if (subast != NULL)
+                {
+                        err = assign_all_initial_scopes(
+                                ctx, subast, expr->scope, false);
+                        if (err != OK)
+                                return err;
+                }
+
+                for (i = 0; i < n_subexprs; i++)
                 {
                         err = assign_initial_scopes(
-                                ctx,
-                                (struct ubik_ast_expr *) pattern_heads.elems[i],
-                                expr->scope);
+                                ctx, subexprs[i], expr->scope);
                         if (err != OK)
                                 return err;
                 }
@@ -349,7 +367,6 @@ update_scopes_with_bindings(
 no_ignore static ubik_error
 bind_cases(
         struct ubik_resolve_context *ctx,
-        struct ubik_vector *resolve_names,
         struct ubik_ast_case *case_stmt)
 {
         struct ubik_resolve_name *resolve;
@@ -386,7 +403,8 @@ bind_cases(
                         resolve->name = name;
                         resolve->type = RESOLVE_LOCAL;
 
-                        err = ubik_vector_append(resolve_names, resolve);
+                        err = ubik_vector_append(
+                                &case_stmt->scope->names, resolve);
                         if (err != OK)
                                 return err;
 
@@ -446,9 +464,7 @@ find_lambdas_and_bind(
         {
                 if (expr->cond_block.block_type == COND_PATTERN)
                 {
-                        err = bind_cases(
-                                ctx, &expr->scope->names,
-                                expr->cond_block.case_stmts);
+                        err = bind_cases(ctx, expr->cond_block.case_stmts);
                         if (err != OK)
                                 return err;
                 }

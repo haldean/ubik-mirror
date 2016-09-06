@@ -104,6 +104,7 @@ struct ubik_ast_case
         struct ubik_ast_case *next;
         struct ubik_dagc_node *gen;
         struct ubik_ast_loc loc;
+        struct ubik_resolve_scope *scope;
 };
 
 struct ubik_ast_expr

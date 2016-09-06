@@ -136,7 +136,6 @@ pattern_define()
         assert_jump(x0->def == x1->def);
         assert_jump(x0->def != x3->def);
         assert_jump(x2->def == x4->def);
-        return ok;
 
 assert_failed:
         ubik_alloc_free(&req.region);
