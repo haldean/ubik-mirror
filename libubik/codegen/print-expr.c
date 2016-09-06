@@ -188,9 +188,46 @@ cond_block_pretty(
         struct ubik_ast_expr *expr,
         int start_indent)
 {
-        unused(out);
-        unused(expr);
-        unused(start_indent);
+        struct ubik_ast_case *case_stmt;
+
+        ubik_fprintf(out, "? ");
+        if (expr->cond_block.block_type == COND_PATTERN)
+        {
+                switch (expr->cond_block.to_match->expr_type)
+                {
+                case EXPR_ATOM:
+                case EXPR_APPLY:
+                        ubik_ast_expr_pretty(
+                                out, expr->cond_block.to_match, start_indent);
+                        ubik_fprintf(out, " ");
+                        break;
+
+                case EXPR_LAMBDA:
+                case EXPR_COND_BLOCK:
+                case EXPR_BLOCK:
+                        ubik_fprintf(out, "(");
+                        ubik_ast_expr_pretty(
+                                out, expr->cond_block.to_match, start_indent);
+                        ubik_fprintf(out, ") ");
+                        break;
+                }
+        }
+        ubik_fprintf(out, "{\n");
+
+        for (case_stmt = expr->cond_block.case_stmts;
+             case_stmt != NULL;
+             case_stmt = case_stmt->next)
+        {
+                indent(start_indent + 4);
+                ubik_fprintf(out, ". ");
+                ubik_ast_expr_pretty(out, case_stmt->head, start_indent + 4);
+                ubik_fprintf(out, " => ");
+                ubik_ast_expr_pretty(out, case_stmt->tail, start_indent + 4);
+                ubik_fprintf(out, "\n");
+        }
+
+        indent(start_indent);
+        ubik_fprintf(out, "}");
 }
 
 void
