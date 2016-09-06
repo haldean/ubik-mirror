@@ -353,6 +353,7 @@ bind_cases(
         struct ubik_ast_case *case_stmt)
 {
         struct ubik_resolve_name *resolve;
+        struct ubik_resolve_name_loc *name_loc;
         struct ubik_ast_expr *t;
         size_t n_args;
         size_t i;
@@ -388,6 +389,13 @@ bind_cases(
                         err = ubik_vector_append(resolve_names, resolve);
                         if (err != OK)
                                 return err;
+
+                        ubik_alloc1(
+                                &name_loc, struct ubik_resolve_name_loc,
+                                ctx->region);
+                        name_loc->type = RESOLVE_LOCAL;
+                        name_loc->def = resolve;
+                        t->apply.tail->atom->name_loc = name_loc;
                 }
 
                 case_stmt = case_stmt->next;

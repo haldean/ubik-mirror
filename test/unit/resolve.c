@@ -95,10 +95,13 @@ closure_regression()
 }
 
 static char testprog3[] =
-        "~ t : b ^ Word = ? x {"
+        "~ t "
+        "^ T = T1 Word = T2 String Word"
+        ": b ^ Word = ? x {"
         "  . T1 a => a"
         "  . T2 a b => b"
-        "}";
+        "} "
+        ": x ^ Word = 8";
 
 test_t
 pattern_define()
@@ -107,8 +110,9 @@ pattern_define()
         struct ubik_ast *ast;
         struct ubik_stream progstream;
         struct ubik_stream feedback;
-        struct ubik_resolve_name_loc *x0, *x1;
+        struct ubik_resolve_name_loc *x0, *x1, *x2, *x3, *x4;
         struct ubik_ast_expr *e;
+        jump_init();
 
         assert(ubik_stream_wfilep(&feedback, stdout) == OK);
         req.feedback = &feedback;
@@ -125,11 +129,18 @@ pattern_define()
         e = ((struct ubik_ast_binding *) ast->bindings.elems[0])->expr;
         x0 = e->cond_block.case_stmts->head->apply.tail->atom->name_loc;
         x1 = e->cond_block.case_stmts->tail->atom->name_loc;
+        x2 = e->cond_block.case_stmts->next->head->apply.tail->atom->name_loc;
+        x3 = e->cond_block.case_stmts->next->head->apply.head->apply.tail->atom->name_loc;
+        x4 = e->cond_block.case_stmts->next->tail->atom->name_loc;
 
-        assert(x0->def == x1->def);
-
-        ubik_alloc_free(&req.region);
+        assert_jump(x0->def == x1->def);
+        assert_jump(x0->def != x3->def);
+        assert_jump(x2->def == x4->def);
         return ok;
+
+assert_failed:
+        ubik_alloc_free(&req.region);
+        jump_done();
 }
 
 int
@@ -138,5 +149,6 @@ main()
         init();
         run(resolve);
         run(closure_regression);
+        run(pattern_define);
         finish();
 }

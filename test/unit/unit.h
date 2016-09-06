@@ -26,6 +26,11 @@ typedef struct
 } test_t;
 
 #define assert(x) if (!(x)) return (test_t){.msg = #x, .line = __LINE__}
+#define assert_jump(x) if (!(x)) { \
+                __res = (test_t){.msg = #x, .line = __LINE__}; \
+                goto assert_failed; }
+#define jump_init() test_t __res = ok;
+#define jump_done() return __res;
 #define run(x) { \
         test_t __unit_res = (x)(); __n_tests++; \
         if (__unit_res.msg != NULL) { \
