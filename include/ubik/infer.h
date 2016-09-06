@@ -62,6 +62,9 @@ enum ubik_infer_error_type
         INFER_ERR_BLOCK_MISSING_VALUE,
         /* Raised when the expressions in a cond block have different values. */
         INFER_ERR_CASE_TAILS,
+        /* Raised when a pattern and the expression to match have disagreeing
+         * types. */
+        INFER_ERR_CASE_HEAD,
 };
 
 struct ubik_infer_error

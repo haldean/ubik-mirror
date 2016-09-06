@@ -38,6 +38,9 @@ infer_ast(
         bool require_bind_types,
         struct ubik_infer_context *ctx);
 
+no_ignore static ubik_error
+infer_expr(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx);
+
 static void
 new_tyvar(struct ubik_type_expr *t, struct ubik_infer_context *ctx)
 {
@@ -353,10 +356,49 @@ infer_block(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
 }
 
 no_ignore static ubik_error
+unify_pattern(
+        struct ubik_ast_case *case_stmt,
+        struct ubik_ast_expr *to_match,
+        struct ubik_infer_context *ctx)
+{
+        struct ubik_typesystem_unified unified = {0};
+        struct ubik_infer_error *ierr;
+        ubik_error err;
+
+        err = ubik_typesystem_unify(
+                &unified, ctx->type_system, to_match->scope->package_name,
+                case_stmt->head->type, to_match->type,
+                &ctx->req->region, ctx->debug);
+        if (err != OK)
+                return err;
+        if (!unified.success)
+        {
+                ubik_alloc1(
+                        &ierr, struct ubik_infer_error,
+                        &ctx->req->region);
+                ierr->error_type = INFER_ERR_CASE_HEAD;
+                ierr->bad_expr = to_match;
+                ierr->bad_expr2 = case_stmt->head;
+                err = ubik_vector_append(&ctx->errors, ierr);
+                if (err != OK)
+                        return err;
+                return OK;
+        }
+        err = ubik_vector_extend(&ctx->substs, &unified.substs);
+        if (err != OK)
+                return err;
+        err = ubik_typesystem_apply_substs(
+                to_match->type, &unified.substs);
+        if (err != OK)
+                return err;
+        return OK;
+}
+
+no_ignore static ubik_error
 infer_cond_block(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
 {
         struct ubik_ast_case *case_stmt;
-        struct ubik_typesystem_unified unified;
+        struct ubik_typesystem_unified unified = {0};
         struct ubik_infer_error *ierr;
         ubik_error err;
 
@@ -370,9 +412,16 @@ infer_cond_block(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
                 switch (expr->cond_block.block_type)
                 {
                 case COND_PATTERN:
+                        err = unify_pattern(
+                                case_stmt, expr->cond_block.to_match, ctx);
+                        if (err != OK)
+                                return err;
                         break;
+
                 case COND_PREDICATE:
+                        /* TODO: ensure head type is a boolean. */
                         break;
+
                 default:
                         return ubik_raise(
                                 ERR_UNKNOWN_TYPE, "unknown cond block type");
@@ -419,6 +468,7 @@ prebind_pattern_names(
 {
         struct ubik_ast_case *case_stmt;
         struct ubik_resolve_name *resolve;
+        ubik_error err;
         size_t i;
 
         for (case_stmt = expr->cond_block.case_stmts;
@@ -433,7 +483,11 @@ prebind_pattern_names(
                                 &ctx->req->region);
                         new_tyvar(resolve->inferred_type, ctx);
                 }
+                err = infer_expr(case_stmt->head, ctx);
+                if (err != OK)
+                        return err;
         }
+
         return OK;
 }
 
@@ -801,6 +855,24 @@ infer_error_print(
                 pf("\n    has type \x1b[32m");
                 ubik_type_expr_pretty(ctx->req->feedback, ierr->bad_expr2->type);
                 pf("\x1b[0m\n");
+                break;
+
+        case INFER_ERR_CASE_HEAD:
+                ubik_feedback_error_line(
+                        ctx->req->feedback,
+                        UBIK_FEEDBACK_ERR,
+                        &ierr->bad_expr2->loc,
+                        "pattern cannot match the block's expression");
+                pf("    the block's expression:\n        ");
+                ubik_ast_expr_pretty(ctx->req->feedback, ierr->bad_expr, 8);
+                pf("\n    was inferred to have type \x1b[32m");
+                ubik_type_expr_pretty(ctx->req->feedback, ierr->bad_expr->type);
+                pf("\x1b[0m but this pattern:\n        ");
+                ubik_ast_expr_pretty(ctx->req->feedback, ierr->bad_expr2, 8);
+                pf("\n    has type \x1b[32m");
+                ubik_type_expr_pretty(ctx->req->feedback, ierr->bad_expr2->type);
+                pf("\x1b[0m\n");
+                break;
 
         default:
                 return ubik_raise(
