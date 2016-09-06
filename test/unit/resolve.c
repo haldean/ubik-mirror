@@ -94,6 +94,44 @@ closure_regression()
         return ok;
 }
 
+static char testprog3[] =
+        "~ t : b ^ Word = ? x {"
+        "  . T1 a => a"
+        "  . T2 a b => b"
+        "}";
+
+test_t
+pattern_define()
+{
+        struct ubik_compile_request req = {0};
+        struct ubik_ast *ast;
+        struct ubik_stream progstream;
+        struct ubik_stream feedback;
+        struct ubik_resolve_name_loc *x0, *x1;
+        struct ubik_ast_expr *e;
+
+        assert(ubik_stream_wfilep(&feedback, stdout) == OK);
+        req.feedback = &feedback;
+
+        assert(ubik_stream_buffer(&progstream, &req.region) == OK);
+        /* drop the null byte off the end, it makes the lexer unhappy */
+        assert(ubik_stream_write(
+                       &progstream, testprog3, sizeof(testprog3) - 1)
+               == sizeof(testprog3) - 1);
+        assert(ubik_parse(
+                       &ast, &req.region, &feedback, "testprog3", &progstream) == OK);
+        assert(ubik_resolve(ast, &req) == OK);
+
+        e = ((struct ubik_ast_binding *) ast->bindings.elems[0])->expr;
+        x0 = e->cond_block.case_stmts->head->apply.tail->atom->name_loc;
+        x1 = e->cond_block.case_stmts->tail->atom->name_loc;
+
+        assert(x0->def == x1->def);
+
+        ubik_alloc_free(&req.region);
+        return ok;
+}
+
 int
 main()
 {
