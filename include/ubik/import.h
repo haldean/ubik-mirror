@@ -23,9 +23,9 @@
 #include "ubik/ast.h"
 #include "ubik/compile.h"
 
-/* Adds bindings for all names that are splatted into the given AST. */
+/* Adds bindings for all names that are imported into the given AST. */
 no_ignore ubik_error
-ubik_import_add_splats(
+ubik_import_add_all(
         struct ubik_compile_env *cenv,
         struct ubik_ast *ast,
         struct ubik_alloc_region *region);

@@ -11,6 +11,7 @@ tests = \
 	bad-type-7.uk \
 	case-tail-disagree.uk \
 	literate-line-no.rst \
+	match-pattern-disagree.uk \
 	no-package.uk \
 	no-top-type.uk \
 	not-total-pred-block.uk \

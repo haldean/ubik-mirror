@@ -289,7 +289,7 @@ compile_job(
         size_t i;
         ubik_error err, rerr;
 
-        err = ubik_import_add_splats(cenv, job->ast, &job->request->region);
+        err = ubik_import_add_all(cenv, job->ast, &job->request->region);
         if (err != OK)
                 return err;
         if (cenv->debug)

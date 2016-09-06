@@ -1,0 +1,11 @@
+~ ubik-tests/match-pattern-disagree
+
+^ T = T1
+
+: x ^ String = "hello world!"
+
+: disagree
+^ String
+= ? x {
+  . T1 => "yes"
+}

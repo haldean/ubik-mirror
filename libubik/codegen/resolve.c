@@ -40,7 +40,7 @@
 
 struct ubik_resolve_context
 {
-        struct ubik_resolve_scope *native_scope;
+        struct ubik_resolve_scope *global_scope;
         struct ubik_vector errors;
         struct ubik_alloc_region *region;
         struct ubik_stream *feedback;
@@ -548,6 +548,7 @@ find_name_resolution_types(
         needs_resolve = expr->expr_type == EXPR_ATOM;
         if (needs_resolve)
                 needs_resolve &= (expr->atom->atom_type == ATOM_NAME ||
+                                  expr->atom->atom_type == ATOM_QUALIFIED ||
                                   expr->atom->atom_type == ATOM_TYPE_NAME);
         if (needs_resolve)
         {
@@ -555,7 +556,10 @@ find_name_resolution_types(
                         &name_loc, struct ubik_resolve_name_loc, ctx->region);
                 expr->atom->name_loc = name_loc;
 
-                name = expr->atom->str;
+                if (expr->atom->atom_type == ATOM_QUALIFIED)
+                        name = expr->atom->qualified.tail;
+                else
+                        name = expr->atom->str;
                 highest_bdry = BOUNDARY_BLOCK;
                 scope = expr->scope;
                 found = false;
@@ -669,21 +673,34 @@ update_names_with_resolution_types(
 }
 
 no_ignore static ubik_error
-create_native_scope(struct ubik_resolve_context *ctx)
+create_global_scope(struct ubik_resolve_context *ctx, struct ubik_ast *ast)
 {
         size_t i;
         ubik_error err;
+        struct ubik_ast_imported_binding *ibind;
         struct ubik_resolve_name *name;
 
-        ubik_alloc1(&ctx->native_scope, struct ubik_resolve_scope, ctx->region);
-        ctx->native_scope->names.region = ctx->region;
+        ubik_alloc1(&ctx->global_scope, struct ubik_resolve_scope, ctx->region);
+        ctx->global_scope->names.region = ctx->region;
 
         for (i = 0; i < ubik_native_funcs_n; i++)
         {
                 ubik_alloc1(&name, struct ubik_resolve_name, ctx->region);
                 name->name = ubik_strdup(ubik_native_funcs[i].name, ctx->region);
                 name->type = RESOLVE_GLOBAL;
-                err = ubik_vector_append(&ctx->native_scope->names, name);
+                err = ubik_vector_append(&ctx->global_scope->names, name);
+                if (err != OK)
+                        return err;
+        }
+
+        for (i = 0; i < ast->imported_bindings.n; i++)
+        {
+                ibind = ast->imported_bindings.elems[i];
+                ubik_alloc1(&name, struct ubik_resolve_name, ctx->region);
+                name->name = ibind->name;
+                name->type = RESOLVE_GLOBAL;
+                name->inferred_type = ibind->type;
+                err = ubik_vector_append(&ctx->global_scope->names, name);
                 if (err != OK)
                         return err;
         }
@@ -704,11 +721,11 @@ ubik_resolve(
         ctx.feedback = req->feedback;
         ctx.errors.region = ctx.region;
 
-        err = create_native_scope(&ctx);
+        err = create_global_scope(&ctx, ast);
         if (err != OK)
                 return err;
 
-        err = assign_all_initial_scopes(&ctx, ast, ctx.native_scope, true);
+        err = assign_all_initial_scopes(&ctx, ast, ctx.global_scope, true);
         if (err != OK)
                 return err;
 

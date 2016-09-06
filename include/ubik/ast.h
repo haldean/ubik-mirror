@@ -169,6 +169,13 @@ struct ubik_ast_member_list
         struct ubik_ast_member_list *next;
 };
 
+struct ubik_ast_imported_binding
+{
+        char *package;
+        char *name;
+        struct ubik_type_expr *type;
+};
+
 struct ubik_ast
 {
         /* members are struct ubik_ast_binding pointers */
@@ -190,6 +197,9 @@ struct ubik_ast
         struct ubik_ast_loc loc;
         /* the package that this AST is a member of */
         char *package_name;
+        /* bindings that have been imported from another package; think of these
+         * as externed declarations. */
+        struct ubik_vector imported_bindings;
 };
 
 /* Allocates a new AST. */

@@ -24,7 +24,28 @@
 #include <string.h>
 #include <stdlib.h>
 
-no_ignore ubik_error
+static no_ignore ubik_error
+find_compile_result(
+        struct ubik_compile_result **cres,
+        struct ubik_compile_env *cenv,
+        char *canonical)
+{
+        size_t i;
+
+        struct ubik_compile_result *check;
+        for (i = 0; i < cenv->compiled.n; i++)
+        {
+                check = cenv->compiled.elems[i];
+                if (strcmp(check->ast->package_name, canonical) == 0)
+                {
+                        *cres = check;
+                        return OK;
+                }
+        }
+        return ubik_raise(ERR_ABSENT, "splat import not compiled");
+}
+
+static no_ignore ubik_error
 add_splat(
         struct ubik_compile_env *cenv,
         struct ubik_ast *ast,
@@ -34,22 +55,10 @@ add_splat(
         struct ubik_compile_result *cres;
         struct ubik_ast_binding *new_bind;
         struct ubik_ast_binding *old_bind;
-        bool found;
         size_t i;
         ubik_error err;
 
-        found = false;
-        for (i = 0; i < cenv->compiled.n; i++)
-        {
-                cres = cenv->compiled.elems[i];
-                if (strcmp(cres->ast->package_name, canonical) == 0)
-                {
-                        found = true;
-                        break;
-                }
-        }
-        if (!found)
-                return ubik_raise(ERR_ABSENT, "splat import not compiled");
+        err = find_compile_result(&cres, cenv, canonical);
 
         for (i = 0; i < cres->ast->bindings.n; i++)
         {
@@ -94,8 +103,42 @@ add_splat(
         return OK;
 }
 
+static no_ignore ubik_error
+add_import_bindings(
+        struct ubik_compile_env *cenv,
+        struct ubik_ast *ast,
+        char *canonical,
+        struct ubik_alloc_region *region)
+{
+        struct ubik_ast_imported_binding *ibind;
+        struct ubik_ast_binding *bind;
+        struct ubik_compile_result *cres;
+        ubik_error err;
+        size_t i;
+
+        err = find_compile_result(&cres, cenv, canonical);
+        if (err != OK)
+                return err;
+
+        for (i = 0; i < cres->ast->bindings.n; i++)
+        {
+                bind = cres->ast->bindings.elems[i];
+
+                ubik_alloc1(&ibind, struct ubik_ast_imported_binding, region);
+                ibind->package = canonical;
+                ibind->name = bind->name;
+                ibind->type = bind->type_expr;
+
+                err = ubik_vector_append(&ast->imported_bindings, ibind);
+                if (err != OK)
+                        return err;
+        }
+
+        return OK;
+}
+
 no_ignore ubik_error
-ubik_import_add_splats(
+ubik_import_add_all(
         struct ubik_compile_env *cenv,
         struct ubik_ast *ast,
         struct ubik_alloc_region *region)
@@ -111,6 +154,11 @@ ubik_import_add_splats(
                         err = add_splat(cenv, ast, import->canonical, region);
                         if (err != OK)
                                 return err;
+                }
+                else
+                {
+                        err = add_import_bindings(
+                                cenv, ast, import->canonical, region);
                 }
                 import = import->next;
         }
