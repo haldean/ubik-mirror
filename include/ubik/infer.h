@@ -60,16 +60,18 @@ enum ubik_infer_error_type
         INFER_ERR_TOP_TYPE_MISSING,
         /* Raised when a block doesn't have an immediate value. */
         INFER_ERR_BLOCK_MISSING_VALUE,
+        /* Raised when the expressions in a cond block have different values. */
+        INFER_ERR_CASE_TAILS,
 };
 
 struct ubik_infer_error
 {
         enum ubik_infer_error_type error_type;
-        union
-        {
-                struct ubik_ast_expr *bad_expr;
-                struct ubik_ast_binding *bad_bind;
-        };
+        /* These fields have different meanings depending on the error type;
+         * their meanings are "documented" in infer_error_print. */
+        struct ubik_ast_expr *bad_expr;
+        struct ubik_ast_expr *bad_expr2;
+        struct ubik_ast_binding *bad_bind;
         char *extra_info;
 };
 

@@ -9,6 +9,7 @@ tests = \
 	bad-type-5.uk \
 	bad-type-6.uk \
 	bad-type-7.uk \
+	case-tail-disagree.uk \
 	literate-line-no.rst \
 	no-package.uk \
 	no-top-type.uk \

@@ -1,0 +1,10 @@
+~ ubik-tests/case-tail-disagree
+
+^ T = T1 = T2
+
+: top
+^ T -> String
+= \x -> (? x {
+  . T1 => (\z -> "hello")
+  . T2 => (\z -> 10)
+}) 12

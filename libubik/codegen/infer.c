@@ -355,8 +355,85 @@ infer_block(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
 no_ignore static ubik_error
 infer_cond_block(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
 {
-        unused(expr);
-        unused(ctx);
+        struct ubik_ast_case *case_stmt;
+        struct ubik_typesystem_unified unified;
+        struct ubik_infer_error *ierr;
+        ubik_error err;
+
+        ubik_alloc1(&expr->type, struct ubik_type_expr, &ctx->req->region);
+        new_tyvar(expr->type, ctx);
+
+        for (case_stmt = expr->cond_block.case_stmts;
+             case_stmt != NULL;
+             case_stmt = case_stmt->next)
+        {
+                switch (expr->cond_block.block_type)
+                {
+                case COND_PATTERN:
+                        break;
+                case COND_PREDICATE:
+                        break;
+                default:
+                        return ubik_raise(
+                                ERR_UNKNOWN_TYPE, "unknown cond block type");
+                }
+
+                err = ubik_typesystem_unify(
+                        &unified, ctx->type_system, expr->scope->package_name,
+                        expr->type, case_stmt->tail->type,
+                        &ctx->req->region, ctx->debug);
+                if (err != OK)
+                        return err;
+                if (!unified.success)
+                {
+                        ubik_alloc1(
+                                &ierr, struct ubik_infer_error,
+                                &ctx->req->region);
+                        ierr->error_type = INFER_ERR_CASE_TAILS;
+                        ierr->bad_expr = expr;
+                        ierr->bad_expr2 = case_stmt->tail;
+                        err = ubik_vector_append(&ctx->errors, ierr);
+                        if (err != OK)
+                                return err;
+                }
+                else
+                {
+                        err = ubik_vector_extend(
+                                &ctx->substs, &unified.substs);
+                        if (err != OK)
+                                return err;
+                        err = ubik_typesystem_apply_substs(
+                                expr->type, &unified.substs);
+                        if (err != OK)
+                                return err;
+                }
+        }
+
+        return OK;
+}
+
+no_ignore static ubik_error
+prebind_pattern_names(
+        struct ubik_ast_expr *expr,
+        struct ubik_infer_context *ctx)
+{
+        struct ubik_ast_case *case_stmt;
+        struct ubik_resolve_name *resolve;
+        size_t i;
+
+        for (case_stmt = expr->cond_block.case_stmts;
+             case_stmt != NULL;
+             case_stmt = case_stmt->next)
+        {
+                for (i = 0; i < case_stmt->scope->names.n; i++)
+                {
+                        resolve = case_stmt->scope->names.elems[i];
+                        ubik_alloc1(
+                                &resolve->inferred_type, struct ubik_type_expr,
+                                &ctx->req->region);
+                        new_tyvar(resolve->inferred_type, ctx);
+                }
+        }
         return OK;
 }
 
@@ -369,6 +446,15 @@ infer_expr(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
         size_t n_subexprs;
         size_t i;
         ubik_error err;
+
+        /* pre-bind names defined in cond block scopes */
+        if (expr->expr_type == EXPR_COND_BLOCK &&
+            expr->cond_block.block_type == COND_PATTERN)
+        {
+                err = prebind_pattern_names(expr, ctx);
+                if (err != OK)
+                        return err;
+        }
 
         expr->type = NULL;
         subast = NULL;
@@ -699,6 +785,22 @@ infer_error_print(
                 ubik_ast_expr_pretty(ctx->req->feedback, ierr->bad_expr, 8);
                 pf("\n");
                 break;
+
+        case INFER_ERR_CASE_TAILS:
+                ubik_feedback_error_line(
+                        ctx->req->feedback,
+                        UBIK_FEEDBACK_ERR,
+                        &ierr->bad_expr2->loc,
+                        "type of case expression disagrees with the type of "
+                        "other case expressions");
+                pf("    expressions in cond block were inferred to have type "
+                   "\x1b[32m");
+                ubik_type_expr_pretty(ctx->req->feedback, ierr->bad_expr->type);
+                pf("\x1b[0m but this case:\n        ");
+                ubik_ast_expr_pretty(ctx->req->feedback, ierr->bad_expr2, 8);
+                pf("\n    has type \x1b[32m");
+                ubik_type_expr_pretty(ctx->req->feedback, ierr->bad_expr2->type);
+                pf("\x1b[0m\n");
 
         default:
                 return ubik_raise(
