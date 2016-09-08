@@ -324,6 +324,7 @@ traverse_expr(
 
         if (is_closure_ref(expr))
         {
+                ubik_assert(*resolving_name == NULL);
                 *resolving_name = expr->atom->str;
                 expr->atom->name_loc->type = RESOLVE_LOCAL;
                 *changed = true;
@@ -339,7 +340,7 @@ traverse_expr(
                 if (*resolving_name != NULL) { \
                         err = apply_upwards_transform( \
                                 resolving_name, expr_ref, req); \
-                        if (err != OK) return err; \
+                        return err; \
                 }} while (0)
 
         switch (expr->expr_type)
