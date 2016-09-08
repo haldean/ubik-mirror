@@ -289,6 +289,9 @@ compile_job(
         size_t i;
         ubik_error err, rerr;
 
+        if (cenv->debug)
+                printf("compiling package %s\n", job->ast->package_name);
+
         err = ubik_import_add_all(cenv, job->ast, &job->request->region);
         if (err != OK)
                 return err;

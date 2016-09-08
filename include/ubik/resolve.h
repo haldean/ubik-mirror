@@ -42,6 +42,7 @@ enum ubik_resolve_type
 
 struct ubik_resolve_name
 {
+        char *package;
         char *name;
         enum ubik_resolve_type type;
         struct ubik_dagc_node *node;

@@ -551,6 +551,8 @@ find_name_resolution_types(
                                   expr->atom->atom_type == ATOM_QUALIFIED ||
                                   expr->atom->atom_type == ATOM_TYPE_NAME);
         if (needs_resolve)
+                needs_resolve &= expr->atom->name_loc == NULL;
+        if (needs_resolve)
         {
                 ubik_alloc1(
                         &name_loc, struct ubik_resolve_name_loc, ctx->region);
@@ -569,11 +571,18 @@ find_name_resolution_types(
                         for (i = 0; i < scope->names.n; i++)
                         {
                                 check_name = scope->names.elems[i];
-                                if (strcmp(name, check_name->name) == 0)
+                                if (strcmp(name, check_name->name) != 0)
+                                        continue;
+                                if (expr->atom->atom_type == ATOM_QUALIFIED)
                                 {
-                                        found = true;
-                                        name_loc->def = check_name;
+                                        if (check_name->package == NULL)
+                                                continue;
+                                        if (strcmp(expr->atom->qualified.head,
+                                                   check_name->package) != 0)
+                                                continue;
                                 }
+                                found = true;
+                                name_loc->def = check_name;
                         }
                         if (scope->boundary == BOUNDARY_GLOBAL)
                                 highest_bdry = BOUNDARY_GLOBAL;
@@ -698,6 +707,7 @@ create_global_scope(struct ubik_resolve_context *ctx, struct ubik_ast *ast)
                 ibind = ast->imported_bindings.elems[i];
                 ubik_alloc1(&name, struct ubik_resolve_name, ctx->region);
                 name->name = ibind->name;
+                name->package = ibind->package;
                 name->type = RESOLVE_GLOBAL;
                 name->inferred_type = ibind->type;
                 err = ubik_vector_append(&ctx->global_scope->names, name);

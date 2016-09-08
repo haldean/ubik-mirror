@@ -180,6 +180,7 @@ infer_atom(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
 
         case ATOM_NAME:
         case ATOM_TYPE_NAME:
+        case ATOM_QUALIFIED:
                 switch (expr->atom->name_loc->type)
                 {
                 case RESOLVE_NATIVE:
@@ -202,7 +203,6 @@ infer_atom(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
                         ERR_BAD_VALUE,
                         "unknown name resolution type in infer");
 
-        case ATOM_QUALIFIED:
         case ATOM_VALUE:
                 expr->type = NULL;
                 return OK;

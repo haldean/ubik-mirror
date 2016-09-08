@@ -18,6 +18,7 @@
  */
 
 #include "ubik/import.h"
+#include "ubik/resolve.h"
 #include "ubik/string.h"
 #include "ubik/types.h"
 
@@ -55,6 +56,7 @@ add_splat(
         struct ubik_compile_result *cres;
         struct ubik_ast_binding *new_bind;
         struct ubik_ast_binding *old_bind;
+        struct ubik_resolve_name_loc *name_loc;
         size_t i;
         ubik_error err;
 
@@ -79,6 +81,12 @@ add_splat(
                 new_bind->expr->atom->qualified.tail =
                         ubik_strdup(old_bind->name, region);
                 new_bind->expr->atom->loc = old_bind->loc;
+
+                ubik_alloc1(&name_loc, struct ubik_resolve_name_loc, region);
+                name_loc->def = old_bind->name_loc->def;
+                name_loc->type = RESOLVE_GLOBAL;
+                name_loc->package_name = cres->ast->package_name;
+                new_bind->expr->atom->name_loc = name_loc;
 
                 if (old_bind->type_expr != NULL)
                 {
