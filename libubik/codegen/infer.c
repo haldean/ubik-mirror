@@ -297,9 +297,16 @@ infer_lambda(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
 {
         struct ubik_ast_arg_list *args;
         struct ubik_type_expr *t0;
+        struct ubik_vector argtypes = {0};
+        ubik_error err;
+        size_t i;
 
         expr->type = expr->lambda.body->type;
+        argtypes.region = &ctx->req->region;
 
+        /* We're building this left-associatively, which means we need to
+         * iterate over the arguments in reverse. We build a list of the types of
+         * each of the arguments and then iterate over that, backwards. */
         for (args = expr->lambda.args; args != NULL; args = args->next)
         {
                 /* possible if the argument isn't used anywhere in the body of
@@ -311,8 +318,16 @@ infer_lambda(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
                         new_tyvar(t0, ctx);
                         args->name_loc->def->inferred_type = t0;
                 }
+                err = ubik_vector_append(
+                        &argtypes, args->name_loc->def->inferred_type);
+                if (err != OK)
+                        return err;
+        }
+
+        for (i = 0; i < argtypes.n; i++)
+        {
                 ubik_type_make_applyable(
-                        &expr->type, args->name_loc->def->inferred_type,
+                        &expr->type, argtypes.elems[argtypes.n - i - 1],
                         expr->type, &ctx->req->region);
         }
 

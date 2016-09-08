@@ -3,6 +3,7 @@ top=../..
 
 tests = \
 	add.uk \
+	apply-types.uk \
 	bind.uk \
 	block.uk \
 	boolean.uk \

@@ -1,0 +1,9 @@
+~ ubik-tests/apply-types
+
+: apply-types
+^ String -> Word -> String
+= \x y -> {
+  : x_ ^ String = x
+  : y_ ^ Word = y
+  ! x_
+}
