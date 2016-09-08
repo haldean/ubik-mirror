@@ -1,0 +1,5 @@
+~ ubik-tests/scope-simple
+
+: simple-scope
+^ String
+= \x y -> { ! \z -> x y }

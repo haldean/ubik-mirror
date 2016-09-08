@@ -23,6 +23,7 @@ tests = \
 	pattern-block.uk \
 	pred-block.uk \
 	scope.uk \
+	scope-simple.uk \
 	simple-adt.uk \
 	zero-arity.uk
 
