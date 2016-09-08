@@ -340,9 +340,11 @@ unify(
                 if (assign_from->type_expr_type == TYPE_EXPR_ATOM)
                         return assign_atom_to_atom(
                                 unified, assign_to, assign_from);
+                unified->success = false;
                 return OK;
 
         case TYPE_EXPR_CONSTRAINED:
+                unified->success = false;
                 return ubik_raise(
                         ERR_BAD_TYPE,
                         "constrained types should have been stripped out");
@@ -366,7 +368,6 @@ unify(
         case TYPE_EXPR_VAR:
                 return assign_to_var(
                         unified, tsys, assign_to, assign_from, region);
-                return OK;
         }
 
         return ubik_raise(ERR_BAD_TYPE, "bad type expr type in unify");
@@ -657,7 +658,7 @@ ubik_typesystem_unify(
                                 printf("%s ", constraint->params[j].name);
                         }
                 }
-                printf("\n");
+                printf(", result=%d\n", unified->success);
         }
 
         return err;
