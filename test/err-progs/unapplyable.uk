@@ -1,0 +1,6 @@
+~ ubik-tests/unapplyable
+
+# should fail, because String is not applyable but the bound value is.
+: unapplyable
+^ String
+= \x -> x

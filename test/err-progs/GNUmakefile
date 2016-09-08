@@ -16,6 +16,7 @@ tests = \
 	no-top-type.uk \
 	not-total-pred-block.uk \
 	syntax.uk \
+	unapplyable.uk \
 	unknown-name.uk
 
 all: $(tests)
