@@ -62,12 +62,12 @@ eundrflw.ERR_UNDERFLOW
 
    apply.DAGC_NODE_APPLY
     cond.DAGC_NODE_COND
-   const.DAGC_NODE_CONST
    input.DAGC_NODE_INPUT
     load.DAGC_NODE_LOAD
   native.DAGC_NODE_NATIVE
      ref.DAGC_NODE_REF
    store.DAGC_NODE_STORE
+   value.DAGC_NODE_VALUE
 
   cvalue.DAGC_TYPE_VALUE
   cgraph.DAGC_TYPE_GRAPH

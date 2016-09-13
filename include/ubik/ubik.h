@@ -27,6 +27,7 @@
 
 typedef uint16_t ubik_tag;
 typedef uint64_t ubik_word;
+typedef sint64_t ubik_sword;
 
 #if __SIZEOF_DOUBLE__ == 8
 typedef double ubik_float;
@@ -128,7 +129,7 @@ struct ubik_str
 struct ubik_rat
 {
         /* TODO: inf-prec */
-        ubik_word den;
+        ubik_sword den;
         ubik_word num;
 };
 

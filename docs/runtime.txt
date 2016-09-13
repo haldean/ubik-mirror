@@ -1,0 +1,163 @@
+Architecture of the Ubik runtime =======================================
+Haldean Brown                                      First draft: Sep 2016
+                                                  Last updated: Sep 2016
+
+Status: Draft
+
+------------------------------------------------------------------------
+
+The Ubik runtime has a relatively simple architecture; the basic idea is
+that Ubik values are allocated by the GC system and flow through the
+scheduler, which is responsible for producing a "minimal value" from an
+existing value. The scheduler attempts to minimize all terminal values,
+and in so doing evaluates the result of a computation.
+
+Ubik values come in 9 types:
+
+     STR: a UTF-8 encoded string
+          encoded as byte-arrays with a length
+
+     RAT: a rational number
+          encoded as a 64-bit signed numerator and a 64-bit unsigned
+          denominator
+
+     BOO: a boolean
+          encoded as a C11 _Boolean (which is stored in a byte)
+
+     TUP: a fixed-length typed tuple
+          encoded as a list of values, a list of types and a size
+
+     FUN: a function
+          encoded as a list of nodes, an optional evaluator, and the
+          index of the node that represents the result of the function.
+          More on node encodings in a second.
+
+     PAP: a partially-applied function
+          encoded as a pair of values and an integer; the first value
+          represents the function, the second represents the argument,
+          and the integer represents the number of arguments the result
+          can take before it is fully applied.
+
+     MUL: a polymorphic multimethod
+          TODO
+
+     TYP: a type
+          TODO
+
+     IMP: an implementation of an interface
+          TODO
+
+Encoding functions -----------------------------------------------------
+
+Functions are encoded through an implicit directed acyclic graph of
+nodes, each of which takes some number of inputs and computes a result.
+These nodes perform very simple operations; there are currently 8 types:
+
+     APPLY:  applies a function to an argument
+             contains a node index to the function and a node index to
+             the argument.
+
+     VALUE:  represents a constant value
+             contains a pair of values; one is the type and one is the
+             value of the constant value.
+
+     LOAD:   loads a value from the environment
+             contains a URI to load from.
+
+     STORE:  stores a value in the environment
+             contains a node index whose value will be stored, and the
+             URI at which the value will be stored.
+
+     INPUT:  represents an argument to the function
+             contains the argument index this node corresponds to (i.e.,
+             if the node represents the first argument, it's argument
+             index is zero).
+
+     REF:    adopts the type and value of a referrent node
+             contains the node index of the referrent node. These are
+             used to make compilation easier; in an ideal world, the
+             compiler would optimize these out entirely.
+
+     COND:   branches based on a boolean
+             takes the node indexes of three nodes: the condition, the
+             value if true, and the value if false.
+
+     NATIVE: stores the result of a native computation
+             this is a little piece of magic that enables the graph
+             representation of functions that are implemented by the
+             runtime instead of in Ubik. If the graph has a custom
+             evaluator (which we'll discuss in the scheduler section)
+             then this node will be filled with the result of the
+             evaluator when the evaluator completes, as if by magic. It
+             has no subfields, as it is only a container for a result.
+
+Each node also contains an ID (a word that is only used for debugging)
+and a flag that determines whether the node is terminal or not. Terminal
+nodes are enqueued as "goals" in the scheduler when an evaluation of the
+function is requested. This makes it possible to force eventual STORE
+effects without keeping them in the dependency chain of the graph's
+result.
+
+Scheduling computation -------------------------------------------------
+
+The scheduler's job is to take a FUN, PAP, or MUL value and collapse
+them to their minimal values (i.e., if the FUN, PAP, or MUL has
+input-arity 0, it evaluates the function). This operation is called
+"evaluation". A user of the runtime can request evaluation of a value or
+of multiple values; this is called "enqueuing" the values.
+
+When an unreducable value is enqueued (like a STR or a BOO), the
+scheduler halts as the value has already been reduced. Additionally, if
+a value is executable but is not fully applied (for example, you've
+provided one of the two arguments to a function) the scheduler halts, as
+the value has already been reduced.
+
+When a graph is enqueued, it is wrapped in a graph executor
+(ubik_exec_graph). The executor is responsible for encoding all of the
+information specific to an invoking of the function. This means:
+
+     - the calculated value of each node (including the values of the
+       arguments, if any)
+     - the calculated type of each node
+     - the readiness of each node (i.e., whether the node is ready to
+       evaluate or is still waiting on a piece of data or one of the
+       nodes it depends on)
+     - the value being evaluated
+     - the environment in which the graph will be executed
+     - an optional callback that will be called when the graph's result
+       is done being evaluated
+
+Following this, we walk the dependency tree of the terminal nodes to
+determine their evaluation status. The evaluation status is determined
+as follows:
+
+     - if the node is a COND node, the node is marked as waiting on the
+       evaluation of the condition.
+     - if the node has any dependencies, set the WAIT flags for each
+       dependency. The maximum number of dependencies for any node type
+       is 3, so there are 3 such flags: WAIT_D1, WAIT_D2, and WAIT_D3.
+       The mapping from field to dependency index is arbitrary but
+       consistent for a given node type (i.e., D1 for a VALUE node is
+       always the value, and D2 is always the type).
+     - if the node has no dependencies, set the READY flag
+
+These flags are set on the graph executor. All READY nodes are enqueued
+in the "ready" queue; all WAIT nodes are enqueued in the "wait" queue.
+The scheduler then begins the evalulation loop:
+
+     - it takes a node executor off of the ready queue
+     - it evalutates the node in the executor
+     - it stores the resulting value and type in the graph executor
+     - it finds the tasks dependent on the calculated value and clears
+       the dependency-wait flag associated with the evaluated node in
+       each task. If all wait flags have been cleared on the dependent
+       task, the node is marked as ready.
+     - the scheduler then does a "ready-sweep", in which it moves node
+       executors that are marked as ready from the wait queue to the
+       ready queue.
+
+The process then repeats, until the ready queue is empty. At that point,
+if there are still nodes in the wait queue, the scheduler is deadlocked
+and is unable to evaluate the computation; this can happen due to
+circular node dependencies, or waiting on data that never appears. If
+the wait queue is empty, the computation has completed successfully.

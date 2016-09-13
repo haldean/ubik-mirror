@@ -55,21 +55,24 @@ struct ubik_exec_notify
 
 struct ubik_exec_graph
 {
-        /* The graph being evaluated */
-        struct ubik_dagc *graph;
-
-        /* The number of arguments that have already been applied to the graph */
-        ubik_word args_applied;
+        /* The value being evaluated */
+        struct ubik_value *v;
 
         /* Information about the status of each node. Each element in this array
            is the bitwise union of some number of the UBIK_STATUS constants. */
         uint8_t *status;
 
         /* The calculated value of each node. */
-        struct ubik_value **values;
+        struct ubik_value **nv;
 
         /* The calculated type of each node. */
-        struct ubik_value **types;
+        struct ubik_value **nt;
+
+        /* The environment in which to execute the node */
+        struct ubik_env *env;
+
+        /* The function to call once execution is complete */
+        struct ubik_exec_notify *notify;
 };
 
 struct ubik_exec_unit
@@ -79,12 +82,6 @@ struct ubik_exec_unit
 
         /* The graph evaluator for the graph in which the node exists */
         struct ubik_exec_graph *gexec;
-
-        /* The environment in which to execute the node */
-        struct ubik_env *env;
-
-        /* The function to call once execution is complete */
-        struct ubik_exec_notify *notify;
 
         /* The next execution unit in the stack; callers to ubik_schedule_push
          * need not set this field, as the result will be overwritten anyawy. */
