@@ -21,20 +21,7 @@
 
 #include "ubik/ubik.h"
 
-/* node is fully evaluated */
-#define UBIK_DAGC_FLAG_COMPLETE   0x01
-/* waiting on node's first dependency */
-#define UBIK_DAGC_FLAG_WAIT_D1    0x02
-/* waiting on node's second dependency */
-#define UBIK_DAGC_FLAG_WAIT_D2    0x04
-/* waiting on node's third dependency */
-#define UBIK_DAGC_FLAG_WAIT_D3    0x08
-/* waiting on evaluation */
-#define UBIK_DAGC_FLAG_WAIT_EVAL  0x10
-/* waiting on data to exist */
-#define UBIK_DAGC_FLAG_WAIT_DATA  0x20
-/* wait_d1 | wait_d2 | wait_d3 | wait_eval */
-#define UBIK_DAGC_WAIT_MASK       0x2E
+#define UBIK_INVALID_NODE_ID 0xFFFFFFFFFFFFFFFF
 
 struct ubik_dagc_adjacency
 {
@@ -43,145 +30,81 @@ struct ubik_dagc_adjacency
         size_t n_parents;
 };
 
-struct ubik_dagc_apply
+struct ubik_node
 {
-        struct ubik_dagc_node head;
-        /* Function to call */
-        struct ubik_dagc_node *func;
-        /* Argument to apply to function */
-        struct ubik_dagc_node *arg;
+        /* One of the DAGC_NODE constants */
+        ubik_word node_type;
+        /* The unique identifier of this node */
+        ubik_word id;
+
+        union
+        {
+                /* Apply nodes apply a function (whose value is at the index
+                   "func" in this graph) to an argument (index "arg") */
+                struct
+                {
+                        ubik_word func;
+                        ubik_word arg;
+                } apply;
+                /* Value nodes represent a constant value. */
+                struct
+                {
+                        ubik_value *type;
+                        ubik_value *value;
+                } value;
+                /* Load nodes load a value from the evaluation environment. */
+                struct
+                {
+                        ubik_uri *loc;
+                } load;
+                /* Store nodes store the value of another node in the narrowest
+                   currently-active scope. */
+                struct
+                {
+                        ubik_word value;
+                        ubik_uri *loc;
+                } store;
+                /* Input nodes capture arguments to a function. */
+                struct
+                {
+                        ubik_word arg_num;
+                } input;
+                /* Ref nodes copy everything forward from a referrent, and are
+                   used as a compilation tool. */
+                struct
+                {
+                        ubik_word referrent;
+                } ref;
+                /* Condition nodes capture a branch; if the condition node
+                   evaluates to true, the result of evaluating if_true is the
+                   value of this node. Otherwise, this node's result is the
+                   result of evaluating if_false. */
+                struct
+                {
+                        ubik_word condition;
+                        ubik_word if_true;
+                        ubik_word if_false;
+                } cond;
+                /* The native_out node is a piece of magic that is enabled by
+                   the graph evaluator; if a graph has the native tag, then the
+                   evaluator evalutes the value of the graph using native code
+                   and populates the native node in the graph with the result.
+                   The native node is provided only as a thing for the caller to
+                   latch on to for the result. The native_out node has no
+                   fields to its name. */
+        };
+
+        /* Nonzero if we want the value of this node at the end of
+           evaluation */
+        uint8_t is_terminal;
 };
-
-struct ubik_dagc_const
-{
-        struct ubik_dagc_node head;
-        /* Type of constant */
-        struct ubik_value *type;
-        /* Value of constant */
-        union ubik_value_or_graph value;
-};
-
-struct ubik_dagc_load
-{
-        struct ubik_dagc_node head;
-        /* Where to load from */
-        struct ubik_uri *loc;
-};
-
-struct ubik_dagc_store
-{
-        struct ubik_dagc_node head;
-        /* Location to store */
-        struct ubik_uri *loc;
-        /* Value to store */
-        struct ubik_dagc_node *value;
-};
-
-struct ubik_dagc_input
-{
-        struct ubik_dagc_node head;
-        /* The argument that this corresponds to */
-        ubik_word arg_num;
-};
-
-struct ubik_dagc_ref
-{
-        struct ubik_dagc_node head;
-        /* The node to copy the value from */
-        struct ubik_dagc_node *referrent;
-};
-
-/* The native_out node is a piece of magic that is enabled
- * by the graph evaluator; if a graph has the native tag,
- * then the evaluator evalutes the value of the graph using
- * native code and populates the native node in the graph
- * with the result. The native node is provided only as a
- * thing for the caller to latch on to for the result. */
-struct ubik_dagc_native_out
-{
-        struct ubik_dagc_node head;
-};
-
-struct ubik_dagc_cond
-{
-        struct ubik_dagc_node head;
-        /* The node that contains the condition */
-        struct ubik_dagc_node *condition;
-        /* The node that contains the value that is used if
-         * the condition evaluates to true */
-        struct ubik_dagc_node *if_true;
-        /* The node that contains the value that is used if
-         * the condition evaluates to false */
-        struct ubik_dagc_node *if_false;
-};
-
-/* This syntax is terrible; it defines ubik_native_evaluator_t as a
- * function pointer that takes an env and a dagc and returns an
- * ubik_error. */
-typedef ubik_error (*ubik_native_evaluator_t)(
-        struct ubik_env *env, struct ubik_dagc *graph);
-
-struct ubik_dagc_native
-{
-        /* ubik_dagc_native pointers are equivalent to an ubik_dagc
-         * pointer */
-        struct ubik_dagc graph;
-
-        /* The function used to evaluate this graph. */
-        ubik_native_evaluator_t evaluator;
-};
-
-/* It can be anything you want it to be.
- *
- * It also happens to be the maximum size of all of the nodes,
- * which has advantages for allocating big lists of nodes. */
-union ubik_dagc_any_node
-{
-        struct ubik_dagc_node node;
-        struct ubik_dagc_apply as_apply;
-        struct ubik_dagc_cond as_cond;
-        struct ubik_dagc_const as_const;
-        struct ubik_dagc_input as_input;
-        struct ubik_dagc_load as_load;
-        struct ubik_dagc_ref as_ref;
-        struct ubik_dagc_store as_store;
-};
-
-/* Allocates a graph object in a memory region of the given size.
- *
- * If copy_from is not NULL, this also copies size bytes from
- * copy_from into the graph before allocating all of the
- * substructures of the graph. */
-no_ignore ubik_error
-ubik_dagc_alloc(
-        struct ubik_dagc **graph,
-        size_t n_nodes,
-        size_t size,
-        void *copy_from);
 
 /* Gets the dependencies of a node.
  *
  * For nodes with N dependencies, d1 through dN will be filled in
  * and the result will be NULL. */
 no_ignore ubik_error
-ubik_dagc_get_deps(
-        struct ubik_dagc_node **d1,
-        struct ubik_dagc_node **d2,
-        struct ubik_dagc_node **d3,
-        struct ubik_dagc_node *n);
-
-/* Modifies any references from the given node into the proto list
- * of nodes to point at the corresponding node in the list of new
- * nodes.
- *
- * This is useful when copying graphs or inserting nodes into
- * graphs. */
-no_ignore ubik_error
-ubik_dagc_replace_node_refs(
-        struct ubik_dagc_node *node,
-        struct ubik_dagc_node **proto,
-        struct ubik_dagc_node **new,
-        size_t n);
+ubik_dagc_get_deps(ubik_word *d1, ubik_word *d2, ubik_word *d3, ubik_word n);
 
 /* Retrieve the parents of the given node.
  *
@@ -214,13 +137,3 @@ no_ignore ubik_error
 ubik_dagc_node_sizeof(
         size_t *size,
         struct ubik_dagc_node *node);
-
-/* Performs a copy from proto to result.
- *
- * This is a deep copy of the nodes but not the values within
- * them. This copies all information, including adjacency, and
- * updates all internal references between nodes. */
-no_ignore ubik_error
-ubik_dagc_copy(
-        struct ubik_dagc **result,
-        struct ubik_dagc *proto);

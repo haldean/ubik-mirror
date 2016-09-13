@@ -36,13 +36,49 @@ struct ubik_exec_notify
         void *arg;
 };
 
+/* node is ready to be evaluated */
+#define UBIK_STATUS_READY      0x00
+/* node is fully evaluated */
+#define UBIK_STATUS_COMPLETE   0x01
+/* waiting on node's first dependency */
+#define UBIK_STATUS_WAIT_D1    0x02
+/* waiting on node's second dependency */
+#define UBIK_STATUS_WAIT_D2    0x04
+/* waiting on node's third dependency */
+#define UBIK_STATUS_WAIT_D3    0x08
+/* waiting on evaluation */
+#define UBIK_STATUS_WAIT_EVAL  0x10
+/* waiting on data to exist */
+#define UBIK_STATUS_WAIT_DATA  0x20
+/* wait_d1 | wait_d2 | wait_d3 | wait_eval */
+#define UBIK_STATUS_WAIT_MASK  0x2E
+
+struct ubik_exec_graph
+{
+        /* The graph being evaluated */
+        struct ubik_dagc *graph;
+
+        /* The number of arguments that have already been applied to the graph */
+        ubik_word args_applied;
+
+        /* Information about the status of each node. Each element in this array
+           is the bitwise union of some number of the UBIK_STATUS constants. */
+        uint8_t *status;
+
+        /* The calculated value of each node. */
+        struct ubik_value **values;
+
+        /* The calculated type of each node. */
+        struct ubik_value **types;
+};
+
 struct ubik_exec_unit
 {
         /* The node to be evaluated */
-        struct ubik_dagc_node *node;
+        ubik_word node;
 
-        /* The graph in which the node exists */
-        struct ubik_dagc *graph;
+        /* The graph evaluator for the graph in which the node exists */
+        struct ubik_exec_graph *gexec;
 
         /* The environment in which to execute the node */
         struct ubik_env *env;

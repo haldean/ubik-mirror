@@ -68,41 +68,49 @@ ubik_schedule_free(struct ubik_scheduler *s)
 
 /* Initializes the flags of a given node. */
 no_ignore static ubik_error
-_set_initial_ready(struct ubik_dagc_node *n)
+_set_initial_ready(
+        struct ubik_exec_graph *gexec,
+        ubik_word node_id)
 {
-        struct ubik_dagc_node *d1, *d2, *d3;
+        ubik_word d1, d2, d3;
+        ubik_word node_type;
         ubik_error err;
+
+        node_type = gexec->graph->nodes[node_id];
 
         /* Input nodes are special; they're only ready once their values
          * have been filled in, even though they have no dependencies.
          * Only application of the graph they participate in can make
          * them ready, so these don't changed here. */
-        if (n->node_type == DAGC_NODE_INPUT)
+        if (node_type == DAGC_NODE_INPUT)
                 return OK;
 
-        err = ubik_dagc_get_deps(&d1, &d2, &d3, n);
+        err = ubik_dagc_get_deps(&d1, &d2, &d3, gexec->graph->nodes[node_id]);
         if (err != OK)
                 return err;
 
         /* Cond nodes are also special; they start out only waiting on
          * their condition, and then on the basis of their condition
          * they are re-waited. */
-        if (n->node_type == DAGC_NODE_COND)
+        if (node_type == DAGC_NODE_COND)
         {
-                if (d1->flags & UBIK_DAGC_FLAG_COMPLETE)
-                        n->flags = 0;
+                if (gexec->status[d1] & UBIK_DAGC_FLAG_COMPLETE)
+                        gexec->status[node_id] = UBIK_STATUS_READY;
                 else
-                        n->flags = UBIK_DAGC_FLAG_WAIT_D1;
+                        gexec->status[node_id] = UBIK_STATUS_WAIT_D1;
         }
         else
         {
-                n->flags = 0;
-                if (d1 != NULL && !(d1->flags & UBIK_DAGC_FLAG_COMPLETE))
-                        n->flags |= UBIK_DAGC_FLAG_WAIT_D1;
-                if (d2 != NULL && !(d2->flags & UBIK_DAGC_FLAG_COMPLETE))
-                        n->flags |= UBIK_DAGC_FLAG_WAIT_D2;
-                if (d3 != NULL && !(d3->flags & UBIK_DAGC_FLAG_COMPLETE))
-                        n->flags |= UBIK_DAGC_FLAG_WAIT_D3;
+                gexec->status[node_id] = UBIK_STATUS_READY;
+                if (d1 != UBIK_INVALID_NODE_ID)
+                        if (!(gexec->status[d1] & UBIK_STATUS_COMPLETE))
+                                gexec->status[node_id] |= UBIK_STATUS_WAIT_D1;
+                if (d2 != UBIK_INVALID_NODE_ID)
+                        if (!(gexec->status[d2] & UBIK_STATUS_COMPLETE))
+                                gexec->status[node_id] |= UBIK_STATUS_WAIT_D2;
+                if (d3 != UBIK_INVALID_NODE_ID)
+                        if (!(gexec->status[d3] & UBIK_STATUS_COMPLETE))
+                                gexec->status[node_id] |= UBIK_STATUS_WAIT_D3;
         }
 
         return OK;
@@ -111,29 +119,31 @@ _set_initial_ready(struct ubik_dagc_node *n)
 no_ignore static ubik_error
 _enqueue(
         struct ubik_scheduler *s,
-        struct ubik_dagc *graph,
+        struct ubik_exec_graph *gexec,
         struct ubik_env *env,
         struct ubik_exec_notify *notify,
-        struct ubik_dagc_node *node)
+        ubik_word node)
 {
         struct ubik_exec_unit *u;
         ubik_error err;
         struct ubik_exec_unit *test;
 
-        test = s->wait;
-        while (test != NULL)
+        /* Check to make sure this node isn't already enqueued. */
+        for (test = s->wait; test != NULL; test = test->next)
         {
-                if (test->node == node)
-                        return OK;
-                test = test->next;
+                if (test->gexec->graph != gexec->graph)
+                        continue;
+                if (test->node != node)
+                        continue;
+                return OK;
         }
-
-        test = s->ready;
-        while (test != NULL)
+        for (test = s->ready; test != NULL; test = test->next)
         {
-                if (test->node == node)
-                        return OK;
-                test = test->next;
+                if (test->gexec->graph != gexec->graph)
+                        continue;
+                if (test->node != node)
+                        continue;
+                return OK;
         }
 
         u = calloc(1, sizeof(struct ubik_exec_unit));
@@ -142,9 +152,9 @@ _enqueue(
         u->node = node;
         u->notify = notify;
         u->env = env;
-        u->graph = graph;
+        u->gexec = gexec;
 
-        err = _set_initial_ready(node);
+        err = _set_initial_ready(gexec, node);
         if (err != OK)
                 return err;
 
@@ -161,26 +171,24 @@ _enqueue(
 no_ignore static ubik_error
 _eval_native_dagc(
         struct ubik_scheduler *s,
-        struct ubik_dagc_native *ngraph,
+        struct ubik_exec_graph *gexec,
         struct ubik_env *env,
         struct ubik_exec_notify *notify)
 {
         ubik_error err;
-        struct ubik_dagc *graph;
         struct ubik_exec_unit unit;
 
-        graph = (struct ubik_dagc *) ngraph;
-        err = ngraph->evaluator(env, graph);
+        err = gexec->graph->evaluator(env, gexec->graph);
         if (err != OK)
                 return err;
 
-        graph->result->flags |= UBIK_DAGC_FLAG_COMPLETE;
+        gexec->status[gexec->graph->result] = UBIK_DAGC_FLAG_COMPLETE;
 
         if (notify == NULL)
                 return OK;
 
-        unit.node = graph->result;
-        unit.graph = graph;
+        unit.node = gexec->graph->result;
+        unit.gexec = gexec;
         unit.env = env;
         unit.notify = NULL;
         unit.next = NULL;
@@ -196,8 +204,8 @@ _eval_native_dagc(
 no_ignore static ubik_error
 _push_dep_tree(
         struct ubik_scheduler *s,
-        struct ubik_dagc *graph,
-        struct ubik_dagc_node *node,
+        struct ubik_exec_graph *gexec,
+        ubik_word node,
         struct ubik_env *env,
         struct ubik_exec_notify *notify);
 
@@ -205,14 +213,14 @@ _push_dep_tree(
 no_ignore static ubik_error
 _push_deps(
         struct ubik_scheduler *s,
-        struct ubik_dagc *graph,
-        struct ubik_dagc_node *node,
+        struct ubik_exec_graph *gexec,
+        ubik_word node,
         struct ubik_env *env)
 {
-        struct ubik_dagc_node *d1, *d2, *d3;
+        ubik_word d1, d2, d3;
         ubik_error err;
 
-        err = ubik_dagc_get_deps(&d1, &d2, &d3, node);
+        err = ubik_dagc_get_deps(d1, d2, d3, node);
         if (err != OK)
                 return err;
 
@@ -220,20 +228,23 @@ _push_deps(
         ubik_assert(d2 != node);
         ubik_assert(d3 != node);
 
-        if (d1 != NULL && (node->flags & UBIK_DAGC_FLAG_WAIT_D1))
+        if (d1 != UBIK_INVALID_NODE_ID
+            && (gexec->status[node] & UBIK_DAGC_FLAG_WAIT_D1))
         {
                 /* only the root gets notified; everything below it doesn't */
                 err = _push_dep_tree(s, graph, d1, env, NULL);
                 if (err != OK)
                         return err;
         }
-        if (d2 != NULL && (node->flags & UBIK_DAGC_FLAG_WAIT_D2))
+        if (d2 != UBIK_INVALID_NODE_ID
+            && (gexec->status[node] & UBIK_DAGC_FLAG_WAIT_D2))
         {
                 err = _push_dep_tree(s, graph, d2, env, NULL);
                 if (err != OK)
                         return err;
         }
-        if (d3 != NULL && (node->flags & UBIK_DAGC_FLAG_WAIT_D3))
+        if (d3 != UBIK_INVALID_NODE_ID
+            && (gexec->status[node] & UBIK_DAGC_FLAG_WAIT_D3))
         {
                 err = _push_dep_tree(s, graph, d3, env, NULL);
                 if (err != OK)
@@ -247,18 +258,18 @@ _push_deps(
 no_ignore static ubik_error
 _push_dep_tree(
         struct ubik_scheduler *s,
-        struct ubik_dagc *graph,
-        struct ubik_dagc_node *node,
+        struct ubik_exec_graph *gexec,
+        ubik_word node,
         struct ubik_env *env,
-        struct ubik_exec_notify *notify)
+        struct ubik_exec_notify *notify);
 {
         ubik_error err;
 
-        err = _enqueue(s, graph, env, notify, node);
+        err = _enqueue(s, gexec, env, notify, node);
         if (err != OK)
                 return err;
 
-        err = _push_deps(s, graph, node, env);
+        err = _push_deps(s, gexec, node, env);
         if (err != OK)
                 return err;
 
@@ -275,25 +286,39 @@ ubik_schedule_push(
 {
         ubik_error err;
         struct ubik_dagc_node *n;
+        struct ubik_exec_graph *gexec;
         size_t i;
 
-        /* Native graphs get to cheat and skip all this biz. */
-        if (graph->tag & TAG_GRAPH_NATIVE)
-                return _eval_native_dagc(
-                        s, (struct ubik_dagc_native *) graph, env, notify);
+        gexec = calloc(1, sizeof(struct ubik_exec_graph));
+        gexec->status = calloc(graph->n, sizeof(uint8_t));
+        if (graph->arity > 0)
+                gexec->args = calloc(graph->arity, sizeof(struct ubik_value *));
+        gexec->args_applied = 0;
+
+        /* Graphs with special evaluators get to cheat and skip all this biz. */
+        if (graph->evaluator != NULL)
+        {
+                err = _eval_native_dagc(s, gexec, env, notify);
+                if (err != OK)
+                        return err;
+                free(gexec->status);
+                if (graph->arity > 0)
+                        free(gexec->args);
+                free(gexec);
+        }
 
         for (i = 0; i < graph->n; i++)
         {
-                err = _set_initial_ready(graph->nodes[i]);
+                err = _set_initial_ready(gexec, i);
                 if (err != OK)
                         return err;
         }
-
-        for (i = 0; i < graph->out_arity; i++)
+        for (i = 0; i < graph->n; i++)
         {
-                n = graph->terminals[i];
+                if (!graph->nodes[i].is_terminal)
+                        continue;
                 err = _push_dep_tree(
-                        s, graph, n, env, n == graph->result ? notify : NULL);
+                        s, gexec, i, env, i == graph->result ? notify : NULL);
                 if (err != OK)
                         return err;
         }
@@ -307,13 +332,14 @@ ubik_schedule_complete(
         struct ubik_scheduler *s,
         struct ubik_exec_unit *e)
 {
-        struct ubik_dagc_node **parents;
-        struct ubik_dagc_node *d1, *d2, *d3;
+        ubik_word **parents;
+        ubik_word d1, d2, d3;
         size_t n_parents;
         size_t i;
         ubik_error err;
 
-        err = ubik_dagc_get_parents(&parents, &n_parents, e->graph, e->node);
+        err = ubik_dagc_get_parents(
+                &parents, &n_parents, e->gexec->graph, e->node);
         if (err != OK)
                 return err;
 
@@ -324,11 +350,11 @@ ubik_schedule_complete(
                         return err;
 
                 if (d1 == e->node)
-                        parents[i]->flags &= ~UBIK_DAGC_FLAG_WAIT_D1;
+                        e->gexec->status[parents[i]] &= ~UBIK_DAGC_FLAG_WAIT_D1;
                 if (d2 == e->node)
-                        parents[i]->flags &= ~UBIK_DAGC_FLAG_WAIT_D2;
+                        e->gexec->status[parents[i]] &= ~UBIK_DAGC_FLAG_WAIT_D2;
                 if (d3 == e->node)
-                        parents[i]->flags &= ~UBIK_DAGC_FLAG_WAIT_D3;
+                        e->gexec->status[parents[i]] &= ~UBIK_DAGC_FLAG_WAIT_D3;
         }
 
         if (e->notify != NULL)
