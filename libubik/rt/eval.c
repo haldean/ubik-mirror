@@ -18,7 +18,6 @@
  */
 
 #include "ubik/assert.h"
-#include "ubik/dagc.h"
 #include "ubik/env.h"
 #include "ubik/rttypes.h"
 #include "ubik/ubik.h"

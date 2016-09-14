@@ -19,6 +19,7 @@
 
 #pragma once
 #include "ubik/alloc.h"
+#include "ubik/stream.h"
 #include "ubik/ubik.h"
 
 /* Turns a stream from Ubik source or literate Ubik source into raw Ubik source

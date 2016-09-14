@@ -48,7 +48,7 @@
 {
         int token;
         ubik_word integer;
-        ubik_float floating;
+        double floating;
         char *string;
 
         struct ubik_ast *ast;

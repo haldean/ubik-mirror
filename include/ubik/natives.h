@@ -20,7 +20,7 @@
 #pragma once
 #include "ubik/alloc.h"
 #include "ubik/ast.h"
-#include "ubik/dagc.h"
+#include "ubik/env.h"
 #include "ubik/ubik.h"
 #include <stdbool.h>
 
@@ -63,7 +63,7 @@ ubik_internal_native_uri(struct ubik_uri **uri, char *name);
 
 no_ignore ubik_error
 ubik_internal_native_create_op(
-        struct ubik_dagc **graph_ptr,
+        struct ubik_value **graph_ptr,
         size_t arity,
-        ubik_native_evaluator_t evaluator);
+        ubik_graph_evaluator_t evaluator);
 
