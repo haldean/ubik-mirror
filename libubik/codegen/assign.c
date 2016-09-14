@@ -110,6 +110,7 @@ _find_name_in_scope(
 
 no_ignore static ubik_error
 _assign_atom_node(
+        struct ubik_assign_context *ctx,
         struct ubik_node *n,
         struct ubik_ast_expr *expr)
 {
@@ -123,14 +124,14 @@ _assign_atom_node(
         case ATOM_INT:
                 n->node_type = UBIK_VALUE;
 
-                err = ubik_value_new(&n->value.type);
+                err = ubik_value_new(&n->value.type, ctx->workspace);
                 if (err != OK)
                         return err;
                 err = ubik_type_word(n->value.type);
                 if (err != OK)
                         return err;
 
-                err = ubik_value_new(&n->value.value);
+                err = ubik_value_new(&n->value.value, ctx->workspace);
                 if (err != OK)
                         return err;
                 n->value.value->type = UBIK_RAT;
@@ -144,7 +145,7 @@ _assign_atom_node(
         case ATOM_VALUE:
                 n->node_type = UBIK_VALUE;
 
-                err = ubik_value_new(&n->value.type);
+                err = ubik_value_new(&n->value.type, ctx->workspace);
                 if (err != OK)
                         return err;
                 /* TODO: type these! */
@@ -214,14 +215,14 @@ _assign_atom_node(
         case ATOM_STRING:
                 n->node_type = UBIK_VALUE;
 
-                err = ubik_value_new(&n->value.type);
+                err = ubik_value_new(&n->value.type, ctx->workspace);
                 if (err != OK)
                         return err;
                 err = ubik_type_string(n->value.type);
                 if (err != OK)
                         return err;
 
-                err = ubik_value_new(&n->value.value);
+                err = ubik_value_new(&n->value.value, ctx->workspace);
                 if (err != OK)
                         return err;
                 n->value.value->type = UBIK_STR;
@@ -429,7 +430,7 @@ _assign_lambda(
         if (err != OK)
                 return err;
 
-        err = ubik_value_new(&subgraph);
+        err = ubik_value_new(&subgraph, ctx->workspace);
         if (err != OK)
                 return err;
         ubik_fun_from_vector(subgraph, &subnodes, expr->lambda.body->gen);
@@ -438,7 +439,7 @@ _assign_lambda(
         n->value.value = subgraph;
 
         /* TODO: lambda type here. */
-        err = ubik_value_new(&n->value.type);
+        err = ubik_value_new(&n->value.type, ctx->workspace);
         if (err != OK)
                 return err;
 
@@ -459,7 +460,7 @@ ubik_assign_nodes(
         switch (expr->expr_type)
         {
         case EXPR_ATOM:
-                err = _assign_atom_node(n, expr);
+                err = _assign_atom_node(ctx, n, expr);
                 if (err != OK)
                         return err;
                 break;

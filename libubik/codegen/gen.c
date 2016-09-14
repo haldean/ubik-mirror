@@ -20,9 +20,8 @@
 #include "ubik/adt.h"
 #include "ubik/assert.h"
 #include "ubik/assign.h"
-#include "ubik/bdagc.h"
-#include "ubik/dagc.h"
 #include "ubik/env.h"
+#include "ubik/fun.h"
 #include "ubik/gen.h"
 #include "ubik/resolve.h"
 #include "ubik/rttypes.h"
@@ -45,7 +44,6 @@ ubik_compile_binding(
         struct ubik_value *res;
         struct ubik_value *type;
         struct ubik_vector nodes = {.region = ctx->region};
-        size_t i;
 
         ubik_error err;
 
@@ -53,23 +51,22 @@ ubik_compile_binding(
         if (err != OK)
                 return err;
 
-        err = ubik_value_new(&res);
+        err = ubik_value_new(&res, ctx->workspace);
         if (err != OK)
                 return err;
-        ubik_fun_from_vector(res, nodes, binding->expr->gen);
+        ubik_fun_from_vector(res, &nodes, binding->expr->gen);
 
         ubik_galloc1(&uri, struct ubik_uri);
         err = ubik_uri_package(
                 uri, binding->expr->scope->package_name, binding->name);
         if (err != OK)
                 return err;
-        res->identity = uri;
 
         /* TODO: add binding type here */
-        err = ubik_value_new(&type);
+        err = ubik_value_new(&type, ctx->workspace);
         if (err != OK)
                 return err;
-        type->value_type = UBIK_TYP;
+        type->type = UBIK_TYP;
 
         err = ubik_env_set(local_env, uri, res, type);
         if (err != OK)
@@ -92,8 +89,8 @@ _add_modinit_setter(
 {
         struct ubik_value *value;
         struct ubik_value *type;
-        struct ubik_dagc_store *store_node;
-        struct ubik_dagc_const *val_node;
+        struct ubik_node *store_node;
+        struct ubik_node *val_node;
         struct modinit_iterator *iter;
         struct ubik_uri *store_uri;
         ubik_error err;
@@ -110,17 +107,17 @@ _add_modinit_setter(
                 return err;
 
         ubik_galloc1(&val_node, struct ubik_node);
-        val_node->node_type = UBIK_CONST;
-        val_node->id = iter->nodes.n;
+        val_node->node_type = UBIK_VALUE;
+        val_node->id = iter->nodes->n;
         val_node->value.type = type;
         val_node->value.value = value;
 
         ubik_galloc1(&store_node, struct ubik_node);
         store_node->node_type = UBIK_STORE;
-        store_node->id = iter->nodes.n + 1;
+        store_node->id = iter->nodes->n + 1;
         store_node->is_terminal = true;
-        store_node->loc = store_uri;
-        store_node->value = val_node->id;
+        store_node->store.loc = store_uri;
+        store_node->store.value = val_node->id;
 
         err = ubik_vector_append(iter->nodes, val_node);
         if (err != OK)
@@ -141,11 +138,9 @@ ubik_create_modinit(
         struct ubik_assign_context *ctx)
 {
         struct modinit_iterator iter;
-        struct ubik_graph_builder builder;
         struct ubik_vector nodes = {.region = ctx->region};
         ubik_word result;
         ubik_error err;
-        size_t i;
 
         iter.nodes = &nodes;
         iter.package_name = ast->package_name;
@@ -162,7 +157,7 @@ ubik_create_modinit(
                         return err;
                 result = ast->immediate->gen;
         }
-        else if (builder.nodes.n > 0)
+        else if (nodes.n > 0)
         {
                 /* All graphs have to have a result, so we just pick one here.
                  * We'll end up executing all of them anyway, and nothing reads
@@ -171,14 +166,13 @@ ubik_create_modinit(
         }
         else
         {
-                err = ubik_raise(ERR_NO_DATA, "nothing to bind in modinit");
-                goto cleanup;
+                return ubik_raise(ERR_NO_DATA, "nothing to bind in modinit");
         }
 
-        err = ubik_value_new(modinit);
+        err = ubik_value_new(modinit, ctx->workspace);
         if (err != OK)
                 return err;
-        ubik_fun_from_vector(*modinit, nodes, result);
+        ubik_fun_from_vector(*modinit, &nodes, result);
         return OK;
 }
 

@@ -37,7 +37,7 @@ ubik_type_func_apply(
  * for an argument of the given type. */
 no_ignore ubik_error
 ubik_type_match_polyfunc(
-        struct ubik_dagc **result,
+        struct ubik_value **result,
         struct ubik_value *def,
         struct ubik_value *arg_type);
 

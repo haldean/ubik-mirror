@@ -39,6 +39,7 @@ struct ubik_assign_context
         struct ubik_vector errors;
         struct ubik_alloc_region *region;
         struct ubik_stream *feedback;
+        struct ubik_workspace *workspace;
 };
 
 void

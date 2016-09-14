@@ -33,6 +33,6 @@
  * returned are allocated by the graph allocator and are refcounted. */
 no_ignore ubik_error
 ubik_gen_graphs(
-        struct ubik_dagc **res,
+        struct ubik_value **res,
         struct ubik_ast *ast,
         struct ubik_compile_request *req);

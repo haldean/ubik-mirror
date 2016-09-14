@@ -240,7 +240,9 @@ ubik_teardown();
 
 /* Create a value object. */
 no_ignore ubik_error
-ubik_value_new(struct ubik_value **res);
+ubik_value_new(
+        struct ubik_value **res,
+        struct ubik_workspace *ws);
 
 /* Create an error object. */
 ubik_error

@@ -26,6 +26,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+struct ubik_env;
 
 typedef ubik_error (*ubik_env_cb)(
         void *arg,

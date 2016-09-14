@@ -117,19 +117,11 @@ ubik_compile_env_free(struct ubik_compile_env *cenv)
 {
         struct ubik_compile_result *res;
         struct ubik_compile_job *job;
-        size_t i, j;
-        ubik_error err;
+        size_t i;
 
         for (i = 0; i < cenv->compiled.n; i++)
         {
                 res = cenv->compiled.elems[i];
-
-                for (j = 0; j < res->n_graphs; j++)
-                {
-                        err = ubik_release(res->graphs[j]);
-                        if (err != OK)
-                                return err;
-                }
                 free_req(res->request);
         }
 
@@ -216,6 +208,7 @@ create_import_request(
                                 res->reason = LOAD_IMPORTED;
                                 res->cb = NULL;
                                 res->feedback = parent->feedback;
+                                res->workspace = parent->workspace;
 
                                 closedir(test_dir);
                                 return OK;
@@ -283,11 +276,11 @@ compile_job(
         struct ubik_compile_env *cenv,
         struct ubik_compile_job *job)
 {
-        struct ubik_dagc *graph;
+        struct ubik_value *graph;
         struct ubik_compile_result *res;
         local(infer_context) struct ubik_infer_context infer_ctx = {0};
         size_t i;
-        ubik_error err, rerr;
+        ubik_error err;
 
         if (cenv->debug)
                 printf("compiling package %s\n", job->ast->package_name);
@@ -377,11 +370,7 @@ compile_job(
         graph = NULL;
         err = ubik_gen_graphs(&graph, job->ast, job->request);
         if (err != OK)
-        {
-                if (graph != NULL)
-                        goto release_graph;
                 return err;
-        }
 
         ubik_alloc1(&res, struct ubik_compile_result, &job->request->region);
         res->request = job->request;
@@ -405,9 +394,7 @@ compile_job(
 
 free_res:
         free(res);
-release_graph:
-        rerr = ubik_release(graph);
-        return err == OK ? rerr : err;
+        return err;
 }
 
 no_ignore ubik_error
@@ -438,6 +425,7 @@ ubik_compile_enqueue(
         req->cb = userreq->cb;
         req->feedback = userreq->feedback;
         req->type_system = cenv->type_system;
+        req->workspace = userreq->workspace;
 
         ubik_alloc1(&job, struct ubik_compile_job, &req->region);
         job->request = req;
@@ -487,9 +475,6 @@ ensure_imports_ready(
                 {
                         err = ubik_vector_append(
                                 &job->dep_graphs, result->graphs[i]);
-                        if (err != OK)
-                                return err;
-                        err = ubik_take(result->graphs[i]);
                         if (err != OK)
                                 return err;
                 }

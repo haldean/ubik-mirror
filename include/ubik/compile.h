@@ -64,12 +64,15 @@ struct ubik_compile_request
         /* the stream to send feedback information to */
         struct ubik_stream *feedback;
         /* the region in which all allocations are made when handling this
-         * request; the memory associated with the result can be freed all at
-         * once by freeing this region. */
+           request; the memory associated with the result can be freed all at
+           once by freeing this region. */
         struct ubik_alloc_region region;
         /* a pointer to the global type system for the current compilation
-         * environment. This is filled in on enqueue. */
+           environment. This is filled in on enqueue. */
         struct ubik_typesystem *type_system;
+        /* the value workspace containing all values produced as part of the
+           compilation request */
+        struct ubik_workspace *workspace;
 };
 
 /* Represents the final result of compilation. */
@@ -81,7 +84,7 @@ struct ubik_compile_result
         struct ubik_ast *ast;
         /* a list of graphs required for the request and its transitive
          * dependency closure */
-        struct ubik_dagc **graphs;
+        struct ubik_value **graphs;
         size_t n_graphs;
 };
 
