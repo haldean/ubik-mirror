@@ -19,7 +19,6 @@
 
 #include "ubik/env.h"
 #include "ubik/ubik.h"
-#include "ubik/gc.h"
 #include "ubik/natives.h"
 
 const uint16_t UBIK_MAJOR = 0;
@@ -32,8 +31,6 @@ ubik_error
 ubik_start()
 {
         ubik_error err;
-
-        ubik_gc_start();
 
         err = ubik_natives_register(ubik_env_get_root());
         if (err != OK)
@@ -54,8 +51,6 @@ ubik_teardown()
         err = ubik_env_free(ubik_env_get_root());
         if (err != OK)
                 return err;
-
-        ubik_gc_teardown();
 
         return OK;
 }

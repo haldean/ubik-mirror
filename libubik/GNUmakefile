@@ -21,13 +21,11 @@ c_sources = \
     ./codegen/types.c \
     ./codegen/typesystem.c \
     ./rt/eval.c \
-    ./rt/gc.c \
     ./rt/schedule.c \
     ./rt/timer.c \
     ./shared/adt.c \
     ./shared/alloc.c \
     ./shared/assert.c \
-    ./shared/dagc.c \
     ./shared/env.c \
     ./shared/error.c \
     ./shared/explain.c \

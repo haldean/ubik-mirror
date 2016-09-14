@@ -22,7 +22,6 @@
 #include <stdlib.h>
 
 #include "ubik/assert.h"
-#include "ubik/dagc.h"
 #include "ubik/env.h"
 #include "ubik/schedule.h"
 #include "ubik/util.h"
