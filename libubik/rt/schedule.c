@@ -41,6 +41,13 @@ get_fun(struct ubik_value *v)
         return v;
 }
 
+static void
+free_exec_graph(struct ubik_exec_graph *gexec)
+{
+        unused(gexec);
+        ubik_assert("not implemented!" == NULL);
+}
+
 /* Creates a scheduler. */
 no_ignore ubik_error
 ubik_schedule_new(struct ubik_scheduler **s)
@@ -343,7 +350,7 @@ ubik_schedule_complete(
         for (i = 0; i < parents.n; i++)
         {
                 p = (ubik_word) parents.elems[i];
-                err = ubik_fun_get_deps(&d1, &d2, &d3, graph->fun.nodes[p]);
+                err = ubik_fun_get_deps(&d1, &d2, &d3, &graph->fun.nodes[p]);
                 if (err != OK)
                         return err;
 
@@ -355,12 +362,13 @@ ubik_schedule_complete(
                         e->gexec->status[p] &= ~UBIK_STATUS_WAIT_D3;
         }
 
-        if (e->notify != NULL)
+        /* If this was a terminal node, it's possible that we're done with this
+           graph. Check if there are any outstanding terminals, and if there
+           aren't, clean up the graph executor and notify listeners. */
+        if (graph->fun.nodes[e->node].is_terminal)
         {
-                err = e->notify->notify(e->notify->arg, s, e);
-                if (err != OK)
-                        return err;
-                free(e->notify);
+                unused(s);
+                return ubik_raise(ERR_NOT_IMPLEMENTED, "yup");
         }
 
         free(e);
@@ -378,25 +386,19 @@ _notify_node(
         ubik_error err;
 
 #ifdef UBIK_SCHEDULE_DEBUG
-        printf("notifying %s on completion of %s\n",
-               ubik_node_explain(waiting->node), ubik_node_explain(complete->node));
+        printf("notifying %d on completion of %d\n",
+               waiting->node, complete->node);
 #endif
 
-        /* We save these off here because we need to free them, but freeing them
-         * will free the result values as well. We read the result values into
-         * our node and then free these when we're done instead. */
-        old = waiting->node->known.any;
-        old_type = waiting->node->known_type;
-
-        waiting->node->known.any = complete->node->known.any;
-        waiting->node->known_type = complete->node->known_type;
+        waiting->gexec->nv[waiting->node] = complete->gexec->nv[complete->node];
+        waiting->gexec->nt[waiting->node] = complete->gexec->nt[complete->node];
+        waiting->gexec->status[waiting->node] = UBIK_STATUS_COMPLETE;
 
         err = ubik_env_free(complete->env);
         if (err != OK)
                 return err;
         free(complete->env);
 
-        waiting->node->flags = UBIK_STATUS_COMPLETE;
         err = ubik_schedule_complete(s, waiting);
         if (err != OK)
                 return err;
@@ -435,7 +437,8 @@ _collapse_graph(
         if (err != OK)
                 return err;
 
-        err = ubik_schedule_push(s, e->node->known.graph, child_env, notify);
+        err = ubik_schedule_push(
+                s, e->node->known.graph, child_env, notify);
         if (err != OK)
                 return err;
 

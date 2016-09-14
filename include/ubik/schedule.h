@@ -106,7 +106,8 @@ ubik_schedule_push(
         struct ubik_scheduler *s,
         struct ubik_value *graph,
         struct ubik_env *env,
-        struct ubik_exec_notify *notify);
+        struct ubik_exec_notify *notify,
+        struct ubik_workspace *workspace);
 
 /* Marks an execution unit complete. */
 no_ignore ubik_error
