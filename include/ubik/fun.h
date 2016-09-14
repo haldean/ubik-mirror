@@ -26,3 +26,12 @@ ubik_fun_from_vector(
         struct ubik_value *res,
         struct ubik_vector *nodes,
         ubik_word result);
+
+no_ignore ubik_error
+ubik_fun_get_deps(
+        ubik_word *d1, ubik_word *d2, ubik_word *d3,
+        struct ubik_node *n);
+
+no_ignore ubik_error
+ubik_fun_get_parents(
+        struct ubik_vector *parents, struct ubik_value *graph, ubik_word node);
