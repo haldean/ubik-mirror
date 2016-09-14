@@ -20,148 +20,89 @@
 #include "ubik/assert.h"
 #include "ubik/env.h"
 #include "ubik/rttypes.h"
+#include "ubik/schedule.h"
 #include "ubik/ubik.h"
 #include "ubik/util.h"
 #include "ubik/value.h"
 
 no_ignore static ubik_error
-_eval_apply(struct ubik_env *env, struct ubik_dagc_apply *node)
+_eval_apply(struct ubik_exec_unit *u, struct ubik_node *n)
 {
         ubik_error err;
-        struct ubik_dagc_input *input;
-        struct ubik_dagc *result;
-        struct ubik_dagc *proto;
-        size_t i;
+        struct ubik_value *res;
+        struct ubik_value *type;
 
-        unused(env);
-
-        if ((*node->func->known.tag & TAG_TYPE_MASK) != TAG_GRAPH)
-        {
-                err = ubik_type_match_polyfunc(
-                        &proto, node->func->known.tree, node->arg->known_type);
-                if (err != OK)
-                        return err;
-        }
-        else
-        {
-                proto = node->func->known.graph;
-        }
-
-        if (proto->in_arity == 0)
-                return ubik_raise(ERR_BAD_TYPE, "apply: graph has no inputs");
-
-        err = ubik_dagc_copy(&result, proto);
+        err = ubik_value_new(&res, u->gexec->workspace);
         if (err != OK)
                 return err;
-        node->head.known.graph = result;
-
-        err = ubik_take(result);
+        err = ubik_value_new(&type, u->gexec->workspace);
         if (err != OK)
                 return err;
 
-        /* Take an input node off the front, shift the remaining ones left. */
-        input = (struct ubik_dagc_input *) result->inputs[0];
-        result->in_arity--;
-        for (i = 0; i < result->in_arity; i++)
-                result->inputs[i] = result->inputs[i + 1];
+        res->type = UBIK_PAP;
+        res->pap.func = u->gexec->nv[n->apply.func];
+        res->pap.arg = u->gexec->nv[n->apply.arg];
+        res->pap.arg_type = u->gexec->nt[n->apply.arg];
 
-        input->head.flags = UBIK_DAGC_FLAG_COMPLETE;
-
-        input->head.known_type = node->arg->known_type;
-        err = ubik_take(input->head.known_type);
+        err = ubik_type_func_apply(type, u->gexec->nt[n->apply.func]);
         if (err != OK)
                 return err;
 
-        input->head.known = node->arg->known;
-        err = ubik_take(input->head.known.any);
-        if (err != OK)
-                return err;
-
-        err = ubik_value_new(&node->head.known_type);
-        if (err != OK)
-                return err;
-        err = ubik_type_func_apply(node->head.known_type, node->func->known_type);
-        if (err != OK)
-                return err;
-
-        node->head.flags |= UBIK_DAGC_FLAG_COMPLETE;
+        u->gexec->nv[n->id] = res;
+        u->gexec->nt[n->id] = type;
+        u->gexec->status[n->id] = UBIK_STATUS_COMPLETE;
         return OK;
 }
 
 no_ignore static ubik_error
-_eval_const(struct ubik_env *env, struct ubik_dagc_const *node)
+_eval_value(struct ubik_exec_unit *u, struct ubik_node *n)
 {
-        ubik_error err;
-        unused(env);
-
-        /* We end up having two references for a single value from a single
-         * node; this is so we don't have to worry about whether things are
-         * populated when we eventually free the graph. */
-        node->head.known_type = node->type;
-        err = ubik_take(node->type);
-        if (err != OK)
-                return err;
-
-        node->head.known = node->value;
-        err = ubik_take(node->head.known.any);
-        if (err != OK)
-                return err;
-
-        node->head.flags |= UBIK_DAGC_FLAG_COMPLETE;
+        u->gexec->nv[n->id] = n->value.value;
+        u->gexec->nt[n->id] = n->value.type;
+        u->gexec->status[n->id] = UBIK_STATUS_COMPLETE;
         return OK;
 }
 
 no_ignore static ubik_error
-_eval_ref(struct ubik_env *env, struct ubik_dagc_ref *node)
+_eval_ref(struct ubik_exec_unit *u, struct ubik_node *n)
 {
-        ubik_error err;
-        unused(env);
-
-        node->head.known_type = node->referrent->known_type;
-        err = ubik_take(node->head.known_type);
-        if (err != OK)
-                return err;
-
-        node->head.known.any = node->referrent->known.any;
-        err = ubik_take(node->head.known.any);
-        if (err != OK)
-                return err;
-
-        node->head.flags |= UBIK_DAGC_FLAG_COMPLETE;
+        u->gexec->nv[n->id] = u->gexec->nv[n->ref.referrent];
+        u->gexec->nt[n->id] = u->gexec->nt[n->ref.referrent];
+        u->gexec->status[n->id] = UBIK_STATUS_COMPLETE;
         return OK;
 }
 
 no_ignore static ubik_error
 _mark_load_complete(
-        void *node_void,
+        void *unit_void,
         struct ubik_env *env,
         struct ubik_uri *uri)
 {
-        struct ubik_dagc_node *node;
+        struct ubik_exec_unit *u;
         unused(env);
         unused(uri);
 
-        node = (struct ubik_dagc_node *) node_void;
-        node->flags &= ~UBIK_DAGC_FLAG_WAIT_DATA;
+        u = unit_void;
+        u->gexec->status[u->node] &= ~UBIK_STATUS_WAIT_DATA;
         return OK;
 }
 
 no_ignore static ubik_error
-_eval_load(struct ubik_env *env, struct ubik_dagc_load *node)
+_eval_load(struct ubik_exec_unit *u, struct ubik_node *n)
 {
-        union ubik_value_or_graph value;
+        struct ubik_value *value;
         struct ubik_value *type;
         ubik_error err;
 
-        err = ubik_env_get(&value, &type, env, node->loc);
+        err = ubik_env_get(&value, &type, u->gexec->env, n->load.loc);
         if (err != OK)
         {
                 /* native funcs never reappear; they're gone forever. */
-                if (node->loc->scope == SCOPE_NATIVE)
+                if (n->load.loc->scope == SCOPE_NATIVE)
                 {
                         if (err->error_code == ERR_ABSENT)
                         {
-                                char *buf = ubik_uri_explain(node->loc);
+                                char *buf = ubik_uri_explain(n->load.loc);
                                 printf("tried to access nonexistent native "
                                        "function %s\n", buf);
                                 free(buf);
@@ -172,9 +113,10 @@ _eval_load(struct ubik_env *env, struct ubik_dagc_load *node)
                 if (err->error_code == ERR_ABSENT)
                 {
                         free(err);
-                        node->head.flags |= UBIK_DAGC_FLAG_WAIT_DATA;
+                        u->gexec->status[n->id] |= UBIK_STATUS_WAIT_DATA;
                         err = ubik_env_watch(
-                                _mark_load_complete, env, node->loc, node);
+                                _mark_load_complete, u->gexec->env,
+                                n->load.loc, u);
                         if (err != OK)
                                 return err;
                         return OK;
@@ -182,126 +124,114 @@ _eval_load(struct ubik_env *env, struct ubik_dagc_load *node)
                 return err;
         }
 
-        err = ubik_take(value.any);
-        if (err != OK)
-                return err;
-
-        err = ubik_take(type);
-        if (err != OK)
-                return err;
-
-        node->head.known_type = type;
-        node->head.known = value;
-
-        node->head.flags |= UBIK_DAGC_FLAG_COMPLETE;
+        u->gexec->nv[n->id] = value;
+        u->gexec->nt[n->id] = type;
+        u->gexec->status[n->id] = UBIK_STATUS_COMPLETE;
         return OK;
 }
 
 no_ignore static ubik_error
-_eval_cond(struct ubik_env *env, struct ubik_dagc_cond *cond)
+_eval_cond(struct ubik_exec_unit *u, struct ubik_node *n)
 {
-        struct ubik_dagc_node *res;
-        ubik_error err;
+        ubik_word res;
         bool condition;
 
-        unused(env);
+        ubik_assert(u->gexec->nv[n->cond.condition]->type == UBIK_BOO);
+        condition = u->gexec->nv[n->cond.condition]->boo.value;
+        res = condition ? n->cond.if_true : n->cond.if_false;
 
-        err = ubik_value_as_bool(&condition, cond->condition->known.tree);
-        if (err != OK)
-                return err;
-
-        res = condition ? cond->if_true : cond->if_false;
-
-        if (res->known.any == NULL)
+        if (u->gexec->status[res] != UBIK_STATUS_COMPLETE)
         {
                 /* If this is true, we just got done evaluating the condition
                  * but we haven't scheduled the if_true/if_false nodes. We set
                  * our wait flag on the appropriate node and let the scheduler
                  * pick it up and reevaluate us later. */
-                cond->head.flags |= condition
-                        ? UBIK_DAGC_FLAG_WAIT_D2
-                        : UBIK_DAGC_FLAG_WAIT_D3;
+                u->gexec->status[n->id] |= condition
+                        ? UBIK_STATUS_WAIT_D2
+                        : UBIK_STATUS_WAIT_D3;
                 return OK;
         }
 
-        cond->head.known_type = res->known_type;
-        cond->head.known = res->known;
-
-        err = ubik_take(cond->head.known_type);
-        if (err != OK)
-                return err;
-        err = ubik_take(cond->head.known.any);
-        if (err != OK)
-                return err;
-
-        cond->head.flags |= UBIK_DAGC_FLAG_COMPLETE;
+        u->gexec->nv[n->id] = u->gexec->nv[res];
+        u->gexec->nt[n->id] = u->gexec->nt[res];
+        u->gexec->status[n->id] = UBIK_STATUS_COMPLETE;
         return OK;
 }
 
 no_ignore static ubik_error
-_eval_store(struct ubik_env *env, struct ubik_dagc_store *node)
+_eval_store(struct ubik_exec_unit *u, struct ubik_node *n)
 {
-        ubik_error err;
+        u->gexec->nv[n->id] = u->gexec->nv[n->store.value];
+        u->gexec->nt[n->id] = u->gexec->nt[n->store.value];
+        u->gexec->status[n->id] = UBIK_STATUS_COMPLETE;
 
-        node->head.known_type = node->value->known_type;
-        node->head.known = node->value->known;
-
-        err = ubik_take(node->head.known.any);
-        if (err != OK)
-                return err;
-
-        err = ubik_take(node->head.known_type);
-        if (err != OK)
-                return err;
-
-        node->head.flags |= UBIK_DAGC_FLAG_COMPLETE;
         return ubik_env_set(
-                env, node->loc, node->value->known, node->value->known_type);
+                u->gexec->env, n->store.loc,
+                u->gexec->nv[n->id], u->gexec->nt[n->id]);
 }
 
 no_ignore static ubik_error
-_eval_input(struct ubik_env *env, struct ubik_dagc_input *node)
+_eval_input(struct ubik_exec_unit *u, struct ubik_node *n)
 {
-        unused(env);
-        unused(node);
+        ubik_word arity;
+        struct ubik_value *t;
 
-        node->head.flags |= UBIK_DAGC_FLAG_COMPLETE;
+        /* find the arity of the original function */
+        t = u->gexec->v;
+        for (t = u->gexec->v, arity = 0;
+             t->type == UBIK_PAP;
+             arity++, t = t->pap.func);
+
+        /* ...then traverse back to the PAP corresponding to the application of
+           the argument we're evaluating. */
+        for (arity = arity - n->input.arg_num - 1, t = u->gexec->v;
+             arity > 0; arity--, t = t->pap.func);
+
+        u->gexec->nv[n->id] = t->pap.arg;
+        u->gexec->nt[n->id] = t->pap.arg_type;
+        u->gexec->status[n->id] = UBIK_STATUS_COMPLETE;
         return OK;
 }
 
 no_ignore ubik_error
-ubik_dagc_node_eval(
-        struct ubik_env *env,
-        struct ubik_dagc_node *node)
+ubik_eval_node(struct ubik_exec_unit *u)
 {
+        struct ubik_node *n;
+        struct ubik_value *fun;
         ubik_error err;
 
-        ubik_assert(!(node->flags & UBIK_DAGC_WAIT_MASK));
+        ubik_assert(!(u->gexec->status[u->node] & UBIK_STATUS_WAIT_MASK));
 
-        switch (node->node_type)
+        fun = u->gexec->v;
+        while (fun->type == UBIK_PAP)
+                fun = fun->pap.func;
+        ubik_assert(fun->type == UBIK_FUN);
+        n = &fun->fun.nodes[u->node];
+
+        switch (n->node_type)
         {
-        case DAGC_NODE_APPLY:
-                err = _eval_apply(env, (struct ubik_dagc_apply *) node);
+        case UBIK_APPLY:
+                err = _eval_apply(u, n);
                 break;
-        case DAGC_NODE_CONST:
-                err = _eval_const(env, (struct ubik_dagc_const *) node);
+        case UBIK_VALUE:
+                err = _eval_value(u, n);
                 break;
-        case DAGC_NODE_LOAD:
-                err = _eval_load(env, (struct ubik_dagc_load *) node);
+        case UBIK_LOAD:
+                err = _eval_load(u, n);
                 break;
-        case DAGC_NODE_STORE:
-                err = _eval_store(env, (struct ubik_dagc_store *) node);
+        case UBIK_STORE:
+                err = _eval_store(u, n);
                 break;
-        case DAGC_NODE_INPUT:
-                err = _eval_input(env, (struct ubik_dagc_input *) node);
+        case UBIK_INPUT:
+                err = _eval_input(u, n);
                 break;
-        case DAGC_NODE_COND:
-                err = _eval_cond(env, (struct ubik_dagc_cond *) node);
+        case UBIK_COND:
+                err = _eval_cond(u, n);
                 break;
-        case DAGC_NODE_REF:
-                err = _eval_ref(env, (struct ubik_dagc_ref *) node);
+        case UBIK_REF:
+                err = _eval_ref(u, n);
                 break;
-        case DAGC_NODE_NATIVE:
+        case UBIK_NATIVE:
                 return ubik_raise(ERR_BAD_TYPE, "node_eval: can't eval native");
         default:
                 return ubik_raise(ERR_UNKNOWN_TYPE, "node_eval");

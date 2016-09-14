@@ -611,7 +611,7 @@ _run_single_pass(struct ubik_scheduler *s)
         u = s->ready;
         while (u != NULL)
         {
-                err = ubik_dagc_node_eval(u->env, u->node);
+                err = ubik_dagc_node_eval(u);
                 if (err != OK)
                         return err;
 

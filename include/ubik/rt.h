@@ -115,7 +115,7 @@ typedef ubik_error (*ubik_graph_evaluator_t)(struct ubik_exec_graph *gexec);
 struct ubik_fun
 {
         /* The nodes participating in the graph. */
-        struct ubik_dagc_node *nodes;
+        struct ubik_node *nodes;
         /* The number of nodes in the graph. */
         size_t n;
         /* The function used to evaluate this graph. If NULL, then the default
@@ -152,6 +152,7 @@ struct ubik_pap
 {
         struct ubik_value *func;
         struct ubik_value *arg;
+        struct ubik_value *arg_type;
 };
 
 /* Represents any value at runtime. */

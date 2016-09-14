@@ -17,6 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#pragma once
 #include "ubik/ubik.h"
 
 struct ubik_scheduler;
@@ -73,6 +74,9 @@ struct ubik_exec_graph
 
         /* The function to call once execution is complete */
         struct ubik_exec_notify *notify;
+
+        /* The workspace in which we're working */
+        struct ubik_workspace *workspace;
 };
 
 struct ubik_exec_unit
@@ -84,7 +88,7 @@ struct ubik_exec_unit
         struct ubik_exec_graph *gexec;
 
         /* The next execution unit in the stack; callers to ubik_schedule_push
-         * need not set this field, as the result will be overwritten anyawy. */
+           need not set this field, as the result will be overwritten anyawy. */
         struct ubik_exec_unit *next;
 };
 
@@ -100,7 +104,7 @@ ubik_schedule_free(struct ubik_scheduler *s);
 no_ignore ubik_error
 ubik_schedule_push(
         struct ubik_scheduler *s,
-        struct ubik_dagc *graph,
+        struct ubik_value *graph,
         struct ubik_env *env,
         struct ubik_exec_notify *notify);
 

@@ -19,6 +19,7 @@
 
 #include <stdbool.h>
 
+#include "ubik/stream.h"
 #include "ubik/ubik.h"
 
 bool
