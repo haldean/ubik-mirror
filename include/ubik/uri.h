@@ -25,7 +25,6 @@
 
 /* Identifies values in the ubik substrate */
 struct ubik_uri {
-        ubik_tag  tag;
         ubik_word hash;
 
         char      *name;
@@ -35,16 +34,10 @@ struct ubik_uri {
         ubik_word version;
         ubik_word scope;
 
-        uint64_t  refcount;
-
         /* The value representation of the URI. Generated and cached by
          * ubik_uri_attach_value. */
         struct ubik_value *as_value;
 };
-
-/* Allocates a URI with the tag set correctly. */
-void
-ubik_uri_alloc(struct ubik_uri **uri);
 
 /* Creates a URI for a resource of unknown scope. */
 no_ignore ubik_error

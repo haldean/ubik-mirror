@@ -42,13 +42,6 @@ _set_hash(struct ubik_uri *uri)
         return OK;
 }
 
-void
-ubik_uri_alloc(struct ubik_uri **uri)
-{
-        ubik_alloc1(uri, struct ubik_uri, NULL);
-        (*uri)->tag = TAG_URI;
-}
-
 no_ignore ubik_error
 ubik_uri_unknown(
         struct ubik_uri *uri,

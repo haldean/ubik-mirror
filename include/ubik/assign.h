@@ -20,7 +20,6 @@
 #pragma once
 #include "ubik/alloc.h"
 #include "ubik/ast.h"
-#include "ubik/bdagc.h"
 #include "ubik/ubik.h"
 
 enum ubik_assign_error_type
@@ -36,7 +35,6 @@ struct ubik_assign_error
 
 struct ubik_assign_context
 {
-        ubik_word next_id;
         /* Elements are struct ubik_assign_error * */
         struct ubik_vector errors;
         struct ubik_alloc_region *region;
@@ -47,15 +45,16 @@ void
 ubik_assign_context_free(struct ubik_assign_context *ctx);
 
 /* Prints a human-readable description of any errors that occured, and
- * returns whether assignment failed (i.e., this returns true if there
- * were any errors). */
+   returns whether assignment failed (i.e., this returns true if there
+   were any errors). */
 bool
 ubik_assign_emit_errors(struct ubik_assign_context *ctx);
 
 /* Assigns nodes to everything in the tree of a given expression, adding
- * the results to the graph builder. */
+   the results to the given node vector. The node list must be empty when this
+   function is called. */
 no_ignore ubik_error
 ubik_assign_nodes(
         struct ubik_assign_context *ctx,
-        struct ubik_graph_builder *builder,
+        struct ubik_vector *nodes,
         struct ubik_ast_expr *expr);

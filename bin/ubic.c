@@ -23,11 +23,12 @@
 #include <string.h>
 
 #include "ubik/alloc.h"
+#include "ubik/bytecode.h"
 #include "ubik/compile.h"
 #include "ubik/env.h"
-#include "ubik/ubik.h"
 #include "ubik/parse.h"
 #include "ubik/schedule.h"
+#include "ubik/ubik.h"
 #include "ubik/value.h"
 
 #define c(x) \
@@ -58,7 +59,9 @@ usage(char *argv[])
 no_ignore ubik_error
 save_result(const struct ubik_compile_result *res)
 {
-        return ubik_save(&out, res->graphs, res->n_graphs);
+        struct ubik_workspace ws = {0};
+        ws.n_values = 10;
+        return ubik_bytecode_write(&out, &ws);
 }
 
 int

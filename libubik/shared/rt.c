@@ -22,6 +22,12 @@
 #include "ubik/gc.h"
 #include "ubik/natives.h"
 
+const uint16_t UBIK_MAJOR = 0;
+const uint16_t UBIK_MINOR = 0;
+const uint32_t UBIK_PATCH = 0;
+const uint64_t UBIK_VERSION = (
+        UBIK_MAJOR << 48 | UBIK_MINOR << 32 | UBIK_PATCH);
+
 ubik_error
 ubik_start()
 {

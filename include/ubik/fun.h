@@ -1,5 +1,5 @@
 /*
- * bdagc.h: graph builder
+ * fun.h: utilities for working with function values
  * Copyright (C) 2016, Haldean Brown
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,33 +17,12 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#pragma once
-#include "ubik/dagc.h"
+#include "ubik/rt.h"
 #include "ubik/ubik.h"
 #include "ubik/vector.h"
 
-struct ubik_graph_builder
-{
-        /* members are ubik_dagc_node pointers */
-        struct ubik_vector nodes;
-        struct ubik_dagc_node *result;
-};
-
-no_ignore ubik_error
-ubik_bdagc_init(struct ubik_graph_builder *b, struct ubik_alloc_region *r);
-
-/* Adds a node to the graph. */
-no_ignore ubik_error
-ubik_bdagc_push_node(
-        struct ubik_graph_builder *b,
-        struct ubik_dagc_node *node);
-
-/* Builds the graph. */
-no_ignore ubik_error
-ubik_bdagc_build(
-        struct ubik_dagc **graph,
-        struct ubik_graph_builder *b);
-
-/* Frees a graph builder. */
 void
-ubik_bdagc_free(struct ubik_graph_builder *b);
+ubik_fun_from_vector(
+        struct ubik_value *res,
+        struct ubik_vector *nodes,
+        ubik_word result);

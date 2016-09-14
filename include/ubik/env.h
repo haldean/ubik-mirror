@@ -35,9 +35,9 @@ typedef ubik_error (*ubik_env_cb)(
 /* An association between a URI and a value */
 struct ubik_binding
 {
-        struct ubik_uri           *uri;
-        union ubik_value_or_graph value;
-        struct ubik_value         *type;
+        struct ubik_uri   *uri;
+        struct ubik_value *value;
+        struct ubik_value *type;
 };
 
 struct ubik_env_watch
@@ -107,7 +107,7 @@ ubik_env_free(struct ubik_env *env);
  * */
 no_ignore ubik_error
 ubik_env_get(
-        union ubik_value_or_graph *value,
+        struct ubik_value **value,
         struct ubik_value **type,
         struct ubik_env *env,
         struct ubik_uri *uri);
@@ -123,7 +123,7 @@ no_ignore ubik_error
 ubik_env_overwrite(
         struct ubik_env *env,
         struct ubik_uri *uri,
-        union ubik_value_or_graph value,
+        struct ubik_value *value,
         struct ubik_value *type);
 
 /* Inserts the given value in at the given URI if the URI is
@@ -140,7 +140,7 @@ no_ignore ubik_error
 ubik_env_set(
         struct ubik_env *env,
         struct ubik_uri *uri,
-        union ubik_value_or_graph value,
+        struct ubik_value *value,
         struct ubik_value *type);
 
 /* Returns true if the provided URI is present in the environment. */

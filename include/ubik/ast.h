@@ -75,7 +75,7 @@ struct ubik_ast_atom
         {
                 char *str;
                 ubik_word integer;
-                ubik_float number;
+                double number;
                 struct
                 {
                         char *head;
@@ -92,7 +92,7 @@ struct ubik_ast_arg_list
 {
         char *name;
         struct ubik_ast_arg_list *next;
-        struct ubik_dagc_node *gen;
+        ubik_word gen;
         struct ubik_resolve_name_loc *name_loc;
         struct ubik_ast_loc loc;
 };
@@ -102,7 +102,7 @@ struct ubik_ast_case
         struct ubik_ast_expr *head;
         struct ubik_ast_expr *tail;
         struct ubik_ast_case *next;
-        struct ubik_dagc_node *gen;
+        ubik_word gen;
         struct ubik_ast_loc loc;
         struct ubik_resolve_scope *scope;
 };
@@ -139,7 +139,7 @@ struct ubik_ast_expr
         struct ubik_ast_loc loc;
 
         struct ubik_resolve_scope *scope;
-        struct ubik_dagc_node *gen;
+        ubik_word gen;
         struct ubik_type_expr *type;
 };
 

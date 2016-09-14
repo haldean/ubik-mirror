@@ -4,7 +4,6 @@ top = ..
 c_sources = \
     ./codegen/assign.c \
     ./codegen/ast.c \
-    ./codegen/bdagc.c \
     ./codegen/closure.c \
     ./codegen/compile.c \
     ./codegen/gen.c \
@@ -33,6 +32,7 @@ c_sources = \
     ./shared/error.c \
     ./shared/explain.c \
     ./shared/feedback.c \
+	./shared/fun.c \
     ./shared/list.c \
     ./shared/load.c \
     ./shared/natives.c \

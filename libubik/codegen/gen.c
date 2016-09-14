@@ -41,37 +41,26 @@ ubik_compile_binding(
         struct ubik_env *local_env,
         struct ubik_assign_context *ctx)
 {
-        struct ubik_dagc *res;
         struct ubik_uri *uri;
-        struct ubik_graph_builder builder;
+        struct ubik_value *res;
         struct ubik_value *type;
-        union ubik_value_or_graph ins_value;
+        struct ubik_vector nodes = {.region = ctx->region};
+        size_t i;
 
         ubik_error err;
 
-        err = ubik_bdagc_init(&builder, ctx->region);
+        err = ubik_assign_nodes(ctx, &nodes, binding->expr);
         if (err != OK)
                 return err;
 
-        err = ubik_assign_nodes(ctx, &builder, binding->expr);
+        err = ubik_value_new(&res);
         if (err != OK)
                 return err;
+        ubik_fun_from_vector(res, nodes, binding->expr->gen);
 
-        builder.result = binding->expr->gen;
-        builder.result->is_terminal = true;
-
-        err = ubik_bdagc_build(&res, &builder);
-        if (err != OK)
-                return err;
-
-        uri = calloc(1, sizeof(struct ubik_uri));
-        if (uri == NULL)
-                return ubik_raise(ERR_NO_MEMORY, "uri alloc");
+        ubik_galloc1(&uri, struct ubik_uri);
         err = ubik_uri_package(
                 uri, binding->expr->scope->package_name, binding->name);
-        if (err != OK)
-                return err;
-        err = ubik_take(uri);
         if (err != OK)
                 return err;
         res->identity = uri;
@@ -80,20 +69,9 @@ ubik_compile_binding(
         err = ubik_value_new(&type);
         if (err != OK)
                 return err;
-        type->tag |= TAG_LEFT_WORD | TAG_RIGHT_WORD;
-        type->left.w = 0;
-        type->right.w = 0;
+        type->value_type = UBIK_TYP;
 
-        ins_value.graph = res;
-
-        err = ubik_env_set(local_env, uri, ins_value, type);
-        if (err != OK)
-                return err;
-
-        err = ubik_release(type);
-        if (err != OK)
-                return err;
-        err = ubik_release(res);
+        err = ubik_env_set(local_env, uri, res, type);
         if (err != OK)
                 return err;
 
@@ -102,11 +80,8 @@ ubik_compile_binding(
 
 struct modinit_iterator
 {
-        struct ubik_graph_builder *builder;
+        struct ubik_vector *nodes;
         char *package_name;
-
-        struct ubik_dagc_node **free_nodes;
-        size_t next_node;
 };
 
 no_ignore static ubik_error
@@ -115,75 +90,51 @@ _add_modinit_setter(
         struct ubik_env *env,
         struct ubik_uri *uri)
 {
-        union ubik_value_or_graph value;
+        struct ubik_value *value;
         struct ubik_value *type;
         struct ubik_dagc_store *store_node;
-        struct ubik_dagc_const *const_node;
-        struct ubik_graph_builder *builder;
+        struct ubik_dagc_const *val_node;
         struct modinit_iterator *iter;
         struct ubik_uri *store_uri;
         ubik_error err;
 
         iter = (struct modinit_iterator *) viter;
-        builder = iter->builder;
 
         err = ubik_env_get(&value, &type, env, uri);
         if (err != OK)
                 return err;
 
-        store_uri = calloc(1, sizeof(struct ubik_uri));
-        if (store_uri == NULL)
-                return ubik_raise(ERR_NO_MEMORY, "uri alloc");
+        ubik_galloc1(&store_uri, struct ubik_uri);
         err = ubik_uri_package(store_uri, iter->package_name, uri->name);
         if (err != OK)
                 return err;
 
-        const_node = calloc(1, sizeof(struct ubik_dagc_const));
-        if (const_node == NULL)
-                return ubik_raise(ERR_NO_MEMORY, "modinit node alloc");
+        ubik_galloc1(&val_node, struct ubik_node);
+        val_node->node_type = UBIK_CONST;
+        val_node->id = iter->nodes.n;
+        val_node->value.type = type;
+        val_node->value.value = value;
 
-        const_node->head.node_type = DAGC_NODE_CONST;
-        const_node->head.id = 0;
-        const_node->type = type;
-        const_node->value = value;
-
-        err = ubik_take(value.any);
-        if (err != OK)
-                return err;
-        err = ubik_take(type);
-        if (err != OK)
-                return err;
-
-        store_node = calloc(1, sizeof(struct ubik_dagc_store));
-        if (store_node == NULL)
-                return ubik_raise(ERR_NO_MEMORY, "modinit node alloc");
-
-        store_node->head.node_type = DAGC_NODE_STORE;
-        store_node->head.id = 0;
-        store_node->head.is_terminal = true;
+        ubik_galloc1(&store_node, struct ubik_node);
+        store_node->node_type = UBIK_STORE;
+        store_node->id = iter->nodes.n + 1;
+        store_node->is_terminal = true;
         store_node->loc = store_uri;
-        store_node->value = &const_node->head;
+        store_node->value = val_node->id;
 
-        err = ubik_take(store_uri);
+        err = ubik_vector_append(iter->nodes, val_node);
         if (err != OK)
                 return err;
-
-        err = ubik_bdagc_push_node(builder, &const_node->head);
+        err = ubik_vector_append(iter->nodes, store_node);
         if (err != OK)
                 return err;
-        err = ubik_bdagc_push_node(builder, &store_node->head);
-        if (err != OK)
-                return err;
-
-        iter->free_nodes[iter->next_node++] = &const_node->head;
-        iter->free_nodes[iter->next_node++] = &store_node->head;
 
         return OK;
 }
 
 no_ignore static ubik_error
 ubik_create_modinit(
-        struct ubik_dagc **modinit,
+        struct ubik_value **modinit,
         struct ubik_ast *ast,
         struct ubik_env *local_env,
         enum ubik_load_reason load_reason,
@@ -191,18 +142,13 @@ ubik_create_modinit(
 {
         struct modinit_iterator iter;
         struct ubik_graph_builder builder;
+        struct ubik_vector nodes = {.region = ctx->region};
+        ubik_word result;
         ubik_error err;
         size_t i;
 
-        err = ubik_bdagc_init(&builder, ctx->region);
-        if (err != OK)
-                return err;
-
-        iter.builder = &builder;
+        iter.nodes = &nodes;
         iter.package_name = ast->package_name;
-        iter.free_nodes = calloc(
-                2 * local_env->n, sizeof(struct ubik_dagc_node *));
-        iter.next_node = 0;
 
         err = ubik_env_iterate(_add_modinit_setter, local_env, &iter);
         if (err != OK)
@@ -211,18 +157,17 @@ ubik_create_modinit(
         if (ast->immediate != NULL
                 && (load_reason == LOAD_MAIN || load_reason == LOAD_BLOCK))
         {
-                err = ubik_assign_nodes(ctx, &builder, ast->immediate);
+                err = ubik_assign_nodes(ctx, &nodes, ast->immediate);
                 if (err != OK)
                         return err;
-                ast->immediate->gen->is_terminal = true;
-                builder.result = ast->immediate->gen;
+                result = ast->immediate->gen;
         }
         else if (builder.nodes.n > 0)
         {
                 /* All graphs have to have a result, so we just pick one here.
                  * We'll end up executing all of them anyway, and nothing reads
                  * the modinit's result. */
-                builder.result = builder.nodes.elems[builder.nodes.n - 1];
+                result = nodes.n - 1;
         }
         else
         {
@@ -230,33 +175,16 @@ ubik_create_modinit(
                 goto cleanup;
         }
 
-        err = ubik_bdagc_build(modinit, &builder);
+        err = ubik_value_new(modinit);
         if (err != OK)
                 return err;
-
-        (*modinit)->tag |= TAG_GRAPH_MODINIT;
-        (*modinit)->identity = calloc(1, sizeof(struct ubik_uri));
-        err = ubik_uri_package(
-                (*modinit)->identity, ast->package_name, "__modinit");
-        if (err != OK)
-                return err;
-        err = ubik_take((*modinit)->identity);
-        if (err != OK)
-                return err;
-
-        err = OK;
-
-cleanup:
-        for (i = 0; i < iter.next_node; i++)
-                free(iter.free_nodes[i]);
-        free(iter.free_nodes);
-
-        return err;
+        ubik_fun_from_vector(*modinit, nodes, result);
+        return OK;
 }
 
 no_ignore ubik_error
 ubik_gen_graphs(
-        struct ubik_dagc **res,
+        struct ubik_value **res,
         struct ubik_ast *ast,
         struct ubik_compile_request *req)
 {
