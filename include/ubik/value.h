@@ -27,21 +27,3 @@ ubik_value_eq(struct ubik_value *v1, struct ubik_value *v2);
 
 no_ignore ubik_error
 ubik_value_print(struct ubik_stream *out, struct ubik_value *v);
-
-/* Reads a packed array into a byte array. The last value of the
- * returned array is always NULL, and the returned size does not include
- * the NULL byte. */
-no_ignore ubik_error
-ubik_packed_read(uint8_t **dest, size_t *n, struct ubik_value *src);
-
-/* Reads a string into a byte array. The last value of the
- * returned array is always NULL, and the returned size does not include
- * the NULL byte. */
-no_ignore ubik_error
-ubik_string_read(char **dest, size_t *n, struct ubik_value *src);
-
-no_ignore ubik_error
-ubik_value_as_bool(bool *res, struct ubik_value *v);
-
-no_ignore ubik_error
-ubik_value_pack_string(struct ubik_value *dest, char *src, size_t n);
