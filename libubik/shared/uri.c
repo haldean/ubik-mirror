@@ -22,6 +22,7 @@
 
 #include "ubik/alloc.h"
 #include "ubik/assert.h"
+#include "ubik/rttypes.h"
 #include "ubik/ubik.h"
 #include "ubik/uri.h"
 #include "ubik/value.h"
@@ -59,7 +60,6 @@ ubik_uri_unknown(
         uri->source_len = 0;
         uri->version = 0;
         uri->scope = SCOPE_UNKNOWN;
-        uri->tag = TAG_URI;
         uri->as_value = NULL;
         return _set_hash(uri);
 }
@@ -81,7 +81,6 @@ ubik_uri_user(
         uri->source_len = 0;
         uri->version = 0;
         uri->scope = SCOPE_USER_DEFINED;
-        uri->tag = TAG_URI;
         uri->as_value = NULL;
         return _set_hash(uri);
 }
@@ -108,7 +107,6 @@ ubik_uri_package(
         uri->source_len = strlen(package_buf);
         uri->version = 0;
         uri->scope = SCOPE_PACKAGE;
-        uri->tag = TAG_URI;
         uri->as_value = NULL;
         return _set_hash(uri);
 }
@@ -130,13 +128,12 @@ ubik_uri_native(
         uri->source_len = 0;
         uri->version = 0;
         uri->scope = SCOPE_NATIVE;
-        uri->tag = TAG_URI;
         uri->as_value = NULL;
         return _set_hash(uri);
 }
 
 no_ignore ubik_error
-ubik_uri_nocopy(
+ubik_uri(
         struct ubik_uri *uri,
         char *package,
         char *name)
@@ -147,7 +144,6 @@ ubik_uri_nocopy(
         uri->source_len = strlen(package);
         uri->version = 0;
         uri->scope = SCOPE_PACKAGE;
-        uri->tag = TAG_URI;
         uri->as_value = NULL;
         return _set_hash(uri);
 }
@@ -180,74 +176,87 @@ ubik_uri_eq(struct ubik_uri *u0, struct ubik_uri *u1)
 no_ignore ubik_error
 ubik_uri_from_value(struct ubik_uri *uri, struct ubik_value *uri_val)
 {
-        ubik_error err;
-        struct ubik_value *uri_right, *uri_left;
+        if (uri_val->type != UBIK_TUP)
+                return ubik_raise(ERR_BAD_VALUE, "value is not a URI");
+        if (uri_val->tup.n != 4)
+                return ubik_raise(ERR_BAD_VALUE, "value is not a URI");
 
-        if ((uri_val->tag & ~TAG_TYPE_MASK) != (TAG_LEFT_NODE | TAG_RIGHT_NODE))
-                return ubik_raise(ERR_BAD_TAG, "bad tag for URI root");
+        if (uri_val->tup.elems[0]->type != UBIK_RAT)
+                return ubik_raise(ERR_BAD_VALUE, "value is not a URI");
+        uri->version = uri_val->tup.elems[0]->rat.den;
 
-        uri_left = uri_val->left.t;
-        if ((uri_left->tag & ~TAG_TYPE_MASK) != (TAG_LEFT_WORD | TAG_RIGHT_WORD))
-                return ubik_raise(ERR_BAD_TAG, "bad tag for URI root");
+        if (uri_val->tup.elems[1]->type != UBIK_RAT)
+                return ubik_raise(ERR_BAD_VALUE, "value is not a URI");
+        uri->scope = uri_val->tup.elems[1]->rat.den;
 
-        uri_right = uri_val->right.t;
-        if ((uri_right->tag & ~TAG_TYPE_MASK) != (TAG_LEFT_NODE | TAG_RIGHT_NODE))
-                return ubik_raise(ERR_BAD_TAG, "bad tag for URI right");
+        if (uri_val->tup.elems[2]->type != UBIK_STR)
+                return ubik_raise(ERR_BAD_VALUE, "value is not a URI");
+        uri->name = uri_val->tup.elems[2]->str.data;
+        uri->name_len = uri_val->tup.elems[2]->str.length;
 
-        /* URIs have the following structure:
-         *      LL     version
-         *      LR     scope
-         *      RL     string-encoded name
-         *      RR     string-encoded source
-         */
-        uri->version = uri_left->left.w;
-        uri->scope = uri_left->right.w;
-
-        err = ubik_string_read(&uri->name, &uri->name_len, uri_right->left.t);
-        if (err != OK)
-                return err;
-
-        err = ubik_string_read(&uri->source, &uri->source_len, uri_right->right.t);
-        if (err != OK)
-                return err;
-
-        uri->tag = TAG_URI;
-        uri->refcount = 0;
+        if (uri_val->tup.elems[3]->type != UBIK_STR)
+                return ubik_raise(ERR_BAD_VALUE, "value is not a URI");
+        uri->source = uri_val->tup.elems[3]->str.data;
+        uri->source_len = uri_val->tup.elems[3]->str.length;
 
         uri->as_value = uri_val;
-        err = ubik_take(uri->as_value);
-        if (err != OK)
-                return err;
-
-        err = _set_hash(uri);
-        return err;
+        return _set_hash(uri);
 }
 
 no_ignore ubik_error
-ubik_uri_attach_value(struct ubik_uri *uri)
+ubik_uri_attach_value(struct ubik_uri *uri, struct ubik_workspace *ws)
 {
+        struct ubik_value *v;
         ubik_error err;
-        struct ubik_value *name;
-        struct ubik_value *source;
+        int i;
 
         if (uri->as_value != NULL)
                 return OK;
 
-        err = ubik_value_new(&name);
-        if (err != OK)
-                return err;
-        err = ubik_value_pack_string(name, uri->name, uri->name_len);
+        err = ubik_value_new(&v, ws);
         if (err != OK)
                 return err;
 
-        err = ubik_value_new(&source);
-        if (err != OK)
-                return err;
-        err = ubik_value_pack_string(source, uri->source, uri->source_len);
-        if (err != OK)
-                return err;
+        v->type = UBIK_TUP;
+        v->tup.n = 4;
 
-        #include "uri-value.h"
+        for (i = 0; i < 4; i++)
+        {
+                err = ubik_value_new(&v->tup.elems[i], ws);
+                if (err != OK)
+                        return err;
+                err = ubik_value_new(&v->tup.types[i], ws);
+                if (err != OK)
+                        return err;
+        }
+
+        err = ubik_type_word(v->tup.types[0]);
+        if (err != OK)
+                return err;
+        v->tup.elems[0]->type = UBIK_RAT;
+        v->tup.elems[0]->rat.num = uri->version;
+        v->tup.elems[0]->rat.den = 1;
+
+        err = ubik_type_word(v->tup.types[0]);
+        if (err != OK)
+                return err;
+        v->tup.elems[1]->type = UBIK_RAT;
+        v->tup.elems[1]->rat.num = uri->scope;
+        v->tup.elems[1]->rat.den = 1;
+
+        err = ubik_type_string(v->tup.types[0]);
+        if (err != OK)
+                return err;
+        v->tup.elems[2]->type = UBIK_STR;
+        v->tup.elems[2]->str.data = uri->name;
+        v->tup.elems[2]->str.length = uri->name_len;
+
+        err = ubik_type_string(v->tup.types[0]);
+        if (err != OK)
+                return err;
+        v->tup.elems[3]->type = UBIK_STR;
+        v->tup.elems[3]->str.data = uri->source;
+        v->tup.elems[3]->str.length = uri->source_len;
 
         return OK;
 }
@@ -292,14 +301,12 @@ ubik_uri_parse(struct ubik_uri *uri, char *str)
                 return ubik_raise(ERR_NOT_IMPLEMENTED, "package URIs not supported");
         i++;
 
-        uri->tag = TAG_URI;
         uri->name = strdup(&str[i]);
         uri->name_len = len - i;
         uri->source = NULL;
         uri->source_len = 0;
         uri->version = 0;
         uri->scope = scope;
-        uri->refcount = 0;
         uri->as_value = NULL;
 
         return _set_hash(uri);

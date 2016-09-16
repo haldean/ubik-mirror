@@ -61,7 +61,7 @@ ubik_uri_package(
 /* Creates a URI for a package-scoped resource, but does not copy in the
  * name or package. Guaranteed to allocate no memory. */
 no_ignore ubik_error
-ubik_uri_nocopy(
+ubik_uri(
         struct ubik_uri *uri,
         char *package,
         char *name);
@@ -84,7 +84,7 @@ ubik_uri_eq(struct ubik_uri *u0, struct ubik_uri *u1);
  * as_value field. If the field is already initialized, this function is a
  * no-op. */
 no_ignore ubik_error
-ubik_uri_attach_value(struct ubik_uri *uri);
+ubik_uri_attach_value(struct ubik_uri *uri, struct ubik_workspace *ws);
 
 /* Parses a URI string into a URI struct. Returns struct has no references;
  * caller must take a reference to it. */
