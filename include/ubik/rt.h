@@ -102,8 +102,8 @@ struct ubik_rat
 
 struct ubik_tup
 {
-        struct ubik_value *elems;
-        struct ubik_value *types;
+        struct ubik_value **elems;
+        struct ubik_value **types;
         ubik_word n;
 };
 

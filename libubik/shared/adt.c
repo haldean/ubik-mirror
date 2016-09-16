@@ -40,7 +40,8 @@ ubik_adt_instantiate(
         struct ubik_value *res,
         struct ubik_value *type_decl,
         struct ubik_value *ctor_name,
-        struct ubik_value *args)
+        struct ubik_value *args,
+        struct ubik_workspace *ws)
 {
         ubik_error err;
         unused(type_decl);
@@ -49,7 +50,7 @@ ubik_adt_instantiate(
         if (err != OK)
                 return err;
 
-        err = ubik_list_append(res, ctor_name);
+        err = ubik_list_append(res, ctor_name, ws);
         if (err != OK)
                 return err;
 
@@ -210,7 +211,7 @@ ubik_adt_create_decl(
                         t, src_ctors->name, strlen(src_ctors->name));
                 if (err != OK)
                         return err;
-                err = ubik_list_append(dst_ctor, t);
+                err = ubik_list_append(dst_ctor, t, ws);
                 if (err != OK)
                         return err;
 
@@ -223,12 +224,12 @@ ubik_adt_create_decl(
                         if (err != OK)
                                 return err;
 
-                        err = ubik_list_append(dst_ctor, t);
+                        err = ubik_list_append(dst_ctor, t, ws);
                         if (err != OK)
                                 return err;
                 }
 
-                err = ubik_list_append(dst_ctors, dst_ctor);
+                err = ubik_list_append(dst_ctors, dst_ctor, ws);
                 if (err != OK)
                         return err;
         }
@@ -237,19 +238,19 @@ ubik_adt_create_decl(
         if (err != OK)
                 return err;
 
-        err = ubik_list_append(res, dst_name);
+        err = ubik_list_append(res, dst_name, ws);
         if (err != OK)
                 return err;
 
-        err = ubik_list_append(res, dst_params);
+        err = ubik_list_append(res, dst_params, ws);
         if (err != OK)
                 return err;
 
-        err = ubik_list_append(res, dst_constraints);
+        err = ubik_list_append(res, dst_constraints, ws);
         if (err != OK)
                 return err;
 
-        err = ubik_list_append(res, dst_ctors);
+        err = ubik_list_append(res, dst_ctors, ws);
         if (err != OK)
                 return err;
         return OK;

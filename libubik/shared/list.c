@@ -17,48 +17,49 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include "ubik/alloc.h"
 #include "ubik/list.h"
+#include "ubik/util.h"
 
 /* Creates an empty list backed by the given value. */
 no_ignore ubik_error
 ubik_list_create_empty(struct ubik_value *lst)
 {
-        lst->tag &= TAG_TYPE_MASK;
-        lst->tag |= TAG_LEFT_WORD | TAG_RIGHT_WORD;
-        lst->left.w = 0;
-        lst->right.w = 0;
+        lst->type = UBIK_TUP;
+        lst->tup.n = 0;
         return OK;
 }
 
 /* Appends an item onto the end of the list. */
 no_ignore ubik_error
-ubik_list_append(struct ubik_value *lst, struct ubik_value *v)
+ubik_list_append(
+        struct ubik_value *lst,
+        struct ubik_value *v,
+        struct ubik_workspace *ws)
 {
         ubik_error err;
 
-        while ((lst->tag & TAG_LEFT_WORD) == 0)
+        if (lst->type != UBIK_TUP || (lst->tup.n != 2 && lst->tup.n != 0))
+                return ubik_raise(
+                        ERR_BAD_TAG, "provided value is not a list");
+        while (lst->tup.n == 2)
         {
-                if ((lst->tag & TAG_RIGHT_NODE) == 0)
+                lst = lst->tup.elems[1];
+                if (unlikely(lst->type != UBIK_TUP))
                         return ubik_raise(
                                 ERR_BAD_TAG, "provided value is not a list");
-                lst = lst->right.t;
         }
 
-        lst->tag &= TAG_TYPE_MASK;
-        lst->tag |= TAG_LEFT_NODE | TAG_RIGHT_NODE;
-        lst->left.t = v;
+        lst->tup.n = 2;
+        ubik_galloc((void**) &lst->tup.elems, 2, sizeof(struct ubik_value *));
+        ubik_galloc((void**) &lst->tup.types, 2, sizeof(struct ubik_value *));
 
-        err = ubik_value_new(&lst->right.t);
+        lst->tup.elems[0] = v;
+
+        err = ubik_value_new(&lst->tup.elems[1], ws);
         if (err != OK)
                 return err;
-
-        lst->right.t->tag |= TAG_LEFT_WORD | TAG_RIGHT_WORD;
-        lst->right.t->left.w = 0;
-        lst->right.t->right.w = 0;
-
-        err = ubik_take(v);
-        if (err != OK)
-                return err;
+        lst->tup.elems[1]->type = UBIK_TUP;
 
         return OK;
 }
@@ -68,7 +69,6 @@ ubik_list_extend(struct ubik_value *lst, struct ubik_value *ex)
 {
         size_t size;
         ubik_error err;
-        ubik_word old_refcount;
 
         err = ubik_list_size(&size, ex);
         if (err != OK)
@@ -83,30 +83,18 @@ ubik_list_extend(struct ubik_value *lst, struct ubik_value *ex)
 
         if (size == 0)
         {
-                old_refcount = lst->refcount;
                 *lst = *ex;
-                lst->refcount = old_refcount;
                 return OK;
         }
 
-        while ((lst->right.t->tag & TAG_LEFT_WORD) == 0)
+        while (lst->tup.n == 2 && lst->tup.elems[1]->tup.n == 2)
         {
-                if ((lst->tag & TAG_RIGHT_NODE) == 0)
+                lst = lst->tup.elems[1];
+                if (unlikely(lst->type != UBIK_TUP))
                         return ubik_raise(
                                 ERR_BAD_TAG, "provided value is not a list");
-                lst = lst->right.t;
         }
-
-        err = ubik_release(lst->right.t);
-        if (err != OK)
-                return err;
-
-        lst->right.t = ex;
-
-        err = ubik_take(ex);
-        if (err != OK)
-                return err;
-
+        lst->tup.elems[1] = ex;
         return OK;
 }
 
@@ -116,12 +104,12 @@ ubik_list_size(size_t *ret_size, struct ubik_value *lst)
 {
         size_t size;
 
-        for (size = 0; (lst->tag & TAG_LEFT_WORD) == 0; size++)
+        size = 0;
+        for (size = 0; lst->tup.n == 2; size++, lst = lst->tup.elems[1])
         {
-                if ((lst->tag & TAG_RIGHT_NODE) == 0)
+                if (unlikely(lst->type != UBIK_TUP || lst->tup.n != 2))
                         return ubik_raise(
                                 ERR_BAD_TAG, "provided value is not a list");
-                lst = lst->right.t;
         }
 
         *ret_size = size;
@@ -137,18 +125,19 @@ ubik_list_get(
 {
         size_t seen;
 
-        for (seen = 0; seen < i && (lst->tag & TAG_LEFT_WORD) == 0; seen++)
+        for (seen = 0;
+             seen < i && lst->tup.n == 2;
+             seen++, lst = lst->tup.elems[1])
         {
-                if ((lst->tag & TAG_RIGHT_NODE) == 0)
+                if (unlikely(lst->type != UBIK_TUP || lst->tup.n != 2))
                         return ubik_raise(
                                 ERR_BAD_TAG, "provided value is not a list");
-                lst = lst->right.t;
         }
 
-        if (lst->tag & TAG_LEFT_WORD)
+        if (seen != i)
                 return ubik_raise(
                         ERR_OUT_OF_BOUNDS,
                         "index out of bounds in list access");
-        *val = lst->left.t;
+        *val = lst->tup.elems[0];
         return OK;
 }

@@ -32,7 +32,8 @@ ubik_adt_instantiate(
         struct ubik_value *res,
         struct ubik_value *type_decl,
         struct ubik_value *ctor_name,
-        struct ubik_value *args);
+        struct ubik_value *args,
+        struct ubik_workspace *ws);
 
 /* Returns the name of the ADT that is encoded in an ADT type
  * declaration. */

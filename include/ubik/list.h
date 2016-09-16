@@ -36,7 +36,10 @@ ubik_list_create_empty(struct ubik_value *lst);
 /* Appends an item onto the end of the list. The list takes a reference to the
  * value. */
 no_ignore ubik_error
-ubik_list_append(struct ubik_value *lst, struct ubik_value *);
+ubik_list_append(
+        struct ubik_value *lst,
+        struct ubik_value *,
+        struct ubik_workspace *ws);
 
 /* Concatenates one list to the end of another. */
 no_ignore ubik_error
