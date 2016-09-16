@@ -18,22 +18,33 @@
  */
 
 #ifndef UBIK_RECKLESS
-        #include <stdio.h>
-        #include <stdlib.h>
-        #include "ubik/util.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include "ubik/util.h"
 
-        int
-        break_on_assert();
+int
+break_on_assert();
 
-        #define ubik_assert(x) do { \
-                if (!(x)) { \
-                        fprintf(stderr, \
+#define ubik_assert(x) do {                                     \
+                if (!(x)) {                                     \
+                        fprintf(stderr,                         \
                                 "assertion %s:%d failed: %s\n", \
-                                __FILE__, __LINE__, #x); \
-                        break_on_assert(); \
-                        ubik_trace_print(); \
-                        exit(EXIT_FAILURE); \
+                                __FILE__, __LINE__, #x);        \
+                        break_on_assert();                      \
+                        ubik_trace_print();                     \
+                        exit(EXIT_FAILURE);                     \
                 }} while (0)
+
+#define ubik_unreachable(msg) do {                                      \
+                fprintf(stderr, "unreachable line %s:%d reached: %s\n", \
+                        __FILE__, __LINE__, msg);                       \
+                break_on_assert();                                      \
+                ubik_trace_print();                                     \
+                exit(EXIT_FAILURE);                                     \
+                __builtin_unreachable();                                \
+        } while (0)
+
 #else
-        #define ubik_assert(x)
+#define ubik_assert(x)
+#define ubik_unreachable(msg)
 #endif
