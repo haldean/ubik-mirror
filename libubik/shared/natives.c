@@ -34,8 +34,8 @@
 extern ubik_error _register_adt_ctor_matches(struct ubik_env *env);
 extern ubik_error _register_adt_get(struct ubik_env *env);
 extern ubik_error _register_all_adt_new(struct ubik_env *env);
-extern ubik_error _register_uadd(struct ubik_env *env);
-extern ubik_error _register_usub(struct ubik_env *env);
+extern ubik_error _register_rational_add(struct ubik_env *env);
+extern ubik_error _register_rational_subtract(struct ubik_env *env);
 extern ubik_error _register_eq(struct ubik_env *env);
 extern ubik_error _register_emit(struct ubik_env *env);
 extern ubik_error _register_humanize(struct ubik_env *env);
@@ -104,8 +104,8 @@ ubik_internal_native_create_op(
 }
 
 struct ubik_native_record ubik_native_funcs[] = {
-        { "uadd", "Word -> Word -> Word", NULL },
-        { "usub", "Word -> Word -> Word", NULL },
+        { "rational-add", "Word -> Word -> Word", NULL },
+        { "rational-subtract", "Word -> Word -> Word", NULL },
         { "eq", NULL, NULL },
         { "emit", "String -> String", NULL },
         { "humanize", NULL, NULL },
@@ -230,11 +230,11 @@ ubik_natives_register(struct ubik_env *env)
 {
         ubik_error err;
 
-        err = _register_uadd(env);
+        err = _register_rational_add(env);
         if (err != OK)
                 return err;
 
-        err = _register_usub(env);
+        err = _register_rational_subtract(env);
         if (err != OK)
                 return err;
 
