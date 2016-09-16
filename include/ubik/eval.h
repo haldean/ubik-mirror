@@ -22,4 +22,4 @@
 #include "ubik/ubik.h"
 
 no_ignore ubik_error
-ubik_eval_node(struct ubik_exec_unit *u);
+ubik_node_eval(struct ubik_exec_unit *u);

@@ -117,7 +117,9 @@ struct ubik_fun
         /* The nodes participating in the graph. */
         struct ubik_node *nodes;
         /* The number of nodes in the graph. */
-        size_t n;
+        ubik_word n;
+        /* The number of input nodes in the graph. */
+        ubik_word arity;
         /* The function used to evaluate this graph. If NULL, then the default
            evaluation strategy is used. */
         ubik_graph_evaluator_t evaluator;

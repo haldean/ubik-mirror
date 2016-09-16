@@ -23,6 +23,7 @@
 
 #include "ubik/assert.h"
 #include "ubik/env.h"
+#include "ubik/eval.h"
 #include "ubik/fun.h"
 #include "ubik/schedule.h"
 #include "ubik/util.h"
@@ -381,8 +382,6 @@ _notify_node(
         struct ubik_scheduler *s,
         struct ubik_exec_unit *complete)
 {
-        void *old;
-        void *old_type;
         ubik_error err;
 
 #ifdef UBIK_SCHEDULE_DEBUG
@@ -394,10 +393,10 @@ _notify_node(
         waiting->gexec->nt[waiting->node] = complete->gexec->nt[complete->node];
         waiting->gexec->status[waiting->node] = UBIK_STATUS_COMPLETE;
 
-        err = ubik_env_free(complete->env);
+        err = ubik_env_free(complete->gexec->env);
         if (err != OK)
                 return err;
-        free(complete->env);
+        free(complete->gexec->env);
 
         err = ubik_schedule_complete(s, waiting);
         if (err != OK)
@@ -429,16 +428,17 @@ _collapse_graph(
         notify->notify = (ubik_exec_notify_func) _notify_node;
         notify->arg = e;
 
-        e->node->flags = UBIK_STATUS_WAIT_EVAL;
+        e->gexec->status[e->node] = UBIK_STATUS_WAIT_EVAL;
 
         /* Create a child environment to execute the function in. */
         child_env = calloc(1, sizeof(struct ubik_env));
-        err = ubik_env_make_child(child_env, e->env);
+        err = ubik_env_make_child(child_env, e->gexec->env);
         if (err != OK)
                 return err;
 
         err = ubik_schedule_push(
-                s, e->node->known.graph, child_env, notify);
+                s, e->gexec->nv[e->node], child_env, notify,
+                e->gexec->workspace);
         if (err != OK)
                 return err;
 
@@ -446,9 +446,24 @@ _collapse_graph(
 }
 
 no_ignore static bool
-_is_ready(struct ubik_exec_unit *e)
+is_ready(struct ubik_exec_unit *e)
 {
-        return !(e->node->flags & UBIK_DAGC_WAIT_MASK);
+        return !(e->gexec->status[e->node] & UBIK_STATUS_WAIT_MASK);
+}
+
+no_ignore static bool
+can_collapse(struct ubik_exec_unit *e)
+{
+        struct ubik_value *v;
+        ubik_word arity;
+        v = e->gexec->nv[e->node];
+        if (v->type == UBIK_FUN)
+                return v->fun.arity == 0;
+        if (v->type != UBIK_PAP)
+                return false;
+        for (arity = 0; v->type == UBIK_PAP; arity++, v = v->pap.func);
+        ubik_assert(v->type == UBIK_FUN);
+        return arity == v->fun.arity;
 }
 
 no_ignore static ubik_error
@@ -498,6 +513,8 @@ _dump_exec_unit(struct ubik_exec_unit *u)
         }
         return OK;
         */
+        unused(u);
+        return OK;
 }
 
 no_ignore ubik_error
@@ -535,6 +552,7 @@ _run_single_pass(struct ubik_scheduler *s)
 {
         struct ubik_exec_unit *u, *t;
         struct ubik_exec_unit *prev;
+        ubik_word status;
         ubik_error err;
 
         /* This proceeds in two phases; first, we move everything that is ready
@@ -546,7 +564,7 @@ _run_single_pass(struct ubik_scheduler *s)
         {
                 t = u->next;
 
-                if (_is_ready(u))
+                if (is_ready(u))
                 {
 #ifdef UBIK_SCHEDULE_DEBUG
                         printf("moving %s from waiting to ready\n",
@@ -587,15 +605,14 @@ _run_single_pass(struct ubik_scheduler *s)
         u = s->ready;
         while (u != NULL)
         {
-                err = ubik_dagc_node_eval(u);
+                err = ubik_node_eval(u);
                 if (err != OK)
                         return err;
 
                 s->ready = s->ready->next;
 
-                if (u->node->flags & UBIK_STATUS_COMPLETE &&
-                        *u->node->known.tag & TAG_GRAPH &&
-                        u->node->known.graph->in_arity == 0)
+                status = u->gexec->status[u->node];
+                if (can_collapse(u))
                 {
 #ifdef UBIK_SCHEDULE_DEBUG
                         printf("collapsing %s\n",
@@ -609,7 +626,7 @@ _run_single_pass(struct ubik_scheduler *s)
                         if (err != OK)
                                 return err;
                 }
-                else if (u->node->flags & UBIK_STATUS_COMPLETE)
+                else if (status & UBIK_STATUS_COMPLETE)
                 {
 #ifdef UBIK_SCHEDULE_DEBUG
                         printf("marking %s complete\n",
@@ -619,7 +636,7 @@ _run_single_pass(struct ubik_scheduler *s)
                         if (err != OK)
                                 return err;
                 }
-                else if (u->node->flags & UBIK_DAGC_WAIT_MASK)
+                else if (status & UBIK_STATUS_WAIT_MASK)
                 {
 #ifdef UBIK_SCHEDULE_DEBUG
                         printf("moving %s back to waiting\n",

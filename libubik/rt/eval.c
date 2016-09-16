@@ -194,7 +194,7 @@ _eval_input(struct ubik_exec_unit *u, struct ubik_node *n)
 }
 
 no_ignore ubik_error
-ubik_eval_node(struct ubik_exec_unit *u)
+ubik_node_eval(struct ubik_exec_unit *u)
 {
         struct ubik_node *n;
         struct ubik_value *fun;
