@@ -52,7 +52,7 @@ ubik_internal_native_uri(struct ubik_uri **uri, char *name)
                 return ubik_raise(ERR_NO_MEMORY, "create native uri");
 
         name_len = strlen(name);
-        if (unlikely(name_len < 1))
+        if (unlikely(name_len == 0))
                 return ubik_raise(ERR_BAD_VALUE, "native uri must have name");
 
         err = ubik_uri_native(*uri, name);
@@ -61,51 +61,44 @@ ubik_internal_native_uri(struct ubik_uri **uri, char *name)
 
 no_ignore ubik_error
 ubik_internal_native_create_op(
-        struct ubik_dagc **graph_ptr,
+        struct ubik_value **graph_ptr,
         size_t arity,
-        ubik_native_evaluator_t evaluator)
+        ubik_graph_evaluator_t evaluator,
+        struct ubik_workspace *ws)
 {
-        struct ubik_dagc *graph;
-        struct ubik_dagc_native *ngraph;
-        struct ubik_dagc_input *in;
+        struct ubik_value *graph;
+        struct ubik_node *in;
         size_t i;
         ubik_error err;
 
-        err = ubik_dagc_alloc(
-                &graph, arity + 1, sizeof(struct ubik_dagc_native), NULL);
+        err = ubik_value_new(&graph, ws);
         if (err != OK)
                 return err;
-        ngraph = (struct ubik_dagc_native *) graph;
         *graph_ptr = graph;
+
+        graph->type = UBIK_FUN;
+        graph->fun.n = arity + 1;
+        graph->fun.arity = arity;
+        graph->fun.result = graph->fun.n - 1;
+        graph->fun.evaluator = evaluator;
+
+        ubik_galloc((void**) &graph->fun.nodes,
+                    graph->fun.n, sizeof(struct ubik_node));
 
         /* Create input nodes */
         for (i = 0; i < arity; i++)
         {
-                in = (struct ubik_dagc_input *) graph->nodes[i];
-                if (in == NULL)
-                        return ubik_raise(ERR_NO_MEMORY, "create native dagc");
-                in->head.node_type = DAGC_NODE_INPUT;
-                in->head.known_type = NULL;
-                in->head.known.any = NULL;
-                in->head.is_terminal = 0x00;
-                in->head.flags = 0x00;
-                in->arg_num = i;
+                in = &graph->fun.nodes[i];
+                in->node_type = UBIK_INPUT;
+                in->id = i;
+                in->is_terminal = false;
+                in->input.arg_num = i;
         }
 
         /* Create output native node */
-        graph->nodes[arity]->node_type = DAGC_NODE_NATIVE;
-        graph->nodes[arity]->known_type = NULL;
-        graph->nodes[arity]->known.any = NULL;
-        graph->nodes[arity]->is_terminal = 0x01;
-        graph->nodes[arity]->flags = 0x00;
-
-        graph->result = graph->nodes[arity];
-
-        err = ubik_dagc_init(graph);
-        if (err != OK)
-                return err;
-        graph->tag |= TAG_GRAPH_NATIVE;
-        ngraph->evaluator = evaluator;
+        graph->fun.nodes[arity].node_type = UBIK_NATIVE;
+        graph->fun.nodes[arity].id = arity;
+        graph->fun.nodes[arity].is_terminal = true;
 
         return OK;
 }

@@ -21,11 +21,17 @@
 #include "ubik/ubik.h"
 #include "ubik/natives.h"
 
-const uint16_t UBIK_MAJOR = 0;
-const uint16_t UBIK_MINOR = 0;
-const uint32_t UBIK_PATCH = 0;
-const uint64_t UBIK_VERSION = (
-        UBIK_MAJOR << 48 | UBIK_MINOR << 32 | UBIK_PATCH);
+/* these are used so that we can bit-shift them and still have a constexpr for
+   UBIK_VERSION. */
+#define MAJOR 0
+#define MINOR 0
+#define PATCH 0
+
+const uint16_t UBIK_MAJOR = MAJOR;
+const uint16_t UBIK_MINOR = MINOR;
+const uint32_t UBIK_PATCH = PATCH;
+const uint64_t UBIK_VERSION =
+        (uint64_t) MAJOR << 48 | (uint64_t) MINOR << 32 | PATCH;
 
 ubik_error
 ubik_start()

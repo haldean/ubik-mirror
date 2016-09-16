@@ -65,5 +65,6 @@ no_ignore ubik_error
 ubik_internal_native_create_op(
         struct ubik_value **graph_ptr,
         size_t arity,
-        ubik_graph_evaluator_t evaluator);
+        ubik_graph_evaluator_t evaluator,
+        struct ubik_workspace *ws);
 
