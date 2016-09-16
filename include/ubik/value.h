@@ -26,4 +26,7 @@ bool
 ubik_value_eq(struct ubik_value *v1, struct ubik_value *v2);
 
 no_ignore ubik_error
+ubik_value_humanize(char **res, size_t *res_len, struct ubik_value *v);
+
+no_ignore ubik_error
 ubik_value_print(struct ubik_stream *out, struct ubik_value *v);

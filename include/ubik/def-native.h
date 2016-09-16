@@ -29,10 +29,6 @@
 #error "no DEF_OP_URI specified, should be const char* of method name"
 #endif
 
-#ifndef DEF_ARG_TYPE
-#error "no DEF_ARG_TYPE specified, should be name of type constructor for arguments"
-#endif
-
 #ifndef concat
 #define concat(a, ...) concatr(a, __VA_ARGS__)
 #define concatr(a, ...) a ## __VA_ARGS__
@@ -111,5 +107,4 @@ _op_name(struct ubik_env *env, struct ubik_workspace *ws)
 #undef DEF_OP_URI
 #undef DEF_BINARY
 #undef DEF_UNARY
-#undef DEF_ARG_TYPE
 #undef _op_name
