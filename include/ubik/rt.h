@@ -152,7 +152,10 @@ struct ubik_boo
 
 struct ubik_pap
 {
+        /* the FUN, MUL or PAP value that we're applying another argument to */
         struct ubik_value *func;
+        /* the base FUN or MUL value that's being applied to. */
+        struct ubik_value *base_func;
         struct ubik_value *arg;
         struct ubik_value *arg_type;
 };

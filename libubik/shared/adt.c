@@ -62,33 +62,15 @@ ubik_adt_instantiate(
 }
 
 no_ignore ubik_error
-ubik_adt_get_name(char **res, struct ubik_value *type_decl)
+ubik_adt_get_name(struct ubik_value **res, struct ubik_value *type_decl)
 {
-        struct ubik_value *name;
-        ubik_error err;
-
-        err = ubik_list_get(&name, type_decl, 0);
-        if (err != OK)
-                return err;
-
-        /* TODO V2: this function should return a value, or both data and len */
-        *res = name->str.data;
-        return OK;
+        return ubik_list_get(res, type_decl, 0);
 }
 
 no_ignore ubik_error
-ubik_adt_get_ctor(char **res, struct ubik_value *value)
+ubik_adt_get_ctor(struct ubik_value **res, struct ubik_value *value)
 {
-        struct ubik_value *name;
-        ubik_error err;
-
-        err = ubik_list_get(&name, value, 0);
-        if (err != OK)
-                return err;
-
-        /* TODO V2: this function should return a value, or both data and len */
-        *res = name->str.data;
-        return OK;
+        return ubik_list_get(res, value, 0);
 }
 
 no_ignore ubik_error

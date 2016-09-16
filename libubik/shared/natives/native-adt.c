@@ -27,6 +27,7 @@
 #include "ubik/list.h"
 #include "ubik/natives.h"
 #include "ubik/rttypes.h"
+#include "ubik/schedule.h"
 #include "ubik/ubik.h"
 #include "ubik/util.h"
 #include "ubik/value.h"
@@ -34,61 +35,55 @@
 #include <string.h>
 
 static ubik_error
-_native_adt_new(struct ubik_env *env, struct ubik_dagc *graph)
+_native_adt_new(struct ubik_exec_graph *gexec)
 {
         struct ubik_value *type_decl;
         struct ubik_value *ctor;
         struct ubik_value *args;
         struct ubik_value *res;
-        ubik_error err, cerr;
+        struct ubik_value *graph;
+        ubik_error err;
         size_t i;
-        unused(env);
 
-        type_decl = graph->nodes[0]->known.tree;
-        ctor = graph->nodes[1]->known.tree;
+        ubik_assert(gexec->v->type == UBIK_PAP);
+        graph = gexec->v->pap.base_func;
 
-        err = ubik_value_new(&args);
+        type_decl = gexec->nv[0];
+        ctor = gexec->nv[1];
+
+        err = ubik_value_new(&args, gexec->workspace);
         if (err != OK)
                 return err;
         err = ubik_list_create_empty(args);
         if (err != OK)
-                goto free_args;
+                return err;
 
-        for (i = 2; i < graph->n - 1; i++)
+        for (i = 2; i < graph->fun.n - 1; i++)
         {
-                err = ubik_list_append(args, graph->nodes[i]->known.tree);
+                err = ubik_list_append(
+                        args, gexec->nv[i], gexec->workspace);
                 if (err != OK)
-                        goto free_args;
+                        return err;
         }
 
-        err = ubik_value_new(&res);
+        err = ubik_value_new(&res, gexec->workspace);
         if (err != OK)
                 return err;
-        err = ubik_adt_instantiate(res, type_decl, ctor, args);
+        err = ubik_adt_instantiate(
+                res, type_decl, ctor, args, gexec->workspace);
         if (err != OK)
-                goto free_args;
-        graph->result->known.tree = res;
-
-        graph->result->known_type = type_decl;
-        err = ubik_take(type_decl);
-        if (err != OK)
-                goto free_args;
-
-free_args:
-        cerr = ubik_release(args);
-        if (cerr != OK)
-                return err ? err : cerr;
-
-        return err;
+                return err;
+        gexec->nv[graph->fun.result] = res;
+        gexec->nt[graph->fun.result] = type_decl;
+        return OK;
 }
 
 ubik_error
-_register_all_adt_new(struct ubik_env *env)
+_register_all_adt_new(struct ubik_env *env, struct ubik_workspace *ws)
 {
-        struct ubik_dagc *graph;
+        struct ubik_value *graph;
         struct ubik_uri *uri;
         struct ubik_value *type;
-        union ubik_value_or_graph ins;
         ubik_error err;
         char *func_name;
         int res;
@@ -98,7 +93,7 @@ _register_all_adt_new(struct ubik_env *env)
         {
                 graph = NULL;
                 err = ubik_internal_native_create_op(
-                        &graph, i + 2, _native_adt_new);
+                        &graph, i + 2, _native_adt_new, ws);
                 if (err != OK)
                         return err;
 
@@ -110,24 +105,11 @@ _register_all_adt_new(struct ubik_env *env)
                         return err;
                 free(func_name);
 
-                graph->identity = uri;
-                err = ubik_take(graph->identity);
+                err = ubik_value_new(&type, ws);
                 if (err != OK)
                         return err;
 
-                err = ubik_value_new(&type);
-                if (err != OK)
-                        return err;
-
-                ins.graph = graph;
-                err = ubik_env_set(env, uri, ins, type);
-                if (err != OK)
-                        return err;
-
-                err = ubik_release(type);
-                if (err != OK)
-                        return err;
-                err = ubik_release(graph);
+                err = ubik_env_set(env, uri, graph, type);
                 if (err != OK)
                         return err;
         }
@@ -136,64 +118,56 @@ _register_all_adt_new(struct ubik_env *env)
 }
 
 no_ignore static ubik_error
-_native_adt_ctor_matches(struct ubik_env *env, struct ubik_dagc *graph)
+_native_adt_ctor_matches(struct ubik_exec_graph *gexec)
 {
         struct ubik_value *inst;
-        struct ubik_value *match_name_val;
-        char *match_name;
-        char *ctor_name;
-        size_t match_name_len;
+        struct ubik_value *match_name;
+        struct ubik_value *ctor_name;
+        struct ubik_value *res;
+        struct ubik_value *res_type;
         bool matches;
         ubik_error err;
-        unused(env);
 
-        match_name_val = graph->nodes[0]->known.tree;
-        inst = graph->nodes[1]->known.tree;
-        err = OK;
+        ubik_assert(gexec->v->type == UBIK_PAP);
 
-        err = ubik_string_read(&match_name, &match_name_len, match_name_val);
-        if (err != OK)
-                return err;
+        match_name = gexec->nv[0];
+        inst = gexec->nv[1];
 
         err = ubik_adt_get_ctor(&ctor_name, inst);
         if (err != OK)
-                goto free_match_name;
+                return err;
 
-        matches = strncmp(match_name, ctor_name, match_name_len) == 0;
+        matches = ubik_value_eq(match_name, ctor_name);
 
-        err = ubik_value_new(&graph->result->known.tree);
+        err = ubik_value_new(&res, gexec->workspace);
         if (err != OK)
-                goto free_ctor_name;
-        graph->result->known.tree->tag |= TAG_LEFT_WORD | TAG_RIGHT_WORD;
-        graph->result->known.tree->left.w = matches ? 1 : 0;
+                return err;
+        res->type = UBIK_BOO;
+        res->boo.value = matches;
+        gexec->nv[gexec->v->pap.base_func->fun.result] = res;
 
-        err = ubik_value_new(&graph->result->known_type);
+        err = ubik_value_new(&res_type, gexec->workspace);
         if (err != OK)
-                goto free_ctor_name;
-        err = ubik_type_bool(graph->result->known_type);
+                return err;
+        err = ubik_type_bool(res_type);
         if (err != OK)
-                goto free_ctor_name;
+                return err;
+        gexec->nt[gexec->v->pap.base_func->fun.result] = res_type;
 
-free_ctor_name:
-        free(ctor_name);
-free_match_name:
-        free(match_name);
-
-        return err;
+        return OK;
 }
 
 ubik_error
-_register_adt_ctor_matches(struct ubik_env *env)
+_register_adt_ctor_matches(struct ubik_env *env, struct ubik_workspace *ws)
 {
-        struct ubik_dagc *graph;
+        struct ubik_value *graph;
         struct ubik_uri *uri;
         struct ubik_value *type;
-        union ubik_value_or_graph ins;
         ubik_error err;
 
         graph = NULL;
         err = ubik_internal_native_create_op(
-                &graph, 2, _native_adt_ctor_matches);
+                &graph, 2, _native_adt_ctor_matches, ws);
         if (err != OK)
                 return err;
 
@@ -201,77 +175,57 @@ _register_adt_ctor_matches(struct ubik_env *env)
         if (err != OK)
                 return err;
 
-        graph->identity = uri;
-        err = ubik_take(graph->identity);
+        err = ubik_value_new(&type, ws);
         if (err != OK)
                 return err;
 
-        err = ubik_value_new(&type);
+        err = ubik_env_set(env, uri, graph, type);
         if (err != OK)
                 return err;
 
-        ins.graph = graph;
-        err = ubik_env_set(env, uri, ins, type);
-        if (err != OK)
-                return err;
-
-        err = ubik_release(type);
-        if (err != OK)
-                return err;
-        err = ubik_release(graph);
-        if (err != OK)
-                return err;
         return OK;
 }
 
 no_ignore static ubik_error
-_native_adt_get(struct ubik_env *env, struct ubik_dagc *graph)
+_native_adt_get(struct ubik_exec_graph *gexec)
 {
         struct ubik_value *inst;
         struct ubik_value *index_val;
         struct ubik_value *res;
+        struct ubik_value *res_type;
         ubik_word index;
-        ubik_error err, rerr;
-        unused(env);
+        ubik_error err;
 
-        index_val = graph->nodes[0]->known.tree;
-        inst = graph->nodes[1]->known.tree;
+        index_val = gexec->nv[0];
+        inst = gexec->nv[1];
 
-        ubik_assert(
-                index_val->tag == (TAG_VALUE | TAG_LEFT_WORD | TAG_RIGHT_WORD));
-        index = index_val->left.w;
+        ubik_assert(index_val->type == UBIK_RAT && index_val->rat.den == 1);
+        index = index_val->rat.num;
 
         err = ubik_adt_get_field(&res, inst, index);
         if (err != OK)
                 return err;
-
-        graph->result->known.tree = res;
-        err = ubik_take(res);
+        err = ubik_adt_get_field_type(&res_type, inst, index);
         if (err != OK)
                 return err;
 
-        err = ubik_value_new(&graph->result->known_type);
-        if (err != OK)
-                goto release_res;
+        ubik_assert(gexec->v->type == UBIK_PAP);
+        gexec->nv[gexec->v->pap.base_func->fun.result] = res;
+        gexec->nt[gexec->v->pap.base_func->fun.result] = res_type;
 
         return OK;
-
-release_res:
-        rerr = ubik_release(res);
-        return err != OK ? err : rerr;
 }
 
 ubik_error
-_register_adt_get(struct ubik_env *env)
+_register_adt_get(struct ubik_env *env, struct ubik_workspace *ws)
 {
-        struct ubik_dagc *graph;
+        struct ubik_value *graph;
         struct ubik_uri *uri;
         struct ubik_value *type;
-        union ubik_value_or_graph ins;
         ubik_error err;
 
         graph = NULL;
-        err = ubik_internal_native_create_op(&graph, 2, _native_adt_get);
+        err = ubik_internal_native_create_op(&graph, 2, _native_adt_get, ws);
         if (err != OK)
                 return err;
 
@@ -279,25 +233,13 @@ _register_adt_get(struct ubik_env *env)
         if (err != OK)
                 return err;
 
-        graph->identity = uri;
-        err = ubik_take(graph->identity);
+        err = ubik_value_new(&type, ws);
         if (err != OK)
                 return err;
 
-        err = ubik_value_new(&type);
+        err = ubik_env_set(env, uri, graph, type);
         if (err != OK)
                 return err;
 
-        ins.graph = graph;
-        err = ubik_env_set(env, uri, ins, type);
-        if (err != OK)
-                return err;
-
-        err = ubik_release(type);
-        if (err != OK)
-                return err;
-        err = ubik_release(graph);
-        if (err != OK)
-                return err;
         return OK;
 }
