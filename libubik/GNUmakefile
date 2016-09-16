@@ -21,6 +21,7 @@ c_sources = \
     ./codegen/types.c \
     ./codegen/typesystem.c \
     ./rt/eval.c \
+	./rt/mem.c \
     ./rt/schedule.c \
     ./rt/timer.c \
     ./shared/adt.c \

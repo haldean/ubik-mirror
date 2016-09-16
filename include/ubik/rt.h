@@ -182,7 +182,8 @@ struct ubik_value
 struct ubik_workspace
 {
         struct ubik_value *values;
-        ubik_word n_values;
+        struct ubik_workspace *next;
+        size_t n;
 };
 
 #define UBIK_INVALID_NODE_ID 0xFFFFFFFFFFFFFFFF
@@ -250,6 +251,10 @@ no_ignore ubik_error
 ubik_value_new(
         struct ubik_value **res,
         struct ubik_workspace *ws);
+
+/* Create a workspace with the default capacity. */
+no_ignore ubik_error
+ubik_workspace_new(struct ubik_workspace *ws);
 
 /* Create an error object. */
 ubik_error
