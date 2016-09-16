@@ -19,83 +19,55 @@
 
 #include "ubik/env.h"
 #include "ubik/natives.h"
+#include "ubik/rat.h"
+#include "ubik/schedule.h"
 #include "ubik/ubik.h"
 #include "ubik/util.h"
 
 static ubik_error
-_native_unsigned_add(struct ubik_env *env, struct ubik_dagc *graph)
+_native_rational_add(struct ubik_exec_graph *gexec)
 {
         struct ubik_value *res;
         ubik_error err;
-        ubik_word v0, v1;
 
-        unused(env);
-
-        err = ubik_value_new(&res);
+        err = ubik_value_new(&res, gexec->workspace);
         if (err != OK)
                 return err;
 
-        v0 = graph->nodes[0]->known.tree->left.w;
-        v1 = graph->nodes[1]->known.tree->left.w;
-
-        res->tag |= TAG_LEFT_WORD | TAG_RIGHT_WORD;
-        res->left.w = v0 + v1;
-        res->right.w =
-                res->left.w < v0 || res->left.w < v1
-                ? ERR_OVERFLOW : 0;
-
-        graph->result->known.tree = res;
-        graph->result->known_type = graph->nodes[0]->known_type;
-
-        /* We already own the tree because we just new'ed it. */
-        err = ubik_take(graph->result->known_type);
-        if (err != OK)
-                return err;
+        ubik_rat_add(res, gexec->nv[0], gexec->nv[1]);
+        gexec->nv[2] = res;
+        gexec->nt[2] = gexec->nt[0];
 
         return OK;
 }
 
 #define DEF_BINARY
 #define DEF_ARG_TYPE ubik_type_word
-#define DEF_OP uadd
-#define DEF_OP_EVAL _native_unsigned_add
-#define DEF_OP_URI "uadd"
+#define DEF_OP rational_add
+#define DEF_OP_EVAL _native_rational_add
+#define DEF_OP_URI "rational-add"
 #include "ubik/def-native.h"
 
 static ubik_error
-_native_unsigned_subtract(struct ubik_env *env, struct ubik_dagc *graph)
+_native_rational_subtract(struct ubik_exec_graph *gexec)
 {
         struct ubik_value *res;
         ubik_error err;
-        ubik_word v0, v1;
 
-        unused(env);
-
-        err = ubik_value_new(&res);
+        err = ubik_value_new(&res, gexec->workspace);
         if (err != OK)
                 return err;
 
-        v0 = graph->nodes[0]->known.tree->left.w;
-        v1 = graph->nodes[1]->known.tree->left.w;
-
-        res->tag |= TAG_LEFT_WORD | TAG_RIGHT_WORD;
-        res->left.w = v0 - v1;
-        res->right.w = v0 < v1 ? ERR_UNDERFLOW : 0;
-
-        graph->result->known.tree = res;
-        graph->result->known_type = graph->nodes[0]->known_type;
-
-        /* We already own the tree because we just new'ed it. */
-        err = ubik_take(graph->result->known_type);
-        if (err != OK)
-                return err;
+        ubik_rat_sub(res, gexec->nv[0], gexec->nv[1]);
+        gexec->nv[2] = res;
+        gexec->nt[2] = gexec->nt[0];
 
         return OK;
 }
 
 #define DEF_BINARY
-#define DEF_OP usub
 #define DEF_ARG_TYPE ubik_type_word
-#define DEF_OP_EVAL _native_unsigned_subtract
+#define DEF_OP rational_subtract
+#define DEF_OP_EVAL _native_rational_subtract
 #define DEF_OP_URI "usub"
 #include "ubik/def-native.h"

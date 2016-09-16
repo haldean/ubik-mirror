@@ -43,17 +43,15 @@
 #ifdef DEF_BINARY
 
 no_ignore ubik_error
-_op_name(struct ubik_env *env)
+_op_name(struct ubik_env *env, struct ubik_workspace *ws)
 {
+        struct ubik_value *ngraph;
+        struct ubik_value *type;
+        struct ubik_uri *uri;
         ubik_error err;
 
-        struct ubik_dagc *ngraph;
-        struct ubik_uri *uri;
-        struct ubik_value *type;
-        union ubik_value_or_graph ins;
-
         ngraph = NULL;
-        err = ubik_internal_native_create_op(&ngraph, 2, DEF_OP_EVAL);
+        err = ubik_internal_native_create_op(&ngraph, 2, DEF_OP_EVAL, ws);
         if (err != OK)
                 return err;
 
@@ -61,25 +59,12 @@ _op_name(struct ubik_env *env)
         if (err != OK)
                 return err;
 
-        ngraph->identity = uri;
-        err = ubik_take(uri);
-        if (err != OK)
-                return err;
-
-        err = ubik_value_new(&type);
+        err = ubik_value_new(&type, ws);
         if (err != OK)
                 return err;
         /* TODO: set type here */
 
-        ins.graph = ngraph;
-        err = ubik_env_set(env, uri, ins, type);
-        if (err != OK)
-                return err;
-
-        err = ubik_release(type);
-        if (err != OK)
-                return err;
-        err = ubik_release(ngraph);
+        err = ubik_env_set(env, uri, ngraph, type);
         if (err != OK)
                 return err;
 
@@ -89,17 +74,15 @@ _op_name(struct ubik_env *env)
 #elif defined(DEF_UNARY)
 
 no_ignore ubik_error
-_op_name(struct ubik_env *env)
+_op_name(struct ubik_env *env, struct ubik_workspace *ws)
 {
+        struct ubik_value *ngraph;
+        struct ubik_value *type;
+        struct ubik_uri *uri;
         ubik_error err;
 
-        struct ubik_dagc *ngraph;
-        struct ubik_uri *uri;
-        struct ubik_value *type;
-        union ubik_value_or_graph ins;
-
         ngraph = NULL;
-        err = ubik_internal_native_create_op(&ngraph, 1, DEF_OP_EVAL);
+        err = ubik_internal_native_create_op(&ngraph, 1, DEF_OP_EVAL, ws);
         if (err != OK)
                 return err;
 
@@ -107,25 +90,12 @@ _op_name(struct ubik_env *env)
         if (err != OK)
                 return err;
 
-        ngraph->identity = uri;
-        err = ubik_take(uri);
-        if (err != OK)
-                return err;
-
-        err = ubik_value_new(&type);
+        err = ubik_value_new(&type, ws);
         if (err != OK)
                 return err;
         /* TODO: set type here */
 
-        ins.graph = ngraph;
-        err = ubik_env_set(env, uri, ins, type);
-        if (err != OK)
-                return err;
-
-        err = ubik_release(type);
-        if (err != OK)
-                return err;
-        err = ubik_release(ngraph);
+        err = ubik_env_set(env, uri, ngraph, type);
         if (err != OK)
                 return err;
 
