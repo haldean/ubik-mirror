@@ -140,3 +140,91 @@ ubik_value_eq(struct ubik_value *v1, struct ubik_value *v2)
                 ubik_unreachable("unknown value type in eq");
         }
 }
+
+no_ignore ubik_error
+ubik_value_humanize(char **res, size_t *res_len, struct ubik_value *v)
+{
+        char *t0, *t1;
+        size_t s0, s1;
+        ubik_word i;
+        ubik_error err;
+
+        switch (v->type)
+        {
+        case UBIK_STR:
+                *res = v->str.data;
+                *res_len = v->str.length;
+                return OK;
+
+        case UBIK_RAT:
+                if (v->rat.den == 1)
+                        *res_len = asprintf(res, "%" PRId64, v->rat.num);
+                else
+                        *res_len = asprintf(res, "%" PRId64 "/%" PRIu64,
+                                            v->rat.num, v->rat.den);
+                return OK;
+
+        case UBIK_TUP:
+                t0 = strdup("(");
+                s0 = 1;
+                for (i = 0; i < v->tup.n; i++)
+                {
+                        err = ubik_value_humanize(&t1, &s1, v->tup.elems[i]);
+                        if (err != OK)
+                                return err;
+                        t0 = strcat(t0, t1);
+                        s0 += s1;
+                }
+                *res = strcat(t0, ")");
+                *res_len = s1 + 1;
+                return OK;
+
+        case UBIK_FUN:
+                ubik_unreachable("function printing not implemented");
+
+        case UBIK_MUL:
+                ubik_unreachable("multimethod printing not implemented");
+
+        case UBIK_TYP:
+                ubik_unreachable("type printing not implemented");
+
+        case UBIK_IMP:
+                ubik_unreachable("implementation printing not implemented");
+
+        case UBIK_BOO:
+                if (v->boo.value)
+                {
+                        *res = strdup("true");
+                        *res_len = 4;
+                        return OK;
+                }
+                *res = strdup("false");
+                *res_len = 5;
+                return OK;
+
+        case UBIK_PAP:
+                ubik_unreachable("pap printing not implemented");
+
+        case UBIK_MAX_VALUE_TYPE:
+        default:
+                ubik_unreachable("unknown value type in print");
+        }
+}
+
+no_ignore ubik_error
+ubik_value_print(struct ubik_stream *out, struct ubik_value *v)
+{
+        char *str;
+        size_t len;
+        size_t written;
+        ubik_error err;
+
+        err = ubik_value_humanize(&str, &len, v);
+        if (err != OK)
+                return err;
+
+        written = ubik_stream_write(out, str, len);
+        if (written != len)
+                return ubik_raise(ERR_WRITE_FAILED, "failed to print value");
+        return OK;
+}
