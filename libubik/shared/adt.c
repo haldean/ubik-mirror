@@ -89,6 +89,21 @@ ubik_adt_get_field(
 }
 
 no_ignore ubik_error
+ubik_adt_get_field_type(
+        struct ubik_value **res,
+        struct ubik_value *instance,
+        size_t n)
+{
+        ubik_error err;
+
+        err = ubik_list_get(res, instance, n + 1);
+        if (err != OK)
+                return err;
+
+        return ubik_raise(ERR_NOT_IMPLEMENTED, "get field type");
+}
+
+no_ignore ubik_error
 ubik_adt_inst_size(
         size_t *n,
         struct ubik_value *instance)

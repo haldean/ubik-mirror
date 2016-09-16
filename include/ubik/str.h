@@ -23,6 +23,6 @@
 /* Concatenates two strings and sticks the result in r. */
 void
 ubik_str_concat(
-        struct ubik_value *r,
-        struct ubik_value *v1,
-        struct ubik_value *v2);
+        struct ubik_value *restrict r,
+        struct ubik_value *restrict v1,
+        struct ubik_value *restrict v2);

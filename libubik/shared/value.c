@@ -145,7 +145,7 @@ no_ignore ubik_error
 ubik_value_humanize(char **res, size_t *res_len, struct ubik_value *v)
 {
         char *t0, *t1;
-        size_t s0, s1;
+        size_t s;
         ubik_word i;
         ubik_error err;
 
@@ -165,18 +165,18 @@ ubik_value_humanize(char **res, size_t *res_len, struct ubik_value *v)
                 return OK;
 
         case UBIK_TUP:
-                t0 = strdup("(");
-                s0 = 1;
+                t0 = NULL;
                 for (i = 0; i < v->tup.n; i++)
                 {
-                        err = ubik_value_humanize(&t1, &s1, v->tup.elems[i]);
+                        err = ubik_value_humanize(&t1, &s, v->tup.elems[i]);
                         if (err != OK)
                                 return err;
-                        t0 = strcat(t0, t1);
-                        s0 += s1;
+                        if (t0 == NULL)
+                                asprintf(&t0, "(%s", t1);
+                        else
+                                asprintf(&t0, "%s, %s", t0, t1);
                 }
-                *res = strcat(t0, ")");
-                *res_len = s1 + 1;
+                *res_len = asprintf(res, "%s)", t0);
                 return OK;
 
         case UBIK_FUN:

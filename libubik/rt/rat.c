@@ -17,19 +17,48 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include "ubik/rt.h"
-#include "ubik/ubik.h"
+#include "ubik/rat.h"
 
-/* Adds v1 and v2 and stores the result in r. */
+/* TODO: overflow!? */
+static inline ubik_word
+lcm(ubik_word w0, ubik_word w1)
+{
+        ubik_word t;
+        ubik_word prod;
+
+        prod = w0 * w1;
+
+        while (w1 != 0)
+        {
+                t = w1;
+                w1 = w0 % w1;
+                w0 = t;
+        }
+        return prod / w0;
+}
+
 void
 ubik_rat_add(
         struct ubik_value *restrict r,
         struct ubik_value *restrict v1,
-        struct ubik_value *restrict v2);
+        struct ubik_value *restrict v2)
+{
+        r->type = UBIK_RAT;
+        r->rat.den = lcm(v1->rat.den, v2->rat.den);
+        r->rat.num =
+                v1->rat.num * (r->rat.den / v1->rat.den) +
+                v2->rat.num * (r->rat.den / v2->rat.den);
+}
 
-/* Subtracts v2 from v1 and stores the result in r. */
 void
 ubik_rat_sub(
         struct ubik_value *restrict r,
         struct ubik_value *restrict v1,
-        struct ubik_value *restrict v2);
+        struct ubik_value *restrict v2)
+{
+        r->type = UBIK_RAT;
+        r->rat.den = lcm(v1->rat.den, v2->rat.den);
+        r->rat.num =
+                v1->rat.num * (r->rat.den / v1->rat.den) -
+                v2->rat.num * (r->rat.den / v2->rat.den);
+}

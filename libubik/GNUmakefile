@@ -22,7 +22,9 @@ c_sources = \
     ./codegen/typesystem.c \
     ./rt/eval.c \
 	./rt/mem.c \
+	./rt/rat.c \
     ./rt/schedule.c \
+	./rt/str.c \
     ./rt/timer.c \
     ./shared/adt.c \
     ./shared/alloc.c \

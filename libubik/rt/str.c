@@ -1,5 +1,5 @@
 /*
- * rat.h: utilities for working with rational values
+ * str.c: utilities for working with strings
  * Copyright (C) 2016, Haldean Brown
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,19 +17,21 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include "ubik/rt.h"
-#include "ubik/ubik.h"
+#include <string.h>
 
-/* Adds v1 and v2 and stores the result in r. */
+#include "ubik/alloc.h"
+#include "ubik/str.h"
+
 void
-ubik_rat_add(
+ubik_str_concat(
         struct ubik_value *restrict r,
         struct ubik_value *restrict v1,
-        struct ubik_value *restrict v2);
-
-/* Subtracts v2 from v1 and stores the result in r. */
-void
-ubik_rat_sub(
-        struct ubik_value *restrict r,
-        struct ubik_value *restrict v1,
-        struct ubik_value *restrict v2);
+        struct ubik_value *restrict v2)
+{
+        r->type = UBIK_STR;
+        r->str.length = v1->str.length + v2->str.length;
+        ubik_galloc1(&r->str.data, r->str.length);
+        memcpy(r->str.data, v1->str.data, v1->str.length);
+        memcpy(r->str.data + v1->str.length,
+               v2->str.data, v2->str.length);
+}
