@@ -64,40 +64,30 @@ ubik_adt_instantiate(
 no_ignore ubik_error
 ubik_adt_get_name(char **res, struct ubik_value *type_decl)
 {
-        struct ubik_value *encoded;
+        struct ubik_value *name;
         ubik_error err;
-        char *name;
-        size_t read;
 
-        err = ubik_list_get(&encoded, type_decl, 0);
+        err = ubik_list_get(&name, type_decl, 0);
         if (err != OK)
                 return err;
 
-        err = ubik_string_read(&name, &read, encoded);
-        if (err != OK)
-                return err;
-
-        *res = name;
+        /* TODO V2: this function should return a value, or both data and len */
+        *res = name->str.data;
         return OK;
 }
 
 no_ignore ubik_error
 ubik_adt_get_ctor(char **res, struct ubik_value *value)
 {
-        struct ubik_value *encoded;
+        struct ubik_value *name;
         ubik_error err;
-        char *name;
-        size_t read;
 
-        err = ubik_list_get(&encoded, value, 0);
+        err = ubik_list_get(&name, value, 0);
         if (err != OK)
                 return err;
 
-        err = ubik_string_read(&name, &read, encoded);
-        if (err != OK)
-                return err;
-
-        *res = name;
+        /* TODO V2: this function should return a value, or both data and len */
+        *res = name->str.data;
         return OK;
 }
 
@@ -168,10 +158,9 @@ ubik_adt_create_decl(
         err = ubik_value_new(&dst_name, ws);
         if (err != OK)
                 return err;
-        err = ubik_value_pack_string(
-                dst_name, source->name, strlen(source->name));
-        if (err != OK)
-                return err;
+        dst_name->type = UBIK_STR;
+        dst_name->str.data = source->name;
+        dst_name->str.length = strlen(source->name);
 
         err = ubik_value_new(&dst_params, ws);
         if (err != OK)
@@ -207,10 +196,9 @@ ubik_adt_create_decl(
                 err = ubik_value_new(&t, ws);
                 if (err != OK)
                         return err;
-                err = ubik_value_pack_string(
-                        t, src_ctors->name, strlen(src_ctors->name));
-                if (err != OK)
-                        return err;
+                t->type = UBIK_STR;
+                t->str.data = src_ctors->name;
+                t->str.length = strlen(src_ctors->name);
                 err = ubik_list_append(dst_ctor, t, ws);
                 if (err != OK)
                         return err;
