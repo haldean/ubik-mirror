@@ -59,9 +59,7 @@ usage(char *argv[])
 no_ignore ubik_error
 save_result(const struct ubik_compile_result *res)
 {
-        struct ubik_workspace ws = {0};
-        ws.n_values = 10;
-        return ubik_bytecode_write(&out, &ws);
+        return ubik_bytecode_write(&out, res->request->workspace);
 }
 
 int

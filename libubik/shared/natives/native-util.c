@@ -39,7 +39,7 @@ _native_emit(struct ubik_exec_graph *gexec)
 {
         /* this uses fwrite to remove the requirement for a NULL byte at the end
            of the string. */
-        fwrite(gexec->nv[0]->str.data, sizeof(char), 
+        fwrite(gexec->nv[0]->str.data, sizeof(char),
                gexec->nv[0]->str.length, stdout);
 
         gexec->nv[1] = gexec->nv[0];
