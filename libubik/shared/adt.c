@@ -27,7 +27,6 @@
 
 #include "ubik/adt.h"
 #include "ubik/assert.h"
-#include "ubik/bdagc.h"
 #include "ubik/list.h"
 #include "ubik/rttypes.h"
 #include "ubik/string.h"
@@ -43,27 +42,22 @@ ubik_adt_instantiate(
         struct ubik_value *ctor_name,
         struct ubik_value *args)
 {
-        ubik_error err, rerr;
+        ubik_error err;
         unused(type_decl);
 
         err = ubik_list_create_empty(res);
         if (err != OK)
-                goto release_res;
+                return err;
 
         err = ubik_list_append(res, ctor_name);
         if (err != OK)
-                goto release_res;
+                return err;
 
         err = ubik_list_extend(res, args);
         if (err != OK)
-                goto release_res;
+                return err;
 
         return OK;
-
-release_res:
-
-        rerr = ubik_release(res);
-        return err ? err : rerr;
 }
 
 no_ignore ubik_error
@@ -144,6 +138,7 @@ ubik_adt_inst_size(
 no_ignore static ubik_error
 ubik_adt_create_decl(
         struct ubik_value *res,
+        struct ubik_workspace *ws,
         struct ubik_type *source)
 {
         struct ubik_type_params *src_params;
@@ -169,7 +164,7 @@ ubik_adt_create_decl(
                 return ubik_raise(
                         ERR_NOT_IMPLEMENTED, "no constraints on ADTs yet");
 
-        err = ubik_value_new(&dst_name);
+        err = ubik_value_new(&dst_name, ws);
         if (err != OK)
                 return err;
         err = ubik_value_pack_string(
@@ -177,21 +172,21 @@ ubik_adt_create_decl(
         if (err != OK)
                 return err;
 
-        err = ubik_value_new(&dst_params);
+        err = ubik_value_new(&dst_params, ws);
         if (err != OK)
                 return err;
         err = ubik_list_create_empty(dst_params);
         if (err != OK)
                 return err;
 
-        err = ubik_value_new(&dst_constraints);
+        err = ubik_value_new(&dst_constraints, ws);
         if (err != OK)
                 return err;
         err = ubik_list_create_empty(dst_constraints);
         if (err != OK)
                 return err;
 
-        err = ubik_value_new(&dst_ctors);
+        err = ubik_value_new(&dst_ctors, ws);
         if (err != OK)
                 return err;
         err = ubik_list_create_empty(dst_ctors);
@@ -201,14 +196,14 @@ ubik_adt_create_decl(
         for (src_ctors = source->adt.ctors;
                 src_ctors != NULL; src_ctors = src_ctors->next)
         {
-                err = ubik_value_new(&dst_ctor);
+                err = ubik_value_new(&dst_ctor, ws);
                 if (err != OK)
                         return err;
                 err = ubik_list_create_empty(dst_ctor);
                 if (err != OK)
                         return err;
 
-                err = ubik_value_new(&t);
+                err = ubik_value_new(&t, ws);
                 if (err != OK)
                         return err;
                 err = ubik_value_pack_string(
@@ -218,34 +213,22 @@ ubik_adt_create_decl(
                 err = ubik_list_append(dst_ctor, t);
                 if (err != OK)
                         return err;
-                err = ubik_release(t);
-                if (err != OK)
-                        return err;
 
                 for (src_ctor_param = src_ctors->params;
                         src_ctor_param != NULL;
                         src_ctor_param = src_ctor_param->next)
                 {
                         /* TODO: these should be types */
-                        err = ubik_value_new(&t);
+                        err = ubik_value_new(&t, ws);
                         if (err != OK)
                                 return err;
-                        t->tag |= TAG_LEFT_WORD | TAG_RIGHT_WORD;
-                        t->left.w = 0;
-                        t->right.w = 0;
 
                         err = ubik_list_append(dst_ctor, t);
-                        if (err != OK)
-                                return err;
-                        err = ubik_release(t);
                         if (err != OK)
                                 return err;
                 }
 
                 err = ubik_list_append(dst_ctors, dst_ctor);
-                if (err != OK)
-                        return err;
-                err = ubik_release(dst_ctor);
                 if (err != OK)
                         return err;
         }
@@ -257,28 +240,16 @@ ubik_adt_create_decl(
         err = ubik_list_append(res, dst_name);
         if (err != OK)
                 return err;
-        err = ubik_release(dst_name);
-        if (err != OK)
-                return err;
 
         err = ubik_list_append(res, dst_params);
-        if (err != OK)
-                return err;
-        err = ubik_release(dst_params);
         if (err != OK)
                 return err;
 
         err = ubik_list_append(res, dst_constraints);
         if (err != OK)
                 return err;
-        err = ubik_release(dst_constraints);
-        if (err != OK)
-                return err;
 
         err = ubik_list_append(res, dst_ctors);
-        if (err != OK)
-                return err;
-        err = ubik_release(dst_ctors);
         if (err != OK)
                 return err;
         return OK;
@@ -295,12 +266,12 @@ bind_decl(
         struct ubik_ast_expr *decl_expr;
         ubik_error err;
 
-        err = ubik_value_new(&type_decl);
+        err = ubik_value_new(&type_decl, req->workspace);
         if (err != OK)
                 return err;
         ubik_ref_steal(type_decl, &req->region);
 
-        err = ubik_adt_create_decl(type_decl, type);
+        err = ubik_adt_create_decl(type_decl, req->workspace, type);
         if (err != OK)
                 return err;
 
