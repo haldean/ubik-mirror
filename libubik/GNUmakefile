@@ -37,7 +37,6 @@ c_sources = \
     ./shared/print-ast.c \
     ./shared/rt.c \
     ./shared/rttypes.c \
-    ./shared/store.c \
     ./shared/stream.c \
     ./shared/streamutil.c \
     ./shared/string.c \
