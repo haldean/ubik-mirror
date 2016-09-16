@@ -19,6 +19,7 @@
 
 #include "ubik/rttypes.h"
 #include "ubik/ubik.h"
+#include "ubik/util.h"
 #include "ubik/value.h"
 
 #include <stdio.h>
@@ -37,28 +38,8 @@ ubik_type_satisfied(
 char *
 ubik_type_explain(struct ubik_value *type)
 {
-        char *res;
-        if (type->left.w == BASE_TYPE_WORD && type->right.w == 0)
-        {
-                res = calloc(5, sizeof(char));
-                if (res == NULL)
-                        return res;
-                sprintf(res, "word");
-                return res;
-        }
-        if (type->left.w == BASE_TYPE_PACKED && type->right.w == PACK_TYPE_CHAR)
-        {
-                res = calloc(7, sizeof(char));
-                if (res == NULL)
-                        return res;
-                sprintf(res, "string");
-                return res;
-        }
-        res = calloc(8, sizeof(char));
-        if (res == NULL)
-                return res;
-        sprintf(res, "unknown");
-        return res;
+        unused(type);
+        return "TODO: type explain";
 }
 
 no_ignore ubik_error
@@ -66,90 +47,34 @@ ubik_type_func_apply(
         struct ubik_value *result,
         struct ubik_value *func_type)
 {
-        /* This is super dumb, and is provided only as a way to see if this used
-         * to be causing a crash. */
-        result->tag = func_type->tag;
-        result->left.w = func_type->left.w;
-        result->right.w = func_type->right.w;
-        return OK;
+        unused(result);
+        unused(func_type);
+        return ubik_raise(ERR_NOT_IMPLEMENTED, "runtime types");
 }
 
 no_ignore ubik_error
 ubik_type_match_polyfunc(
-        struct ubik_dagc **result,
+        struct ubik_value **result,
         struct ubik_value *def,
         struct ubik_value *arg_type)
 {
-        /* Polymorphic functions are defined as a list of pairs, where the left
-         * of the pair is the type node and the right of the pair is the graph
-         * to call. */
-        struct ubik_value *pair;
+        unused(result);
+        unused(def);
+        unused(arg_type);
+        return ubik_raise(ERR_NOT_IMPLEMENTED, "runtime types");
+}
 
-        for (;;)
-        {
-                if (!(def->tag & TAG_LEFT_NODE))
-                        return ubik_raise(ERR_BAD_TAG, "bad tag in poly root");
-
-                pair = def->left.t;
-                if (pair->tag != (TAG_VALUE | TAG_LEFT_NODE | TAG_RIGHT_GRAPH))
-                        return ubik_raise(ERR_BAD_TAG, "bad tag in poly pair");
-
-                if (ubik_type_satisfied(pair->left.t, arg_type))
-                {
-                        *result = pair->right.g;
-                        return OK;
-                }
-
-                if (!(def->tag & TAG_RIGHT_NODE))
-                        return ubik_raise(ERR_BAD_TYPE, "no func matches type");
-                def = def->right.t;
+#define failing_ctor(n)                                                 \
+        no_ignore ubik_error ubik_type_##n(struct ubik_value *v) {      \
+                unused(v);                                              \
+                return ubik_raise(                                      \
+                        ERR_NOT_IMPLEMENTED, "runtime types");          \
         }
-}
 
-bool
-ubik_type_is_prim_word(struct ubik_value *value)
-{
-        return value->left.w == BASE_TYPE_WORD
-                || value->left.w == BASE_TYPE_SWORD
-                || value->left.w == BASE_TYPE_BOOL
-                || value->left.w == BASE_TYPE_FLOAT;
-}
-
-no_ignore ubik_error
-ubik_type_word(struct ubik_value *value)
-{
-        value->tag |= TAG_LEFT_WORD | TAG_RIGHT_WORD;
-        value->left.w = BASE_TYPE_WORD;
-        value->right.w = 0;
-        return OK;
-}
-
-no_ignore ubik_error
-ubik_type_string(struct ubik_value *value)
-{
-        value->tag |= TAG_LEFT_WORD | TAG_RIGHT_WORD;
-        value->left.w = BASE_TYPE_PACKED;
-        value->right.w = PACK_TYPE_CHAR;
-        return OK;
-}
-
-no_ignore ubik_error
-ubik_type_bool(struct ubik_value *value)
-{
-        value->tag |= TAG_LEFT_WORD | TAG_RIGHT_WORD;
-        value->left.w = BASE_TYPE_BOOL;
-        value->right.w = 0;
-        return OK;
-}
-
-no_ignore ubik_error
-ubik_type_float(struct ubik_value *value)
-{
-        value->tag |= TAG_LEFT_WORD | TAG_RIGHT_WORD;
-        value->left.w = BASE_TYPE_FLOAT;
-        value->right.w = 0;
-        return OK;
-}
+failing_ctor(word)
+failing_ctor(string)
+failing_ctor(bool)
+failing_ctor(float)
 
 no_ignore ubik_error
 ubik_type_tuple(
@@ -157,28 +82,10 @@ ubik_type_tuple(
         struct ubik_value **field_types,
         size_t n_field_types)
 {
-        ubik_error err;
-        size_t i;
-
-        product->tag |= TAG_LEFT_WORD | TAG_RIGHT_NODE;
-        product->left.w = BASE_TYPE_TUPLE;
-
-        for (i = 0; i < n_field_types; i++)
-        {
-                product->tag |= TAG_RIGHT_NODE;
-                err = ubik_value_new(&product->right.t);
-                if (err != OK)
-                        return err;
-                product = product->right.t;
-
-                product->left.t = field_types[i];
-                product->tag |= TAG_LEFT_NODE;
-        }
-
-        product->tag |= TAG_RIGHT_WORD;
-        product->right.w = 0;
-
-        return OK;
+        unused(product);
+        unused(field_types);
+        unused(n_field_types);
+        return ubik_raise(ERR_NOT_IMPLEMENTED, "runtime types");
 }
 
 no_ignore ubik_error
