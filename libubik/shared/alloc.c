@@ -40,14 +40,10 @@ _append_region(struct ubik_alloc_region *r)
         r->next = calloc(1, sizeof(struct ubik_alloc_region));
         ubik_assert(r->next != NULL);
 
-        r->next->r_cap = REFS_PER_REGION;
         r->next->f_cap = ALLOCS_PER_REGION;
 
         r->next->freeable = calloc(r->next->f_cap, sizeof(void *));
         ubik_assert(r->next->freeable != NULL);
-
-        r->next->releasable = calloc(r->next->r_cap, sizeof(void *));
-        ubik_assert(r->next->releasable != NULL);
 
         r->next->heap = true;
 }
@@ -81,18 +77,6 @@ ubik_ralloc(void **dst, size_t n, size_t elemsize, struct ubik_alloc_region *r)
         ubik_assert(n != 0 && size / n == elemsize);
 
         _ralloc(dst, size, r);
-}
-
-void
-ubik_ref_steal(void *obj, struct ubik_alloc_region *r)
-{
-        while (r->r_used == r->r_cap)
-        {
-                if (r->next == NULL)
-                        _append_region(r);
-                r = r->next;
-        }
-        r->releasable[r->r_used++] = obj;
 }
 
 void
@@ -143,15 +127,11 @@ void
 ubik_alloc_start(struct ubik_alloc_region *r)
 {
         r->f_cap = ALLOCS_PER_REGION;
-        r->r_cap = REFS_PER_REGION;
         r->freeable = calloc(r->f_cap, sizeof(void *));
         ubik_assert(r->freeable != NULL);
-        r->releasable = calloc(r->r_cap, sizeof(void *));
-        ubik_assert(r->releasable != NULL);
         r->heap = false;
         r->next = NULL;
         r->f_used = 0;
-        r->r_used = 0;
 }
 
 void
@@ -169,7 +149,6 @@ void
 ubik_alloc_orphan(struct ubik_alloc_region *r)
 {
         free(r->freeable);
-        free(r->releasable);
         if (r->next != NULL)
                 ubik_alloc_orphan(r->next);
         if (r->heap)
@@ -184,9 +163,6 @@ ubik_alloc_free(struct ubik_alloc_region *r)
                 if (r->freeable[i] != NULL)
                         free(r->freeable[i]);
         free(r->freeable);
-        for (i = 0; i < r->r_used; i++)
-                ubik_assert(ubik_release(r->releasable[i]) == OK);
-        free(r->releasable);
         if (r->next != NULL)
                 ubik_alloc_free(r->next);
         if (r->heap)

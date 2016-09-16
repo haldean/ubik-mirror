@@ -62,28 +62,11 @@ ubik_env_make_child(struct ubik_env *child, struct ubik_env *parent)
 no_ignore ubik_error
 ubik_env_free(struct ubik_env *env)
 {
-        ubik_error err;
-        size_t i;
         struct ubik_env_watch_list *to_free;
 
         if (likely(env->bindings != NULL))
-        {
-                for (i = 0; i < env->cap; i++)
-                {
-                        if (env->bindings[i].value.any == NULL)
-                                continue;
-                        err = ubik_release(env->bindings[i].uri);
-                        if (err != OK)
-                                return err;
-                        err = ubik_release(env->bindings[i].type);
-                        if (err != OK)
-                                return err;
-                        err = ubik_release(env->bindings[i].value.any);
-                        if (err != OK)
-                                return err;
-                }
                 free(env->bindings);
-        }
+
         while (env->watches != NULL)
         {
                 to_free = env->watches;
@@ -129,7 +112,7 @@ ubik_env_iterate(
 
 no_ignore ubik_error
 ubik_env_get(
-        union ubik_value_or_graph *value,
+        struct ubik_value **value,
         struct ubik_value **type,
         struct ubik_env *env,
         struct ubik_uri *uri)
@@ -155,7 +138,7 @@ ubik_env_get(
                         {
                                 if (value != NULL)
                                 {
-                                        value->any = env->bindings[i].value.any;
+                                        *value = env->bindings[i].value;
                                         *type = env->bindings[i].type;
                                 }
                                 found = true;
@@ -211,7 +194,6 @@ _insert(
 {
         size_t i;
         size_t probed;
-        ubik_error err;
 
         i = insert->uri->hash % cap;
         for (probed = 0; probed < cap; probed++)
@@ -224,23 +206,8 @@ _insert(
         }
         if (unlikely(probed == cap))
                 return ubik_raise(ERR_FULL, "env insert");
-
-        /* There was already a value at this key, we need to release our
-         * reference on it. */
-        if (unlikely(binds[i].value.any != NULL))
-        {
-                if (!overwrite)
-                        return ubik_raise(ERR_PRESENT, "env overwrite");
-                err = ubik_release(binds[i].value.any);
-                if (err != OK)
-                        return err;
-                err = ubik_release(binds[i].uri);
-                if (err != OK)
-                        return err;
-                err = ubik_release(binds[i].type);
-                if (err != OK)
-                        return err;
-        }
+        if (unlikely(binds[i].value != NULL && !overwrite))
+                return ubik_raise(ERR_PRESENT, "env overwrite");
 
         binds[i] = *insert;
         return OK;
@@ -300,13 +267,13 @@ no_ignore static ubik_error
 _set(
         struct ubik_env *env,
         struct ubik_uri *uri,
-        union ubik_value_or_graph value,
+        struct ubik_value *value,
         struct ubik_value *type,
         bool overwrite)
 {
         struct ubik_binding new_binding;
         struct ubik_env_watch_list *watch, *to_free;
-        ubik_error err, ignore;
+        ubik_error err;
 
         err = OK;
         if (unlikely(env->cap == 0))
@@ -320,39 +287,9 @@ _set(
         new_binding.value = value;
         new_binding.type = type;
 
-        /* Take a reference to the value. We do this before we know whether the
-         * insert succeeded, because the insert can result in a release, which
-         * itself can result in a GC. We want to make sure that this doesn't get
-         * GCed if we are going to keep this thing, so we take a reference now
-         * and release it if the insert fails later. */
-        err = ubik_take(value.any);
-        if (err != OK)
-                return err;
-        err = ubik_take(type);
-        if (err != OK)
-                return err;
-        err = ubik_take(uri);
-        if (err != OK)
-                return err;
-
         err = _insert(env->bindings, env->cap, &new_binding, overwrite);
         if (err != OK)
-        {
-                /* We're on the clean-up codepath, and we want the returned
-                 * error to be the actual error, not whatever went wrong during
-                 * the release, so we drop this error on the ground.
-                 *
-                 * (I like that it takes this much effort to ignore an
-                 * unignorable parameter) */
-                ignore = ubik_release(value.any);
-                unused(ignore);
-                ignore = ubik_release(type);
-                unused(ignore);
-                ignore = ubik_release(uri);
-                unused(ignore);
-
                 return err;
-        }
         env->n++;
 
         watch = env->watches;
@@ -399,7 +336,7 @@ no_ignore ubik_error
 ubik_env_set(
         struct ubik_env *env,
         struct ubik_uri *uri,
-        union ubik_value_or_graph value,
+        struct ubik_value *value,
         struct ubik_value *type)
 {
         return _set(env, uri, value, type, false);
@@ -409,7 +346,7 @@ no_ignore ubik_error
 ubik_env_overwrite(
         struct ubik_env *env,
         struct ubik_uri *uri,
-        union ubik_value_or_graph value,
+        struct ubik_value *value,
         struct ubik_value *type)
 {
         return _set(env, uri, value, type, true);

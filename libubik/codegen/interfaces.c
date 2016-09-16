@@ -67,7 +67,6 @@ add_multimethod(
         e1->atom->atom_type = ATOM_VALUE;
         e1->atom->loc = e1->loc;
         e1->atom->value = uri.as_value;
-        ubik_ref_steal(e1->atom->value, &req->region);
 
         ubik_alloc1(&e2, struct ubik_ast_expr, &req->region);
         e2->expr_type = EXPR_APPLY;

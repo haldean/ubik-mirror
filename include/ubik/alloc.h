@@ -27,10 +27,6 @@ struct ubik_alloc_region
         size_t f_used;
         size_t f_cap;
 
-        void **releasable;
-        size_t r_used;
-        size_t r_cap;
-
         struct ubik_alloc_region *next;
         /* if true, this region is allocated on the heap and thus should be
          * freed when cleaning up the region. If false, it's assumed to be on
@@ -46,12 +42,6 @@ ubik_galloc(void **dst, size_t n, size_t size);
  * region makes ralloc behave the same as galloc. */
 void
 ubik_ralloc(void **dst, size_t n, size_t size, struct ubik_alloc_region *r);
-
-/* Steal a reference to an object and put it in the region. When the region is
- * cleaned up, this reference will be released. This does not take a new
- * reference; it assumes that an existing reference is there for it to take. */
-void
-ubik_ref_steal(void *obj, struct ubik_alloc_region *r);
 
 /* Reallocates a block to be bigger. All additional memory beyond what was
  * already allocated is left uninitialized. If region is NULL, behaves exactly

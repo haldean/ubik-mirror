@@ -269,7 +269,6 @@ bind_decl(
         err = ubik_value_new(&type_decl, req->workspace);
         if (err != OK)
                 return err;
-        ubik_ref_steal(type_decl, &req->region);
 
         err = ubik_adt_create_decl(type_decl, req->workspace, type);
         if (err != OK)
