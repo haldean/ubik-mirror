@@ -166,6 +166,13 @@ write_value(
         ubik_word i;
         ubik_error err;
 
+        if (v->gc.runtime_managed)
+        {
+                t16 = 0;
+                WRITE_INTO(out, t16);
+                return OK;
+        }
+
         t16 = htons(v->type);
         WRITE_INTO(out, t16);
 

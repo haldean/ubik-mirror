@@ -83,6 +83,8 @@ ubik_internal_native_create_op(
         err = ubik_value_new(&graph, ws);
         if (err != OK)
                 return err;
+        graph->gc.runtime_managed = true;
+
         *graph_ptr = graph;
 
         graph->type = UBIK_FUN;

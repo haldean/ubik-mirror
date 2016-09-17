@@ -40,9 +40,12 @@ struct ubik_exec_graph;
 struct ubik_gc_record
 {
         /* true if there is a reference from a root value to this value. */
-        bool alive;
+        bool alive:1;
         /* true if this value is known to be alive a priori. */
-        bool root;
+        bool root:1;
+        /* true if this value is a runtime-managed value that can't be GCed and
+           can't be persisted. */
+        bool runtime_managed:1;
 };
 
 enum ubik_value_type

@@ -54,6 +54,7 @@ _op_name(struct ubik_env *env, struct ubik_workspace *ws)
         err = ubik_value_new(&type, ws);
         if (err != OK)
                 return err;
+        type->gc.runtime_managed = true;
         type->type = UBIK_TYP;
         /* TODO: set type here */
 
@@ -87,6 +88,7 @@ _op_name(struct ubik_env *env, struct ubik_workspace *ws)
         err = ubik_value_new(&type, ws);
         if (err != OK)
                 return err;
+        type->gc.runtime_managed = true;
         type->type = UBIK_TYP;
         /* TODO: set type here */
 

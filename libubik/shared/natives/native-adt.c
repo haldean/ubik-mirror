@@ -54,6 +54,7 @@ _native_adt_new(struct ubik_exec_graph *gexec)
         err = ubik_value_new(&args, gexec->workspace);
         if (err != OK)
                 return err;
+        args->gc.runtime_managed = true;
         err = ubik_list_create_empty(args);
         if (err != OK)
                 return err;
@@ -69,6 +70,7 @@ _native_adt_new(struct ubik_exec_graph *gexec)
         err = ubik_value_new(&res, gexec->workspace);
         if (err != OK)
                 return err;
+        res->gc.runtime_managed = true;
         err = ubik_adt_instantiate(
                 res, type_decl, ctor, args, gexec->workspace);
         if (err != OK)
@@ -100,6 +102,7 @@ _register_all_adt_new(struct ubik_env *env, struct ubik_workspace *ws)
                 err = ubik_value_new(&type, ws);
                 if (err != OK)
                         return err;
+                type->gc.runtime_managed = true;
                 type->type = UBIK_TYP;
 
                 res = asprintf(&func_name, "ubik-adt-new-%d", i);
@@ -145,6 +148,7 @@ _native_adt_ctor_matches(struct ubik_exec_graph *gexec)
         err = ubik_value_new(&res, gexec->workspace);
         if (err != OK)
                 return err;
+        res->gc.runtime_managed = true;
         res->type = UBIK_BOO;
         res->boo.value = matches;
         gexec->nv[gexec->v->pap.base_func->fun.result] = res;
@@ -152,6 +156,7 @@ _native_adt_ctor_matches(struct ubik_exec_graph *gexec)
         err = ubik_value_new(&res_type, gexec->workspace);
         if (err != OK)
                 return err;
+        res_type->gc.runtime_managed = true;
         err = ubik_type_boo(res_type);
         if (err != OK)
                 return err;
@@ -177,6 +182,7 @@ _register_adt_ctor_matches(struct ubik_env *env, struct ubik_workspace *ws)
         err = ubik_value_new(&type, ws);
         if (err != OK)
                 return err;
+        type->gc.runtime_managed = true;
         type->type = UBIK_TYP;
 
         err = ubik_internal_native_uri(&uri, "ubik-adt-ctor-matches?");
@@ -237,6 +243,7 @@ _register_adt_get(struct ubik_env *env, struct ubik_workspace *ws)
         err = ubik_value_new(&type, ws);
         if (err != OK)
                 return err;
+        type->gc.runtime_managed = true;
         type->type = UBIK_TYP;
 
         err = ubik_internal_native_uri(&uri, "ubik-adt-get");
