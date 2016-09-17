@@ -29,6 +29,7 @@ c_sources = \
     ./shared/adt.c \
     ./shared/alloc.c \
     ./shared/assert.c \
+    ./shared/bytecode.c \
     ./shared/env.c \
     ./shared/error.c \
     ./shared/explain.c \

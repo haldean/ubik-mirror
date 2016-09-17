@@ -190,8 +190,7 @@ struct ubik_workspace
 
 struct ubik_node
 {
-        /* One of the DAGC_NODE constants */
-        ubik_word node_type;
+        enum ubik_node_type node_type;
         /* The unique identifier of this node. Must be the same as the index
            of the node in the graph's node list. */
         ubik_word id;

@@ -71,6 +71,7 @@ nodes_equal(struct ubik_node *n1, struct ubik_node *n2)
         case UBIK_NATIVE:
                 return true;
 
+        case UBIK_MAX_NODE_TYPE:
         default:
                 ubik_unreachable("unknown node type in eq");
         }

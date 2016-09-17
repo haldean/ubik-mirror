@@ -19,6 +19,7 @@
 
 #include "ubik/rt.h"
 #include "ubik/stream.h"
+#include "ubik/ubik.h"
 
 no_ignore ubik_error
 ubik_bytecode_read(struct ubik_workspace *ws, struct ubik_stream *in);

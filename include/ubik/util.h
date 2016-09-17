@@ -53,3 +53,8 @@ ubik_trace_get(char ***res, size_t *n_lines);
 /* Converts a constant to its string value. */
 char *
 ubik_word_explain(ubik_word);
+
+/* Adds two words, storing the result in res, and ensures that the result does
+   not overflow. */
+no_ignore ubik_error
+ubik_check_add(ubik_word *res, ubik_word w1, ubik_word w2);

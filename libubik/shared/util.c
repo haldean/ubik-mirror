@@ -121,3 +121,11 @@ ubik_word_explain(ubik_word word)
                 res[i] = (char) (word >> (8 * (7 - i)));
         return res;
 }
+
+no_ignore ubik_error
+ubik_check_add(ubik_word *res, ubik_word w1, ubik_word w2)
+{
+        if (__builtin_uaddl_overflow(w1, w2, res))
+                return ubik_raise(ERR_OVERFLOW, "addition overflowed");
+        return OK;
+}

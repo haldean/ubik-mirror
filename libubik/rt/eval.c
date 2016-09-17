@@ -233,6 +233,7 @@ ubik_node_eval(struct ubik_exec_unit *u)
                 break;
         case UBIK_NATIVE:
                 return ubik_raise(ERR_BAD_TYPE, "node_eval: can't eval native");
+        case UBIK_MAX_NODE_TYPE:
         default:
                 return ubik_raise(ERR_UNKNOWN_TYPE, "node_eval");
         }
