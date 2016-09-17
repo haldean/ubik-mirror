@@ -84,7 +84,7 @@ run_file(char *fname, bool timing)
         {
                 err = ubik_timer_elapsed(&elapsed, timer);
                 CHECK_ERR("couldn't read timer");
-                printf("\ttime from start to loaded:    %" PRId64 " usec\n", elapsed);
+                printf("time from start to loaded:    %" PRId64 " usec\n", elapsed);
         }
 
         err = ubik_env_init(&env);
@@ -106,7 +106,7 @@ run_file(char *fname, bool timing)
         {
                 err = ubik_timer_elapsed(&elapsed, timer);
                 CHECK_ERR("couldn't read timer");
-                printf("\ttime from start to evaluated: %" PRId64 " usec\n", elapsed);
+                printf("time from start to evaluated: %" PRId64 " usec\n", elapsed);
         }
 
 teardown:
@@ -125,6 +125,8 @@ teardown:
                 }
                 free(s);
         }
+
+        ubik_workspace_free(ws);
 
         teardown_err = ubik_teardown();
         if (teardown_err != OK)
