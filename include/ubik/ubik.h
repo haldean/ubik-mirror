@@ -19,6 +19,7 @@
 
 #pragma once
 #include <stdint.h>
+#include <stddef.h>
 
 extern const uint16_t UBIK_MAJOR;
 extern const uint16_t UBIK_MINOR;
@@ -30,7 +31,7 @@ typedef int64_t  ubik_sword;
 
 /* If true, all errors have backtraces attached but the traces are leaked all
  * over the place. */
-#define UBIK_ERRORS_HAVE_TRACES 0
+#define UBIK_ERRORS_HAVE_TRACES 1
 
 /* Used to communicate errors through the stack. */
 struct ubik_error

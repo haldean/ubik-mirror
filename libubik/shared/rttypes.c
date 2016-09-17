@@ -71,10 +71,9 @@ ubik_type_match_polyfunc(
                         ERR_NOT_IMPLEMENTED, "runtime types");          \
         }
 
-failing_ctor(word)
-failing_ctor(string)
-failing_ctor(bool)
-failing_ctor(float)
+failing_ctor(rat)
+failing_ctor(str)
+failing_ctor(boo)
 
 no_ignore ubik_error
 ubik_type_tuple(

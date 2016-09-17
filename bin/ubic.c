@@ -97,6 +97,7 @@ main(int argc, char *argv[])
         else
                 req.cb = save_result;
         req.feedback = &feedback;
+        req.workspace = ws;
 
         if (strcmp(req.source_name, "-") == 0)
         {

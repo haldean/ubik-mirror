@@ -44,23 +44,14 @@ ubik_type_match_polyfunc(
 char *
 ubik_type_explain(struct ubik_value *type);
 
-/* Returns true if the values of the given type are "primitive words", meaning
- * that their representation is entirely contained in the left value of their
- * associated node. */
-bool
-ubik_type_is_prim_word(struct ubik_value *value);
+no_ignore ubik_error
+ubik_type_rat(struct ubik_value *value);
 
 no_ignore ubik_error
-ubik_type_word(struct ubik_value *value);
+ubik_type_str(struct ubik_value *value);
 
 no_ignore ubik_error
-ubik_type_string(struct ubik_value *value);
-
-no_ignore ubik_error
-ubik_type_bool(struct ubik_value *value);
-
-no_ignore ubik_error
-ubik_type_float(struct ubik_value *value);
+ubik_type_boo(struct ubik_value *value);
 
 no_ignore ubik_error
 ubik_type_tuple(

@@ -190,6 +190,7 @@ ubik_gen_graphs(
         ctx.region = &req->region;
         ctx.feedback = req->feedback;
         ctx.errors.region = &req->region;
+        ctx.workspace = req->workspace;
 
         err = ubik_env_init(&local_env);
         if (err != OK)

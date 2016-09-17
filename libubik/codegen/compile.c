@@ -24,6 +24,7 @@
 #include <unistd.h>
 
 #include "ubik/adt.h"
+#include "ubik/assert.h"
 #include "ubik/assign.h"
 #include "ubik/compile.h"
 #include "ubik/feedback.h"
@@ -408,6 +409,7 @@ ubik_compile_enqueue(
         if (userreq->feedback == NULL)
                 printf("warning: compilation feedback unavailable, no feedback "
                        "stream provided\n");
+        ubik_assert(userreq->workspace != NULL);
 
         req = calloc(1, sizeof(struct ubik_compile_request));
         if (req == NULL)
