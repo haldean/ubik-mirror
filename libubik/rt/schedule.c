@@ -673,3 +673,28 @@ ubik_schedule_run(struct ubik_scheduler *s)
         }
         return OK;
 }
+
+no_ignore ubik_error
+ubik_schedule_push_roots(
+        struct ubik_scheduler *s,
+        struct ubik_env *env,
+        struct ubik_workspace *ws)
+{
+        ubik_error err;
+        size_t i;
+
+        for (; ws != NULL; ws = ws->next)
+        {
+                for (i = 0; i < ws->n; i++)
+                {
+                        if (!ws->values[i].gc.root)
+                                continue;
+                        err = ubik_schedule_push(
+                                s, &ws->values[i], env, NULL, ws);
+                        if (err != OK)
+                                return err;
+                }
+        }
+
+        return OK;
+}

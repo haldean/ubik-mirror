@@ -23,151 +23,90 @@
 #include <string.h>
 
 #include "ubik/assert.h"
-#include "ubik/dagc.h"
+#include "ubik/bytecode.h"
 #include "ubik/env.h"
-#include "ubik/ubik.h"
+#include "ubik/rt.h"
 #include "ubik/schedule.h"
 #include "ubik/stream.h"
 #include "ubik/timer.h"
+#include "ubik/ubik.h"
 #include "ubik/util.h"
 #include "ubik/value.h"
 
-#define CHECK_ERR(msg, label) \
+#define CHECK_ERR(msg) \
         do { if (err != OK) \
         { \
                 char *expl = ubik_error_explain(err); \
                 printf(msg ": %s\n", expl); \
                 free(err); free(expl); \
-                goto label; \
+                goto teardown; \
         } } while(0)
 
 ubik_error
-test_file(char *fname, bool debug, bool timing)
+run_file(char *fname, bool timing)
 {
         struct ubik_stream stream;
         struct ubik_stream sstdout;
-        struct ubik_dagc **graphs;
+        struct ubik_workspace *ws;
         struct ubik_env env;
         struct ubik_scheduler *s;
-        struct ubik_value *expected, *actual;
-        size_t n_graphs, i, modinit_i;
         ubik_error err, teardown_err;
         struct ubik_timer *timer;
         int64_t elapsed;
-        bool pushed_modinit;
 
-        err = OK;
-        n_graphs = 0;
-        graphs = NULL;
+        ws = NULL;
         s = NULL;
-        expected = NULL;
 
         if (timing)
         {
                 err = ubik_timer_new(&timer);
-                CHECK_ERR("couldn't create timer", teardown);
+                CHECK_ERR("couldn't create timer");
                 err = ubik_timer_start(timer);
-                CHECK_ERR("couldn't start timer", teardown);
+                CHECK_ERR("couldn't start timer");
         }
 
         err = ubik_start();
-        CHECK_ERR("couldn't start ubik", teardown);
+        CHECK_ERR("couldn't start ubik");
 
         err = ubik_stream_rfile(&stream, fname);
-        CHECK_ERR("couldn't open file", teardown);
+        CHECK_ERR("couldn't open file");
 
         err = ubik_stream_wfilep(&sstdout, stdout);
-        CHECK_ERR("couldn't open stdout", teardown);
+        CHECK_ERR("couldn't open stdout");
 
-        err = ubik_load(&graphs, &n_graphs, &stream);
-        CHECK_ERR("couldn't load file", teardown);
+        err = ubik_workspace_new(&ws);
+        CHECK_ERR("couldn't allocate workspace");
 
-        ubik_assert(n_graphs != 0);
+        err = ubik_bytecode_read(ws, &stream);
+        CHECK_ERR("couldn't load file");
 
         if (timing)
         {
                 err = ubik_timer_elapsed(&elapsed, timer);
-                CHECK_ERR("couldn't read timer", teardown);
+                CHECK_ERR("couldn't read timer");
                 printf("\ttime from start to loaded:    %" PRId64 " usec\n", elapsed);
         }
 
-        if (debug)
-        {
-                err = ubik_value_new(&expected);
-                CHECK_ERR("couldn't create expected value", teardown);
-
-                err = ubik_value_load(expected, &stream);
-                if (err != OK && err->error_code == ERR_NO_DATA)
-                {
-                        free(err);
-                        /* No expected result for this run, we'll just run it and make
-                         * sure we don't crash. */
-                        err = ubik_release(expected);
-                        CHECK_ERR("couldn't release expected", teardown);
-                        expected = NULL;
-                }
-                else
-                        CHECK_ERR("couldn't load expected", teardown);
-        }
-
         err = ubik_env_init(&env);
-        CHECK_ERR("couldn't create environment", teardown);
+        CHECK_ERR("couldn't create environment");
 
         err = ubik_schedule_new(&s);
-        CHECK_ERR("couldn't create scheduler", teardown);
+        CHECK_ERR("couldn't create scheduler");
 
-        modinit_i = 0;
-        pushed_modinit = false;
-        for (i = 0; i < n_graphs; i++)
-        {
-                if (graphs[i]->tag & TAG_GRAPH_MODINIT)
-                {
-                        err = ubik_schedule_push(s, graphs[i], &env, NULL);
-                        CHECK_ERR("couldn't push graph into scheduler", teardown);
-
-                        modinit_i = i;
-                        pushed_modinit = true;
-                }
-        }
-        ubik_assert(pushed_modinit);
+        err = ubik_schedule_push_roots(s, &env, ws);
+        CHECK_ERR("couldn't schedule root objects");
 
         err = ubik_schedule_run(s);
-        CHECK_ERR("couldn't run scheduler", teardown);
+        CHECK_ERR("couldn't run scheduler");
 
         err = ubik_env_free(&env);
-        CHECK_ERR("couldn't free environment", teardown);
+        CHECK_ERR("couldn't free environment");
 
         if (timing)
         {
                 err = ubik_timer_elapsed(&elapsed, timer);
-                CHECK_ERR("couldn't read timer", teardown);
+                CHECK_ERR("couldn't read timer");
                 printf("\ttime from start to evaluated: %" PRId64 " usec\n", elapsed);
-        }
-
-        if (debug && expected != NULL)
-        {
-                actual = graphs[modinit_i]->result->known.tree;
-
-                if (actual == NULL || !ubik_value_eq(expected, actual))
-                {
-                        printf("fail: %s\n\texpected:  ", fname);
-                        err = ubik_value_print(&sstdout, expected);
-                        CHECK_ERR("couldn't print expected", teardown);
-
-                        printf("\n\t  actual:  ");
-                        if (actual != NULL)
-                        {
-                                err = ubik_value_print(&sstdout, actual);
-                                CHECK_ERR("couldn't print actual", teardown);
-                        }
-                        else
-                        {
-                                printf("not evaluated");
-                        }
-                        printf("\n");
-                        err = ubik_raise(ERR_TEST_FAILED, NULL);
-                        goto teardown;
-                }
         }
 
 teardown:
@@ -187,43 +126,6 @@ teardown:
                 free(s);
         }
 
-        if (graphs != NULL)
-        {
-                for (i = 0; i < n_graphs; i++)
-                {
-                        if (graphs[i] == NULL)
-                                continue;
-                        teardown_err = ubik_release(graphs[i]);
-                        if (teardown_err != OK)
-                        {
-                                char *explain = ubik_error_explain(teardown_err);
-                                printf("graph release failed: %s\n", explain);
-                                free(explain);
-                                if (err == OK)
-                                        err = teardown_err;
-                                else
-                                        free(teardown_err);
-                        }
-
-                }
-                free(graphs);
-        }
-
-        if (expected != NULL)
-        {
-                teardown_err = ubik_release(expected);
-                if (teardown_err != OK)
-                {
-                        char *explain = ubik_error_explain(teardown_err);
-                        printf("expected val release failed: %s\n", explain);
-                        free(explain);
-                        if (err == OK)
-                                err = teardown_err;
-                        else
-                                free(teardown_err);
-                }
-        }
-
         teardown_err = ubik_teardown();
         if (teardown_err != OK)
         {
@@ -237,37 +139,22 @@ teardown:
         }
 
         ubik_stream_close(&stream);
-
-        if (err == OK && debug)
-                printf("ok:   %s\n", fname);
-
         return err;
 }
 
 int
 main(int argc, char *argv[])
 {
-        uint32_t n_failures;
-        int i;
-        char *debug_opt;
-        bool debug;
         char *timing_opt;
         bool timing;
-
-        debug_opt = getenv("UBIK_DEBUG");
-        debug = debug_opt != NULL && strlen(debug_opt) > 0;
 
         timing_opt = getenv("UBIK_TIMING");
         timing = timing_opt != NULL && strlen(timing_opt) > 0;
 
-        n_failures = 0;
-        for (i = 1; i < argc; i++)
+        if (argc == 1)
         {
-                if (test_file(argv[i], debug, timing) != OK)
-                        n_failures++;
+                printf("no bytecode files given, aborting\n");
+                return 1;
         }
-
-        if (debug && n_failures)
-                printf("%d of %d failed\n", n_failures, argc - 1);
-        return n_failures;
+        return (run_file(argv[1], timing) == OK) ? 0 : 2;
 }

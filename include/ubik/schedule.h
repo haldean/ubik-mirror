@@ -109,6 +109,13 @@ ubik_schedule_push(
         struct ubik_exec_notify *notify,
         struct ubik_workspace *workspace);
 
+/* Pushes all root values from a workspace into the scheduler for execution. */
+no_ignore ubik_error
+ubik_schedule_push_roots(
+        struct ubik_scheduler *s,
+        struct ubik_env *env,
+        struct ubik_workspace *ws);
+
 /* Marks an execution unit complete. */
 no_ignore ubik_error
 ubik_schedule_complete(struct ubik_scheduler *s, struct ubik_exec_unit *e);

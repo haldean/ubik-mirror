@@ -44,11 +44,11 @@ ubik_value_new(
                         return OK;
                 }
         }
-        ubik_galloc1(&ws->next, struct ubik_workspace);
-        ws = ws->next;
-        err = ubik_workspace_new(ws);
+
+        err = ubik_workspace_new(&ws->next);
         if (err != OK)
                 return err;
+        ws = ws->next;
 
         *res = &ws->values[0];
         ws->n = 1;
@@ -56,13 +56,18 @@ ubik_value_new(
 }
 
 no_ignore ubik_error
-ubik_workspace_new(struct ubik_workspace *ws)
+ubik_workspace_new(struct ubik_workspace **ref)
 {
+        struct ubik_workspace *ws;
+
+        ubik_galloc1(&ws, struct ubik_workspace);
         ubik_galloc(
                 (void**) ws->values,
                 workspace_cap,
                 sizeof(struct ubik_value));
         ws->next = 0;
         ws->n = 0;
+        *ref = ws;
+
         return OK;
 }

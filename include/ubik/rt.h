@@ -39,7 +39,10 @@ struct ubik_exec_graph;
 
 struct ubik_gc_record
 {
+        /* true if there is a reference from a root value to this value. */
         bool alive;
+        /* true if this value is known to be alive a priori. */
+        bool root;
 };
 
 enum ubik_value_type
@@ -176,7 +179,7 @@ struct ubik_value
                 struct ubik_boo boo;
                 struct ubik_pap pap;
         };
-        struct ubik_gc_record rec;
+        struct ubik_gc_record gc;
 };
 
 struct ubik_workspace
@@ -253,7 +256,7 @@ ubik_value_new(
 
 /* Create a workspace with the default capacity. */
 no_ignore ubik_error
-ubik_workspace_new(struct ubik_workspace *ws);
+ubik_workspace_new(struct ubik_workspace **ws);
 
 /* Create an error object. */
 ubik_error
