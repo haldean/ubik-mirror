@@ -81,6 +81,7 @@ struct modinit_iterator
 {
         struct ubik_vector *nodes;
         char *package_name;
+        struct ubik_alloc_region *region;
 };
 
 no_ignore static ubik_error
@@ -103,22 +104,22 @@ _add_modinit_setter(
         if (err != OK)
                 return err;
 
-        ubik_ralloc1(&store_uri, struct ubik_uri, iter->region);
-        err = ubik_uri_package(store_uri, iter->package_name, uri->name);
+        ubik_alloc1(&store_uri, struct ubik_uri, iter->region);
+        err = ubik_uri(store_uri, iter->package_name, uri->name);
         if (err != OK)
                 return err;
 
-        ubik_ralloc1(&val_node, struct ubik_node, iter->region);
+        ubik_alloc1(&val_node, struct ubik_node, iter->region);
         val_node->node_type = UBIK_VALUE;
         val_node->id = iter->nodes->n;
         val_node->value.type = type;
         val_node->value.value = value;
 
-        ubik_ralloc1(&store_node, struct ubik_node, iter->region);
+        ubik_alloc1(&store_node, struct ubik_node, iter->region);
         store_node->node_type = UBIK_STORE;
         store_node->id = iter->nodes->n + 1;
         store_node->is_terminal = true;
-        store_node->store.loc = store_uri;
+        store_node->store.loc = ubik_uri_dup(store_uri);
         store_node->store.value = val_node->id;
 
         err = ubik_vector_append(iter->nodes, val_node);
@@ -146,6 +147,7 @@ ubik_create_modinit(
 
         iter.nodes = &nodes;
         iter.package_name = ast->package_name;
+        iter.region = ctx->region;
 
         err = ubik_env_iterate(_add_modinit_setter, local_env, &iter);
         if (err != OK)

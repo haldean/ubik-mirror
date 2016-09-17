@@ -53,15 +53,10 @@ c_sources = \
     ./shared/natives/native-seq.c \
     ./shared/natives/native-util.c
 
-buildtree_sources = \
-    ./tree/uri-value.tree \
-    ./tree/humanize-poly.tree
-
 CFLAGS := $(CFLAGS) -Itree -I.
 objects = $(patsubst %.c,%.o,$(c_sources))
 deps = $(patsubst %.c,%.d,$(c_sources))
-buildtree_headers = $(patsubst %.tree,%.h,$(buildtree_sources))
-built_headers = $(buildtree_headers) codegen/grammar.h
+built_headers = codegen/grammar.h
 
 libubik.a: $(objects)
 	$(AR) rcs $@ $(objects)
@@ -70,9 +65,6 @@ $(objects): %.o: %.c $(built_headers)
 	$(CC) -c -fPIC -MD -o $@ $(CFLAGS) $<
 
 -include $(patsubst %.o,%.d,$(objects))
-
-tree/%.h: tree/%.tree
-	$(PYTHON) ../res/buildtree/buildtree.py $< $@
 
 codegen/grammar.y: codegen/grammar/*.y
 	ls -1 codegen/grammar/*.y | sort | xargs cat > $@
@@ -88,7 +80,6 @@ codegen/token.c: codegen/token.l
 clean:
 	rm -f libubik.a \
 		$(objects) \
-		$(buildtree_headers) \
 		$(deps) \
 		codegen/grammar.{c,h,output,y} \
 	       	codegen/token.c

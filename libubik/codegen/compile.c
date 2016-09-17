@@ -422,7 +422,6 @@ ubik_compile_enqueue(
         ubik_alloc1(&job, struct ubik_compile_job, &req->region);
         job->request = req;
         job->ast = NULL;
-        job->dep_graphs.region = &req->region;
         job->status = COMPILE_WAIT_FOR_AST;
 
         return ubik_vector_append(&cenv->to_compile, job);
