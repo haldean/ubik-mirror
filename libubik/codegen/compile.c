@@ -374,18 +374,18 @@ compile_job(
         res->request = job->request;
         res->ast = job->ast;
 
+        if (job->request->cb != NULL)
+        {
+                err = job->request->cb(res);
+                if (err != OK)
+                        return err;
+        }
+
+        job->status = COMPILE_DONE;
         err = ubik_vector_append(&cenv->compiled, res);
         if (err != OK)
-                goto free_res;
-
-        if (job->request->cb != NULL)
-                job->request->cb(res);
-        job->status = COMPILE_DONE;
+                return err;
         return OK;
-
-free_res:
-        free(res);
-        return err;
 }
 
 no_ignore ubik_error
