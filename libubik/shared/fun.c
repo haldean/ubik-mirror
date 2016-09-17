@@ -46,3 +46,67 @@ ubik_fun_from_vector(
         res->fun.result = result;
         res->fun.nodes[res->fun.result].is_terminal = true;
 }
+
+no_ignore ubik_error
+ubik_fun_get_deps(
+        ubik_word *d1, ubik_word *d2, ubik_word *d3,
+        struct ubik_node *n)
+{
+        switch (n->node_type)
+        {
+        case UBIK_APPLY:
+                *d1 = n->apply.func;
+                *d2 = n->apply.arg;
+                *d3 = UBIK_INVALID_NODE_ID;
+                return OK;
+        case UBIK_STORE:
+                *d1 = n->store.value;
+                *d2 = UBIK_INVALID_NODE_ID;
+                *d3 = UBIK_INVALID_NODE_ID;
+                return OK;
+        case UBIK_REF:
+                *d1 = n->ref.referrent;
+                *d2 = UBIK_INVALID_NODE_ID;
+                *d3 = UBIK_INVALID_NODE_ID;
+                return OK;
+        case UBIK_COND:
+                *d1 = n->cond.condition;
+                *d2 = n->cond.if_true;
+                *d3 = n->cond.if_false;
+                return OK;
+        case UBIK_NATIVE:
+        case UBIK_LOAD:
+        case UBIK_INPUT:
+        case UBIK_VALUE:
+                *d1 = UBIK_INVALID_NODE_ID;
+                *d2 = UBIK_INVALID_NODE_ID;
+                *d3 = UBIK_INVALID_NODE_ID;
+                return OK;
+
+        case UBIK_MAX_NODE_TYPE:
+        default:
+                return ubik_raise(ERR_BAD_TYPE, "bad node type in deps");
+        }
+}
+
+no_ignore ubik_error
+ubik_fun_get_parents(
+        struct ubik_vector *parents, struct ubik_value *graph, ubik_word node)
+{
+        ubik_word i;
+        ubik_word d1, d2, d3;
+        ubik_error err;
+
+        for (i = 0; i < graph->fun.n; i++)
+        {
+                err = ubik_fun_get_deps(&d1, &d2, &d3, &graph->fun.nodes[i]);
+                if (d1 == node || d2 == node || d3 == node)
+                {
+                        err = ubik_vector_append(
+                                parents, (void *) ((uintptr_t) i));
+                        if (err != OK)
+                                return err;
+                }
+        }
+        return OK;
+}
