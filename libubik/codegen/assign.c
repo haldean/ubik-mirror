@@ -227,7 +227,7 @@ _assign_atom_node(
                         return err;
                 n->value.value->type = UBIK_STR;
                 n->value.value->str.length = strlen(expr->atom->str);
-                n->value.value->str.data = expr->atom->str;
+                n->value.value->str.data = strdup(expr->atom->str);
                 return OK;
         }
         return ubik_raise(ERR_UNKNOWN_TYPE, "compile atom type");

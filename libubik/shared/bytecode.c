@@ -236,9 +236,14 @@ write_value(
                         if (err != OK)
                                 return err;
                 }
+                return OK;
+
+        case UBIK_TYP:
+                t16 = htonw(v->typ.t);
+                WRITE_INTO(out, t16);
+                return OK;
 
         case UBIK_MUL:
-        case UBIK_TYP:
         case UBIK_IMP:
                 return ubik_raise(
                         ERR_NOT_IMPLEMENTED,

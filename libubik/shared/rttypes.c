@@ -64,16 +64,29 @@ ubik_type_match_polyfunc(
         return ubik_raise(ERR_NOT_IMPLEMENTED, "runtime types");
 }
 
-#define failing_ctor(n)                                                 \
-        no_ignore ubik_error ubik_type_##n(struct ubik_value *v) {      \
-                v->type = UBIK_TYP;                                     \
-                return ubik_raise(                                      \
-                        ERR_NOT_IMPLEMENTED, "runtime types");          \
-        }
+no_ignore ubik_error
+ubik_type_str(struct ubik_value *v)
+{
+        v->type = UBIK_TYP;
+        v->typ.t = UBIK_TYPE_STR;
+        return OK;
+}
 
-failing_ctor(rat)
-failing_ctor(str)
-failing_ctor(boo)
+no_ignore ubik_error
+ubik_type_rat(struct ubik_value *v)
+{
+        v->type = UBIK_TYP;
+        v->typ.t = UBIK_TYPE_RAT;
+        return OK;
+}
+
+no_ignore ubik_error
+ubik_type_boo(struct ubik_value *v)
+{
+        v->type = UBIK_TYP;
+        v->typ.t = UBIK_TYPE_BOO;
+        return OK;
+}
 
 no_ignore ubik_error
 ubik_type_tuple(

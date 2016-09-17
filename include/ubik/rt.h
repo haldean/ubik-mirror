@@ -90,6 +90,16 @@ enum ubik_node_type
         UBIK_MAX_NODE_TYPE,
 };
 
+enum ubik_rt_type
+{
+        /* these are all assigned explicit, stable constants, because this enum
+           is contained within persisted bytecode. */
+        UBIK_TYPE_STR = 1,
+        UBIK_TYPE_RAT = 2,
+        UBIK_TYPE_BOO = 3,
+        UBIK_TYPE_ADT = 4,
+};
+
 struct ubik_str
 {
         ubik_word length;
@@ -138,8 +148,7 @@ struct ubik_mul
 
 struct ubik_typ
 {
-        /* TODO */
-        ubik_word whyyyy;
+        enum ubik_node_type t;
 };
 
 struct ubik_imp
