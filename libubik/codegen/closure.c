@@ -86,6 +86,7 @@ apply_closure(
         ubik_alloc1(&name->atom, struct ubik_ast_atom, &req->region);
         name->atom->atom_type = ATOM_NAME;
 
+        bind = NULL;
         for (i = 0; i < (*head)->scope->names.n; i++)
         {
                 bind = (struct ubik_resolve_name *)
@@ -93,7 +94,7 @@ apply_closure(
                 if (strcmp(bind->name, resolving_name) == 0)
                         break;
         }
-        ubik_assert(strcmp(bind->name, resolving_name) == 0);
+        ubik_assert(bind && strcmp(bind->name, resolving_name) == 0);
 
         ubik_alloc1(
                 &name->atom->name_loc, struct ubik_resolve_name_loc,
