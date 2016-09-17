@@ -18,6 +18,7 @@
  */
 
 #include <arpa/inet.h>
+#include <string.h>
 
 #include "ubik/assert.h"
 #include "ubik/bytecode.h"
@@ -25,20 +26,79 @@
 #include "ubik/util.h"
 
 /* Reads sizeof(x) bytes into x from out. */
-#define READ_INTO(x, out)                                       \
-        if (ubik_stream_read(&x, out, sizeof(x)) != sizeof(x))  \
+#define READ_INTO(x, in)                                        \
+        if (ubik_stream_read(&x, in, sizeof(x)) != sizeof(x))   \
                 return ubik_raise(ERR_NO_DATA, #x);
 #define WRITE_INTO(out, x)                                      \
         if (ubik_stream_write(out, &x, sizeof(x)) != sizeof(x)) \
                 return ubik_raise(ERR_WRITE_FAILED, #x);
 
+no_ignore static ubik_error
+read_value(
+        struct ubik_value *res,
+        struct ubik_stream *in,
+        struct ubik_workspace *root)
+{
+        uint16_t t16;
+        uint8_t t8;
+
+        READ_INTO(t16, in);
+        t16 = ntohs(t16);
+        res->type = t16;
+
+        READ_INTO(t8, in);
+        res->gc.root = t8;
+
+        unused(root);
+        return OK;
+}
+
 no_ignore ubik_error
 ubik_bytecode_read(
-        struct ubik_workspace *ws,
+        struct ubik_workspace **res,
         struct ubik_stream *in)
 {
-        unused(ws);
-        unused(in);
+        struct ubik_workspace *ws;
+        struct ubik_workspace *root;
+        uint64_t n;
+        uint64_t i;
+        uint64_t j;
+        ubik_error err;
+        char head[4];
+        uint32_t version;
+
+        if (ubik_stream_read(head, in, 4) != 4)
+                return ubik_raise(ERR_NO_DATA, "header");
+        if (strncmp(head, "ubik", 4) != 0)
+                return ubik_raise(ERR_BAD_HEADER, "not valid ubik bytecode");
+
+        READ_INTO(version, in);
+        version = ntohl(version);
+        if (version != UBIK_BYTECODE_VERSION)
+                return ubik_raise(
+                        ERR_BAD_HEADER, "unsupported bytecode version");
+
+        READ_INTO(n, in);
+        n = ntohw(n);
+
+        err = ubik_workspace_prealloced(&ws, n);
+        if (err != OK)
+                return err;
+        root = ws;
+        *res = ws;
+
+        for (i = 0; i < n; i++)
+        {
+                ubik_assert(ws != NULL);
+                for (j = 0; j < ws->n && i < n; j++, i++)
+                {
+                        err = read_value(&ws->values[i], in, root);
+                        if (err != OK)
+                                return err;
+                }
+                ws = ws->next;
+        }
+
         return OK;
 }
 
@@ -175,6 +235,9 @@ write_value(
 
         t16 = htons(v->type);
         WRITE_INTO(out, t16);
+
+        t8 = v->gc.root ? 1 : 0;
+        WRITE_INTO(out, t8);
 
         switch (v->type)
         {

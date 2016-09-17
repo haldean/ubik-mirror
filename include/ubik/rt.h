@@ -270,6 +270,10 @@ ubik_value_new(
 no_ignore ubik_error
 ubik_workspace_new(struct ubik_workspace **ws);
 
+/* Create a workspace with the given number of values preallocated. */
+no_ignore ubik_error
+ubik_workspace_prealloced(struct ubik_workspace **ws, size_t prealloc);
+
 /* Destroys a workspace. Assumes the workspace was allocated using
    ubik_workspace_new. */
 void

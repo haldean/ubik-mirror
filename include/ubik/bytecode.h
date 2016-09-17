@@ -22,7 +22,7 @@
 #include "ubik/ubik.h"
 
 no_ignore ubik_error
-ubik_bytecode_read(struct ubik_workspace *ws, struct ubik_stream *in);
+ubik_bytecode_read(struct ubik_workspace **ws, struct ubik_stream *in);
 
 no_ignore ubik_error
 ubik_bytecode_write(struct ubik_stream *out, struct ubik_workspace *ws);

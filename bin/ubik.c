@@ -65,8 +65,8 @@ run_file(char *fname, bool timing)
                 CHECK_ERR("couldn't start timer");
         }
 
-        err = ubik_workspace_new(&ws);
-        CHECK_ERR("couldn't allocate workspace");
+        err = ubik_bytecode_read(&ws, &stream);
+        CHECK_ERR("couldn't load file");
 
         err = ubik_start(ws);
         CHECK_ERR("couldn't start ubik");
@@ -76,9 +76,6 @@ run_file(char *fname, bool timing)
 
         err = ubik_stream_wfilep(&sstdout, stdout);
         CHECK_ERR("couldn't open stdout");
-
-        err = ubik_bytecode_read(ws, &stream);
-        CHECK_ERR("couldn't load file");
 
         if (timing)
         {
