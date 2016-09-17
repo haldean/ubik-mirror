@@ -262,6 +262,34 @@ write_value(
         }
 }
 
+no_ignore static ubik_error
+attach_values_to_uris(struct ubik_value *v, struct ubik_workspace *root)
+{
+        ubik_word i;
+        ubik_error err;
+
+        if (v->type != UBIK_FUN)
+                return OK;
+        for (i = 0; i < v->fun.n; i++)
+        {
+                if (v->fun.nodes[i].node_type == UBIK_LOAD)
+                {
+                        err = ubik_uri_attach_value(
+                                v->fun.nodes[i].load.loc, root);
+                        if (err != OK)
+                                return err;
+                }
+                else if (v->fun.nodes[i].node_type == UBIK_STORE)
+                {
+                        err = ubik_uri_attach_value(
+                                v->fun.nodes[i].store.loc, root);
+                        if (err != OK)
+                                return err;
+                }
+        }
+        return OK;
+}
+
 no_ignore ubik_error
 ubik_bytecode_write(
         struct ubik_stream *out,
@@ -272,6 +300,16 @@ ubik_bytecode_write(
         uint32_t t32;
         uint64_t t64;
         ubik_error err;
+
+        for (ws = root; ws != NULL; ws = ws->next)
+        {
+                for (i = 0; i < ws->n; i++)
+                {
+                        err = attach_values_to_uris(&ws->values[i], root);
+                        if (err != OK)
+                                return err;
+                }
+        }
 
         if (ubik_stream_write(out, "ubik", 4) != 4)
                 return ubik_raise(ERR_WRITE_FAILED, "header");

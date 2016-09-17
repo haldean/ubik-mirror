@@ -220,6 +220,11 @@ ubik_uri_attach_value(struct ubik_uri *uri, struct ubik_workspace *ws)
         v->type = UBIK_TUP;
         v->tup.n = 4;
 
+        ubik_galloc(
+                (void**) &v->tup.elems, sizeof(struct ubik_value *), v->tup.n);
+        ubik_galloc(
+                (void**) &v->tup.types, sizeof(struct ubik_value *), v->tup.n);
+
         for (i = 0; i < 4; i++)
         {
                 err = ubik_value_new(&v->tup.elems[i], ws);
@@ -248,16 +253,18 @@ ubik_uri_attach_value(struct ubik_uri *uri, struct ubik_workspace *ws)
         if (err != OK)
                 return err;
         v->tup.elems[2]->type = UBIK_STR;
-        v->tup.elems[2]->str.data = uri->name;
+        v->tup.elems[2]->str.data = strdup(uri->name);
         v->tup.elems[2]->str.length = uri->name_len;
 
         err = ubik_type_str(v->tup.types[3]);
         if (err != OK)
                 return err;
         v->tup.elems[3]->type = UBIK_STR;
-        v->tup.elems[3]->str.data = uri->source;
+        v->tup.elems[3]->str.data = strdup(
+                uri->source == NULL ? "" : uri->source);
         v->tup.elems[3]->str.length = uri->source_len;
 
+        uri->as_value = v;
         return OK;
 }
 
