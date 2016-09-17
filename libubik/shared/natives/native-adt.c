@@ -152,7 +152,7 @@ _native_adt_ctor_matches(struct ubik_exec_graph *gexec)
         err = ubik_value_new(&res_type, gexec->workspace);
         if (err != OK)
                 return err;
-        err = ubik_type_bool(res_type);
+        err = ubik_type_boo(res_type);
         if (err != OK)
                 return err;
         gexec->nt[gexec->v->pap.base_func->fun.result] = res_type;

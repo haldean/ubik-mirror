@@ -230,28 +230,28 @@ ubik_uri_attach_value(struct ubik_uri *uri, struct ubik_workspace *ws)
                         return err;
         }
 
-        err = ubik_type_word(v->tup.types[0]);
+        err = ubik_type_rat(v->tup.types[0]);
         if (err != OK)
                 return err;
         v->tup.elems[0]->type = UBIK_RAT;
         v->tup.elems[0]->rat.num = uri->version;
         v->tup.elems[0]->rat.den = 1;
 
-        err = ubik_type_word(v->tup.types[0]);
+        err = ubik_type_rat(v->tup.types[0]);
         if (err != OK)
                 return err;
         v->tup.elems[1]->type = UBIK_RAT;
         v->tup.elems[1]->rat.num = uri->scope;
         v->tup.elems[1]->rat.den = 1;
 
-        err = ubik_type_string(v->tup.types[0]);
+        err = ubik_type_str(v->tup.types[0]);
         if (err != OK)
                 return err;
         v->tup.elems[2]->type = UBIK_STR;
         v->tup.elems[2]->str.data = uri->name;
         v->tup.elems[2]->str.length = uri->name_len;
 
-        err = ubik_type_string(v->tup.types[0]);
+        err = ubik_type_str(v->tup.types[0]);
         if (err != OK)
                 return err;
         v->tup.elems[3]->type = UBIK_STR;

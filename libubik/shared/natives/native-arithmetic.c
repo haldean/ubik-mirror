@@ -42,7 +42,7 @@ _native_rational_add(struct ubik_exec_graph *gexec)
 }
 
 #define DEF_BINARY
-#define DEF_ARG_TYPE ubik_type_word
+#define DEF_ARG_TYPE ubik_type_rat
 #define DEF_OP rational_add
 #define DEF_OP_EVAL _native_rational_add
 #define DEF_OP_URI "rational-add"
@@ -66,7 +66,7 @@ _native_rational_subtract(struct ubik_exec_graph *gexec)
 }
 
 #define DEF_BINARY
-#define DEF_ARG_TYPE ubik_type_word
+#define DEF_ARG_TYPE ubik_type_rat
 #define DEF_OP rational_subtract
 #define DEF_OP_EVAL _native_rational_subtract
 #define DEF_OP_URI "rational-subtract"

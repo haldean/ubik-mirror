@@ -50,7 +50,7 @@ _native_emit(struct ubik_exec_graph *gexec)
 
 #define DEF_UNARY
 #define DEF_OP emit
-#define DEF_ARG_TYPE ubik_type_string
+#define DEF_ARG_TYPE ubik_type_str
 #define DEF_OP_EVAL _native_emit
 #define DEF_OP_URI "emit"
 #include "ubik/def-native.h"
@@ -68,7 +68,7 @@ _native_eq(struct ubik_exec_graph *gexec)
         err = ubik_value_new(&res_type, gexec->workspace);
         if (err != OK)
                 return err;
-        err = ubik_type_bool(res_type);
+        err = ubik_type_boo(res_type);
         if (err != OK)
                 return err;
 
@@ -110,7 +110,7 @@ _native_humanize(struct ubik_exec_graph *gexec)
         res->str.data = str;
         res->str.length = str_size;
 
-        err = ubik_type_string(type);
+        err = ubik_type_str(type);
         if (err != OK)
                 return err;
 

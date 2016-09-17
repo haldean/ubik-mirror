@@ -96,17 +96,17 @@ ubik_type_builtin_from_name(
 
         if (strcmp(name, "Word") == 0)
         {
-                err = ubik_type_word(value);
+                err = ubik_type_rat(value);
                 return err;
         }
         if (strcmp(name, "String") == 0)
         {
-                err = ubik_type_string(value);
+                err = ubik_type_str(value);
                 return err;
         }
         if (strcmp(name, "Float") == 0)
         {
-                err = ubik_type_float(value);
+                err = ubik_type_rat(value);
                 return err;
         }
 

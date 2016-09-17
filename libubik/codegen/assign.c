@@ -149,7 +149,7 @@ _assign_atom_node(
                 if (err != OK)
                         return err;
                 /* TODO: type these! */
-                err = ubik_type_word(n->value.type);
+                err = ubik_type_rat(n->value.type);
                 if (err != OK)
                         return err;
 
@@ -218,7 +218,7 @@ _assign_atom_node(
                 err = ubik_value_new(&n->value.type, ctx->workspace);
                 if (err != OK)
                         return err;
-                err = ubik_type_string(n->value.type);
+                err = ubik_type_str(n->value.type);
                 if (err != OK)
                         return err;
 

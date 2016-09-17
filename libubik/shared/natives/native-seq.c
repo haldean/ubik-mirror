@@ -47,7 +47,7 @@ _native_concat(struct ubik_exec_graph *gexec)
 
 #define DEF_BINARY
 #define DEF_OP concat
-#define DEF_ARG_TYPE ubik_type_string
+#define DEF_ARG_TYPE ubik_type_str
 #define DEF_OP_EVAL _native_concat
 #define DEF_OP_URI "concat"
 #include "ubik/def-native.h"
