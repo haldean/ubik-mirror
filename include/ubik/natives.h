@@ -35,7 +35,9 @@ extern struct ubik_native_record ubik_native_funcs[];
 extern const size_t ubik_native_funcs_n;
 
 no_ignore ubik_error
-ubik_natives_register(struct ubik_env *env);
+ubik_natives_register(
+        struct ubik_env *env,
+        struct ubik_workspace *ws);
 
 /* Called to store type objects on each native function in the function
  * table. Must be called before any operation that checks for native

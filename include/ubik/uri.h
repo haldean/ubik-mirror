@@ -94,3 +94,11 @@ ubik_uri_parse(struct ubik_uri *uri, char *str);
 /* Creates a string representation of a URI. */
 char *
 ubik_uri_explain(struct ubik_uri *uri);
+
+/* Frees a URI object. */
+void
+ubik_uri_free(struct ubik_uri *uri);
+
+/* Copies a URI object. */
+struct ubik_uri *
+ubik_uri_dup(struct ubik_uri *uri);

@@ -34,11 +34,11 @@ const uint64_t UBIK_VERSION =
         (uint64_t) MAJOR << 48 | (uint64_t) MINOR << 32 | PATCH;
 
 ubik_error
-ubik_start()
+ubik_start(struct ubik_workspace *ws)
 {
         ubik_error err;
 
-        err = ubik_natives_register(ubik_env_get_root());
+        err = ubik_natives_register(ubik_env_get_root(), ws);
         if (err != OK)
                 return err;
 

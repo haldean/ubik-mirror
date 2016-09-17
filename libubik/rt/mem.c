@@ -17,9 +17,15 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include <stdlib.h>
+#include <string.h>
+
 #include "ubik/alloc.h"
+#include "ubik/assert.h"
 #include "ubik/rt.h"
 #include "ubik/ubik.h"
+#include "ubik/uri.h"
+#include "ubik/util.h"
 
 static const size_t workspace_cap = 1024;
 
@@ -33,6 +39,7 @@ ubik_value_new(
         if (ws->n < workspace_cap)
         {
                 *res = &ws->values[ws->n++];
+                (*res)->gc.alive = true;
                 return OK;
         }
         while (ws->next != NULL)
@@ -41,6 +48,7 @@ ubik_value_new(
                 if (ws->n < workspace_cap)
                 {
                         *res = &ws->values[ws->n++];
+                        (*res)->gc.alive = true;
                         return OK;
                 }
         }
@@ -51,6 +59,7 @@ ubik_value_new(
         ws = ws->next;
 
         *res = &ws->values[0];
+        (*res)->gc.alive = true;
         ws->n = 1;
         return OK;
 }
@@ -61,13 +70,69 @@ ubik_workspace_new(struct ubik_workspace **ref)
         struct ubik_workspace *ws;
 
         ubik_galloc1(&ws, struct ubik_workspace);
-        ubik_galloc(
-                (void**) ws->values,
-                workspace_cap,
-                sizeof(struct ubik_value));
+        ws->values = aligned_alloc(
+                sizeof(void *), workspace_cap * sizeof(struct ubik_value));
+        bzero(ws->values, workspace_cap * sizeof(struct ubik_value));
+        if (ws->values == NULL)
+                return ubik_raise(ERR_NO_MEMORY, "couldn't allocate new values");
         ws->next = 0;
         ws->n = 0;
         *ref = ws;
 
         return OK;
+}
+
+void
+free_value(struct ubik_value *v)
+{
+        size_t i;
+        struct ubik_node *n;
+
+        switch (v->type)
+        {
+        case UBIK_STR:
+                free(v->str.data);
+                return;
+
+        case UBIK_TUP:
+                free(v->tup.elems);
+                free(v->tup.types);
+                return;
+
+        case UBIK_FUN:
+                for (i = 0; i < v->fun.n; i++)
+                {
+                        n = &v->fun.nodes[i];
+                        if (n->node_type == UBIK_LOAD)
+                                ubik_uri_free(n->load.loc);
+                        else if (n->node_type == UBIK_STORE)
+                                ubik_uri_free(n->store.loc);
+                }
+                free(v->fun.nodes);
+                return;
+
+        case UBIK_BOO:
+        case UBIK_RAT:
+        case UBIK_MUL:
+        case UBIK_TYP:
+        case UBIK_IMP:
+        case UBIK_PAP:
+                return;
+
+        case UBIK_MAX_VALUE_TYPE:
+        default:
+                ubik_unreachable("bad value type in workspace");
+        }
+}
+
+void
+ubik_workspace_free(struct ubik_workspace *ws)
+{
+        size_t i;
+        if (ws->next != NULL)
+                ubik_workspace_free(ws->next);
+        for (i = 0; i < ws->n; i++)
+                free_value(&ws->values[i]);
+        free(ws->values);
+        free(ws);
 }

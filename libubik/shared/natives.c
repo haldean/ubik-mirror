@@ -31,15 +31,24 @@
 
 #include <string.h>
 
-extern ubik_error _register_adt_ctor_matches(struct ubik_env *env);
-extern ubik_error _register_adt_get(struct ubik_env *env);
-extern ubik_error _register_all_adt_new(struct ubik_env *env);
-extern ubik_error _register_rational_add(struct ubik_env *env);
-extern ubik_error _register_rational_subtract(struct ubik_env *env);
-extern ubik_error _register_eq(struct ubik_env *env);
-extern ubik_error _register_emit(struct ubik_env *env);
-extern ubik_error _register_humanize(struct ubik_env *env);
-extern ubik_error _register_concat(struct ubik_env *env);
+extern ubik_error _register_adt_ctor_matches(
+        struct ubik_env *env, struct ubik_workspace *ws);
+extern ubik_error _register_adt_get(
+        struct ubik_env *env, struct ubik_workspace *ws);
+extern ubik_error _register_all_adt_new(
+        struct ubik_env *env, struct ubik_workspace *ws);
+extern ubik_error _register_rational_add(
+        struct ubik_env *env, struct ubik_workspace *ws);
+extern ubik_error _register_rational_subtract(
+        struct ubik_env *env, struct ubik_workspace *ws);
+extern ubik_error _register_eq(
+        struct ubik_env *env, struct ubik_workspace *ws);
+extern ubik_error _register_emit(
+        struct ubik_env *env, struct ubik_workspace *ws);
+extern ubik_error _register_humanize(
+        struct ubik_env *env, struct ubik_workspace *ws);
+extern ubik_error _register_concat(
+        struct ubik_env *env, struct ubik_workspace *ws);
 
 no_ignore ubik_error
 ubik_internal_native_uri(struct ubik_uri **uri, char *name)
@@ -226,43 +235,43 @@ ubik_natives_get_type(
 }
 
 no_ignore ubik_error
-ubik_natives_register(struct ubik_env *env)
+ubik_natives_register(struct ubik_env *env, struct ubik_workspace *ws)
 {
         ubik_error err;
 
-        err = _register_rational_add(env);
+        err = _register_rational_add(env, ws);
         if (err != OK)
                 return err;
 
-        err = _register_rational_subtract(env);
+        err = _register_rational_subtract(env, ws);
         if (err != OK)
                 return err;
 
-        err = _register_eq(env);
+        err = _register_eq(env, ws);
         if (err != OK)
                 return err;
 
-        err = _register_emit(env);
+        err = _register_emit(env, ws);
         if (err != OK)
                 return err;
 
-        err = _register_humanize(env);
+        err = _register_humanize(env, ws);
         if (err != OK)
                 return err;
 
-        err = _register_concat(env);
+        err = _register_concat(env, ws);
         if (err != OK)
                 return err;
 
-        err = _register_all_adt_new(env);
+        err = _register_all_adt_new(env, ws);
         if (err != OK)
                 return err;
 
-        err = _register_adt_ctor_matches(env);
+        err = _register_adt_ctor_matches(env, ws);
         if (err != OK)
                 return err;
 
-        err = _register_adt_get(env);
+        err = _register_adt_get(env, ws);
         if (err != OK)
                 return err;
 

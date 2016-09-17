@@ -66,7 +66,7 @@ ubik_type_match_polyfunc(
 
 #define failing_ctor(n)                                                 \
         no_ignore ubik_error ubik_type_##n(struct ubik_value *v) {      \
-                unused(v);                                              \
+                v->type = UBIK_TYP;                                     \
                 return ubik_raise(                                      \
                         ERR_NOT_IMPLEMENTED, "runtime types");          \
         }

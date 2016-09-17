@@ -63,7 +63,11 @@ no_ignore ubik_error
 ubik_env_free(struct ubik_env *env)
 {
         struct ubik_env_watch_list *to_free;
+        size_t i;
 
+        for (i = 0; i < env->cap; i++)
+                if (env->bindings[i].uri != NULL)
+                        ubik_uri_free(env->bindings[i].uri);
         if (likely(env->bindings != NULL))
                 free(env->bindings);
 
@@ -283,13 +287,16 @@ _set(
         if (err != OK)
                 return err;
 
-        new_binding.uri = uri;
+        new_binding.uri = ubik_uri_dup(uri);
         new_binding.value = value;
         new_binding.type = type;
 
         err = _insert(env->bindings, env->cap, &new_binding, overwrite);
         if (err != OK)
+        {
+                ubik_uri_free(new_binding.uri);
                 return err;
+        }
         env->n++;
 
         watch = env->watches;

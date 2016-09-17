@@ -242,7 +242,7 @@ struct ubik_node
 
 /* Starts the ubik runtime. */
 no_ignore ubik_error
-ubik_start();
+ubik_start(struct ubik_workspace *ws);
 
 /* Stops the ubik runtime. */
 no_ignore ubik_error
@@ -257,6 +257,11 @@ ubik_value_new(
 /* Create a workspace with the default capacity. */
 no_ignore ubik_error
 ubik_workspace_new(struct ubik_workspace **ws);
+
+/* Destroys a workspace. Assumes the workspace was allocated using
+   ubik_workspace_new. */
+void
+ubik_workspace_free(struct ubik_workspace *ws);
 
 /* Create an error object. */
 ubik_error

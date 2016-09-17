@@ -97,19 +97,22 @@ _register_all_adt_new(struct ubik_env *env, struct ubik_workspace *ws)
                 if (err != OK)
                         return err;
 
+                err = ubik_value_new(&type, ws);
+                if (err != OK)
+                        return err;
+                type->type = UBIK_TYP;
+
                 res = asprintf(&func_name, "ubik-adt-new-%d", i);
                 if (res < 0)
                         return ubik_raise(ERR_NO_MEMORY, "adt new name alloc");
-                err = ubik_internal_native_uri(&uri, func_name);
-                if (err != OK)
-                        return err;
-                free(func_name);
 
-                err = ubik_value_new(&type, ws);
+                err = ubik_internal_native_uri(&uri, func_name);
+                free(func_name);
                 if (err != OK)
                         return err;
 
                 err = ubik_env_set(env, uri, graph, type);
+                ubik_uri_free(uri);
                 if (err != OK)
                         return err;
         }
@@ -171,15 +174,17 @@ _register_adt_ctor_matches(struct ubik_env *env, struct ubik_workspace *ws)
         if (err != OK)
                 return err;
 
+        err = ubik_value_new(&type, ws);
+        if (err != OK)
+                return err;
+        type->type = UBIK_TYP;
+
         err = ubik_internal_native_uri(&uri, "ubik-adt-ctor-matches?");
         if (err != OK)
                 return err;
 
-        err = ubik_value_new(&type, ws);
-        if (err != OK)
-                return err;
-
         err = ubik_env_set(env, uri, graph, type);
+        ubik_uri_free(uri);
         if (err != OK)
                 return err;
 
@@ -229,15 +234,17 @@ _register_adt_get(struct ubik_env *env, struct ubik_workspace *ws)
         if (err != OK)
                 return err;
 
+        err = ubik_value_new(&type, ws);
+        if (err != OK)
+                return err;
+        type->type = UBIK_TYP;
+
         err = ubik_internal_native_uri(&uri, "ubik-adt-get");
         if (err != OK)
                 return err;
 
-        err = ubik_value_new(&type, ws);
-        if (err != OK)
-                return err;
-
         err = ubik_env_set(env, uri, graph, type);
+        ubik_uri_free(uri);
         if (err != OK)
                 return err;
 

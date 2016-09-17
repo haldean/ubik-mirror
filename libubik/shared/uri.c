@@ -326,3 +326,30 @@ ubik_uri_explain(struct ubik_uri *uri)
                 res = NULL;
         return res;
 }
+
+void
+ubik_uri_free(struct ubik_uri *u)
+{
+        free(u->source);
+        free(u->name);
+        free(u);
+}
+
+struct ubik_uri *
+ubik_uri_dup(struct ubik_uri *uri)
+{
+        struct ubik_uri *res;
+
+        ubik_galloc1(&res, struct ubik_uri);
+
+        res->hash = uri->hash;
+        res->name = strdup(uri->name);
+        res->name_len = uri->name_len;
+        res->source = uri->source == NULL ? NULL : strdup(uri->source);
+        res->source_len = uri->source_len;
+        res->version = uri->version;
+        res->scope = uri->scope;
+        res->as_value = NULL;
+
+        return res;
+}

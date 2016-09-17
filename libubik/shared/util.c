@@ -95,7 +95,7 @@ ubik_trace_print(void)
         size_t size;
 
         size = backtrace(array, UBIK_TRACE_SIZE);
-        backtrace_symbols_fd(array, size, STDERR_FILENO);
+        backtrace_symbols_fd(array, size, STDOUT_FILENO);
 }
 
 void

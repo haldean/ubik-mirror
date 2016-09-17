@@ -68,6 +68,7 @@ main(int argc, char *argv[])
         struct ubik_compile_env env = {0};
         struct ubik_compile_request req = {0};
         struct ubik_stream feedback;
+        struct ubik_workspace *ws;
         bool discard_res;
         ubik_error err;
         ubik_error rerr;
@@ -86,7 +87,8 @@ main(int argc, char *argv[])
                 return EXIT_FAILURE;
         }
 
-        c(ubik_start());
+        c(ubik_workspace_new(&ws));
+        c(ubik_start(ws));
 
         req.source_name = argv[1];
         req.reason = LOAD_MAIN;
@@ -134,6 +136,8 @@ teardown:
         if ((rerr = ubik_teardown()) != OK)
                 printf("error when tearing down runtime: %s\n",
                        ubik_error_explain(rerr));
+
+        ubik_workspace_free(ws);
 
         return err == OK ? EXIT_SUCCESS : EXIT_FAILURE;
 }

@@ -51,16 +51,18 @@ _op_name(struct ubik_env *env, struct ubik_workspace *ws)
         if (err != OK)
                 return err;
 
+        err = ubik_value_new(&type, ws);
+        if (err != OK)
+                return err;
+        type->type = UBIK_TYP;
+        /* TODO: set type here */
+
         err = ubik_internal_native_uri(&uri, DEF_OP_URI);
         if (err != OK)
                 return err;
 
-        err = ubik_value_new(&type, ws);
-        if (err != OK)
-                return err;
-        /* TODO: set type here */
-
         err = ubik_env_set(env, uri, ngraph, type);
+        ubik_uri_free(uri);
         if (err != OK)
                 return err;
 
@@ -82,16 +84,18 @@ _op_name(struct ubik_env *env, struct ubik_workspace *ws)
         if (err != OK)
                 return err;
 
+        err = ubik_value_new(&type, ws);
+        if (err != OK)
+                return err;
+        type->type = UBIK_TYP;
+        /* TODO: set type here */
+
         err = ubik_internal_native_uri(&uri, DEF_OP_URI);
         if (err != OK)
                 return err;
 
-        err = ubik_value_new(&type, ws);
-        if (err != OK)
-                return err;
-        /* TODO: set type here */
-
         err = ubik_env_set(env, uri, ngraph, type);
+        ubik_uri_free(uri);
         if (err != OK)
                 return err;
 
