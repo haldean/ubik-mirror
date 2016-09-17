@@ -82,10 +82,6 @@ struct ubik_compile_result
         struct ubik_compile_request *request;
         /* the fully-annotated AST for the request */
         struct ubik_ast *ast;
-        /* a list of graphs required for the request and its transitive
-         * dependency closure */
-        struct ubik_value **graphs;
-        size_t n_graphs;
 };
 
 /* Represents an in-progress compilation job. */
@@ -99,8 +95,6 @@ struct ubik_compile_job
         struct ubik_ast *ast;
         /* the status of the job */
         enum ubik_compile_job_status status;
-        /* the graphs created by compiling its dependencies */
-        struct ubik_vector dep_graphs;
         /* a stream containing the woven contents of the (potentially-literate)
          * file. */
         struct ubik_stream woven;

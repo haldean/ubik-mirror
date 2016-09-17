@@ -18,6 +18,7 @@
  */
 
 #include "ubik/adt.h"
+#include "ubik/alloc.h"
 #include "ubik/assert.h"
 #include "ubik/assign.h"
 #include "ubik/env.h"
@@ -56,19 +57,20 @@ ubik_compile_binding(
                 return err;
         ubik_fun_from_vector(res, &nodes, binding->expr->gen);
 
-        ubik_galloc1(&uri, struct ubik_uri);
-        err = ubik_uri_package(
-                uri, binding->expr->scope->package_name, binding->name);
-        if (err != OK)
-                return err;
-
         /* TODO: add binding type here */
         err = ubik_value_new(&type, ctx->workspace);
         if (err != OK)
                 return err;
         type->type = UBIK_TYP;
 
+        ubik_galloc1(&uri, struct ubik_uri);
+        err = ubik_uri_package(
+                uri, binding->expr->scope->package_name, binding->name);
+        if (err != OK)
+                return err;
+
         err = ubik_env_set(local_env, uri, res, type);
+        ubik_uri_free(uri);
         if (err != OK)
                 return err;
 
@@ -101,18 +103,18 @@ _add_modinit_setter(
         if (err != OK)
                 return err;
 
-        ubik_galloc1(&store_uri, struct ubik_uri);
+        ubik_ralloc1(&store_uri, struct ubik_uri, iter->region);
         err = ubik_uri_package(store_uri, iter->package_name, uri->name);
         if (err != OK)
                 return err;
 
-        ubik_galloc1(&val_node, struct ubik_node);
+        ubik_ralloc1(&val_node, struct ubik_node, iter->region);
         val_node->node_type = UBIK_VALUE;
         val_node->id = iter->nodes->n;
         val_node->value.type = type;
         val_node->value.value = value;
 
-        ubik_galloc1(&store_node, struct ubik_node);
+        ubik_ralloc1(&store_node, struct ubik_node, iter->region);
         store_node->node_type = UBIK_STORE;
         store_node->id = iter->nodes->n + 1;
         store_node->is_terminal = true;
@@ -178,13 +180,13 @@ ubik_create_modinit(
 
 no_ignore ubik_error
 ubik_gen_graphs(
-        struct ubik_value **res,
         struct ubik_ast *ast,
         struct ubik_compile_request *req)
 {
         size_t i;
         ubik_error err, rerr;
         struct ubik_env local_env;
+        struct ubik_value *modinit;
         local(assign_context) struct ubik_assign_context ctx = {0};
 
         ctx.region = &req->region;
@@ -205,13 +207,14 @@ ubik_gen_graphs(
         }
 
         err = ubik_create_modinit(
-                res, ast, &local_env, req->reason, &ctx);
+                &modinit, ast, &local_env, req->reason, &ctx);
         if (err != OK)
         {
                 if (err->error_code == ERR_NO_DATA)
                         printf("source has no data in it\n");
                 goto cleanup_env;
         }
+        modinit->gc.root = true;
 
         if (ubik_assign_emit_errors(&ctx))
         {

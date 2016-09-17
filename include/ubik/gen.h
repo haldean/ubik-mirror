@@ -25,14 +25,10 @@
 #include "ubik/uri.h"
 
 /* Compiles a single compilation unit down to a series of graphs.
- * Just one graph is returned here: the modinit graph. All other graphs are
- * referenced by it, and are introduced into the environment by evaluating the
- * modinit graph.
- *
- * The region provided is used for scratch memory only; the graphs that are
- * returned are allocated by the graph allocator and are refcounted. */
+   This introduces a number of values into the request's workspace, but only one
+   is a root object: the modinit graph. All other graphs are referenced by it,
+   and are introduced into the environment by evaluating the modinit graph. */
 no_ignore ubik_error
 ubik_gen_graphs(
-        struct ubik_value **res,
         struct ubik_ast *ast,
         struct ubik_compile_request *req);

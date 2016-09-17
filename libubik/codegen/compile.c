@@ -277,10 +277,8 @@ compile_job(
         struct ubik_compile_env *cenv,
         struct ubik_compile_job *job)
 {
-        struct ubik_value *graph;
         struct ubik_compile_result *res;
         local(infer_context) struct ubik_infer_context infer_ctx = {0};
-        size_t i;
         ubik_error err;
 
         if (cenv->debug)
@@ -368,21 +366,13 @@ compile_job(
                         return err;
         }
 
-        graph = NULL;
-        err = ubik_gen_graphs(&graph, job->ast, job->request);
+        err = ubik_gen_graphs(job->ast, job->request);
         if (err != OK)
                 return err;
 
         ubik_alloc1(&res, struct ubik_compile_result, &job->request->region);
         res->request = job->request;
         res->ast = job->ast;
-        ubik_ralloc(
-                (void**) &res->graphs, 1 + job->dep_graphs.n,
-                sizeof(struct ubik_dagc *), &job->request->region);
-        res->graphs[0] = graph;
-        for (i = 0; i < job->dep_graphs.n; i++)
-                res->graphs[i + 1] = job->dep_graphs.elems[i];
-        res->n_graphs = 1 + job->dep_graphs.n;
 
         err = ubik_vector_append(&cenv->compiled, res);
         if (err != OK)
@@ -449,7 +439,6 @@ ensure_imports_ready(
         char *expect;
         char *check;
         size_t i;
-        ubik_error err;
 
         import = job->ast->imports;
 
@@ -473,13 +462,6 @@ ensure_imports_ready(
                         return ubik_raise(
                                 ERR_UNEXPECTED_FAILURE,
                                 "imports were not satisfied in compilation");
-                for (i = 0; i < result->n_graphs; i++)
-                {
-                        err = ubik_vector_append(
-                                &job->dep_graphs, result->graphs[i]);
-                        if (err != OK)
-                                return err;
-                }
                 import = import->next;
         }
 
