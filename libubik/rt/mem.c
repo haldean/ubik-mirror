@@ -92,6 +92,8 @@ ubik_workspace_prealloced(struct ubik_workspace **ws, size_t prealloc)
         err = ubik_workspace_new(&ws0);
         if (err != OK)
                 return err;
+        ws0->n = size_max(prealloc, workspace_cap);
+
         for (alloced = workspace_cap;
              alloced < prealloc;
              alloced += workspace_cap)
@@ -103,6 +105,7 @@ ubik_workspace_prealloced(struct ubik_workspace **ws, size_t prealloc)
                 ws0->next = ws1;
                 ws0 = ws1;
         }
+
         *ws = ws0;
         return OK;
 }
