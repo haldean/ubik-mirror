@@ -92,7 +92,7 @@ ubik_bytecode_read(
                 ubik_assert(ws != NULL);
                 for (j = 0; j < ws->n && i < n; j++, i++)
                 {
-                        err = read_value(&ws->values[i], in, root);
+                        err = read_value(&ws->values[j], in, root);
                         if (err != OK)
                                 return err;
                 }
