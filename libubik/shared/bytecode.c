@@ -20,6 +20,7 @@
 #include <arpa/inet.h>
 #include <string.h>
 
+#include "ubik/alloc.h"
 #include "ubik/assert.h"
 #include "ubik/bytecode.h"
 #include "ubik/uri.h"
@@ -34,22 +35,273 @@
                 return ubik_raise(ERR_WRITE_FAILED, #x);
 
 no_ignore static ubik_error
-read_value(
-        struct ubik_value *res,
+read_ref(
+        struct ubik_value **ref,
         struct ubik_stream *in,
         struct ubik_workspace *root)
 {
+        ubik_word i;
+
+        READ_INTO(i, in);
+        i = ntohw(i);
+
+        while (i >= root->n)
+        {
+                i -= root->n;
+                root = root->next;
+                if (root == NULL)
+                        return ubik_raise(
+                                ERR_ABSENT, "bad value ref in bytecode");
+        }
+
+        *ref = &root->values[i];
+        return OK;
+}
+
+no_ignore static ubik_error
+read_node(
+        struct ubik_node *node,
+        struct ubik_stream *in,
+        struct ubik_workspace *root)
+{
+        uint64_t t64;
         uint16_t t16;
         uint8_t t8;
+        ubik_error err;
+        struct ubik_value *uriv;
+
+        READ_INTO(t16, in);
+        node->node_type = ntohs(t16);
+
+        READ_INTO(t64, in);
+        node->id = ntohw(t64);
+
+        READ_INTO(t8, in);
+        node->is_terminal = t8 != 0;
+
+        switch (node->node_type)
+        {
+        case UBIK_APPLY:
+                READ_INTO(t64, in);
+                node->apply.func = ntohw(t64);
+                READ_INTO(t64, in);
+                node->apply.arg = ntohw(t64);
+                return OK;
+
+        case UBIK_VALUE:
+                err = read_ref(&node->value.type, in, root);
+                if (err != OK)
+                        return err;
+                err = read_ref(&node->value.value, in, root);
+                if (err != OK)
+                        return err;
+                return OK;
+
+        case UBIK_LOAD:
+                err = read_ref(&uriv, in, root);
+                if (err != OK)
+                        return err;
+                ubik_galloc1(&node->load.loc, struct ubik_uri);
+                /* we can't load the actual URI here, yet, because it's possible
+                   the associated value hasn't been initialized yet. We store
+                   the value on a dummy URI object, and we'll come back later
+                   to fill in the rest of the struct. */
+                node->load.loc->as_value = uriv;
+                return OK;
+
+        case UBIK_STORE:
+                READ_INTO(t64, in);
+                node->store.value = ntohw(t64);
+
+                err = read_ref(&uriv, in, root);
+                if (err != OK)
+                        return err;
+                ubik_galloc1(&node->store.loc, struct ubik_uri);
+                /* we can't load the actual URI here, yet, because it's possible
+                   the associated value hasn't been initialized yet. We store
+                   the value on a dummy URI object, and we'll come back later
+                   to fill in the rest of the struct. */
+                node->store.loc->as_value = uriv;
+                return OK;
+
+        case UBIK_INPUT:
+                READ_INTO(t64, in);
+                node->input.arg_num = ntohw(t64);
+                return OK;
+
+        case UBIK_REF:
+                READ_INTO(t64, in);
+                node->ref.referrent = ntohw(t64);
+                return OK;
+
+        case UBIK_COND:
+                READ_INTO(t64, in);
+                node->cond.condition = ntohw(t64);
+                READ_INTO(t64, in);
+                node->cond.if_true = ntohw(t64);
+                READ_INTO(t64, in);
+                node->cond.if_false = ntohw(t64);
+                return OK;
+
+        case UBIK_NATIVE:
+                return ubik_raise(
+                        ERR_SYSTEM, "tried to load native function");
+
+        case UBIK_MAX_NODE_TYPE:
+        default:
+                printf("%d\n", node->node_type);
+                return ubik_raise(
+                        ERR_BAD_TYPE, "unknown node type in workspace");
+        }
+}
+
+no_ignore static ubik_error
+read_value(
+        struct ubik_value *v,
+        struct ubik_stream *in,
+        struct ubik_workspace *root)
+{
+        uint64_t t64;
+        uint16_t t16;
+        uint8_t t8;
+        ubik_word i;
+        size_t read;
+        ubik_error err;
 
         READ_INTO(t16, in);
         t16 = ntohs(t16);
-        res->type = t16;
+        v->type = t16;
+
+        if (t16 == 0)
+                /* this was a runtime-managed value; it comes back as skipped in
+                   the workspace. TODO: reclaim this memory. */
+                return OK;
 
         READ_INTO(t8, in);
-        res->gc.root = t8;
+        v->gc.root = t8 != 0;
 
-        unused(root);
+        switch (v->type)
+        {
+        case UBIK_STR:
+                READ_INTO(t64, in);
+                v->str.length = ntohw(t64);
+                ubik_galloc((void**) &v->str.data, v->str.length, sizeof(char));
+                read = ubik_stream_read(v->str.data, in, v->str.length);
+                if (read != v->str.length)
+                        return ubik_raise(ERR_NO_DATA, "string data");
+                return OK;
+
+        case UBIK_RAT:
+                READ_INTO(t64, in);
+                v->rat.num = ntohw(t64);
+                READ_INTO(t64, in);
+                v->rat.den = ntohw(t64);
+                return OK;
+
+        case UBIK_TUP:
+                READ_INTO(t64, in);
+                v->tup.n = ntohw(t64);
+                ubik_galloc((void**) &v->tup.elems,
+                            v->tup.n, sizeof(struct ubik_value *));
+                ubik_galloc((void**) &v->tup.types,
+                            v->tup.n, sizeof(struct ubik_value *));
+                for (i = 0; i < v->tup.n; i++)
+                {
+                        err = read_ref(&v->tup.elems[i], in, root);
+                        if (err != OK)
+                                return err;
+                        err = read_ref(&v->tup.types[i], in, root);
+                        if (err != OK)
+                                return err;
+                }
+                return OK;
+
+        case UBIK_BOO:
+                READ_INTO(t8, in);
+                v->boo.value = t8 != 0;
+                return OK;
+
+        case UBIK_PAP:
+                err = read_ref(&v->pap.func, in, root);
+                if (err != OK)
+                        return err;
+                err = read_ref(&v->pap.base_func, in, root);
+                if (err != OK)
+                        return err;
+                err = read_ref(&v->pap.arg, in, root);
+                if (err != OK)
+                        return err;
+                err = read_ref(&v->pap.arg_type, in, root);
+                if (err != OK)
+                        return err;
+                return OK;
+
+        case UBIK_FUN:
+                READ_INTO(t64, in);
+                v->fun.n = ntohw(t64);
+                READ_INTO(t64, in);
+                v->fun.arity = ntohw(t64);
+                READ_INTO(t64, in);
+                v->fun.result = ntohw(t64);
+                ubik_galloc((void**) &v->fun.nodes,
+                            v->fun.n, sizeof(struct ubik_node));
+                for (i = 0; i < v->fun.n; i++)
+                {
+                        err = read_node(&v->fun.nodes[i], in, root);
+                        if (err != OK)
+                                return err;
+                }
+                return OK;
+
+        case UBIK_TYP:
+                READ_INTO(t16, in);
+                v->typ.t = ntohw(t16);
+                return OK;
+
+        case UBIK_MUL:
+        case UBIK_IMP:
+                return ubik_raise(
+                        ERR_NOT_IMPLEMENTED,
+                        "value not supported in bytecode yet");
+
+        case UBIK_MAX_VALUE_TYPE:
+        default:
+                return ubik_raise(ERR_BAD_TYPE, "bad value type in bytecode");
+        }
+        return OK;
+}
+
+/* at the end of bytecode loading, URIs only have a reference to a value. at the
+   time at which the URI was loaded, it's possible that the value hadn't be
+   loaded yet, so we defer actually creating the URI objects until after all
+   values have been loaded in to the workspace. */
+no_ignore static ubik_error
+load_uris(struct ubik_value *v)
+{
+        ubik_word i;
+        ubik_error err;
+
+        if (v->type != UBIK_FUN)
+                return OK;
+        for (i = 0; i < v->fun.n; i++)
+        {
+                if (v->fun.nodes[i].node_type == UBIK_LOAD)
+                {
+                        err = ubik_uri_from_value(
+                                v->fun.nodes[i].load.loc,
+                                v->fun.nodes[i].load.loc->as_value);
+                        if (err != OK)
+                                return err;
+                }
+                else if (v->fun.nodes[i].node_type == UBIK_STORE)
+                {
+                        err = ubik_uri_from_value(
+                                v->fun.nodes[i].store.loc,
+                                v->fun.nodes[i].store.loc->as_value);
+                        if (err != OK)
+                                return err;
+                }
+        }
         return OK;
 }
 
@@ -99,6 +351,16 @@ ubik_bytecode_read(
                 ws = ws->next;
         }
 
+        for (ws = root; ws != NULL; ws = ws->next)
+        {
+                for (i = 0; i < ws->n; i++)
+                {
+                        err = load_uris(&ws->values[i]);
+                        if (err != OK)
+                                return err;
+                }
+        }
+
         return OK;
 }
 
@@ -120,7 +382,7 @@ write_ref(
                 if (ws <= vp || vp <= we)
                 {
                         i += (vp - ws) / sizeof(struct ubik_value);
-                        i = ntohw(i);
+                        i = htonw(i);
                         WRITE_INTO(out, i);
                         return OK;
                 }
@@ -140,7 +402,7 @@ write_node(
         uint8_t t8;
         ubik_error err;
 
-        t16 = htonw(node->node_type);
+        t16 = htons(node->node_type);
         WRITE_INTO(out, t16);
 
         t64 = htonw(node->id);

@@ -76,4 +76,4 @@ ubik_alloc_reparent(
 #define ubik_alloc1(dst, kind, region) \
         ubik_ralloc((void **) dst, 1, sizeof(kind), region)
 #define ubik_galloc1(dst, kind) \
-        ubik_ralloc((void **) dst, 1, sizeof(kind), NULL)
+        ubik_galloc((void **) dst, 1, sizeof(kind))
