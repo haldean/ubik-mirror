@@ -65,17 +65,17 @@ run_file(char *fname, bool timing)
                 CHECK_ERR("couldn't start timer");
         }
 
-        err = ubik_bytecode_read(&ws, &stream);
-        CHECK_ERR("couldn't load file");
-
-        err = ubik_start(ws);
-        CHECK_ERR("couldn't start ubik");
-
         err = ubik_stream_rfile(&stream, fname);
         CHECK_ERR("couldn't open file");
 
         err = ubik_stream_wfilep(&sstdout, stdout);
         CHECK_ERR("couldn't open stdout");
+
+        err = ubik_bytecode_read(&ws, &stream);
+        CHECK_ERR("couldn't load file");
+
+        err = ubik_start(ws);
+        CHECK_ERR("couldn't start ubik");
 
         if (timing)
         {
@@ -123,7 +123,8 @@ teardown:
                 free(s);
         }
 
-        ubik_workspace_free(ws);
+        if (ws != NULL)
+                ubik_workspace_free(ws);
 
         teardown_err = ubik_teardown();
         if (teardown_err != OK)

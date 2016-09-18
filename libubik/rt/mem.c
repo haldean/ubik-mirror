@@ -82,6 +82,31 @@ ubik_workspace_new(struct ubik_workspace **ref)
         return OK;
 }
 
+no_ignore ubik_error
+ubik_workspace_prealloced(struct ubik_workspace **ws, size_t prealloc)
+{
+        struct ubik_workspace *ws0, *ws1;
+        size_t alloced;
+        ubik_error err;
+
+        err = ubik_workspace_new(&ws0);
+        if (err != OK)
+                return err;
+        for (alloced = workspace_cap;
+             alloced < prealloc;
+             alloced += workspace_cap)
+        {
+                err = ubik_workspace_new(&ws1);
+                if (err != OK)
+                        return err;
+                ws1->n = size_max(prealloc - alloced, workspace_cap);
+                ws0->next = ws1;
+                ws0 = ws1;
+        }
+        *ws = ws0;
+        return OK;
+}
+
 void
 free_value(struct ubik_value *v)
 {
