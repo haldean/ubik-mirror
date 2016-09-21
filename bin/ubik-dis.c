@@ -26,6 +26,7 @@
 #include "ubik/stream.h"
 #include "ubik/string.h"
 #include "ubik/ubik.h"
+#include "ubik/uri.h"
 #include "ubik/util.h"
 
 #define CHECK_ERR(msg)                                          \
@@ -37,13 +38,70 @@
                 } } while(0)
 
 void
+dis_node(struct ubik_stream *s, struct ubik_node *n, ubik_word i)
+{
+        char *buf;
+
+        ubik_fprintf(s, "%" PRIu64 ": ", i);
+        switch (n->node_type)
+        {
+        case UBIK_APPLY:
+                ubik_fprintf(
+                        s, "APPLY %" PRIu64 " %" PRIu64 "\n",
+                        n->apply.func, n->apply.arg);
+                return;
+
+        case UBIK_COND:
+                ubik_fprintf(
+                        s, "COND %" PRIu64 " %" PRIu64 " %" PRIu64 "\n",
+                        n->cond.condition, n->cond.if_true, n->cond.if_false);
+                return;
+
+        case UBIK_INPUT:
+                ubik_fprintf(s, "INPUT %" PRIu64 "\n", n->input.arg_num);
+                return;
+
+        case UBIK_LOAD:
+                buf = ubik_uri_explain(n->load.loc);
+                ubik_fprintf(s, "LOAD %s\n", buf);
+                free(buf);
+                return;
+
+        case UBIK_NATIVE:
+                ubik_fprintf(s, "NATIVE\n");
+                return;
+
+        case UBIK_REF:
+                ubik_fprintf(s, "REF %" PRIu64 "\n", n->ref.referrent);
+                return;
+
+        case UBIK_STORE:
+                buf = ubik_uri_explain(n->store.loc);
+                ubik_fprintf(s, "STORE %" PRIu64 " %s\n", n->store.value, buf);
+                free(buf);
+                return;
+
+        case UBIK_VALUE:
+                ubik_fprintf(
+                        s, "VALUE %" PRIu64 " %" PRIu64 "\n",
+                        n->value.value->gc.id, n->value.type->gc.id);
+                return;
+
+        case UBIK_MAX_NODE_TYPE:
+        default:
+                ubik_fprintf(s, "UNKNOWN %d\n", n->node_type);
+                return;
+        }
+}
+
+void
 dis(struct ubik_stream *s, struct ubik_value *v)
 {
         ubik_word i;
 
         if (v->type == UBIK_NOV)
                 return;
-        ubik_fprintf(s, "\n%" PRIdPTR "\n", v->gc.id);
+        ubik_fprintf(s, "\n%" PRIdPTR "%s\n", v->gc.id, v->gc.root ? "*" : "");
 
         switch (v->type)
         {
@@ -69,7 +127,10 @@ dis(struct ubik_stream *s, struct ubik_value *v)
                 return;
 
         case UBIK_FUN:
-                ubik_fprintf(s, "FUN\n");
+                ubik_fprintf(s, "FUN\n%" PRIu64 "\n%" PRIu64 "\n%" PRIu64 "\n",
+                             v->fun.n, v->fun.arity, v->fun.result);
+                for (i = 0; i < v->fun.n; i++)
+                        dis_node(s, &v->fun.nodes[i], i);
                 return;
 
         case UBIK_MUL:
@@ -106,7 +167,12 @@ dis(struct ubik_stream *s, struct ubik_value *v)
                 return;
 
         case UBIK_PAP:
-                ubik_fprintf(s, "PAP\n");
+                ubik_fprintf(s, "PAP\n%" PRIu64 "\n%" PRIu64 "\n%"
+                             PRIu64 "\n%" PRIu64 "\n",
+                             v->pap.func->gc.id,
+                             v->pap.base_func->gc.id,
+                             v->pap.arg->gc.id,
+                             v->pap.arg_type->gc.id);
                 return;
 
         case UBIK_NOV:

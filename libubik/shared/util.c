@@ -112,13 +112,18 @@ ubik_trace_get(char ***res, size_t *n_lines)
 char *
 ubik_word_explain(ubik_word word)
 {
-        size_t i;
+        size_t i, j;
         char *res;
+        char w;
         res = calloc(9, sizeof(char));
         if (res == NULL)
                 return res;
-        for (i = 0; i < 8; i++)
-                res[i] = (char) (word >> (8 * (7 - i)));
+        for (i = 0, j = 0; i < 8; i++)
+        {
+                w = (char) (word >> (8 * (7 - i)));
+                if (w != ' ' || j > 0)
+                        res[j++] = w;
+        }
         return res;
 }
 

@@ -183,11 +183,11 @@ ubik_uri_from_value(struct ubik_uri *uri, struct ubik_value *uri_val)
 
         if (uri_val->tup.elems[0]->type != UBIK_RAT)
                 return ubik_raise(ERR_BAD_VALUE, "value is not a URI");
-        uri->version = uri_val->tup.elems[0]->rat.den;
+        uri->version = uri_val->tup.elems[0]->rat.num;
 
         if (uri_val->tup.elems[1]->type != UBIK_RAT)
                 return ubik_raise(ERR_BAD_VALUE, "value is not a URI");
-        uri->scope = uri_val->tup.elems[1]->rat.den;
+        uri->scope = uri_val->tup.elems[1]->rat.num;
 
         if (uri_val->tup.elems[2]->type != UBIK_STR)
                 return ubik_raise(ERR_BAD_VALUE, "value is not a URI");
@@ -327,10 +327,30 @@ ubik_uri_explain(struct ubik_uri *uri)
         int aspr_res;
         char *res;
         char *scope;
+        char *source;
+        char *name;
 
         scope = ubik_word_explain(uri->scope);
-        aspr_res = asprintf(&res, "%s://%s/%s", scope, uri->source, uri->name);
+
+        name = calloc(1, uri->name_len + 1);
+        memcpy(name, uri->name, uri->name_len);
+
+        if (uri->source == NULL || uri->source_len == 0)
+        {
+                source = strdup("");
+        }
+        else
+        {
+                source = calloc(1, uri->source_len + 1);
+                memcpy(source, uri->source, uri->source_len);
+        }
+
+        aspr_res = asprintf(&res, "%s:%s/%s", scope, source, name);
+
+        free(name);
+        free(source);
         free(scope);
+
         if (aspr_res < 0)
                 res = NULL;
         return res;
