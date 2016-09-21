@@ -191,13 +191,15 @@ ubik_uri_from_value(struct ubik_uri *uri, struct ubik_value *uri_val)
 
         if (uri_val->tup.elems[2]->type != UBIK_STR)
                 return ubik_raise(ERR_BAD_VALUE, "value is not a URI");
-        uri->name = uri_val->tup.elems[2]->str.data;
         uri->name_len = uri_val->tup.elems[2]->str.length;
+        ubik_galloc((void**) &uri->name, uri->name_len, sizeof(char));
+        memcpy(uri->name, uri_val->tup.elems[2]->str.data, uri->name_len);
 
         if (uri_val->tup.elems[3]->type != UBIK_STR)
                 return ubik_raise(ERR_BAD_VALUE, "value is not a URI");
-        uri->source = uri_val->tup.elems[3]->str.data;
         uri->source_len = uri_val->tup.elems[3]->str.length;
+        ubik_galloc((void**) &uri->source, uri->source_len, sizeof(char));
+        memcpy(uri->source, uri_val->tup.elems[2]->str.data, uri->source_len);
 
         uri->as_value = uri_val;
         return _set_hash(uri);

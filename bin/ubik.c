@@ -33,14 +33,13 @@
 #include "ubik/util.h"
 #include "ubik/value.h"
 
-#define CHECK_ERR(msg) \
-        do { if (err != OK) \
-        { \
-                char *expl = ubik_error_explain(err); \
-                printf(msg ": %s\n", expl); \
-                free(err); free(expl); \
-                goto teardown; \
-        } } while(0)
+#define CHECK_ERR(msg)                                          \
+        do { if (err != OK) {                                   \
+                        char *expl = ubik_error_explain(err);   \
+                        printf(msg ": %s\n", expl);             \
+                        free(err); free(expl);                  \
+                        goto teardown;                          \
+                } } while(0)
 
 ubik_error
 run_file(char *fname, bool timing)

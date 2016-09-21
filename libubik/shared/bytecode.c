@@ -182,6 +182,9 @@ read_value(
 
         switch (v->type)
         {
+        case UBIK_NOV:
+                return OK;
+
         case UBIK_STR:
                 READ_INTO(t64, in);
                 v->str.length = ntohw(t64);
@@ -367,35 +370,18 @@ ubik_bytecode_read(
 no_ignore static ubik_error
 write_ref(
         struct ubik_stream *out,
-        struct ubik_value *v,
-        struct ubik_workspace *root)
+        struct ubik_value *v)
 {
         ubik_word i;
-        uintptr_t vp, ws, we;
-
-        i = 0;
-        vp = (uintptr_t) v;
-        for (; root != NULL; root = root->next)
-        {
-                ws = (uintptr_t) &root->values[0];
-                we = (uintptr_t) &root->values[root->n - 1];
-                if (ws <= vp || vp <= we)
-                {
-                        i += (vp - ws) / sizeof(struct ubik_value);
-                        i = htonw(i);
-                        WRITE_INTO(out, i);
-                        return OK;
-                }
-                i += root->n;
-        }
-        return ubik_raise(ERR_ABSENT, "ref value not in workspace");
+        i = htonw(v->gc.id);
+        WRITE_INTO(out, i);
+        return OK;
 }
 
 no_ignore static ubik_error
 write_node(
         struct ubik_stream *out,
-        struct ubik_node *node,
-        struct ubik_workspace *root)
+        struct ubik_node *node)
 {
         uint64_t t64;
         uint16_t t16;
@@ -421,17 +407,17 @@ write_node(
                 return OK;
 
         case UBIK_VALUE:
-                err = write_ref(out, node->value.type, root);
+                err = write_ref(out, node->value.type);
                 if (err != OK)
                         return err;
-                err = write_ref(out, node->value.value, root);
+                err = write_ref(out, node->value.value);
                 if (err != OK)
                         return err;
                 return OK;
 
         case UBIK_LOAD:
                 ubik_assert(node->load.loc->as_value != NULL);
-                err = write_ref(out, node->load.loc->as_value, root);
+                err = write_ref(out, node->load.loc->as_value);
                 if (err != OK)
                         return err;
                 return OK;
@@ -440,7 +426,7 @@ write_node(
                 ubik_assert(node->store.loc->as_value != NULL);
                 t64 = htonw(node->store.value);
                 WRITE_INTO(out, t64);
-                err = write_ref(out, node->store.loc->as_value, root);
+                err = write_ref(out, node->store.loc->as_value);
                 if (err != OK)
                         return err;
                 return OK;
@@ -478,8 +464,7 @@ write_node(
 no_ignore static ubik_error
 write_value(
         struct ubik_stream *out,
-        struct ubik_value *v,
-        struct ubik_workspace *root)
+        struct ubik_value *v)
 {
         uint64_t t64;
         uint16_t t16;
@@ -503,6 +488,9 @@ write_value(
 
         switch (v->type)
         {
+        case UBIK_NOV:
+                return OK;
+
         case UBIK_STR:
                 t64 = htonw(v->str.length);
                 WRITE_INTO(out, t64);
@@ -523,10 +511,10 @@ write_value(
                 WRITE_INTO(out, t64);
                 for (i = 0; i < v->tup.n; i++)
                 {
-                        err = write_ref(out, v->tup.elems[i], root);
+                        err = write_ref(out, v->tup.elems[i]);
                         if (err != OK)
                                 return err;
-                        err = write_ref(out, v->tup.types[i], root);
+                        err = write_ref(out, v->tup.types[i]);
                         if (err != OK)
                                 return err;
                 }
@@ -538,16 +526,16 @@ write_value(
                 return OK;
 
         case UBIK_PAP:
-                err = write_ref(out, v->pap.func, root);
+                err = write_ref(out, v->pap.func);
                 if (err != OK)
                         return err;
-                err = write_ref(out, v->pap.base_func, root);
+                err = write_ref(out, v->pap.base_func);
                 if (err != OK)
                         return err;
-                err = write_ref(out, v->pap.arg, root);
+                err = write_ref(out, v->pap.arg);
                 if (err != OK)
                         return err;
-                err = write_ref(out, v->pap.arg_type, root);
+                err = write_ref(out, v->pap.arg_type);
                 if (err != OK)
                         return err;
                 return OK;
@@ -564,7 +552,7 @@ write_value(
                 WRITE_INTO(out, t64);
                 for (i = 0; i < v->fun.n; i++)
                 {
-                        err = write_node(out, &v->fun.nodes[i], root);
+                        err = write_node(out, &v->fun.nodes[i]);
                         if (err != OK)
                                 return err;
                 }
@@ -621,7 +609,7 @@ ubik_bytecode_write(
         struct ubik_workspace *root)
 {
         struct ubik_workspace *ws;
-        ubik_word i;
+        ubik_word i, j;
         uint32_t t32;
         uint64_t t64;
         ubik_error err;
@@ -634,6 +622,11 @@ ubik_bytecode_write(
                         if (err != OK)
                                 return err;
                 }
+        }
+        for (ws = root, j = 0; ws != NULL; ws = ws->next)
+        {
+                for (i = 0; i < ws->n; i++, j++)
+                        ws->values[i].gc.id = j;
         }
 
         if (ubik_stream_write(out, "ubik", 4) != 4)
@@ -656,7 +649,7 @@ ubik_bytecode_write(
         {
                 for (i = 0; i < ws->n; i++)
                 {
-                        err = write_value(out, &ws->values[i], root);
+                        err = write_value(out, &ws->values[i]);
                         if (err != OK)
                                 return err;
                 }

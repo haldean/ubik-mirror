@@ -86,6 +86,9 @@ ubik_value_eq(struct ubik_value *v1, struct ubik_value *v2)
                 return false;
         switch (v1->type)
         {
+        case UBIK_NOV:
+                return true;
+
         case UBIK_STR:
                 return v1->str.length == v2->str.length &&
                         !strncmp(v1->str.data, v2->str.data, v1->str.length);
@@ -152,6 +155,11 @@ ubik_value_humanize(char **res, size_t *res_len, struct ubik_value *v)
 
         switch (v->type)
         {
+        case UBIK_NOV:
+                *res = strdup("<no-value>");
+                *res_len = strlen(*res);
+                return OK;
+
         case UBIK_STR:
                 *res = v->str.data;
                 *res_len = v->str.length;

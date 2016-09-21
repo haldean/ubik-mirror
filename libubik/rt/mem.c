@@ -92,7 +92,7 @@ ubik_workspace_prealloced(struct ubik_workspace **ws, size_t prealloc)
         err = ubik_workspace_new(&ws0);
         if (err != OK)
                 return err;
-        ws0->n = size_max(prealloc, workspace_cap);
+        ws0->n = size_min(prealloc, workspace_cap);
 
         for (alloced = workspace_cap;
              alloced < prealloc;
@@ -101,7 +101,7 @@ ubik_workspace_prealloced(struct ubik_workspace **ws, size_t prealloc)
                 err = ubik_workspace_new(&ws1);
                 if (err != OK)
                         return err;
-                ws1->n = size_max(prealloc - alloced, workspace_cap);
+                ws1->n = size_min(prealloc - alloced, workspace_cap);
                 ws0->next = ws1;
                 ws0 = ws1;
         }
@@ -118,6 +118,9 @@ free_value(struct ubik_value *v)
 
         switch (v->type)
         {
+        case UBIK_NOV:
+                return;
+
         case UBIK_STR:
                 free(v->str.data);
                 return;

@@ -39,6 +39,7 @@ struct ubik_exec_graph;
 
 struct ubik_gc_record
 {
+        ubik_word id;
         /* true if there is a reference from a root value to this value. */
         bool alive:1;
         /* true if this value is known to be alive a priori. */
@@ -52,7 +53,8 @@ enum ubik_value_type
 {
         /* these are all assigned explicit, stable constants, because this enum
            is contained within persisted bytecode. */
-
+        /* a "no-value": GCed, uninitialized */
+        UBIK_NOV = 0,
         /* a UTF-8 string */
         UBIK_STR = 1,
         /* an infinite-precision rational number */
@@ -151,7 +153,7 @@ struct ubik_mul
 
 struct ubik_typ
 {
-        enum ubik_node_type t;
+        enum ubik_rt_type t;
 };
 
 struct ubik_imp
