@@ -103,6 +103,8 @@ enum ubik_rt_type
         UBIK_TYPE_RAT = 2,
         UBIK_TYPE_BOO = 3,
         UBIK_TYPE_ADT = 4,
+        /* applyable (these are callable functions) */
+        UBIK_TYPE_APP = 5,
 };
 
 struct ubik_str
@@ -154,6 +156,13 @@ struct ubik_mul
 struct ubik_typ
 {
         enum ubik_rt_type t;
+        union
+        {
+                struct {
+                        struct ubik_value *arg;
+                        struct ubik_value *res;
+                } app;
+        };
 };
 
 struct ubik_imp

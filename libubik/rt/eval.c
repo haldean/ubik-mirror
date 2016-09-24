@@ -44,7 +44,8 @@ _eval_apply(struct ubik_exec_unit *u, struct ubik_node *n)
         res->pap.arg = u->gexec->nv[n->apply.arg];
         res->pap.arg_type = u->gexec->nt[n->apply.arg];
 
-        err = ubik_type_func_apply(type, u->gexec->nt[n->apply.func]);
+        err = ubik_type_func_apply(
+                type, u->gexec->nt[n->apply.func], u->gexec->nt[n->apply.arg]);
         if (err != OK)
                 return err;
 

@@ -45,23 +45,18 @@ ubik_type_explain(struct ubik_value *type)
 no_ignore ubik_error
 ubik_type_func_apply(
         struct ubik_value *result,
-        struct ubik_value *func_type)
-{
-        unused(result);
-        unused(func_type);
-        return ubik_raise(ERR_NOT_IMPLEMENTED, "runtime types");
-}
-
-no_ignore ubik_error
-ubik_type_match_polyfunc(
-        struct ubik_value **result,
-        struct ubik_value *def,
+        struct ubik_value *func_type,
         struct ubik_value *arg_type)
 {
-        unused(result);
-        unused(def);
-        unused(arg_type);
-        return ubik_raise(ERR_NOT_IMPLEMENTED, "runtime types");
+        if (func_type->type != UBIK_TYP)
+                return ubik_raise(ERR_BAD_TYPE, "func_type is not a type");
+        if (func_type->typ.t != UBIK_TYPE_APP)
+                return ubik_raise(ERR_BAD_TYPE, "func_type is not applyable");
+        if (!ubik_type_satisfied(func_type->typ.app.arg, arg_type))
+                return ubik_raise(
+                        ERR_BAD_TYPE, "function and argument types disagree");
+        *result = *(func_type->typ.app.res);
+        return OK;
 }
 
 no_ignore ubik_error

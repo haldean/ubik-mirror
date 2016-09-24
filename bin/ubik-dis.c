@@ -153,6 +153,12 @@ dis(struct ubik_stream *s, struct ubik_value *v)
                 case UBIK_TYPE_ADT:
                         ubik_fprintf(s, "adt\n");
                         return;
+                case UBIK_TYPE_APP:
+                        ubik_fprintf(s, "app\n");
+                        ubik_fprintf(s, "%" PRIu64 " %" PRIu64 "\n",
+                                     v->typ.app.arg->gc.id,
+                                     v->typ.app.res->gc.id);
+                        return;
                 default:
                         ubik_fprintf(s, "unknown %d\n", v->typ.t);
                         return;

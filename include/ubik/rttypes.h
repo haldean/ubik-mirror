@@ -31,14 +31,7 @@ ubik_type_satisfied(
 no_ignore ubik_error
 ubik_type_func_apply(
         struct ubik_value *result,
-        struct ubik_value *func_type);
-
-/* Given the value implementation of a function, returns the graph appropriate
- * for an argument of the given type. */
-no_ignore ubik_error
-ubik_type_match_polyfunc(
-        struct ubik_value **result,
-        struct ubik_value *def,
+        struct ubik_value *func_type,
         struct ubik_value *arg_type);
 
 char *
