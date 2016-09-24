@@ -456,6 +456,8 @@ can_collapse(struct ubik_exec_unit *e)
 {
         struct ubik_value *v;
         ubik_word arity;
+        if (e->gexec->status[e->node] != UBIK_STATUS_COMPLETE)
+                return false;
         v = e->gexec->nv[e->node];
         if (v->type == UBIK_FUN)
                 return v->fun.arity == 0;
