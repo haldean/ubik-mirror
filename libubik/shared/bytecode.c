@@ -258,7 +258,7 @@ read_value(
 
         case UBIK_TYP:
                 READ_INTO(t16, in);
-                v->typ.t = ntohw(t16);
+                v->typ.t = ntohs(t16);
                 return OK;
 
         case UBIK_MUL:
@@ -559,7 +559,7 @@ write_value(
                 return OK;
 
         case UBIK_TYP:
-                t16 = htonw(v->typ.t);
+                t16 = htons(v->typ.t);
                 WRITE_INTO(out, t16);
                 return OK;
 
