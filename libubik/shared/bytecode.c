@@ -259,6 +259,35 @@ read_value(
         case UBIK_TYP:
                 READ_INTO(t16, in);
                 v->typ.t = ntohs(t16);
+                switch (v->typ.t)
+                {
+                case UBIK_TYPE_STR:
+                case UBIK_TYPE_RAT:
+                case UBIK_TYPE_BOO:
+                        return OK;
+
+                case UBIK_TYPE_APP:
+                        err = read_ref(&v->typ.app.arg, in, root);
+                        if (err != OK)
+                                return err;
+                        err = read_ref(&v->typ.app.res, in, root);
+                        if (err != OK)
+                                return err;
+                        return OK;
+
+                case UBIK_TYPE_ADT:
+                        READ_INTO(t64, in);
+                        v->typ.adt.n_ctors = ntohw(t64);
+                        v->typ.adt.ctors = calloc(
+                                v->typ.adt.n_ctors,
+                                sizeof(struct ubik_adt_ctor));
+                        for (i = 0; i < v->typ.adt.n_ctors; i++)
+                        {
+                                return ubik_raise(
+                                        ERR_NOT_IMPLEMENTED,
+                                        "actual ctors because i'm toooo tired");
+                        }
+                }
                 return OK;
 
         case UBIK_MUL:
@@ -470,8 +499,9 @@ write_value(
         uint16_t t16;
         uint8_t t8;
         size_t written;
-        ubik_word i;
+        ubik_word i, j;
         ubik_error err;
+        struct ubik_typ_ctor *ctor;
 
         if (v->gc.runtime_managed)
         {
@@ -561,6 +591,53 @@ write_value(
         case UBIK_TYP:
                 t16 = htons(v->typ.t);
                 WRITE_INTO(out, t16);
+                switch (v->typ.t)
+                {
+                case UBIK_TYPE_STR:
+                case UBIK_TYPE_RAT:
+                case UBIK_TYPE_BOO:
+                        return OK;
+
+                case UBIK_TYPE_APP:
+                        err = write_ref(out, v->typ.app.arg);
+                        if (err != OK)
+                                return err;
+                        err = write_ref(out, v->typ.app.res);
+                        if (err != OK)
+                                return err;
+                        return OK;
+
+                case UBIK_TYPE_ADT:
+                        t64 = htonw(v->typ.adt.n_ctors);
+                        WRITE_INTO(out, t64);
+                        for (i = 0; i < v->typ.adt.n_ctors; i++)
+                        {
+                                ctor = &v->typ.adt.ctors[i];
+
+                                t64 = htonw(ctor->name_len);
+                                WRITE_INTO(out, t64);
+
+                                written = ubik_stream_write(
+                                        out, ctor->name, ctor->name_len);
+                                if (written != ctor->name_len)
+                                        return ubik_raise(
+                                                ERR_WRITE_FAILED, "ctor name");
+
+                                t64 = htonw(ctor->arity);
+                                WRITE_INTO(out, t64);
+
+                                for (j = 0; j < ctor->arity; j++)
+                                {
+                                        err = write_ref(out, ctor->arg_types[j]);
+                                        if (err != OK)
+                                                return err;
+                                }
+                        }
+                        return OK;
+
+                default:
+                        return ubik_raise(ERR_BAD_TYPE, "bad type type");
+                }
                 return OK;
 
         case UBIK_MUL:

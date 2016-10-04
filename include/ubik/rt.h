@@ -153,15 +153,29 @@ struct ubik_mul
         ubik_word whaaaat;
 };
 
+struct ubik_typ_ctor
+{
+        char *name;
+        size_t name_len;
+        struct ubik_value **arg_types;
+        ubik_word arity;
+};
+
 struct ubik_typ
 {
         enum ubik_rt_type t;
         union
         {
-                struct {
+                struct
+                {
                         struct ubik_value *arg;
                         struct ubik_value *res;
                 } app;
+                struct
+                {
+                        struct ubik_typ_ctor *ctors;
+                        size_t n_ctors;
+                } adt;
         };
 };
 
