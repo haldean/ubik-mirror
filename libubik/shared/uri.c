@@ -204,7 +204,7 @@ ubik_uri_from_value(struct ubik_uri *uri, struct ubik_value *uri_val)
         {
                 ubik_galloc((void**) &uri->source,
                             uri->source_len, sizeof(char));
-                memcpy(uri->source, uri_val->tup.elems[2]->str.data,
+                memcpy(uri->source, uri_val->tup.elems[3]->str.data,
                        uri->source_len);
         }
 

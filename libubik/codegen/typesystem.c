@@ -76,13 +76,33 @@ struct ubik_typesystem
 no_ignore ubik_error
 ubik_typesystem_init(
         struct ubik_typesystem **tsys,
-        struct ubik_alloc_region *region)
+        struct ubik_alloc_region *region,
+        struct ubik_workspace *ws)
 {
+        struct ts_type *ts;
+        struct ubik_value *t;
+        ubik_error err;
+
         ubik_alloc1(tsys, struct ubik_typesystem, region);
         (*tsys)->types.region = region;
         (*tsys)->interfaces.region = region;
         (*tsys)->implementations.region = region;
         (*tsys)->region = region;
+
+        err = ubik_value_new(&t, ws);
+        if (err != OK)
+                return err;
+        t->type = UBIK_TYP;
+        t->typ.t = UBIK_TYPE_STR;
+
+        ubik_alloc1(&ts, struct ts_type, region);
+        ts->v = t;
+        ts->name = ubik_strdup("String", region);
+        ts->package = "ubik";
+        err = ubik_vector_append(&(*tsys)->types, ts);
+        if (err != OK)
+                return err;
+
         return OK;
 }
 
@@ -689,7 +709,8 @@ ubik_typesystem_get(
                 *res = t->v;
                 return OK;
         }
-        return ubik_raise(ERR_ABSENT, "type not found in typesystem");
+        return ubik_raise(
+                ERR_ABSENT, "type not found in typesystem");
 }
 
 no_ignore ubik_error

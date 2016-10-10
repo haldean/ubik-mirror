@@ -186,12 +186,12 @@ read_value(
 
         READ_INTO(t16, in);
         t16 = ntohs(t16);
-        v->type = t16;
 
-        if (t16 == 0)
+        if (t16 == UBIK_MAX_VALUE_TYPE)
                 /* this was a runtime-managed value; it comes back as skipped in
                    the workspace. TODO: reclaim this memory. */
                 return OK;
+        v->type = t16;
 
         READ_INTO(t8, in);
         v->gc.root = t8 != 0;
@@ -543,7 +543,7 @@ write_value(
 
         if (v->gc.runtime_managed)
         {
-                t16 = 0;
+                t16 = htons(UBIK_MAX_VALUE_TYPE);
                 WRITE_INTO(out, t16);
                 return OK;
         }

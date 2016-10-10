@@ -62,7 +62,7 @@ adt_typ(
                 res->typ.adt.n_ctors++;
         res->typ.adt.ctors = calloc(
                 res->typ.adt.n_ctors, sizeof(struct ubik_typ_ctor));
-        
+
         for (src_ctors = t->adt.ctors, i = 0;
              src_ctors != NULL && i < res->typ.adt.n_ctors;
              src_ctors = src_ctors->next, i++)

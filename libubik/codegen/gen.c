@@ -61,7 +61,6 @@ ubik_compile_binding(
         err = ubik_value_new(&type, ctx->workspace);
         if (err != OK)
                 return err;
-        type->type = UBIK_TYP;
 
         ubik_galloc1(&uri, struct ubik_uri);
         err = ubik_uri_package(

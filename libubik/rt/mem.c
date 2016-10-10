@@ -142,10 +142,27 @@ free_value(struct ubik_value *v)
                 free(v->fun.nodes);
                 return;
 
+        case UBIK_TYP:
+                switch (v->typ.t)
+                {
+                case UBIK_TYPE_STR:
+                case UBIK_TYPE_RAT:
+                case UBIK_TYPE_BOO:
+                case UBIK_TYPE_APP:
+                        return;
+
+                case UBIK_TYPE_ADT:
+                        for (i = 0; i < v->typ.adt.n_ctors; i++)
+                        {
+                                free(v->typ.adt.ctors[i].name.data);
+                                free(v->typ.adt.ctors[i].arg_types);
+                        }
+                        free(v->typ.adt.ctors);
+                }
+
         case UBIK_BOO:
         case UBIK_RAT:
         case UBIK_MUL:
-        case UBIK_TYP:
         case UBIK_IMP:
         case UBIK_PAP:
                 return;

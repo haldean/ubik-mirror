@@ -121,7 +121,9 @@ struct ubik_compile_env
 };
 
 no_ignore ubik_error
-ubik_compile_env_default(struct ubik_compile_env *cenv);
+ubik_compile_env_default(
+        struct ubik_compile_env *cenv,
+        struct ubik_workspace *ws);
 
 no_ignore ubik_error
 ubik_compile_env_free(struct ubik_compile_env *cenv);

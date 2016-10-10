@@ -38,6 +38,21 @@
                 } } while(0)
 
 void
+dis_ctor(struct ubik_stream *s, struct ubik_typ_ctor *c, ubik_word i)
+{
+        size_t a;
+
+        ubik_fprintf(s, "%" PRIu64 ": ", i);
+        ubik_assert(
+                ubik_stream_write(s, c->name.data, c->name.length)
+                == c->name.length);
+        ubik_fprintf(s, " %" PRIu64 , c->arity);
+        for (a = 0; a < c->arity; a++)
+                ubik_fprintf(s, " %" PRIu64, c->arg_types[a]->gc.id);
+        ubik_fprintf(s, "\n");
+}
+
+void
 dis_node(struct ubik_stream *s, struct ubik_node *n, ubik_word i)
 {
         char *buf;
@@ -151,7 +166,10 @@ dis(struct ubik_stream *s, struct ubik_value *v)
                         ubik_fprintf(s, "boo\n");
                         return;
                 case UBIK_TYPE_ADT:
-                        ubik_fprintf(s, "adt\n");
+                        ubik_fprintf(s, "adt\n%" PRIuPTR "\n",
+                                     v->typ.adt.n_ctors);
+                        for (i = 0; i < v->typ.adt.n_ctors; i++)
+                                dis_ctor(s, &v->typ.adt.ctors[i], i);
                         return;
                 case UBIK_TYPE_APP:
                         ubik_fprintf(s, "app\n");

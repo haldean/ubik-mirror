@@ -21,6 +21,7 @@
 #include "ubik/alloc.h"
 #include "ubik/ast.h"
 #include "ubik/env.h"
+#include "ubik/typesystem.h"
 #include "ubik/ubik.h"
 #include <stdbool.h>
 

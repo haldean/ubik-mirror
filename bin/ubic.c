@@ -122,7 +122,7 @@ main(int argc, char *argv[])
                 return EXIT_FAILURE;
         }
 
-        c(ubik_compile_env_default(&env));
+        c(ubik_compile_env_default(&env, ws));
         c(ubik_compile_enqueue(&env, &req));
         c(ubik_compile_run(&env));
 

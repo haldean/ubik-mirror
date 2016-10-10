@@ -33,6 +33,7 @@
 #include "ubik/infer.h"
 #include "ubik/interfaces.h"
 #include "ubik/literate.h"
+#include "ubik/natives.h"
 #include "ubik/parse.h"
 #include "ubik/patterns.h"
 #include "ubik/resolve.h"
@@ -41,7 +42,9 @@
 #include "ubik/util.h"
 
 no_ignore ubik_error
-ubik_compile_env_default(struct ubik_compile_env *cenv)
+ubik_compile_env_default(
+        struct ubik_compile_env *cenv,
+        struct ubik_workspace *ws)
 {
         char *scratch_dir;
         char *include_dirs;
@@ -96,7 +99,7 @@ ubik_compile_env_default(struct ubik_compile_env *cenv)
         cenv->to_compile.region = &cenv->region;
         cenv->compiled.region = &cenv->region;
 
-        err = ubik_typesystem_init(&cenv->type_system, &cenv->region);
+        err = ubik_typesystem_init(&cenv->type_system, &cenv->region, ws);
         if (err != OK)
                 return err;
 

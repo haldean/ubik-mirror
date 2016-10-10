@@ -45,7 +45,8 @@ struct ubik_typesystem_unified
 no_ignore ubik_error
 ubik_typesystem_init(
         struct ubik_typesystem **tsys,
-        struct ubik_alloc_region *region);
+        struct ubik_alloc_region *region,
+        struct ubik_workspace *ws);
 
 no_ignore ubik_error
 ubik_typesystem_load(
