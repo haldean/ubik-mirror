@@ -68,5 +68,19 @@ ubik_typesystem_apply_substs(
         struct ubik_type_expr *t,
         struct ubik_vector *substs);
 
+no_ignore ubik_error
+ubik_typesystem_get(
+        struct ubik_value **res,
+        struct ubik_typesystem *tsys,
+        char *name,
+        char *package);
+
+no_ignore ubik_error
+ubik_typesystem_get_from_expr(
+        struct ubik_value **res,
+        struct ubik_typesystem *tsys,
+        struct ubik_type_expr *t,
+        struct ubik_workspace *ws);
+
 void
 ubik_typesystem_dump(struct ubik_typesystem *tsys);

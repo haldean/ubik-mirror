@@ -21,6 +21,7 @@
 #include "ubik/compile.h"
 #include "ubik/feedback.h"
 #include "ubik/string.h"
+#include "ubik/typ.h"
 #include "ubik/typesystem.h"
 #include "ubik/vector.h"
 
@@ -37,6 +38,7 @@ struct ts_type
 {
         char *name;
         char *package;
+        struct ubik_value *v;
 };
 
 struct ts_iface
@@ -112,6 +114,9 @@ ubik_typesystem_load(
                 ubik_alloc1(&tst, struct ts_type, tsys->region);
                 tst->name = ubik_strdup(t->name, tsys->region);
                 tst->package = ubik_strdup(ast->package_name, tsys->region);
+                err = ubik_typ_from_ast(&tst->v, t, tsys, req->workspace);
+                if (err != OK)
+                        return err;
                 err = ubik_vector_append(&tsys->types, tst);
                 if (err != OK)
                         return err;
@@ -662,4 +667,51 @@ ubik_typesystem_unify(
         }
 
         return err;
+}
+
+no_ignore ubik_error
+ubik_typesystem_get(
+        struct ubik_value **res,
+        struct ubik_typesystem *tsys,
+        char *name,
+        char *package)
+{
+        size_t i;
+        struct ts_type *t;
+
+        for (i = 0; i < tsys->types.n; i++)
+        {
+                t = tsys->types.elems[i];
+                if (strcmp(t->name, name) != 0)
+                        continue;
+                if (package != NULL && strcmp(t->package, package) != 0)
+                        continue;
+                *res = t->v;
+                return OK;
+        }
+        return ubik_raise(ERR_ABSENT, "type not found in typesystem");
+}
+
+no_ignore ubik_error
+ubik_typesystem_get_from_expr(
+        struct ubik_value **res,
+        struct ubik_typesystem *tsys,
+        struct ubik_type_expr *t,
+        struct ubik_workspace *ws)
+{
+        unused(ws);
+
+        switch (t->type_expr_type)
+        {
+        case TYPE_EXPR_ATOM:
+                /* TODO: should have package! */
+                return ubik_typesystem_get(res, tsys, t->name, NULL);
+
+        case TYPE_EXPR_APPLY:
+        case TYPE_EXPR_VAR:
+        case TYPE_EXPR_CONSTRAINED:
+                return ubik_raise(
+                        ERR_NOT_IMPLEMENTED, "complicated type expr lookup");
+        }
+        return ubik_raise(ERR_BAD_TYPE, "unknown type expr type");
 }

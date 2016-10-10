@@ -31,6 +31,7 @@
 #include "ubik/rttypes.h"
 #include "ubik/string.h"
 #include "ubik/types.h"
+#include "ubik/typesystem.h"
 #include "ubik/uri.h"
 #include "ubik/util.h"
 #include "ubik/value.h"
@@ -62,15 +63,12 @@ ubik_adt_instantiate(
 }
 
 no_ignore ubik_error
-ubik_adt_get_name(struct ubik_value **res, struct ubik_value *type_decl)
-{
-        return ubik_list_get(res, type_decl, 0);
-}
-
-no_ignore ubik_error
 ubik_adt_get_ctor(struct ubik_value **res, struct ubik_value *value)
 {
-        return ubik_list_get(res, value, 0);
+        if (value->type != UBIK_TUP)
+                return ubik_raise(ERR_BAD_VALUE, "value is not an adt");
+        *res = value->tup.elems[0];
+        return OK;
 }
 
 no_ignore ubik_error
@@ -79,12 +77,11 @@ ubik_adt_get_field(
         struct ubik_value *instance,
         size_t n)
 {
-        ubik_error err;
-
-        err = ubik_list_get(res, instance, n + 1);
-        if (err != OK)
-                return err;
-
+        if (instance->type != UBIK_TUP)
+                return ubik_raise(ERR_BAD_VALUE, "value is not an adt");
+        if (n + 1 >= instance->tup.n)
+                return ubik_raise(ERR_BAD_VALUE, "field num is out of range");
+        *res = instance->tup.elems[n + 1];
         return OK;
 }
 
@@ -94,13 +91,12 @@ ubik_adt_get_field_type(
         struct ubik_value *instance,
         size_t n)
 {
-        ubik_error err;
-
-        err = ubik_list_get(res, instance, n + 1);
-        if (err != OK)
-                return err;
-
-        return ubik_raise(ERR_NOT_IMPLEMENTED, "get field type");
+        if (instance->type != UBIK_TUP)
+                return ubik_raise(ERR_BAD_VALUE, "value is not an adt");
+        if (n + 1 >= instance->tup.n)
+                return ubik_raise(ERR_BAD_VALUE, "field num is out of range");
+        *res = instance->tup.types[n + 1];
+        return OK;
 }
 
 no_ignore ubik_error
@@ -108,136 +104,9 @@ ubik_adt_inst_size(
         size_t *n,
         struct ubik_value *instance)
 {
-        size_t size;
-        ubik_error err;
-
-        err = ubik_list_size(&size, instance);
-        if (err != OK)
-                return err;
-
-        if (size < 1)
-                return ubik_raise(
-                        ERR_BAD_VALUE,
-                        "provided value is not an ADT instance");
-        *n = size - 1;
-        return OK;
-}
-
-no_ignore static ubik_error
-ubik_adt_create_decl(
-        struct ubik_value *res,
-        struct ubik_workspace *ws,
-        struct ubik_type *source)
-{
-        struct ubik_type_params *src_params;
-        struct ubik_type_constraints *src_constraints;
-        struct ubik_ast_adt_ctors *src_ctors;
-        struct ubik_type_list *src_ctor_param;
-
-        struct ubik_value *dst_name;
-        struct ubik_value *dst_params;
-        struct ubik_value *dst_constraints;
-        struct ubik_value *dst_ctors;
-        struct ubik_value *dst_ctor;
-
-        struct ubik_value *t;
-        ubik_error err;
-
-        src_params = source->adt.params;
-        if (src_params != NULL)
-                return ubik_raise(ERR_NOT_IMPLEMENTED, "no params on ADTs yet");
-
-        src_constraints = source->adt.constraints;
-        if (src_constraints != NULL)
-                return ubik_raise(
-                        ERR_NOT_IMPLEMENTED, "no constraints on ADTs yet");
-
-        err = ubik_value_new(&dst_name, ws);
-        if (err != OK)
-                return err;
-        dst_name->type = UBIK_STR;
-        dst_name->str.data = source->name;
-        dst_name->str.length = strlen(source->name);
-
-        err = ubik_value_new(&dst_params, ws);
-        if (err != OK)
-                return err;
-        err = ubik_list_create_empty(dst_params);
-        if (err != OK)
-                return err;
-
-        err = ubik_value_new(&dst_constraints, ws);
-        if (err != OK)
-                return err;
-        err = ubik_list_create_empty(dst_constraints);
-        if (err != OK)
-                return err;
-
-        err = ubik_value_new(&dst_ctors, ws);
-        if (err != OK)
-                return err;
-        err = ubik_list_create_empty(dst_ctors);
-        if (err != OK)
-                return err;
-
-        for (src_ctors = source->adt.ctors;
-                src_ctors != NULL; src_ctors = src_ctors->next)
-        {
-                err = ubik_value_new(&dst_ctor, ws);
-                if (err != OK)
-                        return err;
-                err = ubik_list_create_empty(dst_ctor);
-                if (err != OK)
-                        return err;
-
-                err = ubik_value_new(&t, ws);
-                if (err != OK)
-                        return err;
-                t->type = UBIK_STR;
-                t->str.data = src_ctors->name;
-                t->str.length = strlen(src_ctors->name);
-                err = ubik_list_append(dst_ctor, t, ws);
-                if (err != OK)
-                        return err;
-
-                for (src_ctor_param = src_ctors->params;
-                        src_ctor_param != NULL;
-                        src_ctor_param = src_ctor_param->next)
-                {
-                        /* TODO: these should be types */
-                        err = ubik_value_new(&t, ws);
-                        if (err != OK)
-                                return err;
-
-                        err = ubik_list_append(dst_ctor, t, ws);
-                        if (err != OK)
-                                return err;
-                }
-
-                err = ubik_list_append(dst_ctors, dst_ctor, ws);
-                if (err != OK)
-                        return err;
-        }
-
-        err = ubik_list_create_empty(res);
-        if (err != OK)
-                return err;
-
-        err = ubik_list_append(res, dst_name, ws);
-        if (err != OK)
-                return err;
-
-        err = ubik_list_append(res, dst_params, ws);
-        if (err != OK)
-                return err;
-
-        err = ubik_list_append(res, dst_constraints, ws);
-        if (err != OK)
-                return err;
-
-        err = ubik_list_append(res, dst_ctors, ws);
-        if (err != OK)
-                return err;
+        if (instance->type != UBIK_TUP)
+                return ubik_raise(ERR_BAD_VALUE, "value is not an adt");
+        *n = instance->tup.n - 1;
         return OK;
 }
 
@@ -252,11 +121,8 @@ bind_decl(
         struct ubik_ast_expr *decl_expr;
         ubik_error err;
 
-        err = ubik_value_new(&type_decl, req->workspace);
-        if (err != OK)
-                return err;
-
-        err = ubik_adt_create_decl(type_decl, req->workspace, type);
+        err = ubik_typesystem_get(
+                &type_decl, req->type_system, type->name, ast->package_name);
         if (err != OK)
                 return err;
 
@@ -266,7 +132,6 @@ bind_decl(
         decl_expr->loc = type->loc;
         decl_expr->atom->atom_type = ATOM_VALUE;
         decl_expr->atom->loc = type->loc;
-        /* let the expression inherit the ref to type_decl */
         decl_expr->atom->value = type_decl;
 
         ubik_alloc1(&bind, struct ubik_ast_binding, &req->region);

@@ -155,8 +155,7 @@ struct ubik_mul
 
 struct ubik_typ_ctor
 {
-        char *name;
-        size_t name_len;
+        struct ubik_str name;
         struct ubik_value **arg_types;
         ubik_word arity;
 };

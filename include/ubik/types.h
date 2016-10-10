@@ -43,6 +43,7 @@ struct ubik_type_expr
 {
         union
         {
+                /* TODO: should have package! */
                 char *name;
                 struct
                 {

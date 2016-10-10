@@ -156,6 +156,22 @@ read_node(
 }
 
 no_ignore static ubik_error
+read_str(struct ubik_str *str, struct ubik_stream *in)
+{
+        uint64_t t64;
+        size_t read;
+
+        READ_INTO(t64, in);
+        str->length = ntohw(t64);
+        ubik_galloc((void**) &str->data, str->length, sizeof(char));
+        read = ubik_stream_read(str->data, in, str->length);
+        if (read != str->length)
+                return ubik_raise(ERR_NO_DATA, "string data");
+
+        return OK;
+}
+
+no_ignore static ubik_error
 read_value(
         struct ubik_value *v,
         struct ubik_stream *in,
@@ -165,7 +181,7 @@ read_value(
         uint16_t t16;
         uint8_t t8;
         ubik_word i;
-        size_t read;
+        ubik_word j;
         ubik_error err;
 
         READ_INTO(t16, in);
@@ -186,13 +202,7 @@ read_value(
                 return OK;
 
         case UBIK_STR:
-                READ_INTO(t64, in);
-                v->str.length = ntohw(t64);
-                ubik_galloc((void**) &v->str.data, v->str.length, sizeof(char));
-                read = ubik_stream_read(v->str.data, in, v->str.length);
-                if (read != v->str.length)
-                        return ubik_raise(ERR_NO_DATA, "string data");
-                return OK;
+                return read_str(&v->str, in);
 
         case UBIK_RAT:
                 READ_INTO(t64, in);
@@ -280,12 +290,24 @@ read_value(
                         v->typ.adt.n_ctors = ntohw(t64);
                         v->typ.adt.ctors = calloc(
                                 v->typ.adt.n_ctors,
-                                sizeof(struct ubik_adt_ctor));
+                                sizeof(struct ubik_typ_ctor));
                         for (i = 0; i < v->typ.adt.n_ctors; i++)
                         {
-                                return ubik_raise(
-                                        ERR_NOT_IMPLEMENTED,
-                                        "actual ctors because i'm toooo tired");
+                                struct ubik_typ_ctor *c = &v->typ.adt.ctors[i];
+                                err = read_str(&c->name, in);
+                                if (err != OK)
+                                        return err;
+                                READ_INTO(t64, in);
+                                c->arity = ntohw(t64);
+                                c->arg_types = calloc(
+                                        c->arity, sizeof(struct ubik_value *));
+                                for (j = 0; j < c->arity; j++)
+                                {
+                                        err = read_ref(
+                                                &c->arg_types[j], in, root);
+                                        if (err != OK)
+                                                return err;
+                                }
                         }
                 }
                 return OK;
@@ -491,6 +513,23 @@ write_node(
 }
 
 no_ignore static ubik_error
+write_str(
+        struct ubik_stream *out,
+        struct ubik_str *str)
+{
+        size_t written;
+        uint64_t t64;
+
+        t64 = htonw(str->length);
+        WRITE_INTO(out, t64);
+        written = ubik_stream_write(out, str->data, str->length);
+        if (written != str->length)
+                return ubik_raise(ERR_WRITE_FAILED, "string data");
+
+        return OK;
+}
+
+no_ignore static ubik_error
 write_value(
         struct ubik_stream *out,
         struct ubik_value *v)
@@ -498,7 +537,6 @@ write_value(
         uint64_t t64;
         uint16_t t16;
         uint8_t t8;
-        size_t written;
         ubik_word i, j;
         ubik_error err;
         struct ubik_typ_ctor *ctor;
@@ -522,12 +560,7 @@ write_value(
                 return OK;
 
         case UBIK_STR:
-                t64 = htonw(v->str.length);
-                WRITE_INTO(out, t64);
-                written = ubik_stream_write(out, v->str.data, v->str.length);
-                if (written != v->str.length)
-                        return ubik_raise(ERR_WRITE_FAILED, "string data");
-                return OK;
+                return write_str(out, &v->str);
 
         case UBIK_RAT:
                 t64 = htonw(v->rat.num);
@@ -614,14 +647,9 @@ write_value(
                         {
                                 ctor = &v->typ.adt.ctors[i];
 
-                                t64 = htonw(ctor->name_len);
-                                WRITE_INTO(out, t64);
-
-                                written = ubik_stream_write(
-                                        out, ctor->name, ctor->name_len);
-                                if (written != ctor->name_len)
-                                        return ubik_raise(
-                                                ERR_WRITE_FAILED, "ctor name");
+                                err = write_str(out, &ctor->name);
+                                if (err != OK)
+                                        return err;
 
                                 t64 = htonw(ctor->arity);
                                 WRITE_INTO(out, t64);

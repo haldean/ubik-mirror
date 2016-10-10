@@ -35,11 +35,6 @@ ubik_adt_instantiate(
         struct ubik_value *args,
         struct ubik_workspace *ws);
 
-/* Returns the name of the ADT that is encoded in an ADT type
- * declaration. */
-no_ignore ubik_error
-ubik_adt_get_name(struct ubik_value **res, struct ubik_value *type_decl);
-
 /* Returns the name of the constructor that was used for the value. The
  * caller must free the result of this function. */
 no_ignore ubik_error

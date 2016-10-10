@@ -44,6 +44,7 @@ c_sources = \
     ./shared/stream.c \
     ./shared/streamutil.c \
     ./shared/string.c \
+    ./shared/typ.c \
     ./shared/uri.c \
     ./shared/util.c \
     ./shared/value.c \
