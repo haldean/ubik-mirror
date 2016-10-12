@@ -379,10 +379,20 @@ ubik_uri_dup(struct ubik_uri *uri)
         ubik_galloc1(&res, struct ubik_uri);
 
         res->hash = uri->hash;
-        res->name = strdup(uri->name);
+
+        res->name = calloc(uri->name_len, sizeof(char));
+        memcpy(res->name, uri->name, uri->name_len);
         res->name_len = uri->name_len;
-        res->source = uri->source == NULL ? NULL : strdup(uri->source);
+
+        if (uri->source == NULL)
+                res->source = NULL;
+        else
+        {
+                res->source = calloc(uri->source_len, sizeof(char));
+                memcpy(res->source, uri->source, uri->source_len);
+        }
         res->source_len = uri->source_len;
+
         res->version = uri->version;
         res->scope = uri->scope;
         res->as_value = NULL;
