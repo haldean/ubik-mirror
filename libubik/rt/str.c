@@ -30,7 +30,7 @@ ubik_str_concat(
 {
         r->type = UBIK_STR;
         r->str.length = v1->str.length + v2->str.length;
-        ubik_galloc1(&r->str.data, r->str.length);
+        ubik_galloc((void **) &r->str.data, sizeof(char), r->str.length);
         memcpy(r->str.data, v1->str.data, v1->str.length);
         memcpy(r->str.data + v1->str.length,
                v2->str.data, v2->str.length);
