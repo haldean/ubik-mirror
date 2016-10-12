@@ -35,6 +35,7 @@ ubik_value_new(
         struct ubik_workspace *ws)
 {
         ubik_error err;
+        size_t i;
 
         if (ws->n < workspace_cap)
         {
@@ -56,7 +57,10 @@ ubik_value_new(
         err = ubik_workspace_new(&ws->next);
         if (err != OK)
                 return err;
+        ws->next->values[0].gc.id = ws->values[ws->n - 1].gc.id + 1;
         ws = ws->next;
+        for (i = 1; i < ws->n; i++)
+                ws->values[i].gc.id = ws->values[0].gc.id + i;
 
         *res = &ws->values[0];
         (*res)->gc.alive = true;
@@ -68,15 +72,21 @@ no_ignore ubik_error
 ubik_workspace_new(struct ubik_workspace **ref)
 {
         struct ubik_workspace *ws;
+        size_t i;
 
         ubik_galloc1(&ws, struct ubik_workspace);
+
         ws->values = aligned_alloc(
                 sizeof(void *), workspace_cap * sizeof(struct ubik_value));
-        bzero(ws->values, workspace_cap * sizeof(struct ubik_value));
         if (ws->values == NULL)
                 return ubik_raise(ERR_NO_MEMORY, "couldn't allocate new values");
+        bzero(ws->values, workspace_cap * sizeof(struct ubik_value));
+
         ws->next = 0;
         ws->n = 0;
+        for (i = 0; i < ws->n; i++)
+                ws->values[i].gc.id = i;
+
         *ref = ws;
 
         return OK;
