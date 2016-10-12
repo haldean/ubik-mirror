@@ -342,6 +342,7 @@ ubik_schedule_complete(
         ubik_word d1, d2, d3, p;
         size_t i;
         ubik_error err;
+        bool done;
 
         graph = get_fun(e->gexec->v);
         err = ubik_fun_get_parents(&parents, graph, e->node);
@@ -368,8 +369,25 @@ ubik_schedule_complete(
            aren't, clean up the graph executor and notify listeners. */
         if (graph->fun.nodes[e->node].is_terminal)
         {
-                unused(s);
-                return ubik_raise(ERR_NOT_IMPLEMENTED, "yup");
+                done = true;
+                for (i = 0; i < graph->fun.n && done; i++)
+                        if (i != e->node && graph->fun.nodes[i].is_terminal)
+                                done = false;
+                if (done)
+                {
+                        if (e->gexec->notify != NULL) {
+                                err = e->gexec->notify->notify(
+                                        e->gexec->notify->arg, s, e);
+                                if (err != OK)
+                                        return err;
+                        }
+                        err = ubik_env_free(e->gexec->env);
+                        if (err != OK)
+                                return err;
+                        free(e->gexec->nv);
+                        free(e->gexec->nt);
+                        free(e->gexec->status);
+                }
         }
 
         free(e);
@@ -392,11 +410,6 @@ _notify_node(
         waiting->gexec->nv[waiting->node] = complete->gexec->nv[complete->node];
         waiting->gexec->nt[waiting->node] = complete->gexec->nt[complete->node];
         waiting->gexec->status[waiting->node] = UBIK_STATUS_COMPLETE;
-
-        err = ubik_env_free(complete->gexec->env);
-        if (err != OK)
-                return err;
-        free(complete->gexec->env);
 
         err = ubik_schedule_complete(s, waiting);
         if (err != OK)
