@@ -299,7 +299,9 @@ ubik_schedule_push(
         ubik_error err;
         struct ubik_exec_graph *gexec;
         struct ubik_value *graph;
+        struct ubik_value *pap;
         size_t i;
+        size_t j;
 
         graph = get_fun(val);
         gexec = calloc(1, sizeof(struct ubik_exec_graph));
@@ -310,6 +312,23 @@ ubik_schedule_push(
         gexec->env = env;
         gexec->notify = notify;
         gexec->workspace = workspace;
+
+        /* Add types and values for inputs to the executor */
+        for (i = graph->fun.arity - 1, pap = val;
+             pap->type == UBIK_PAP;
+             pap = pap->pap.func, i--)
+        {
+                for (j = 0; j < graph->fun.n; j++)
+                {
+                        if (graph->fun.nodes[j].node_type != UBIK_INPUT)
+                                continue;
+                        if (graph->fun.nodes[j].input.arg_num != i)
+                                continue;
+                        gexec->nv[j] = pap->pap.arg;
+                        gexec->nt[j] = pap->pap.arg_type;
+                        break;
+                }
+        }
 
         /* Graphs with special evaluators get to cheat and skip all this biz. */
         if (graph->fun.evaluator != NULL)
