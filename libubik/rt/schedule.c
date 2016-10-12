@@ -46,8 +46,14 @@ get_fun(struct ubik_value *v)
 static void
 free_exec_graph(struct ubik_exec_graph *gexec)
 {
-        unused(gexec);
-        ubik_assert("not implemented!" == NULL);
+        ubik_assert(ubik_env_free(gexec->env) == OK);
+        free(gexec->env);
+        if (gexec->notify != NULL)
+                free(gexec->notify);
+        free(gexec->nv);
+        free(gexec->nt);
+        free(gexec->status);
+        free(gexec);
 }
 
 /* Creates a scheduler. */
@@ -382,12 +388,7 @@ ubik_schedule_complete(
                                 if (err != OK)
                                         return err;
                         }
-                        err = ubik_env_free(e->gexec->env);
-                        if (err != OK)
-                                return err;
-                        free(e->gexec->nv);
-                        free(e->gexec->nt);
-                        free(e->gexec->status);
+                        free_exec_graph(e->gexec);
                 }
         }
 
