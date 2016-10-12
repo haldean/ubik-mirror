@@ -37,7 +37,8 @@ struct ubik_scheduler
 static inline struct ubik_value *
 get_fun(struct ubik_value *v)
 {
-        for (; v->type == UBIK_PAP; v = v->pap.func);
+        if (v->type == UBIK_PAP)
+                return v->pap.base_func;
         ubik_assert(v->type == UBIK_FUN);
         return v;
 }
