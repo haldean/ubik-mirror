@@ -104,7 +104,10 @@ _add_modinit_setter(
                 return err;
 
         ubik_alloc1(&store_uri, struct ubik_uri, iter->region);
-        err = ubik_uri(store_uri, iter->package_name, uri->name);
+        err = ubik_uri(
+                store_uri,
+                iter->package_name, strlen(iter->package_name),
+                uri->name, uri->name_len);
         if (err != OK)
                 return err;
 

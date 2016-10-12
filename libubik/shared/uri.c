@@ -136,12 +136,14 @@ no_ignore ubik_error
 ubik_uri(
         struct ubik_uri *uri,
         char *package,
-        char *name)
+        size_t package_len,
+        char *name,
+        size_t name_len)
 {
         uri->name = name;
-        uri->name_len = strlen(name);
+        uri->name_len = name_len;
         uri->source = package;
-        uri->source_len = strlen(package);
+        uri->source_len = package_len;
         uri->version = 0;
         uri->scope = SCOPE_PACKAGE;
         uri->as_value = NULL;
@@ -262,15 +264,21 @@ ubik_uri_attach_value(struct ubik_uri *uri, struct ubik_workspace *ws)
         if (err != OK)
                 return err;
         v->tup.elems[2]->type = UBIK_STR;
-        v->tup.elems[2]->str.data = strdup(uri->name);
+        v->tup.elems[2]->str.data = calloc(uri->name_len, sizeof(char));
+        memcpy(v->tup.elems[2]->str.data, uri->name, uri->name_len);
         v->tup.elems[2]->str.length = uri->name_len;
 
         err = ubik_type_str(v->tup.types[3]);
         if (err != OK)
                 return err;
         v->tup.elems[3]->type = UBIK_STR;
-        v->tup.elems[3]->str.data = strdup(
-                uri->source == NULL ? "" : uri->source);
+        if (uri->source == NULL)
+                v->tup.elems[3]->str.data = strdup("");
+        else {
+                v->tup.elems[3]->str.data = calloc(
+                        uri->source_len, sizeof(char));
+                memcpy(v->tup.elems[3]->str.data, uri->source, uri->source_len);
+        }
         v->tup.elems[3]->str.length = uri->source_len;
 
         uri->as_value = v;

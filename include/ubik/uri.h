@@ -64,7 +64,9 @@ no_ignore ubik_error
 ubik_uri(
         struct ubik_uri *uri,
         char *package,
-        char *name);
+        size_t package_len,
+        char *name,
+        size_t name_len);
 
 /* Creates a URI for a global, runtime-provided resource. */
 no_ignore ubik_error

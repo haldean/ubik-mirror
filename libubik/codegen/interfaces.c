@@ -26,6 +26,7 @@
 #include "ubik/util.h"
 
 #include <inttypes.h>
+#include <string.h>
 
 no_ignore static ubik_error
 add_multimethod(
@@ -43,7 +44,9 @@ add_multimethod(
 
         n_args = ubik_type_count_arguments(member->type);
 
-        err = ubik_uri(&uri, ast->package_name, member->name);
+        err = ubik_uri(
+                &uri, ast->package_name, strlen(ast->package_name),
+                member->name, strlen(member->name));
         if (err != OK)
                 return err;
         err = ubik_uri_attach_value(&uri, req->workspace);
