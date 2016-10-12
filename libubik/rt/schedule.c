@@ -17,6 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include <inttypes.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -27,6 +28,8 @@
 #include "ubik/fun.h"
 #include "ubik/schedule.h"
 #include "ubik/util.h"
+
+#define UBIK_SCHEDULE_STEP 1
 
 struct ubik_scheduler
 {
@@ -503,51 +506,21 @@ can_collapse(struct ubik_exec_unit *e)
 no_ignore static ubik_error
 _dump_exec_unit(struct ubik_exec_unit *u)
 {
-        /*
-        struct ubik_dagc_node *d1, *d2, *d3;
-        char *buf;
-        ubik_error err;
+        printf("\tnode %03" PRIx64 " / value %08" PRIx64 " ",
+               u->node, get_fun(u->gexec->v)->gc.id);
 
-        buf = ubik_node_explain(u->node);
-        printf("\t%s\n", buf);
-        free(buf);
-        printf("\t\tenv @%hx ", (short)((uintptr_t) u->env));
-        printf("parent @%hx\n", (short)((uintptr_t) u->env->parent));
+        uint8_t status = u->gexec->status[u->node];
+        printf("wait d1 %d d2 %d d3 %d eval %d data %d ",
+               !!(status & UBIK_STATUS_WAIT_D1),
+               !!(status & UBIK_STATUS_WAIT_D2),
+               !!(status & UBIK_STATUS_WAIT_D3),
+               !!(status & UBIK_STATUS_WAIT_EVAL),
+               !!(status & UBIK_STATUS_WAIT_DATA));
 
-        printf("\t\twait on d1 %d d2 %d d3 %d eval %d data %d\n",
-                !!(u->node->flags & UBIK_STATUS_WAIT_D1),
-                !!(u->node->flags & UBIK_STATUS_WAIT_D2),
-                !!(u->node->flags & UBIK_STATUS_WAIT_D3),
-                !!(u->node->flags & UBIK_STATUS_WAIT_EVAL),
-                !!(u->node->flags & UBIK_STATUS_WAIT_DATA));
+        printf("nv %08" PRIx64 " nt %08" PRIx64 "\n",
+               u->gexec->nv[u->node] == NULL ? 0 : u->gexec->nv[u->node]->gc.id,
+               u->gexec->nt[u->node] == NULL ? 0 : u->gexec->nt[u->node]->gc.id);
 
-        err = ubik_fun_get_deps(&d1, &d2, &d3, u->node);
-        if (err != OK)
-                return err;
-
-        if (d1 != NULL)
-        {
-                buf = ubik_node_explain(d1);
-                printf("\t\td1: %s\n", buf);
-                free(buf);
-        }
-
-        if (d2 != NULL)
-        {
-                buf = ubik_node_explain(d2);
-                printf("\t\td2: %s\n", buf);
-                free(buf);
-        }
-
-        if (d3 != NULL)
-        {
-                buf = ubik_node_explain(d3);
-                printf("\t\td3: %s\n", buf);
-                free(buf);
-        }
-        return OK;
-        */
-        unused(u);
         return OK;
 }
 
@@ -557,7 +530,7 @@ ubik_schedule_dump(struct ubik_scheduler *s)
         struct ubik_exec_unit *u;
         ubik_error err;
 
-        printf("scheduler dump\nwaiting jobs:\n");
+        printf("\nscheduler dump\nwaiting jobs:\n");
         u = s->wait;
         while (u != NULL)
         {
@@ -567,7 +540,7 @@ ubik_schedule_dump(struct ubik_scheduler *s)
                 u = u->next;
         }
 
-        printf("ready jobs:\n");
+        printf("\nready jobs:\n");
         u = s->ready;
         while (u != NULL)
         {
@@ -576,6 +549,7 @@ ubik_schedule_dump(struct ubik_scheduler *s)
                         return err;
                 u = u->next;
         }
+        printf("\n");
 
         return OK;
 }
