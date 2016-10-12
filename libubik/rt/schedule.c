@@ -60,9 +60,7 @@ free_exec_graph(struct ubik_exec_graph *gexec)
 no_ignore ubik_error
 ubik_schedule_new(struct ubik_scheduler **s)
 {
-        *s = calloc(1, sizeof(struct ubik_scheduler));
-        if (*s == NULL)
-                return ubik_raise(ERR_NO_MEMORY, "schedule alloc");
+        ubik_galloc1(s, struct ubik_scheduler);
         return OK;
 }
 
@@ -169,9 +167,7 @@ _enqueue(
                 return OK;
         }
 
-        u = calloc(1, sizeof(struct ubik_exec_unit));
-        if (u == NULL)
-                return ubik_raise(ERR_NO_MEMORY, "exec unit alloc");
+        ubik_galloc1(&u, struct ubik_exec_unit);
         u->node = node;
         u->gexec = gexec;
 
@@ -304,11 +300,14 @@ ubik_schedule_push(
         size_t j;
 
         graph = get_fun(val);
-        gexec = calloc(1, sizeof(struct ubik_exec_graph));
+        ubik_galloc1(&gexec, struct ubik_exec_graph);
+        ubik_galloc((void **) &gexec->status,
+                    graph->fun.n, sizeof(*gexec->status));
+        ubik_galloc((void **) &gexec->nv,
+                    graph->fun.n, sizeof(struct ubik_value *));
+        ubik_galloc((void **) &gexec->nt,
+                    graph->fun.n, sizeof(struct ubik_value *));
         gexec->v = val;
-        gexec->status = calloc(graph->fun.n, sizeof(*gexec->status));
-        gexec->nv = calloc(graph->fun.n, sizeof(struct ubik_value *));
-        gexec->nt = calloc(graph->fun.n, sizeof(struct ubik_value *));
         gexec->env = env;
         gexec->notify = notify;
         gexec->workspace = workspace;
@@ -457,16 +456,14 @@ _collapse_graph(
         }
 #endif
 
-        notify = calloc(1, sizeof(struct ubik_exec_notify));
-        if (notify == NULL)
-                return ubik_raise(ERR_NO_MEMORY, "exec notify");
+        ubik_galloc1(&notify, struct ubik_exec_notify);
         notify->notify = (ubik_exec_notify_func) _notify_node;
         notify->arg = e;
 
         e->gexec->status[e->node] = UBIK_STATUS_WAIT_EVAL;
 
         /* Create a child environment to execute the function in. */
-        child_env = calloc(1, sizeof(struct ubik_env));
+        ubik_galloc1(&child_env, struct ubik_env);
         err = ubik_env_make_child(child_env, e->gexec->env);
         if (err != OK)
                 return err;
