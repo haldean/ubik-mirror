@@ -43,11 +43,33 @@ _eval_apply(struct ubik_exec_unit *u, struct ubik_node *n)
         res->pap.func = u->gexec->nv[n->apply.func];
         res->pap.arg = u->gexec->nv[n->apply.arg];
         res->pap.arg_type = u->gexec->nt[n->apply.arg];
+        switch (res->pap.func->type)
+        {
+        case UBIK_FUN:
+        case UBIK_MUL:
+                res->pap.base_func = res->pap.func;
+                break;
+        case UBIK_PAP:
+                res->pap.base_func = res->pap.func->pap.base_func;
+                break;
+        case UBIK_NOV:
+        case UBIK_STR:
+        case UBIK_RAT:
+        case UBIK_TUP:
+        case UBIK_TYP:
+        case UBIK_IMP:
+        case UBIK_BOO:
+        case UBIK_MAX_VALUE_TYPE:
+                return ubik_raise(
+                        ERR_BAD_TYPE, "func in apply is not applyable");
+        }
 
         err = ubik_type_func_apply(
                 type, u->gexec->nt[n->apply.func], u->gexec->nt[n->apply.arg]);
-        if (err != OK)
-                return err;
+        if (err != OK) {
+                printf("warning: discarding error on applied type\n");
+                free(err);
+        }
 
         u->gexec->nv[n->id] = res;
         u->gexec->nt[n->id] = type;
