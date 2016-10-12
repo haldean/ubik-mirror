@@ -1,11 +1,10 @@
-tuples
-circular reference finder
-low-level debugger with graph step-through
-value_or_graph and atom should be merged
-dagc source maps
-interface files
-real parser for URIs instead of hacky shit
-list iterators
-define _GNU_SOURCE in ubik.h, remove it everywhere else
-make sure that pattern blocks match all patterns
-bindings in pattern blocks
+-*- mode: org -*-
+
+* low-level debugger with graph step-through
+* dagc source maps
+* interface files
+* real parser for URIs instead of hacky shit
+* make sure that pattern blocks match all patterns
+* bindings in pattern blocks
+* input nodes need to have their values/types filled in
+- values are in the PAP value on the executor
