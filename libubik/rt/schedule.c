@@ -318,6 +318,7 @@ ubik_schedule_push(
                 if (err != OK)
                         return err;
                 free_exec_graph(gexec);
+                return OK;
         }
 
         for (i = 0; i < graph->fun.n; i++)
