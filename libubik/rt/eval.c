@@ -67,7 +67,8 @@ _eval_apply(struct ubik_exec_unit *u, struct ubik_node *n)
         err = ubik_type_func_apply(
                 type, u->gexec->nt[n->apply.func], u->gexec->nt[n->apply.arg]);
         if (err != OK) {
-                printf("warning: discarding error on applied type\n");
+                /* TODO: don't discard this! we should have real run time types
+                   flowing here. */
                 free(err);
         }
 
