@@ -52,7 +52,8 @@ static void
 free_exec_graph(struct ubik_exec_graph *gexec)
 {
         ubik_assert(ubik_env_free(gexec->env) == OK);
-        free(gexec->env);
+        if (gexec->transient_env)
+                free(gexec->env);
         if (gexec->notify != NULL)
                 free(gexec->notify);
         free(gexec->nv);
@@ -190,6 +191,7 @@ _enqueue(
         ubik_galloc1(&u, struct ubik_exec_unit);
         u->node = node;
         u->gexec = gexec;
+        gexec->refcount++;
 
         err = _set_initial_ready(gexec, node);
         if (err != OK)
@@ -309,6 +311,7 @@ ubik_schedule_push(
         struct ubik_scheduler *s,
         struct ubik_value *val,
         struct ubik_env *env,
+        bool transient_env,
         struct ubik_exec_notify *notify,
         struct ubik_workspace *workspace)
 {
@@ -331,6 +334,8 @@ ubik_schedule_push(
         gexec->env = env;
         gexec->notify = notify;
         gexec->workspace = workspace;
+        gexec->refcount = 0;
+        gexec->transient_env = transient_env;
 
         /* Add types and values for inputs to the executor */
         for (i = graph->fun.arity - 1, pap = val;
@@ -412,7 +417,7 @@ ubik_schedule_complete(
 
         /* If this was a terminal node, it's possible that we're done with this
            graph. Check if there are any outstanding terminals, and if there
-           aren't, clean up the graph executor and notify listeners. */
+           aren't, notify listeners. */
         if (graph->fun.nodes[e->node].is_terminal)
         {
                 done = true;
@@ -427,9 +432,12 @@ ubik_schedule_complete(
                                 if (err != OK)
                                         return err;
                         }
-                        free_exec_graph(e->gexec);
                 }
         }
+        ubik_assert(e->gexec->refcount > 0);
+        e->gexec->refcount--;
+        if (e->gexec->refcount == 0)
+                free_exec_graph(e->gexec);
 
         free(e);
         return OK;
@@ -489,7 +497,7 @@ _collapse_graph(
                 return err;
 
         err = ubik_schedule_push(
-                s, e->gexec->nv[e->node], child_env, notify,
+                s, e->gexec->nv[e->node], child_env, true, notify,
                 e->gexec->workspace);
         if (err != OK)
                 return err;
@@ -715,7 +723,7 @@ ubik_schedule_push_roots(
                         if (!ws->values[i].gc.root)
                                 continue;
                         err = ubik_schedule_push(
-                                s, &ws->values[i], env, NULL, ws);
+                                s, &ws->values[i], env, false, NULL, ws);
                         if (err != OK)
                                 return err;
                 }

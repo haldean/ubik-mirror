@@ -77,6 +77,13 @@ struct ubik_exec_graph
 
         /* The workspace in which we're working */
         struct ubik_workspace *workspace;
+
+        /* The number of exec units that refer to this executor */
+        uint64_t refcount;
+
+        /* If true, this is executing in a temporary environment that should be
+           cleaned up when execution is complete */
+        bool transient_env;
 };
 
 struct ubik_exec_unit
@@ -106,6 +113,7 @@ ubik_schedule_push(
         struct ubik_scheduler *s,
         struct ubik_value *graph,
         struct ubik_env *env,
+        bool transient_env,
         struct ubik_exec_notify *notify,
         struct ubik_workspace *workspace);
 
