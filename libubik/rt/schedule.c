@@ -26,8 +26,10 @@
 #include "ubik/env.h"
 #include "ubik/eval.h"
 #include "ubik/fun.h"
+#include "ubik/pointerset.h"
 #include "ubik/schedule.h"
 #include "ubik/util.h"
+#include "ubik/vector.h"
 
 #define UBIK_SCHEDULE_STEP 1
 
@@ -72,11 +74,17 @@ no_ignore ubik_error
 ubik_schedule_free(struct ubik_scheduler *s)
 {
         struct ubik_exec_unit *to_free;
+        struct ubik_vector gexecs = {0};
+        ubik_error err;
+        size_t i;
 
         while (s->wait != NULL)
         {
                 to_free = s->wait;
                 s->wait = s->wait->next;
+                err = ubik_pointer_set_add(NULL, &gexecs, to_free->gexec);
+                if (err != OK)
+                        return err;
                 free(to_free);
         }
 
@@ -84,8 +92,17 @@ ubik_schedule_free(struct ubik_scheduler *s)
         {
                 to_free = s->ready;
                 s->ready = s->ready->next;
+                err = ubik_pointer_set_add(NULL, &gexecs, to_free->gexec);
+                if (err != OK)
+                        return err;
                 free(to_free);
         }
+
+        for (i = 0; i < gexecs.n; i++)
+        {
+                free_exec_graph(gexecs.elems[i]);
+        }
+        ubik_vector_free(&gexecs);
 
         return OK;
 }
