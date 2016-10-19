@@ -253,7 +253,7 @@ _assign_pred_case(
         struct ubik_node *n;
         ubik_error err;
 
-        ubik_galloc1(&n, struct ubik_node);
+        ubik_alloc1(&n, struct ubik_node, ctx->region);
 
         if (case_stmt->next != NULL)
         {
