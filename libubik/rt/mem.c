@@ -59,7 +59,7 @@ ubik_value_new(
                 return err;
         ws->next->values[0].gc.id = ws->values[ws->n - 1].gc.id + 1;
         ws = ws->next;
-        for (i = 1; i < ws->n; i++)
+        for (i = 1; i < workspace_cap; i++)
                 ws->values[i].gc.id = ws->values[0].gc.id + i;
 
         *res = &ws->values[0];
@@ -84,7 +84,7 @@ ubik_workspace_new(struct ubik_workspace **ref)
 
         ws->next = 0;
         ws->n = 0;
-        for (i = 0; i < ws->n; i++)
+        for (i = 0; i < workspace_cap; i++)
                 ws->values[i].gc.id = i;
 
         *ref = ws;
