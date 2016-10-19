@@ -8,7 +8,7 @@
     ^ MaybeString -> String
     = \s -> ? s {
         . Solo str * => str
-        . Nada => "nothing"
+        . Nada       => "nothing"
     }
 
 ! emit
