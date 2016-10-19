@@ -51,9 +51,11 @@ get_fun(struct ubik_value *v)
 static void
 free_exec_graph(struct ubik_exec_graph *gexec)
 {
-        ubik_assert(ubik_env_free(gexec->env) == OK);
         if (gexec->transient_env)
+        {
+                ubik_assert(ubik_env_free(gexec->env) == OK);
                 free(gexec->env);
+        }
         if (gexec->notify != NULL)
                 free(gexec->notify);
         free(gexec->nv);
