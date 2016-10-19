@@ -544,9 +544,9 @@ _dump_exec_unit(struct ubik_exec_unit *u)
                !!(status & UBIK_STATUS_WAIT_EVAL),
                !!(status & UBIK_STATUS_WAIT_DATA));
 
-        printf("nv %08" PRIx64 " nt %08" PRIx64 "\n",
-               u->gexec->nv[u->node] == NULL ? 0 : u->gexec->nv[u->node]->gc.id,
-               u->gexec->nt[u->node] == NULL ? 0 : u->gexec->nt[u->node]->gc.id);
+        printf("env %04" PRIx16 " parent %04" PRIx16 "\n",
+               (uint16_t) ((uintptr_t) u->gexec->env),
+               (uint16_t) ((uintptr_t) u->gexec->env->parent));
 
         return OK;
 }
