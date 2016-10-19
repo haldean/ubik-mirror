@@ -531,8 +531,8 @@ can_collapse(struct ubik_exec_unit *e)
 no_ignore static ubik_error
 _dump_exec_unit(struct ubik_exec_unit *u)
 {
-        printf("\tnode %03" PRIx64 " / value %08" PRIx64 " ",
-               u->node, get_fun(u->gexec->v)->gc.id);
+        printf("\tvalue %08" PRIx64 " node %03" PRIx64 " ",
+               get_fun(u->gexec->v)->gc.id, u->node);
 
         uint8_t status = u->gexec->status[u->node];
         printf("wait d1 %d d2 %d d3 %d eval %d data %d ",
