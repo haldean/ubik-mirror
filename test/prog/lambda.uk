@@ -5,7 +5,7 @@
 
 : add-7
         ^ Word -> Word
-        = uadd 7
+        = rational-add 7
 
 : three-string-concat
         ^ String -> String -> String -> String
