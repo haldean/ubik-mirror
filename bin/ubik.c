@@ -137,6 +137,7 @@ teardown:
                         free(teardown_err);
         }
 
+        fflush(stdout);
         ubik_stream_close(&stream);
         return err;
 }
