@@ -17,6 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include "ubik/assert.h"
 #include "ubik/env.h"
 #include "ubik/natives.h"
 #include "ubik/schedule.h"
@@ -38,6 +39,8 @@ _native_concat(struct ubik_exec_graph *gexec)
         if (err != OK)
                 return err;
 
+        ubik_assert(gexec->nv[0]->type == UBIK_STR);
+        ubik_assert(gexec->nv[1]->type == UBIK_STR);
         ubik_str_concat(res, gexec->nv[0], gexec->nv[1]);
         gexec->nv[2] = res;
         gexec->nt[2] = gexec->nv[0];
