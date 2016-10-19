@@ -341,7 +341,7 @@ _assign_block(
         ubik_word node_index;
 
         if (expr->block->types.n != 0)
-                return ubik_raise(ERR_NOT_IMPLEMENTED, "private types");
+                return ubik_raise(ERR_NOT_IMPLEMENTED, "scoped types");
 
         /* first set all of the binding nodes to REF nodes, so that things
          * can point at the definitions of names before the names actually
