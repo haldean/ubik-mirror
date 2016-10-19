@@ -381,7 +381,7 @@ _assign_block(
                         &node_index, expr->block->scope, bind->name);
                 if (err != OK)
                         return err;
-                subnode = (struct ubik_node *) nodes->elems[i];
+                subnode = (struct ubik_node *) nodes->elems[node_index];
                 subnode->ref.referrent = bind->expr->gen;
         }
 
