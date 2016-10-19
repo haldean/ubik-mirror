@@ -39,8 +39,10 @@ _native_concat(struct ubik_exec_graph *gexec)
         if (err != OK)
                 return err;
 
-        ubik_assert(gexec->nv[0]->type == UBIK_STR);
-        ubik_assert(gexec->nv[1]->type == UBIK_STR);
+        if (gexec->nv[0]->type != UBIK_STR)
+                return ubik_raise(ERR_BAD_TYPE, "concat value was not a str");
+        if (gexec->nv[1]->type != UBIK_STR)
+                return ubik_raise(ERR_BAD_TYPE, "concat value was not a str");
         ubik_str_concat(res, gexec->nv[0], gexec->nv[1]);
         gexec->nv[2] = res;
         gexec->nt[2] = gexec->nv[0];
