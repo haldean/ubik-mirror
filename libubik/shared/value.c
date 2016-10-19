@@ -77,11 +77,29 @@ nodes_equal(struct ubik_node *n1, struct ubik_node *n2)
         }
 }
 
+static bool
+ctors_equal(struct ubik_typ_ctor *c1, struct ubik_typ_ctor *c2)
+{
+        ubik_word i;
+
+        if (c1->name.length != c2->name.length ||
+            strncmp(c1->name.data, c2->name.data, c1->name.length))
+                return false;
+        if (c1->arity != c2->arity)
+                return false;
+        for (i = 0; i < c1->arity; i++)
+                if (!ubik_value_eq(c1->arg_types[i], c2->arg_types[i]))
+                        return false;
+        return true;
+}
+
 bool
 ubik_value_eq(struct ubik_value *v1, struct ubik_value *v2)
 {
         ubik_word i;
 
+        if (v1 == v2)
+                return true;
         if (v1->type != v2->type)
                 return false;
         switch (v1->type)
@@ -126,7 +144,31 @@ ubik_value_eq(struct ubik_value *v1, struct ubik_value *v2)
                 ubik_unreachable("multimethod comparison not implemented");
 
         case UBIK_TYP:
-                ubik_unreachable("type comparison not implemented");
+                if (v1->typ.t != v2->typ.t)
+                        return false;
+                switch (v1->typ.t)
+                {
+                case UBIK_TYPE_STR:
+                case UBIK_TYPE_BOO:
+                case UBIK_TYPE_RAT:
+                        return true;
+
+                case UBIK_TYPE_APP:
+                        return ubik_value_eq(v1->typ.app.arg, v2->typ.app.arg) &&
+                               ubik_value_eq(v1->typ.app.res, v2->typ.app.res);
+
+                case UBIK_TYPE_ADT:
+                        if (v1->typ.adt.n_ctors != v2->typ.adt.n_ctors)
+                                return false;
+                        for (i = 0; i < v1->typ.adt.n_ctors; i++)
+                                if (!ctors_equal(&v1->typ.adt.ctors[i],
+                                                 &v2->typ.adt.ctors[i]))
+                                        return false;
+                        return true;
+
+                default:
+                        ubik_unreachable("bad typ type in comparison");
+                }
 
         case UBIK_IMP:
                 ubik_unreachable("implementation comparison not implemented");
