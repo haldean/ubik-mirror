@@ -31,8 +31,6 @@
 #include "ubik/util.h"
 #include "ubik/vector.h"
 
-#define UBIK_SCHEDULE_STEP 1
-
 struct ubik_scheduler
 {
         struct ubik_exec_unit *wait;
