@@ -112,7 +112,7 @@ ubik_type_builtin_from_name(
                 err = ubik_type_str(value);
                 return err;
         }
-        if (strcmp(name, "Float") == 0)
+        if (strcmp(name, "Number") == 0)
         {
                 err = ubik_type_rat(value);
                 return err;
