@@ -142,7 +142,7 @@ dis(struct ubik_stream *s, struct ubik_value *v)
                 return;
 
         case UBIK_FUN:
-                ubik_fprintf(s, "FUN\n%" PRIu64 "\n%" PRIu64 "\n%" PRIu64 "\n",
+                ubik_fprintf(s, "FUN\n%" PRIu64 "\n%" PRIu64 "\n%" PRIx64 "\n",
                              v->fun.n, v->fun.arity, v->fun.result);
                 for (i = 0; i < v->fun.n; i++)
                         dis_node(s, &v->fun.nodes[i], i);
