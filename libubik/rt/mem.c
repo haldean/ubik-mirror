@@ -194,3 +194,15 @@ ubik_workspace_free(struct ubik_workspace *ws)
         free(ws->values);
         free(ws);
 }
+
+void
+ubik_value_release(
+        struct ubik_value *res,
+        struct ubik_workspace *ws)
+{
+        ubik_word id = res->gc.id;
+        memset(res, 0x00, sizeof(struct ubik_value));
+        res->gc.id = id;
+        /* TODO: actually reclaim memory. */
+        unused(ws);
+}

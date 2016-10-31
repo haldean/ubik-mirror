@@ -290,6 +290,12 @@ ubik_value_new(
         struct ubik_value **res,
         struct ubik_workspace *ws);
 
+/* Release a value back into the pool. */
+void
+ubik_value_release(
+        struct ubik_value *res,
+        struct ubik_workspace *ws);
+
 /* Create a workspace with the default capacity. */
 no_ignore ubik_error
 ubik_workspace_new(struct ubik_workspace **ws);
