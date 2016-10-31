@@ -382,6 +382,12 @@ ubik_schedule_push(
         return OK;
 }
 
+static int scheduler_step()
+{
+        volatile int no_inline = 0;
+        return no_inline;
+}
+
 /* Marks an execution unit complete. */
 no_ignore ubik_error
 ubik_schedule_complete(
@@ -394,6 +400,8 @@ ubik_schedule_complete(
         size_t i;
         ubik_error err;
         bool done;
+
+        scheduler_step();
 
         graph = get_fun(e->gexec->v);
         err = ubik_fun_get_parents(&parents, graph, e->node);
