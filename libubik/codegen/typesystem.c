@@ -103,6 +103,20 @@ ubik_typesystem_init(
         if (err != OK)
                 return err;
 
+        err = ubik_value_new(&t, ws);
+        if (err != OK)
+                return err;
+        t->type = UBIK_TYP;
+        t->typ.t = UBIK_TYPE_RAT;
+
+        ubik_alloc1(&ts, struct ts_type, region);
+        ts->v = t;
+        ts->name = ubik_strdup("Number", region);
+        ts->package = "ubik";
+        err = ubik_vector_append(&(*tsys)->types, ts);
+        if (err != OK)
+                return err;
+
         return OK;
 }
 
