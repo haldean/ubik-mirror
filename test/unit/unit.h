@@ -45,8 +45,13 @@ typedef struct
 #define ok (test_t){.msg = NULL, .line = __LINE__}
 
 #define run_single(test) int main() { \
-        struct ubik_workspace *ws; assert(ubik_workspace_new(&ws) == OK); \
-        ubik_error err = ubik_start(ws); \
+        struct ubik_workspace *ws; \
+        ubik_error err = ubik_workspace_new(&ws); \
+        if (err != OK) { \
+                printf("couldn't create workspace: %s\n", ubik_error_explain(err)); \
+                return 1; \
+        } \
+        err = ubik_start(ws); \
         if (err != OK) { \
                 printf("couldn't start ubik: %s\n", ubik_error_explain(err)); \
                 return 1; \

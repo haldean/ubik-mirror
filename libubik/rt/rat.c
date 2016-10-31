@@ -39,6 +39,19 @@ lcm(ubik_word w0, ubik_word w1)
         return prod / w0;
 }
 
+static inline ubik_word
+gcd(ubik_word w0, ubik_word w1)
+{
+        ubik_word t;
+        while (w1 != 0)
+        {
+                t = w1;
+                w1 = w0 % w1;
+                w0 = t;
+        }
+        return w0;
+}
+
 void
 ubik_rat_add(
         struct ubik_value *restrict r,
@@ -72,13 +85,20 @@ ubik_rat_read(
 {
         size_t i;
         size_t n;
+        ubik_word s;
+        bool neg;
 
         n = strlen(str);
+        if (n == 0)
+                return ubik_raise(
+                        ERR_NO_DATA, "empty string has no number value");;
 
-        /* Check for a decimal point */
         res->num = 0;
         res->den = 1;
-        for (i = 0; i < n; i++)
+        neg = str[0] == '-';
+
+        /* Check for a decimal point */
+        for (i = neg ? 1 : 0; i < n; i++)
         {
                 if (str[i] == '.')
                         break;
@@ -91,7 +111,7 @@ ubik_rat_read(
 
         /* Add in the bits after the decimal point by multiplying the
            denominator by 10 for every digit we add. */
-        for (; i < n; i++)
+        for (i++; i < n; i++)
         {
                 if (str[i] < '0' || str[i] > '9')
                         return ubik_raise(
@@ -100,6 +120,15 @@ ubik_rat_read(
                 res->num = 10 * res->num + (str[i] - '0');
                 res->den *= 10;
         }
+
+        s = gcd(res->num, res->den);
+        res->num /= s;
+        res->den /= s;
+
+        /* Hold the negation off until the end, as it keeps the GCD algorithm
+           simpler. */
+        if (neg)
+                res->num = -res->num;
 
         return OK;
 }
