@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "ubik/rt.h"
 #include "ubik/typ.h"
 #include "ubik/util.h"
 
@@ -104,6 +105,7 @@ cleanup:
                         free(res->typ.adt.ctors[j].arg_types);
         }
         free(res->typ.adt.ctors);
+        ubik_value_release(res, ws);
         return err;
 }
 
