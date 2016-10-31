@@ -75,7 +75,7 @@ struct ubik_ast_atom
         {
                 char *str;
                 ubik_word integer;
-                double number;
+                struct ubik_rat number;
                 struct
                 {
                         char *head;

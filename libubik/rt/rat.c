@@ -19,6 +19,8 @@
 
 #include "ubik/rat.h"
 
+#include <string.h>
+
 /* TODO: overflow!? */
 static inline ubik_word
 lcm(ubik_word w0, ubik_word w1)
@@ -61,4 +63,43 @@ ubik_rat_sub(
         r->rat.num =
                 v1->rat.num * (r->rat.den / v1->rat.den) -
                 v2->rat.num * (r->rat.den / v2->rat.den);
+}
+
+no_ignore ubik_error
+ubik_rat_read(
+        struct ubik_rat *res,
+        char *str)
+{
+        size_t i;
+        size_t n;
+
+        n = strlen(str);
+
+        /* Check for a decimal point */
+        res->num = 0;
+        res->den = 1;
+        for (i = 0; i < n; i++)
+        {
+                if (str[i] == '.')
+                        break;
+                if (str[i] < '0' || str[i] > '9')
+                        return ubik_raise(
+                                ERR_BAD_VALUE,
+                                "found char that isn't digit or decimal");
+                res->num = 10 * res->num + (str[i] - '0');
+        }
+
+        /* Add in the bits after the decimal point by multiplying the
+           denominator by 10 for every digit we add. */
+        for (; i < n; i++)
+        {
+                if (str[i] < '0' || str[i] > '9')
+                        return ubik_raise(
+                                ERR_BAD_VALUE,
+                                "found char that isn't digit or decimal");
+                res->num = 10 * res->num + (str[i] - '0');
+                res->den *= 10;
+        }
+
+        return OK;
 }

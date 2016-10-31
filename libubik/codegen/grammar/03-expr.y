@@ -156,7 +156,7 @@ atom
 {
         alloc($$, 1, struct ubik_ast_atom);
         $$->atom_type = ATOM_NUM;
-        $$->number = $1;
+        wrap_err(ubik_rat_read(&$$->number, $1));
         load_loc($$->loc);
 }
 | STRING

@@ -84,7 +84,9 @@ atom_pretty(
                 ubik_fprintf(out, "%" PRIu64, atom->integer);
                 return;
         case ATOM_NUM:
-                ubik_fprintf(out, "%lf", atom->number);
+                ubik_fprintf(
+                        out, "%" PRId64 "/%" PRIu64,
+                        atom->number.num, atom->number.den);
                 return;
         case ATOM_NAME:
                 ubik_fprintf(out, "%s", atom->str);

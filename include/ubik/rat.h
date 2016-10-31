@@ -33,3 +33,9 @@ ubik_rat_sub(
         struct ubik_value *restrict r,
         struct ubik_value *restrict v1,
         struct ubik_value *restrict v2);
+
+/* Reads a rational number from a string. */
+no_ignore ubik_error
+ubik_rat_read(
+        struct ubik_rat *res,
+        char *str);

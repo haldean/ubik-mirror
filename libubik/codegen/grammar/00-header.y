@@ -21,6 +21,7 @@
 
 #include "ubik/ast.h"
 #include "ubik/parse.h"
+#include "ubik/rat.h"
 #include "ubik/string.h"
 #include "ubik/types.h"
 #include "ubik/ubik.h"
@@ -48,7 +49,6 @@
 {
         int token;
         ubik_word integer;
-        double floating;
         char *string;
 
         struct ubik_ast *ast;
@@ -85,8 +85,7 @@
 %token <token> DEFINES INTERFACE
 
 %token <integer> INTEGER
-%token <floating> NUMBER
-%token <string> NAME TYPE_NAME STRING QUALIFIED_NAME QUALIFIED_TYPE_NAME
+%token <string> NAME TYPE_NAME STRING QUALIFIED_NAME QUALIFIED_TYPE_NAME NUMBER
 
 %type <top_result> top_result
 %type <ast> prog blocks bindings

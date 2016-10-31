@@ -73,7 +73,8 @@ _print_atom(struct ubik_ast_atom *atom)
                 printf("%" PRId64 ":i", (int64_t) atom->integer);
                 return OK;
         case ATOM_NUM:
-                printf("%f:f", atom->number);
+                printf("%" PRId64 "/%" PRIu64 ":r",
+                        atom->number.num, atom->number.den);
                 return OK;
         case ATOM_NAME:
                 printf("%s:n", atom->str);
