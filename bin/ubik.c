@@ -95,9 +95,6 @@ run_file(char *fname, bool timing)
         err = ubik_schedule_run(s);
         CHECK_ERR("couldn't run scheduler");
 
-        err = ubik_env_free(&env);
-        CHECK_ERR("couldn't free environment");
-
         if (timing)
         {
                 err = ubik_timer_elapsed(&elapsed, timer);
@@ -120,6 +117,15 @@ teardown:
                         free(teardown_err);
                 }
                 free(s);
+        }
+
+        teardown_err = ubik_env_free(&env);
+        if (teardown_err != OK)
+        {
+                char *explain = ubik_error_explain(teardown_err);
+                printf("env free failed: %s\n", explain);
+                free(explain);
+                free(teardown_err);
         }
 
         if (ws != NULL)
