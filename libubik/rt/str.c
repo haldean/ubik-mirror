@@ -35,3 +35,12 @@ ubik_str_concat(
         memcpy(r->str.data + v1->str.length,
                v2->str.data, v2->str.length);
 }
+
+bool
+ubik_str_eq(
+        struct ubik_str *restrict s1,
+        struct ubik_str *restrict s2)
+{
+        return s1->length == s2->length &&
+                strncmp(s1->data, s2->data, s1->length) == 0;
+}

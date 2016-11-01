@@ -26,3 +26,9 @@ ubik_str_concat(
         struct ubik_value *restrict r,
         struct ubik_value *restrict v1,
         struct ubik_value *restrict v2);
+
+/* Returns true if the given strings are equal. */
+bool
+ubik_str_eq(
+        struct ubik_str *restrict s1,
+        struct ubik_str *restrict s2);

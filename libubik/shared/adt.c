@@ -27,8 +27,8 @@
 
 #include "ubik/adt.h"
 #include "ubik/assert.h"
-#include "ubik/list.h"
 #include "ubik/rttypes.h"
+#include "ubik/str.h"
 #include "ubik/string.h"
 #include "ubik/types.h"
 #include "ubik/typesystem.h"
@@ -44,20 +44,50 @@ ubik_adt_instantiate(
         struct ubik_value *args,
         struct ubik_workspace *ws)
 {
+        struct ubik_typ_ctor *ctor;
         ubik_error err;
-        unused(type_decl);
+        size_t i;
 
-        err = ubik_list_create_empty(res);
+        if (type_decl->typ.t != UBIK_TYPE_ADT)
+                return ubik_raise(ERR_BAD_TYPE, "type is not an ADT");
+
+        for (i = 0; i < type_decl->typ.adt.n_ctors; i++)
+        {
+                ctor = &type_decl->typ.adt.ctors[i];
+                if (ubik_str_eq(&ctor->name, &ctor_name->str))
+                        break;
+                ctor = NULL;
+        }
+        if (ctor == NULL)
+                return ubik_raise(ERR_BAD_VALUE, "ctor not found");
+        if (ctor->arity != args->tup.n)
+                return ubik_raise(
+                        ERR_BAD_VALUE, "wrong number of args for ctor");
+
+        res->type = UBIK_TUP;
+        res->tup.n = ctor->arity + 1;
+        ubik_galloc(
+                (void**) &res->tup.elems,
+                res->tup.n, sizeof(struct ubik_value *));
+        ubik_galloc(
+                (void**) &res->tup.types,
+                res->tup.n, sizeof(struct ubik_value *));
+
+        res->tup.elems[0] = ctor_name;
+
+        err = ubik_value_new(&res->tup.types[0], ws);
         if (err != OK)
                 return err;
+        res->tup.types[0]->type = UBIK_TYP;
+        res->tup.types[0]->typ.t = UBIK_TYPE_STR;
 
-        err = ubik_list_append(res, ctor_name, ws);
-        if (err != OK)
-                return err;
-
-        err = ubik_list_extend(res, args);
-        if (err != OK)
-                return err;
+        if (ctor->arity > 0)
+        {
+                memcpy(&res->tup.elems[1], args->tup.elems,
+                        args->tup.n * sizeof(struct ubik_value *));
+                memcpy(&res->tup.types[1], args->tup.types,
+                        args->tup.n * sizeof(struct ubik_value *));
+        }
 
         return OK;
 }
