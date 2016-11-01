@@ -2,7 +2,7 @@
 
 _ Addable a
     . add ^ a -> a -> a
-~ Addable Word
+~ Addable Number
     . add = uadd
 
 : test-bind

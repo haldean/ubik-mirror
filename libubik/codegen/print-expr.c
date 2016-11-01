@@ -80,13 +80,13 @@ atom_pretty(
 
         switch (atom->atom_type)
         {
-        case ATOM_INT:
-                ubik_fprintf(out, "%" PRIu64, atom->integer);
-                return;
         case ATOM_NUM:
-                ubik_fprintf(
-                        out, "%" PRId64 "/%" PRIu64,
-                        atom->number.num, atom->number.den);
+                if (atom->number.den == 1)
+                        ubik_fprintf(out, "%" PRId64, atom->number.num);
+                else
+                        ubik_fprintf(
+                                out, "%" PRId64 "/%" PRIu64,
+                                atom->number.num, atom->number.den);
                 return;
         case ATOM_NAME:
                 ubik_fprintf(out, "%s", atom->str);

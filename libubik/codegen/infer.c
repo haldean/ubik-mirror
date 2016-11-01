@@ -163,11 +163,6 @@ infer_atom(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
 
         switch (expr->atom->atom_type)
         {
-        case ATOM_INT:
-                expr->type->type_expr_type = TYPE_EXPR_ATOM;
-                expr->type->name = ubik_strdup("Word", &ctx->req->region);
-                return OK;
-
         case ATOM_NUM:
                 expr->type->type_expr_type = TYPE_EXPR_ATOM;
                 expr->type->name = ubik_strdup("Number", &ctx->req->region);

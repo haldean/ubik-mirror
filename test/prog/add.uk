@@ -2,7 +2,7 @@
 ~ ubik-tests/add
 
 : add-two-numbers
-  ^ Word
+  ^ Number
   = rational-add 2 64
 
 ! emit (concat (humanize add-two-numbers) "\nhello world!\n")

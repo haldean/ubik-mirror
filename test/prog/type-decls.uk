@@ -7,5 +7,5 @@
     = Add a a
     = Mult a a
 
-: WordExpr = Expr Word
-: ten-expr ^ WordExpr = Const 10
+: NumberExpr = Expr Number
+: ten-expr ^ NumberExpr = Const 10

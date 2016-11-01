@@ -48,7 +48,6 @@
 %union
 {
         int token;
-        ubik_word integer;
         char *string;
 
         struct ubik_ast *ast;
@@ -84,7 +83,6 @@
 %token <token> MEMBER OPEN_SCOPE CLOSE_SCOPE GIVEN EXISTS COND ADD SPLAT
 %token <token> DEFINES INTERFACE
 
-%token <integer> INTEGER
 %token <string> NAME TYPE_NAME STRING QUALIFIED_NAME QUALIFIED_TYPE_NAME NUMBER
 
 %type <top_result> top_result

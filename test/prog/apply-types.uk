@@ -1,9 +1,9 @@
 ~ ubik-tests/apply-types
 
 : apply-types
-^ String -> Word -> String
+^ String -> Number -> String
 = \x y -> {
   : x_ ^ String = x
-  : y_ ^ Word = y
+  : y_ ^ Number = y
   ! x_
 }

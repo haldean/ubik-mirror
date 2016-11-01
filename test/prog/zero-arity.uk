@@ -2,7 +2,7 @@
 ~ ubik-tests/zero-arity
 
 : sixty-six
-    ^ Word
+    ^ Number
     = \ -> 66
 
 ! emit (concat (humanize sixty-six) "\n")

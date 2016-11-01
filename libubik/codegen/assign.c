@@ -121,7 +121,7 @@ _assign_atom_node(
 
         switch (expr->atom->atom_type)
         {
-        case ATOM_INT:
+        case ATOM_NUM:
                 n->node_type = UBIK_VALUE;
 
                 err = ubik_value_new(&n->value.type, ctx->workspace);
@@ -135,12 +135,8 @@ _assign_atom_node(
                 if (err != OK)
                         return err;
                 n->value.value->type = UBIK_RAT;
-                n->value.value->rat.num = expr->atom->integer;
-                n->value.value->rat.den = 1;
+                n->value.value->rat = expr->atom->number;
                 return OK;
-
-        case ATOM_NUM:
-                return ubik_raise(ERR_NOT_IMPLEMENTED, "rationals?!");
 
         case ATOM_VALUE:
                 n->node_type = UBIK_VALUE;

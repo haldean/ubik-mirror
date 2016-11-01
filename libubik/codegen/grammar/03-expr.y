@@ -145,13 +145,6 @@ atom
         wrap_err(ubik_ast_atom_new_qualified(&$$, $1, ctx->region));
         load_loc($$->loc);
 }
-| INTEGER
-{
-        alloc($$, 1, struct ubik_ast_atom);
-        $$->atom_type = ATOM_INT;
-        $$->integer = $1;
-        load_loc($$->loc);
-}
 | NUMBER
 {
         alloc($$, 1, struct ubik_ast_atom);

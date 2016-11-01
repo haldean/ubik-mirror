@@ -115,8 +115,8 @@ ubik_internal_native_create_op(
 }
 
 struct ubik_native_record ubik_native_funcs[] = {
-        { "rational-add", "Word -> Word -> Word", NULL },
-        { "rational-subtract", "Word -> Word -> Word", NULL },
+        { "rational-add", "Number -> Number -> Number", NULL },
+        { "rational-subtract", "Number -> Number -> Number", NULL },
         { "eq", NULL, NULL },
         { "emit", "String -> String", NULL },
         { "humanize", NULL, NULL },

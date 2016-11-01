@@ -2,7 +2,7 @@
 ~ ubik-tests/print-lib
 
 : number
-    ^ Word -> String
+    ^ Number -> String
     = \x -> emit (concat (humanize x) "\n")
 
 ! concat (number 4) "\n"

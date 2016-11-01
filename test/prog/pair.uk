@@ -4,9 +4,9 @@ _ Pair root a b
     . car ^ root -> a
     . cdr ^ root -> b
 
-^ WordStringPair = WordPair Word String
+^ NumberStringPair = NumberPair Number String
 
-~ Pair WordPair Word String
-    . car = \ wp -> ? wp { . WordPair w * => w }
-    . cdr = \ wp -> ? wp { . WordPair * s => s }
+~ Pair NumberPair Number String
+    . car = \ wp -> ? wp { . NumberPair w * => w }
+    . cdr = \ wp -> ? wp { . NumberPair * s => s }
 

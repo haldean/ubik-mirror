@@ -1,9 +1,9 @@
 ~ ubik-tests/bind
 
 : hello-world
-    ^ Word
+    ^ Number
     = 8
 
 : one-more
-    ^ Word
+    ^ Number
     = hello-world

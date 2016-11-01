@@ -1,7 +1,7 @@
 ~ ubik-tests/lambda-simple
 
 : l
-    ^ Word -> String
+    ^ Number -> String
     = \ x -> "hello\n"
 
 ! emit (l 10)

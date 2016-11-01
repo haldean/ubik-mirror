@@ -88,8 +88,7 @@ NAME [a-z_][a-zA-Z0-9/_\-']*
 "*"                       TOKEN(SPLAT)
 "~"                       TOKEN(DEFINES)
 "_"                       TOKEN(INTERFACE)
-[0-9]+                    { yylval->integer = atoi(yytext); return INTEGER; }
-([0-9]+\.[0-9]*|\.[0-9]+) { yylval->string = yytext; return NUMBER; }
+([0-9]+(\.[0-9]*)?|\.[0-9]+) { yylval->string = yytext; return NUMBER; }
 {NAME}                    TSTRING(NAME)
 {NAME}:{NAME}             TSTRING(QUALIFIED_NAME)
 {NAME}:[A-Z]{NAME}        TSTRING(QUALIFIED_TYPE_NAME)

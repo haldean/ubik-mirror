@@ -4,7 +4,7 @@
 # expected output is "0x110x110x11"
 
 : add-7
-        ^ Word -> Word
+        ^ Number -> Number
         = rational-add 7
 
 : three-string-concat

@@ -1,6 +1,6 @@
 ~ ubik-tests/list
 + *list
 
-: my-list ^ List Word = Cons 1 (Cons 2 (Cons 3 Nil))
+: my-list ^ List Number = Cons 1 (Cons 2 (Cons 3 Nil))
 
 ! emit (humanize-list my-list)

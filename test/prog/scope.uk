@@ -1,9 +1,9 @@
 ~ ubik-tests/scope
 
 : so-deep
-    ^ Word -> (Word -> Word)
+    ^ Number -> (Number -> Number)
     = \ x -> {
-        : y ^ Word = rational-add x 2
+        : y ^ Number = rational-add x 2
         ! \ z -> rational-add x (rational-add y z)
     }
 

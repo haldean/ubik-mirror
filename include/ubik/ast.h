@@ -38,8 +38,7 @@ enum ubik_expr_type
 
 enum ubik_atom_type
 {
-        ATOM_INT = 1,
-        ATOM_NUM,
+        ATOM_NUM = 1,
         ATOM_NAME,
         ATOM_QUALIFIED,
         ATOM_TYPE_NAME,
@@ -74,7 +73,6 @@ struct ubik_ast_atom
         union
         {
                 char *str;
-                ubik_word integer;
                 struct ubik_rat number;
                 struct
                 {

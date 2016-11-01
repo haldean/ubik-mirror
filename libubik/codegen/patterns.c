@@ -115,10 +115,11 @@ create_adt_accessor(
         ubik_alloc1(&index, struct ubik_ast_expr, &req->region);
         ubik_alloc1(&index->atom, struct ubik_ast_atom, &req->region);
         index->expr_type = EXPR_ATOM;
-        index->atom->atom_type = ATOM_INT;
+        index->atom->atom_type = ATOM_NUM;
         /* i is a size_t, which is max 64 bits; ubik_word is always larger or
          * the same size as a size_t. */
-        index->atom->integer = (ubik_word) i;
+        index->atom->number.num = (ubik_word) i;
+        index->atom->number.den = 1;
         index->atom->loc = res->loc;
         index->loc = res->loc;
 

@@ -69,9 +69,6 @@ _print_atom(struct ubik_ast_atom *atom)
         }
         switch (atom->atom_type)
         {
-        case ATOM_INT:
-                printf("%" PRId64 ":i", (int64_t) atom->integer);
-                return OK;
         case ATOM_NUM:
                 printf("%" PRId64 "/%" PRIu64 ":r",
                         atom->number.num, atom->number.den);
