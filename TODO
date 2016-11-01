@@ -1,10 +1,10 @@
 -*- mode: org -*-
 
-* low-level debugger with graph step-through
-* dagc source maps
-* interface files
-* real parser for URIs instead of hacky shit
-* make sure that pattern blocks match all patterns
-* bindings in pattern blocks
-* input nodes need to have their values/types filled in
+- low-level debugger with graph step-through
+- dagc source maps
+- interface files
+- real parser for URIs instead of hacky shit
+- make sure that pattern blocks match all patterns
+- bindings in pattern blocks
 - values are in the PAP value on the executor
+- UBIK_SCHEDULE_DEBUG introduces a bunch of compiler errors
