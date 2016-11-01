@@ -589,7 +589,7 @@ ubik_schedule_dump(struct ubik_scheduler *s)
 no_ignore static ubik_error
 _run_single_pass(struct ubik_scheduler *s)
 {
-        struct ubik_exec_unit *u, *t;
+        struct ubik_exec_unit *u, *t, *next_exec;
         struct ubik_exec_unit *prev;
         ubik_word status;
         ubik_error err;
@@ -648,7 +648,7 @@ _run_single_pass(struct ubik_scheduler *s)
                 if (err != OK)
                         return err;
 
-                s->ready = s->ready->next;
+                next_exec = s->ready->next;
 
                 status = u->gexec->status[u->node];
                 if (can_collapse(u))
@@ -692,7 +692,11 @@ _run_single_pass(struct ubik_scheduler *s)
                         ERR_BAD_HEADER,
                         "eval'ed node is not complete or waiting");
 
-                u = s->ready;
+                /* It's important we do this at the end; we want u to be
+                 * reachable when we free the environment if we end up
+                 * early-returning because of an error. */
+                s->ready = next_exec;
+                u = next_exec;
         }
 
         return OK;
