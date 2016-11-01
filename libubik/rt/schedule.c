@@ -358,10 +358,8 @@ ubik_schedule_push(
         if (graph->fun.evaluator != NULL)
         {
                 err = _eval_native_dagc(s, gexec);
-                if (err != OK)
-                        return err;
                 free_exec_graph(gexec);
-                return OK;
+                return err;
         }
 
         for (i = 0; i < graph->fun.n; i++)
