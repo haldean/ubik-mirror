@@ -653,10 +653,6 @@ _run_single_pass(struct ubik_scheduler *s)
                 status = u->gexec->status[u->node];
                 if (can_collapse(u))
                 {
-#ifdef UBIK_SCHEDULE_DEBUG
-                        printf("collapsing %s\n",
-                               ubik_node_explain(u->node));
-#endif
                         /* Here, we collapse the graph and don't mark the things
                          * depending on the node as ready; when we finish
                          * collapsing the graph we'll notify the dependent
@@ -667,20 +663,12 @@ _run_single_pass(struct ubik_scheduler *s)
                 }
                 else if (status & UBIK_STATUS_COMPLETE)
                 {
-#ifdef UBIK_SCHEDULE_DEBUG
-                        printf("marking %s complete\n",
-                               ubik_node_explain(u->node));
-#endif
                         err = ubik_schedule_complete(s, u);
                         if (err != OK)
                                 return err;
                 }
                 else if (status & UBIK_STATUS_WAIT_MASK)
                 {
-#ifdef UBIK_SCHEDULE_DEBUG
-                        printf("moving %s back to waiting\n",
-                               ubik_node_explain(u->node));
-#endif
                         u->next = s->wait;
                         s->wait = u;
 
