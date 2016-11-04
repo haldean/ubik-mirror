@@ -249,6 +249,7 @@ bind_ctor(
         struct ubik_ast_expr *t2;
         ubik_error err;
         size_t i;
+        size_t arity;
 
         ubik_alloc1(&bind, struct ubik_ast_binding, &req->region);
 
@@ -258,15 +259,15 @@ bind_ctor(
 
         largs = NULL;
         last_largs = NULL;
-        for (i = 0, cargs = ctor->params;
-                cargs != NULL; cargs = cargs->next, i++);
+        for (arity = 0, cargs = ctor->params;
+                cargs != NULL; cargs = cargs->next, arity++);
 
         ubik_alloc1(&t0, struct ubik_ast_expr, &req->region);
         t0->expr_type = EXPR_ATOM;
         t0->loc = ctor->loc;
         ubik_alloc1(&t0->atom, struct ubik_ast_atom, &req->region);
         t0->atom->atom_type = ATOM_NAME;
-        ubik_asprintf(&t0->atom->str, &req->region, "ubik-adt-new-%lu", i);
+        ubik_asprintf(&t0->atom->str, &req->region, "ubik-adt-new-%lu", arity);
         t0->atom->loc = ctor->loc;
 
         ubik_alloc1(&t1, struct ubik_ast_expr, &req->region);
@@ -313,7 +314,10 @@ bind_ctor(
                 ubik_alloc1(&t0->atom, struct ubik_ast_atom, &req->region);
                 t0->atom->atom_type = ATOM_NAME;
                 t0->atom->loc = ctor->loc;
-                ubik_asprintf(&t0->atom->str, &req->region, "%lu", i);
+                /* Count backwards here; the innermost application should be
+                 * the first argument, and we're building outside-in */
+                ubik_asprintf(
+                        &t0->atom->str, &req->region, "%lu", arity - i - 1);
 
                 ubik_alloc1(&t1, struct ubik_ast_expr, &req->region);
                 t1->expr_type = EXPR_APPLY;
