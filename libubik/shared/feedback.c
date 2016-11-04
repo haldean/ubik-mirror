@@ -18,8 +18,10 @@
  */
 
 #include "ubik/feedback.h"
+#include "ubik/rt.h"
 #include "ubik/streamutil.h"
 #include "ubik/string.h"
+#include "ubik/util.h"
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -36,20 +38,20 @@ vheader(
         if (loc->line_start > 0)
                 ubik_fprintf(
                         stream,
-                        "\x1b[36m%s:%lu:%lu:",
+                        "\x1b[36m%s:%lu:%lu: ",
                         loc->source_name,
                         loc->line_start,
                         loc->col_start);
-        else
-                ubik_fprintf(stream, "\x1b[36m%s:", loc->source_name);
+        else if (loc->source_name != NULL)
+                ubik_fprintf(stream, "\x1b[36m%s: ", loc->source_name);
 
         switch (lvl)
         {
         case UBIK_FEEDBACK_ERR:
-                ubik_fprintf(stream, "\x1b[31m error");
+                ubik_fprintf(stream, "\x1b[31merror");
                 break;
         case UBIK_FEEDBACK_WARN:
-                ubik_fprintf(stream, "\x1b[33m warning");
+                ubik_fprintf(stream, "\x1b[33mwarning");
                 break;
         }
         ubik_fprintf(stream, ":\x1b[0m ");
@@ -87,3 +89,28 @@ ubik_feedback_error_header(
         va_end(ap);
 }
 
+ubik_error
+ubik_error_with_feedback(
+        const ubik_word code,
+        char *tag,
+        const char *file,
+        const uint32_t lineno,
+        const char *function,
+        ...)
+{
+        va_list ap;
+        struct ubik_stream sstderr;
+        struct ubik_ast_loc loc = {0};
+        char *err_word_expl;
+
+        ubik_stream_wfilep(&sstderr, stderr);
+
+        err_word_expl = ubik_word_explain(code);
+        loc.source_name = err_word_expl;
+
+        va_start(ap, function);
+        vheader(&sstderr, UBIK_FEEDBACK_ERR, &loc, tag, ap);
+        va_end(ap);
+
+        return ubik_error_new(code, tag, file, lineno, function);
+}

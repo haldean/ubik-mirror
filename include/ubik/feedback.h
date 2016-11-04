@@ -17,6 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#pragma once
 #include "ubik/ast.h"
 #include "ubik/stream.h"
 #include "ubik/ubik.h"
@@ -39,3 +40,20 @@ void __attribute__((format(printf, 4, 5)))
 ubik_feedback_error_header(
         struct ubik_stream *s, enum feedback_level, struct ubik_ast_loc *loc,
         char *fmt, ...);
+
+/* Prints a runtime error using the feedback formatting system, and returns a
+   new error object. Usually called with the ubik_raisef macro, which fills in
+   file, line and function information. */
+ubik_error
+ubik_error_with_feedback(
+        const ubik_word code,
+        char *tag,
+        const char *file,
+        const uint32_t lineno,
+        const char *function,
+        ...);
+
+/* Raise an error with formatted feedback. */
+#define ubik_raisef(code, tag, ...) \
+        ubik_error_with_feedback( \
+                (code), (tag), __FILE__, __LINE__, __func__, ...)

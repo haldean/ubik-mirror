@@ -27,6 +27,7 @@
 
 #include "ubik/adt.h"
 #include "ubik/assert.h"
+#include "ubik/feedback.h"
 #include "ubik/rttypes.h"
 #include "ubik/str.h"
 #include "ubik/string.h"
@@ -61,8 +62,10 @@ ubik_adt_instantiate(
         if (ctor == NULL)
                 return ubik_raise(ERR_BAD_VALUE, "ctor not found");
         if (ctor->arity != args->tup.n)
-                return ubik_raise(
-                        ERR_BAD_VALUE, "wrong number of args for ctor");
+                return ubik_raisef(
+                        ERR_BAD_VALUE,
+                        "wrong number of args (%d) for ctor, needs %d",
+                        args->tup.n, ctor->arity);
 
         res->type = UBIK_TUP;
         res->tup.n = ctor->arity + 1;
