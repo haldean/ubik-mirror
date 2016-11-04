@@ -55,16 +55,20 @@ _native_adt_new(struct ubik_exec_graph *gexec)
         if (err != OK)
                 return err;
         args->gc.runtime_managed = true;
-        err = ubik_list_create_empty(args);
-        if (err != OK)
-                return err;
+
+        args->type = UBIK_TUP;
+        args->tup.n = graph->fun.n - 3;
+        ubik_galloc(
+                (void**) &args->tup.elems,
+                args->tup.n, sizeof(struct ubik_value *));
+        ubik_galloc(
+                (void**) &args->tup.types,
+                args->tup.n, sizeof(struct ubik_value *));
 
         for (i = 2; i < graph->fun.n - 1; i++)
         {
-                err = ubik_list_append(
-                        args, gexec->nv[i], gexec->workspace);
-                if (err != OK)
-                        return err;
+                args->tup.elems[i - 2] = gexec->nv[i];
+                args->tup.types[i - 2] = gexec->nt[i];
         }
 
         err = ubik_value_new(&res, gexec->workspace);
