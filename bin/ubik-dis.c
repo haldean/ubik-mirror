@@ -48,7 +48,7 @@ dis_ctor(struct ubik_stream *s, struct ubik_typ_ctor *c, ubik_word i)
                 == c->name.length);
         ubik_fprintf(s, " %" PRIu64 , c->arity);
         for (a = 0; a < c->arity; a++)
-                ubik_fprintf(s, " %" PRIu64, c->arg_types[a]->gc.id);
+                ubik_fprintf(s, " %" PRIx64, c->arg_types[a]->gc.id);
         ubik_fprintf(s, "\n");
 }
 
