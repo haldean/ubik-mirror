@@ -114,7 +114,7 @@ logo.add(line(l + xw, t + yh + hsw, l + xw, t + ui))
 if logotype != "favicon":
     # B
     l += xw + s
-    logo.add(line(l, t - hsw, l, t + yh + hsw))
+    # logo.add(line(l, t - hsw, l, t + yh + hsw))
     logo.add(line(l + xw / 2, t + yh / 2, l + xw, t + yh / 2))
     logo.add(line(l + xw, t + yh / 2 - hsw, l + xw, t + yh + hsw))
     # logo.add(line(l, t + yh, l + xw, t + yh))
