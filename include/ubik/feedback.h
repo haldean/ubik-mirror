@@ -56,4 +56,4 @@ ubik_error_with_feedback(
 /* Raise an error with formatted feedback. */
 #define ubik_raisef(code, tag, ...) \
         ubik_error_with_feedback( \
-                (code), (tag), __FILE__, __LINE__, __func__, ...)
+                (code), (tag), __FILE__, __LINE__, __func__, __VA_ARGS__)

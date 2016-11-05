@@ -102,15 +102,23 @@ ubik_error_with_feedback(
         struct ubik_stream sstderr;
         struct ubik_ast_loc loc = {0};
         char *err_word_expl;
+        ubik_error err;
 
-        ubik_stream_wfilep(&sstderr, stderr);
-
-        err_word_expl = ubik_word_explain(code);
-        loc.source_name = err_word_expl;
-
-        va_start(ap, function);
-        vheader(&sstderr, UBIK_FEEDBACK_ERR, &loc, tag, ap);
-        va_end(ap);
+        err = ubik_stream_wfilep(&sstderr, stderr);
+        if (err != OK)
+        {
+                err_word_expl = ubik_error_explain(err);
+                printf("could not open stderr: %s", err_word_expl);
+                free(err_word_expl);
+        }
+        else
+        {
+                err_word_expl = ubik_word_explain(code);
+                loc.source_name = err_word_expl;
+                va_start(ap, function);
+                vheader(&sstderr, UBIK_FEEDBACK_ERR, &loc, tag, ap);
+                va_end(ap);
+        }
 
         return ubik_error_new(code, tag, file, lineno, function);
 }
