@@ -117,16 +117,16 @@ if logotype != "favicon":
     logo.add(line(l, t - hsw, l, t + yh + hsw))
     logo.add(line(l + xw / 2, t + yh / 2, l + xw, t + yh / 2))
     logo.add(line(l + xw, t + yh / 2 - hsw, l + xw, t + yh + hsw))
-    logo.add(line(l, t + yh, l + xw, t + yh))
+    # logo.add(line(l, t + yh, l + xw, t + yh))
 
     # I
     l += xw + s
     logo.add(line(l, t - hsw, l, t + ui))
-    logo.add(line(l, t + yh - li, l, t + yh + hsw))
+    # logo.add(line(l, t + yh - li, l, t + yh + hsw))
 
     # K
     l += s + hsw
-    logo.add(line(l, t - hsw, l, t + yh + hsw))
+    # logo.add(line(l, t - hsw, l, t + yh + hsw))
     logo.add(line(l + xw, t + yh / 2, l + xw, t + yh + hsw))
     logo.add(line(l + xw + hsw, t + yh / 2, l + xw / 2, t + yh / 2))
     logo.add(line(l + xw - pdl, t + pdl, l + xw, t))
