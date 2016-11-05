@@ -1,0 +1,20 @@
+~ ubik-tests/is-prime
++ *boolean
+
+# naive primality checking; checks divisibility by every number between X and
+# 1, exclusive.
+: is-prime
+    ^ Number -> Boolean
+    = \x -> {
+        : inner-check = \y -> ? {
+            . eq y 1                  => True
+            . eq (rational-mod x y) 0 => False
+            .                         => inner-check (rational-subtract y 1)
+        }
+        ! inner-check (rational-subtract x 1)
+    }
+
+! emit (? is-prime 7 {
+    . True  => "7 is prime!"
+    . False => "7 isn't prime?!"
+})
