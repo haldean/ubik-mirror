@@ -9,4 +9,6 @@
 - values are in the PAP value on the executor
 - UBIK_SCHEDULE_DEBUG introduces a bunch of compiler errors
 - delete the list module
+- more tests for rational functions
+- short-aliases for arithmetic
 
