@@ -210,9 +210,12 @@ _insert(
         }
         if (unlikely(probed == cap))
                 return ubik_raise(ERR_FULL, "env insert");
-        if (unlikely(binds[i].value != NULL && !overwrite))
-                return ubik_raise(ERR_PRESENT, "env overwrite");
-
+        if (unlikely(binds[i].value != NULL))
+        {
+                if (likely(!overwrite))
+                        return ubik_raise(ERR_PRESENT, "env overwrite");
+                ubik_uri_free(binds[i].uri);
+        }
         binds[i] = *insert;
         return OK;
 }
