@@ -24,7 +24,7 @@
 #include <stdio.h>
 
 static char testprog1[] =
-        "~ testprog\n: test-resolve\n= \\x -> uadd x ((\\x -> x) x)\n";
+        "~ testprog\n: test-resolve\n= \\x -> rational-add x ((\\x -> x) x)\n";
 
 test_t
 resolve()
@@ -35,18 +35,19 @@ resolve()
         struct ubik_stream feedback;
         struct ubik_ast_expr *e;
         struct ubik_resolve_name_loc *x0, *x1, *x2, *x3, *x4;
+        jump_init();
 
-        assert(ubik_stream_wfilep(&feedback, stdout) == OK);
+        assert_jump(ubik_stream_wfilep(&feedback, stdout) == OK);
         req.feedback = &feedback;
 
-        assert(ubik_stream_buffer(&progstream, &req.region) == OK);
+        assert_jump(ubik_stream_buffer(&progstream, &req.region) == OK);
         /* drop the null byte off the end, it makes the lexer unhappy */
-        assert(ubik_stream_write(
+        assert_jump(ubik_stream_write(
                 &progstream, testprog1, sizeof(testprog1) - 1)
                == sizeof(testprog1) - 1);
-        assert(ubik_parse(
+        assert_jump(ubik_parse(
                 &ast, &req.region, &feedback, "testprog1", &progstream) == OK);
-        assert(ubik_resolve(ast, &req) == OK);
+        assert_jump(ubik_resolve(ast, &req) == OK);
 
         /* e here is \x -> uadd x ((\x -> x) x). The xs, by name, are
          * \x0 -> uadd x1 ((\x2 -> x3) x4) */
@@ -58,14 +59,15 @@ resolve()
         x3 = e->lambda.body->apply.tail->apply.head->lambda.body->atom->name_loc;
         x4 = e->lambda.body->apply.tail->apply.tail->atom->name_loc;
 
-        assert(x0->def == x1->def);
-        assert(x0->def != x2->def);
-        assert(x0->def != x3->def);
-        assert(x0->def == x4->def);
-        assert(x2->def == x3->def);
+        assert_jump(x0->def == x1->def);
+        assert_jump(x0->def != x2->def);
+        assert_jump(x0->def != x3->def);
+        assert_jump(x0->def == x4->def);
+        assert_jump(x2->def == x3->def);
 
+assert_failed:
         ubik_alloc_free(&req.region);
-        return ok;
+        jump_done();
 }
 
 static char testprog2[] = "~ t : b ^ Word = { : x = \\y -> y ! \\z -> x 8 }";
