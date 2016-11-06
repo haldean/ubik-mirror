@@ -4,11 +4,8 @@ top=../..
 tests = \
 	buffer-test \
 	env-test \
-	gc-test \
 	generator-test \
 	host_to_net-test \
-	list-test \
-	load_save-test \
 	path_concat-test \
 	pointer_set-test \
 	resolve-test \

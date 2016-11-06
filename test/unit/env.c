@@ -30,79 +30,78 @@ env()
         #define N_TEST_URIS 2000
 
         struct ubik_env env;
-        union ubik_value_or_graph v, r;
-        struct ubik_value *t, *rt;
+        struct ubik_value *v0, *v1, *r;
+        struct ubik_value *t0, *t1, *rt;
         struct ubik_uri u;
         int i;
         char *key;
         struct ubik_uri uris[N_TEST_URIS];
+        struct ubik_workspace *ws;
         ubik_error err;
 
         /* a bug in GCC < 5.0 prevents us from using = {0} to initialize the
          * uris array. */
         bzero(uris, sizeof(uris));
 
-        assert(ubik_value_new(&v.tree) == OK);
-        v.tree->tag = TAG_VALUE | TAG_LEFT_WORD | TAG_RIGHT_WORD;
-        v.tree->left.w = 0x1234567890123456;
-        v.tree->right.w = 0;
+        assert(ubik_workspace_new(&ws) == OK);
 
-        assert(ubik_value_new(&t) == OK);
-        t->tag = TAG_VALUE | TAG_LEFT_WORD | TAG_RIGHT_WORD;
-        t->left.w = BASE_TYPE_WORD;
-        t->right.w = 0;
+        assert(ubik_value_new(&v0, ws) == OK);
+        v0->type = UBIK_RAT;
+        v0->rat.num = 0x123456789012345;
+        v0->rat.den = 1;
+
+        assert(ubik_value_new(&v1, ws) == OK);
+        v1->type = UBIK_RAT;
+        v1->rat.num = -10;
+        v1->rat.den = 1;
+
+        assert(ubik_value_new(&t0, ws) == OK);
+        t0->type = UBIK_TYP;
+        t0->typ.t = UBIK_TYPE_RAT;
+
+        assert(ubik_value_new(&t1, ws) == OK);
+        t1->type = UBIK_TYP;
+        t1->typ.t = UBIK_TYPE_RAT;
 
         u.hash = 0;
         key = calloc(64, sizeof(char));
         snprintf(key, 64, "test_var_0");
         assert(ubik_uri_user(&u, key) == OK);
-        assert(ubik_take(&u) == OK);
         assert(u.hash != 0);
-        assert(u.refcount == 1);
         free(key);
 
         assert(ubik_env_init(&env) == OK);
-        assert(ubik_env_set(&env, &u, v, t) == OK);
-        assert(u.refcount == 2);
+        assert(ubik_env_set(&env, &u, v0, t0) == OK);
 
         assert(ubik_env_get(&r, &rt, &env, &u) == OK);
-        assert(r.tree == v.tree);
-        assert(v.tree->refcount == 2);
+        assert(r == v0);
 
-        err = ubik_env_set(&env, &u, v, t);
+        err = ubik_env_set(&env, &u, v1, t1);
         assert(err->error_code == ERR_PRESENT);
         free(err);
 
-        assert(v.tree->refcount == 2);
-
-        assert(ubik_env_overwrite(&env, &u, v, t) == OK);
-        assert(v.tree->refcount == 2);
+        assert(ubik_env_overwrite(&env, &u, v1, t1) == OK);
 
         for (i = 0; i < N_TEST_URIS; i++)
         {
                 key = calloc(64, sizeof(char));
                 snprintf(key, 64, "test_var_%d", i);
                 assert(ubik_uri_user(&uris[i], key) == OK);
-                assert(ubik_take(&uris[i]) == OK);
                 free(key);
         }
 
         for (i = 0; i < N_TEST_URIS; i++)
         {
-                assert(ubik_env_overwrite(&env, &uris[i], v, t) == OK);
+                assert(ubik_env_overwrite(&env, &uris[i], v0, t0) == OK);
         }
 
-        assert(ubik_release(t) == OK);
-        assert(v.tree->refcount == N_TEST_URIS + 1);
         assert(ubik_env_free(&env) == OK);
-        assert(v.tree->refcount == 1);
-        assert(u.refcount == 1);
-        assert(ubik_release(v.tree) == OK);
 
         for (i = 0; i < N_TEST_URIS; i++)
                 free(uris[i].name);
         free(u.name);
 
+        ubik_workspace_free(ws);
         return ok;
 }
 

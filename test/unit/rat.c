@@ -22,7 +22,7 @@
 #include "unit.h"
 
 test_t
-rat()
+rat_read()
 {
         struct ubik_rat r;
 
@@ -53,4 +53,9 @@ rat()
         return ok;
 }
 
-run_single(rat)
+int main()
+{
+        init();
+        run(rat_read);
+        finish();
+}

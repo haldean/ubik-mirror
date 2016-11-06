@@ -27,6 +27,9 @@ test_t
 uri()
 {
         struct ubik_uri user, native, unknown, parsed, u;
+        struct ubik_workspace *ws;
+
+        assert(ubik_workspace_new(&ws) == OK);
 
         assert(ubik_uri_unknown(&unknown, "unknown-uri") == OK);
         assert(ubik_uri_user(&user, "user-uri") == OK);
@@ -40,9 +43,9 @@ uri()
         assert(ubik_uri_eq(&user, &user));
         assert(ubik_uri_eq(&native, &native));
 
-        assert(ubik_uri_attach_value(&user) == OK);
-        assert(ubik_uri_attach_value(&native) == OK);
-        assert(ubik_uri_attach_value(&unknown) == OK);
+        assert(ubik_uri_attach_value(&user, ws) == OK);
+        assert(ubik_uri_attach_value(&native, ws) == OK);
+        assert(ubik_uri_attach_value(&unknown, ws) == OK);
 
         assert(ubik_uri_from_value(&u, user.as_value) == OK);
         assert(ubik_uri_eq(&u, &user));
@@ -60,18 +63,11 @@ uri()
         assert(ubik_uri_eq(&parsed, &user));
         free(parsed.name);
 
-        /* each of these has two refs: one from the original URI and one from
-         * the one we made as a value. We release twice to release both refs. */
-        assert(ubik_release(user.as_value) == OK);
-        assert(ubik_release(user.as_value) == OK);
-        assert(ubik_release(native.as_value) == OK);
-        assert(ubik_release(native.as_value) == OK);
-        assert(ubik_release(unknown.as_value) == OK);
-        assert(ubik_release(unknown.as_value) == OK);
-
         free(user.name);
         free(native.name);
         free(unknown.name);
+
+        ubik_workspace_free(ws);
         return ok;
 }
 

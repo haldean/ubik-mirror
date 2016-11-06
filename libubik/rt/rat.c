@@ -18,6 +18,7 @@
  */
 
 #include "ubik/rat.h"
+#include "ubik/util.h"
 
 #include <string.h>
 
@@ -52,6 +53,22 @@ gcd(ubik_word w0, ubik_word w1)
         return w0;
 }
 
+static inline void
+rsimplify(struct ubik_value *r)
+{
+        ubik_word g;
+        g = gcd(r->rat.num, r->rat.den);
+        r->rat.num /= g;
+        r->rat.den /= g;
+}
+
+static inline void
+rfloor(struct ubik_value *r)
+{
+        r->rat.num /= r->rat.den;
+        r->rat.den = 1;
+}
+
 void
 ubik_rat_add(
         struct ubik_value *restrict r,
@@ -76,6 +93,49 @@ ubik_rat_sub(
         r->rat.num =
                 v1->rat.num * (r->rat.den / v1->rat.den) -
                 v2->rat.num * (r->rat.den / v2->rat.den);
+}
+
+void
+ubik_rat_mul(
+        struct ubik_value *restrict r,
+        struct ubik_value *restrict v1,
+        struct ubik_value *restrict v2)
+{
+        r->rat.num = v1->rat.num * v2->rat.num;
+        r->rat.den = v1->rat.den * v2->rat.den;
+        rsimplify(r);
+}
+
+void
+ubik_rat_div(
+        struct ubik_value *restrict r,
+        struct ubik_value *restrict v1,
+        struct ubik_value *restrict v2)
+{
+        r->rat.num = v1->rat.num * v2->rat.den;
+        r->rat.den = v1->rat.den * v2->rat.num;
+        rsimplify(r);
+}
+
+void
+ubik_rat_mod(
+        struct ubik_value *restrict r,
+        struct ubik_value *restrict v1,
+        struct ubik_value *restrict v2)
+{
+        struct ubik_value t0;
+        struct ubik_value t1;
+
+        r->type = UBIK_RAT;
+        if (likely(v1->rat.den == 1 && v2->rat.den == 1)) {
+                r->rat.num = v1->rat.num % v2->rat.num;
+                r->rat.den = 1;
+        }
+
+        ubik_rat_div(&t0, v1, v2);
+        rfloor(&t0);
+        ubik_rat_mul(&t1, v2, &t0);
+        ubik_rat_sub(r, v1, &t1);
 }
 
 no_ignore ubik_error

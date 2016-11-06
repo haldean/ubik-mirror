@@ -8,3 +8,5 @@
 - bindings in pattern blocks
 - values are in the PAP value on the executor
 - UBIK_SCHEDULE_DEBUG introduces a bunch of compiler errors
+- delete the list module
+
