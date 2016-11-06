@@ -20,6 +20,7 @@
 #include "ubik/rat.h"
 #include "ubik/util.h"
 
+#include <stdlib.h>
 #include <string.h>
 
 /* TODO: overflow!? */
@@ -57,7 +58,7 @@ static inline void
 rsimplify(struct ubik_value *r)
 {
         ubik_word g;
-        g = gcd(r->rat.num, r->rat.den);
+        g = gcd(abs(r->rat.num), abs(r->rat.den));
         r->rat.num /= g;
         r->rat.den /= g;
 }
@@ -65,7 +66,8 @@ rsimplify(struct ubik_value *r)
 static inline void
 rfloor(struct ubik_value *r)
 {
-        r->rat.num /= r->rat.den;
+        /* TODO: handle overflow here! */
+        r->rat.num /= (ubik_sword) r->rat.den;
         r->rat.den = 1;
 }
 
@@ -130,6 +132,7 @@ ubik_rat_mod(
         if (likely(v1->rat.den == 1 && v2->rat.den == 1)) {
                 r->rat.num = v1->rat.num % v2->rat.num;
                 r->rat.den = 1;
+                return;
         }
 
         ubik_rat_div(&t0, v1, v2);

@@ -116,8 +116,8 @@ struct ubik_str
 struct ubik_rat
 {
         /* TODO: inf-prec */
-        ubik_sword den;
-        ubik_word num;
+        ubik_sword num;
+        ubik_word den;
 };
 
 struct ubik_tup

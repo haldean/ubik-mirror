@@ -53,9 +53,52 @@ rat_read()
         return ok;
 }
 
+test_t
+rat_mod()
+{
+        /* Because there's no value allocation in the rational routines, we get
+         * to cheat a little here and stick our values on the stack. */
+        struct ubik_value v0, v1, v2;
+
+        v0.rat.num = 10;
+        v0.rat.den = 1;
+        v1.rat.num = 10;
+        v1.rat.den = 1;
+        ubik_rat_mod(&v2, &v0, &v1);
+        assert(v2.rat.num == 0);
+        assert(v2.rat.den == 1);
+
+        v1.rat.num = 8;
+        v1.rat.den = 1;
+        ubik_rat_mod(&v2, &v0, &v1);
+        assert(v2.rat.num == 2);
+        assert(v2.rat.den == 1);
+
+        v0.rat.num = -20;
+        v0.rat.den = 1;
+        ubik_rat_mod(&v2, &v0, &v1);
+        assert(v2.rat.num == -4);
+        assert(v2.rat.den == 1);
+
+        v0.rat.num = 33;
+        v0.rat.den = 2;
+        ubik_rat_mod(&v2, &v0, &v1);
+        assert(v2.rat.num == 1);
+        assert(v2.rat.den == 2);
+
+        v0.rat.num = -35;
+        v0.rat.den = 2;
+        ubik_rat_mod(&v2, &v0, &v1);
+        assert(v2.rat.num == -3);
+        assert(v2.rat.den == 2);
+
+        return ok;
+}
+
 int main()
 {
         init();
         run(rat_read);
+        run(rat_mod);
         finish();
 }

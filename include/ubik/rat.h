@@ -34,6 +34,29 @@ ubik_rat_sub(
         struct ubik_value *restrict v1,
         struct ubik_value *restrict v2);
 
+/* Multiplies v2 by v1 and stores the result in r. */
+void
+ubik_rat_mul(
+        struct ubik_value *restrict r,
+        struct ubik_value *restrict v1,
+        struct ubik_value *restrict v2);
+
+/* Divides v2 into v1 and stores the result in r. */
+void
+ubik_rat_div(
+        struct ubik_value *restrict r,
+        struct ubik_value *restrict v1,
+        struct ubik_value *restrict v2);
+
+/* Finds the remainder of dividing v1 by v2 and stores the result in r. For
+ * integral inputs, this falls back to the very fast mod operation. For
+ * nonintegral inputs, this involves 2 multiplications and a division. */
+void
+ubik_rat_mod(
+        struct ubik_value *restrict r,
+        struct ubik_value *restrict v1,
+        struct ubik_value *restrict v2);
+
 /* Reads a rational number from a string. */
 no_ignore ubik_error
 ubik_rat_read(

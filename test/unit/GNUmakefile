@@ -8,6 +8,7 @@ tests = \
 	host_to_net-test \
 	path_concat-test \
 	pointer_set-test \
+	rat-test \
 	resolve-test \
 	split-test \
 	types-test \
