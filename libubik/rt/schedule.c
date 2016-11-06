@@ -177,7 +177,7 @@ _enqueue(
                         continue;
                 if (test->node != node)
                         continue;
-                return OK;
+                return ubik_raise(ERR_PRESENT, "already enqueued");
         }
         for (test = s->ready; test != NULL; test = test->next)
         {
@@ -295,8 +295,13 @@ _push_dep_tree(
         ubik_error err;
 
         err = _enqueue(s, gexec, node);
-        if (err != OK)
+        if (err != OK) {
+                if (err->error_code == ERR_PRESENT) {
+                        free(err);
+                        return OK;
+                }
                 return err;
+        }
 
         err = _push_deps(s, gexec, node);
         if (err != OK)
