@@ -19,4 +19,5 @@
     ! ? prime-res {
         . True  => "7 is prime!"
         . False => "7 isn't prime?!"
-}})
+    }
+})
