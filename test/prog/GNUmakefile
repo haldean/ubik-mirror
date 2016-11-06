@@ -13,6 +13,7 @@ tests = \
 	import.uk \
 	import-splat.uk \
 	infer-hard.uk \
+	is-prime.uk \
 	lambda.uk \
 	lambda-simple.uk \
 	literate.rst \

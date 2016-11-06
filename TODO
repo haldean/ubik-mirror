@@ -11,4 +11,4 @@
 - delete the list module
 - more tests for rational functions
 - short-aliases for arithmetic
-
+- matches against nonatomic expressions (? f x { . A => ...)

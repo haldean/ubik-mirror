@@ -41,6 +41,12 @@ extern ubik_error _register_rational_add(
         struct ubik_env *env, struct ubik_workspace *ws);
 extern ubik_error _register_rational_subtract(
         struct ubik_env *env, struct ubik_workspace *ws);
+extern ubik_error _register_rational_multiply(
+        struct ubik_env *env, struct ubik_workspace *ws);
+extern ubik_error _register_rational_divide(
+        struct ubik_env *env, struct ubik_workspace *ws);
+extern ubik_error _register_rational_remainder(
+        struct ubik_env *env, struct ubik_workspace *ws);
 extern ubik_error _register_eq(
         struct ubik_env *env, struct ubik_workspace *ws);
 extern ubik_error _register_emit(
@@ -117,6 +123,9 @@ ubik_internal_native_create_op(
 struct ubik_native_record ubik_native_funcs[] = {
         { "rational-add", "Number -> Number -> Number", NULL },
         { "rational-subtract", "Number -> Number -> Number", NULL },
+        { "rational-multiply", "Number -> Number -> Number", NULL },
+        { "rational-divide", "Number -> Number -> Number", NULL },
+        { "rational-remainder", "Number -> Number -> Number", NULL },
         { "eq", NULL, NULL },
         { "emit", "String -> String", NULL },
         { "humanize", NULL, NULL },
@@ -246,6 +255,18 @@ ubik_natives_register(struct ubik_env *env, struct ubik_workspace *ws)
                 return err;
 
         err = _register_rational_subtract(env, ws);
+        if (err != OK)
+                return err;
+
+        err = _register_rational_multiply(env, ws);
+        if (err != OK)
+                return err;
+
+        err = _register_rational_divide(env, ws);
+        if (err != OK)
+                return err;
+
+        err = _register_rational_remainder(env, ws);
         if (err != OK)
                 return err;
 

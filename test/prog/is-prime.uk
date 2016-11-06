@@ -7,14 +7,16 @@
     ^ Number -> Boolean
     = \x -> {
         : inner-check = \y -> ? {
-            . eq y 1                  => True
-            . eq (rational-mod x y) 0 => False
-            .                         => inner-check (rational-subtract y 1)
+            . eq y 1 => True
+            . eq (rational-remainder x y) 0 => False
+            . => inner-check (rational-subtract y 1)
         }
         ! inner-check (rational-subtract x 1)
     }
 
-! emit (? is-prime 7 {
-    . True  => "7 is prime!"
-    . False => "7 isn't prime?!"
-})
+! emit ({
+    : prime-res = is-prime 7
+    ! ? prime-res {
+        . True  => "7 is prime!"
+        . False => "7 isn't prime?!"
+}})
