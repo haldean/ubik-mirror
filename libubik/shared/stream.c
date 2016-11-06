@@ -89,7 +89,7 @@ ubik_stream_read(void *dst, struct ubik_stream *src, size_t len)
         case STREAM_TYPE_FILE_W:
                 return 0;
         case STREAM_TYPE_BUFFER:
-                n = size_min(len, src->buffer->write - src->buffer->read);
+                n = size_min(len, src->buffer->end - src->buffer->read);
                 memcpy(dst, src->buffer->read, n);
                 src->buffer->read += n;
                 return n;

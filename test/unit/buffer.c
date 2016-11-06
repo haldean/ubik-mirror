@@ -49,4 +49,25 @@ buffer()
         return ok;
 }
 
-run_single(buffer)
+test_t
+buffer_reset_read_failure()
+{
+        struct ubik_stream s;
+        char c = 0;
+
+        assert(ubik_stream_buffer(&s, NULL) == OK);
+        assert(ubik_stream_write(&s, &c, 1) == 1);
+        ubik_stream_reset(&s);
+        assert(ubik_stream_read(&c, &s, 1) == 1);
+
+        ubik_stream_close(&s);
+        return ok;
+}
+
+int main()
+{
+        init();
+        run(buffer);
+        run(buffer_reset_read_failure);
+        finish();
+}
