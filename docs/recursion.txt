@@ -76,3 +76,77 @@ self-references, and ditto with t. Note that in the actual
 implementation of this feature, anonymous-t does not have a name in the
 global namespace; it is fully anonymous and is only defined by its
 value.
+
+In order to accomplish this, the closure transformation code marks the
+application of the function to itself as the application of a recursion
+parameter, but otherwise performs the closure transformation normally.
+In the above example, this then becomes:
+
+        : t = (\t x -> ? {
+            . eq x 0 => "ok\n"
+            . => t 0
+        }) *t
+
+With the asterisk here being shorthand for is-recursive-parameter. Then,
+in the code-generation stage, when the code generation visitor sees an
+apply statement with a recursion parameter, it transforms:
+
+        (f *f)
+
+Into a new top-level value inserted into the workspace and a reference
+to that value, replacing the recursion parameter with a reference to the
+same value.
+
+        &f = f
+        ((const &f) (const &f))
+
+The closure transformation is maintained on f, allowing it to
+self-recurse without any self-references.
+
+This gets a little more complicated when there are multiple closed
+parameters being applied. Take this useless function as an example:
+
+        {
+            : x = 8
+            : f = \y -> f x
+        }
+
+Both of these would be valid closure transformations for f:
+
+        : f = (\f x y -> f x) *f x
+        : f = (\x f y -> f x) x *f
+
+And their associated recusion transformations are:
+
+        : anonymous-f = \f x y -> f x
+        : f = anonymous-f anonymous-f x
+
+        : anonymous-f = \x f y -> f x
+        : f = anonymous-f x anonymous-f
+
+There are no statements here that look exactly like our (f *f) pattern
+above, though, in the example where f is not the first closure
+parameter. We end up with:
+
+        ((f x) *f)
+
+And (f x) isn't extractable, because x is local. To get around this, the
+code generation stage needs to examine the full apply tree to check if
+an apply chain contains a recursion parameter, and if it does, it needs
+to extract the leftmost function value into its own top-level value.
+
+Note that top level bindings do not need this transformation, because
+they can reference themselves by name. So this function at the top
+level:
+
+        ~ p
+        : f = \t -> f 0
+
+Gets turned into the following pseudo-bytecode:
+
+        000 INPUT 0
+        001 LOAD "p:f"
+        002 CONST 0
+        003 APPLY 001 002
+
+and the LOAD breaks the cycle.

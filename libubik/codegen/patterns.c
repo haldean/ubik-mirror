@@ -79,12 +79,14 @@ create_ctor_match_head(
         apply1->scope = to_match->scope;
         apply1->apply.head = native_func_atom;
         apply1->apply.tail = ctor_name_atom;
+        apply1->apply.recursive_app = false;
         apply1->loc = res->loc;
 
         res->expr_type = EXPR_APPLY;
         res->scope = to_match->scope;
         res->apply.head = apply1;
         res->apply.tail = to_match_copy;
+        res->apply.recursive_app = false;
 
         return OK;
 }

@@ -114,6 +114,10 @@ struct ubik_ast_expr
                 {
                         struct ubik_ast_expr *head;
                         struct ubik_ast_expr *tail;
+                        /* Marks whether this represents an application
+                         * of a function to itself. For more
+                         * information, see docs/recursion.txt. */
+                        bool recursive_app;
                 } apply;
                 struct
                 {
