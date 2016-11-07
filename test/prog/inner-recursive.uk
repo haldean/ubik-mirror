@@ -1,9 +1,9 @@
 ~ ubik-tests/inner-recursive
-! emit ({
+! {
     : t = \x -> ? {
         . eq x 0 => "ok\n"
         . => t 0
     }
     ! t 1
-})
+}
 
