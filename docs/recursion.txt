@@ -1,0 +1,78 @@
+Recursive closures =====================================================
+Haldean Brown                                      First draft: Nov 2016
+                                                  Last updated: Nov 2016
+
+Status: Draft
+
+------------------------------------------------------------------------
+
+The closure transformation turns closures into partially-applied
+functions, by turning values that have been closed over into arguments
+to the function itself. The specific algorithm for doing this is
+detailed greatly in the header closure.c, but the general gist is that:
+
+It transforms this:
+    \x -> (\y -> + x y)
+To this:
+    \x -> ((\x0 y -> + x0 y) x)
+
+It transforms this:
+    \x -> (\y -> (\z -> x))
+Into this:
+    \x -> ((\x0 y -> ((\x1 z -> x1) x0)) x)
+
+It transforms this:
+    \x -> {
+        : y = + x 10
+        ! \z -> y
+    }
+Into this:
+    \x -> {
+        : y = + x 10
+        ! (\y0 z -> y0) y
+    }
+
+This closes these functions over the enclosing scope by making all
+enclosing scope information an explicit argument to the function, and
+then partially applying the function over that information.
+
+This document describes how the closure transformation interacts with
+recursion for values that are not bound to a global name. For example,
+this snippet:
+
+    ! {
+        : t = \x -> ? {
+            . eq x 0 => "ok\n"
+            . => t 0
+        }
+        ! t 1
+    }
+
+In this example, the closure transformation should take t and turn it
+into this:
+
+        : t = (\t x -> ? {
+            . eq x 0 => "ok\n"
+            . => t 0
+        }) t
+
+But now we find ourselves referencing t before we've defined it, and we
+can quickly get into a circular reference. Here, we transform t into a
+top-level anonymous function with its own value:
+
+    : anonymous-t =
+        \t x -> ? {
+            . eq x 0 => "ok\n"
+            . => t 0
+        }
+
+    ! {
+        : t = anonymous-t anonymous-t
+        ! t 1
+    }
+
+In so doing, we can fully define anonymous-t without any
+self-references, and ditto with t. Note that in the actual
+implementation of this feature, anonymous-t does not have a name in the
+global namespace; it is fully anonymous and is only defined by its
+value.
