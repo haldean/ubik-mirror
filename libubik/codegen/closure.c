@@ -235,6 +235,7 @@ no_ignore static ubik_error
 apply_upwards_transform(
         char **resolving_name_ref,
         struct ubik_ast_expr **expr_ref,
+        char *expr_bound_to,
         struct ubik_compile_request *req)
 {
         char *resolving_name;
@@ -289,7 +290,16 @@ apply_upwards_transform(
         if (is_top)
         {
                 *resolving_name_ref = NULL;
-                return apply_downwards_transform(resolving_name, expr_ref, req);
+                err = apply_downwards_transform(resolving_name, expr_ref, req);
+                if (err != OK)
+                        return err;
+                if (expr_bound_to != NULL &&
+                        strcmp(expr_bound_to, resolving_name) == 0)
+                {
+                        ubik_assert((*expr_ref)->expr_type == EXPR_APPLY);
+                        (*expr_ref)->apply.recursive_app = true;
+                }
+                return OK;
         }
         return OK;
 }
@@ -316,6 +326,7 @@ traverse_expr(
         char **resolving_name,
         bool *changed,
         struct ubik_ast_expr **expr_ref,
+        char *expr_bound_to,
         struct ubik_compile_request *req)
 {
         struct ubik_ast_expr *expr;
@@ -337,11 +348,11 @@ traverse_expr(
          * this expression struct. Taking refs to elements in an array doesn't
          * help us. */
         #define traverse(e) do { \
-                err = traverse_expr(resolving_name, changed, &e, req); \
+                err = traverse_expr(resolving_name, changed, &e, NULL, req); \
                 if (err != OK) return err; \
                 if (*resolving_name != NULL) { \
                         err = apply_upwards_transform( \
-                                resolving_name, expr_ref, req); \
+                                resolving_name, expr_ref, expr_bound_to, req); \
                         return err; \
                 }} while (0)
 
@@ -390,7 +401,7 @@ traverse_expr(
                 if (*resolving_name != NULL)
                 {
                         err = apply_upwards_transform(
-                                resolving_name, expr_ref, req);
+                                resolving_name, expr_ref, NULL, req);
                         return err;
                 }
                 break;
@@ -415,7 +426,7 @@ traverse_ast(
 
                 bind = ast->bindings.elems[i];
                 err = traverse_expr(
-                        resolving_name, changed, &bind->expr, req);
+                        resolving_name, changed, &bind->expr, bind->name, req);
                 if (err != OK)
                         return err;
         }
@@ -423,7 +434,7 @@ traverse_ast(
         if (ast->immediate != NULL)
         {
                 err = traverse_expr(
-                        resolving_name, changed, &ast->immediate, req);
+                        resolving_name, changed, &ast->immediate, NULL, req);
                 if (err != OK)
                         return err;
         }
