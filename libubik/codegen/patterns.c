@@ -137,11 +137,13 @@ create_adt_accessor(
         apply->expr_type = EXPR_APPLY;
         apply->apply.head = native_func;
         apply->apply.tail = index;
+        apply->apply.recursive_app = false;
         apply->loc = res->loc;
 
         res->expr_type = EXPR_APPLY;
         res->apply.head = apply;
         res->apply.tail = obj;
+        res->apply.recursive_app = false;
         return OK;
 }
 

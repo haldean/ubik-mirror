@@ -76,6 +76,7 @@ add_multimethod(
         e2->loc = member->loc;
         e2->apply.head = e0;
         e2->apply.tail = e1;
+        e2->apply.recursive_app = false;
 
         for (i = 0; i < n_args; i++)
         {
@@ -94,6 +95,7 @@ add_multimethod(
                 e2->loc = member->loc;
                 e2->apply.head = e1;
                 e2->apply.tail = e0;
+                e2->apply.recursive_app = false;
         }
 
         ubik_alloc1(&e0, struct ubik_ast_expr, &req->region);

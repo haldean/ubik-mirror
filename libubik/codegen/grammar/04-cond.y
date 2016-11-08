@@ -126,6 +126,7 @@ pattern
         $$->expr_type = EXPR_APPLY;
         $$->apply.head = $1;
         $$->apply.tail = tail;
+        $$->apply.recursive_app = false;
 
         merge_loc($$, $1, tail);
 }
@@ -172,6 +173,7 @@ pattern
         $$->expr_type = EXPR_APPLY;
         $$->apply.head = $1;
         $$->apply.tail = tail;
+        $$->apply.recursive_app = false;
 
         merge_loc($$, $1, tail);
 }

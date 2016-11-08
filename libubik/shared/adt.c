@@ -286,6 +286,7 @@ bind_ctor(
         t2->loc = ctor->loc;
         t2->apply.head = t0;
         t2->apply.tail = t1;
+        t2->apply.recursive_app = false;
 
         ubik_alloc1(&t0, struct ubik_ast_expr, &req->region);
         t0->expr_type = EXPR_ATOM;
@@ -300,6 +301,7 @@ bind_ctor(
         t1->loc = ctor->loc;
         t1->apply.head = t2;
         t1->apply.tail = t0;
+        t1->apply.recursive_app = false;
         t2 = t1;
 
         for (i = 0, cargs = ctor->params;
@@ -327,6 +329,7 @@ bind_ctor(
                 t1->loc = ctor->loc;
                 t1->apply.head = t2;
                 t1->apply.tail = t0;
+                t1->apply.recursive_app = false;
                 t2 = t1;
         }
 

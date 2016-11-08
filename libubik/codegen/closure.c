@@ -110,6 +110,7 @@ apply_closure(
         apply->scope = (*head)->scope->parent;
         apply->apply.head = *head;
         apply->apply.tail = name;
+        apply->apply.recursive_app = false;
 
         *head = apply;
         return OK;
