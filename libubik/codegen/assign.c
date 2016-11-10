@@ -231,9 +231,32 @@ _assign_atom_node(
 
 no_ignore static ubik_error
 _assign_apply_node(
+        struct ubik_assign_context *ctx,
         struct ubik_node *n,
+        struct ubik_vector *nodes,
         struct ubik_ast_expr *expr)
 {
+        struct ubik_ast_expr *head;
+        struct ubik_node *argref;
+        ubik_error err;
+
+        if (expr->apply.recursive_app)
+        {
+                head = expr->apply.head;
+                while (head->expr_type == EXPR_APPLY)
+                        head = head->apply.head;
+                ubik_assert(head->expr_type == EXPR_LAMBDA);
+
+                ubik_alloc1(&argref, struct ubik_node, ctx->region);
+                argref->node_type = UBIK_REF;
+                argref->id = nodes->n;
+                argref->ref.referrent = head->gen;
+                err = ubik_vector_append(nodes, argref);
+                if (err != OK)
+                        return err;
+                expr->apply.tail->gen = argref->id;
+        }
+
         n->node_type = UBIK_APPLY;
         n->apply.func = expr->apply.head->gen;
         n->apply.arg = expr->apply.tail->gen;
@@ -471,7 +494,7 @@ ubik_assign_nodes(
                 if (err != OK)
                         return err;
 
-                err = _assign_apply_node(n, expr);
+                err = _assign_apply_node(ctx, n, nodes, expr);
                 if (err != OK)
                         return err;
                 break;
