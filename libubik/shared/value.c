@@ -237,7 +237,30 @@ ubik_value_humanize(char **res, size_t *res_len, struct ubik_value *v)
                 ubik_unreachable("multimethod printing not implemented");
 
         case UBIK_TYP:
-                ubik_unreachable("type printing not implemented");
+                switch (v->typ.t)
+                {
+                case UBIK_TYPE_STR:
+                        *res = strdup("type=string");
+                        *res_len = strlen(*res);
+                        return OK;
+                case UBIK_TYPE_RAT:
+                        *res = strdup("type=rat");
+                        *res_len = strlen(*res);
+                        return OK;
+                case UBIK_TYPE_BOO:
+                        *res = strdup("type=boo");
+                        *res_len = strlen(*res);
+                        return OK;
+                case UBIK_TYPE_ADT:
+                        *res = strdup("type=adt (details not implemented)");
+                        *res_len = strlen(*res);
+                        return OK;
+                case UBIK_TYPE_APP:
+                        *res = strdup("type=app (details not implemented)");
+                        *res_len = strlen(*res);
+                        return OK;
+                }
+                ubik_unreachable("unknown type type");
 
         case UBIK_IMP:
                 ubik_unreachable("implementation printing not implemented");
@@ -277,5 +300,7 @@ ubik_value_print(struct ubik_stream *out, struct ubik_value *v)
         written = ubik_stream_write(out, str, len);
         if (written != len)
                 return ubik_raise(ERR_WRITE_FAILED, "failed to print value");
+
+        free(str);
         return OK;
 }

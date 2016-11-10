@@ -169,6 +169,8 @@ _print_expr(struct ubik_ast_expr *expr, int indent)
                 if (err != OK)
                         return err;
                 printf(" ");
+                if (expr->apply.recursive_app)
+                        printf("$");
                 err = _print_expr(expr->apply.tail, indent);
                 if (err != OK)
                         return err;

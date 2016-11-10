@@ -188,6 +188,46 @@ assert_failed:
         jump_done();
 }
 
+static char testprog5[] =
+        "~ t "
+        ": outer = \\y -> {"
+        "    : t = \\x -> t 0"
+        "    ! t 1"
+        "}";
+
+test_t
+recursive_inner_ref()
+{
+        struct ubik_compile_request req = {0};
+        struct ubik_ast *ast;
+        struct ubik_stream progstream;
+        struct ubik_stream feedback;
+        jump_init();
+
+        assert_jump(ubik_stream_wfilep(&feedback, stdout) == OK);
+        req.feedback = &feedback;
+
+        assert_jump(ubik_stream_buffer(&progstream, &req.region) == OK);
+        /* drop the null byte off the end, it makes the lexer unhappy */
+        assert_jump(ubik_stream_write(
+                       &progstream, testprog4, sizeof(testprog4) - 1)
+               == sizeof(testprog4) - 1);
+        assert_jump(ubik_parse(
+                &ast, &req.region, &feedback, "testprog5", &progstream) == OK);
+        assert_jump(ubik_resolve(ast, &req) == OK);
+
+        struct ubik_ast_binding *t_bind =
+                (struct ubik_ast_binding *)
+                ast->immediate->block->bindings.elems[0];
+        struct ubik_ast_expr *t_expr = t_bind->expr;
+        assert_jump(t_expr->expr_type == EXPR_APPLY);
+        assert_jump(t_expr->apply.recursive_app);
+
+assert_failed:
+        ubik_alloc_free(&req.region);
+        jump_done();
+}
+
 int
 main()
 {

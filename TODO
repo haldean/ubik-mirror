@@ -13,3 +13,4 @@
 - short-aliases for arithmetic
 - matches against nonatomic expressions (? f x { . A => ...)
 - fix all applications in codegen to set recursive_app = false
+- splatted imports shouldn't appear under the importing package's name
