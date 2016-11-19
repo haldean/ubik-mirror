@@ -67,7 +67,7 @@ top-level anonymous function with its own value:
         }
 
     ! {
-        : t = anonymous-t anonymous-t
+        : t = anonymous-t (anonymous-t anonymous-t)
         ! t 1
     }
 
@@ -85,20 +85,20 @@ In the above example, this then becomes:
         : t = (\t x -> ? {
             . eq x 0 => "ok\n"
             . => t 0
-        }) *t
+        }) $t
 
-With the asterisk here being shorthand for is-recursive-parameter. Then,
-in the code-generation stage, when the code generation visitor sees an
-apply statement with a recursion parameter, it transforms:
+With the dollar sign here being shorthand for is-recursive-parameter.
+Then, in the code-generation stage, when the code generation visitor
+sees an apply statement with a recursion parameter, it transforms:
 
-        (f *f)
+        (f $f)
 
 Into a new top-level value inserted into the workspace and a reference
 to that value, replacing the recursion parameter with a reference to the
 same value.
 
         &f = f
-        ((const &f) (const &f))
+        ((const &f) ((const &f) (const &f)))
 
 The closure transformation is maintained on f, allowing it to
 self-recurse without any self-references.
@@ -130,10 +130,11 @@ parameter. We end up with:
 
         ((f x) *f)
 
-And (f x) isn't extractable, because x is local. To get around this, the
-code generation stage needs to examine the full apply tree to check if
-an apply chain contains a recursion parameter, and if it does, it needs
-to extract the leftmost function value into its own top-level value.
+And (f x) isn't extractable, because x is local. We also can't
+successfully partially-apply this function to itself, because we would
+have to apply the arguments ahead of the recursive application. We get
+around this by forcing the recursive application to happen before any
+other closure application.
 
 Note that top level bindings do not need this transformation, because
 they can reference themselves by name. So this function at the top

@@ -1,4 +1,5 @@
 ~ ubik-tests/is-prime
+
 + *boolean
 
 # naive primality checking; checks divisibility by every number between X and
