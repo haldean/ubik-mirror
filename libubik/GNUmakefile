@@ -21,10 +21,10 @@ c_sources = \
     ./codegen/types.c \
     ./codegen/typesystem.c \
     ./rt/eval.c \
-	./rt/mem.c \
-	./rt/rat.c \
+    ./rt/mem.c \
+    ./rt/rat.c \
     ./rt/schedule.c \
-	./rt/str.c \
+    ./rt/str.c \
     ./rt/timer.c \
     ./shared/adt.c \
     ./shared/alloc.c \
@@ -34,7 +34,7 @@ c_sources = \
     ./shared/error.c \
     ./shared/explain.c \
     ./shared/feedback.c \
-	./shared/fun.c \
+    ./shared/fun.c \
     ./shared/list.c \
     ./shared/natives.c \
     ./shared/pointerset.c \
