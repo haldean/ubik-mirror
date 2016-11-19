@@ -14,7 +14,7 @@ syntax match ubikBind "!"
 syntax match ubikBind "_"
 syntax match ubikBind "|"
 syntax match ubikBind "'"
-highlight link ubikBind Delimiter
+highlight link ubikBind Special
 
 syntax match ubikSubbind "\^"
 syntax match ubikSubbind "="
@@ -34,7 +34,7 @@ syntax match ubikNumber "\v<\d+>"
 syntax match ubikNumber "\v<\d+\.\d+>"
 highlight default link ubikNumber Number
 
-syntax keyword ubikTypes String Word
+syntax keyword ubikTypes String Number Boolean
 highlight default link ubikTypes Type
 
 setlocal shiftwidth=4
