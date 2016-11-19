@@ -1,0 +1,17 @@
+~ ubik-tests/recursion-hard
+
+: f0 ^ Number = \ a0 -> {
+    : f1 = \ a1 -> {
+        : f2 = \ a2 -> {
+            : x = f1 a2
+            ! x
+        }
+        ! ? {
+            . eq a1 0 => 0
+            .         => f2 0
+        }
+    }
+    ! f1 1
+}
+
+! emit f0
