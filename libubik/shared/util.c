@@ -139,6 +139,6 @@ ubik_check_add(ubik_word *res, ubik_word w1, ubik_word w2)
                 return ubik_raise(ERR_OVERFLOW, "addition overflowed");
         return OK;
 #else
-#error Compiler must support __builtin_uaddl_overflow
+#error compiler does not support __builtin_uaddl_overflow
 #endif
 }
