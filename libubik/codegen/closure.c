@@ -71,6 +71,7 @@ no_ignore static ubik_error
 apply_closure(
         struct ubik_ast_expr **head,
         char *resolving_name,
+        char *expr_bound_to,
         struct ubik_compile_request *req)
 {
         struct ubik_ast_expr *apply;
@@ -110,7 +111,9 @@ apply_closure(
         apply->scope = (*head)->scope->parent;
         apply->apply.head = *head;
         apply->apply.tail = name;
-        apply->apply.recursive_app = false;
+        apply->apply.recursive_app =
+                expr_bound_to != NULL
+                && strcmp(expr_bound_to, resolving_name) == 0;
 
         *head = apply;
         return OK;
@@ -120,6 +123,7 @@ no_ignore static ubik_error
 apply_downwards_transform(
         char *resolving_name,
         struct ubik_ast_expr **expr_ref,
+        char *expr_bound_to,
         struct ubik_compile_request *req)
 {
         struct ubik_ast *subast;
@@ -133,7 +137,8 @@ apply_downwards_transform(
 
         if (expr->scope->needs_closure_appl)
         {
-                err = apply_closure(expr_ref, resolving_name, req);
+                err = apply_closure(
+                        expr_ref, resolving_name, expr_bound_to, req);
                 if (err != OK)
                         return err;
                 expr = *expr_ref;
@@ -143,7 +148,8 @@ apply_downwards_transform(
          * proper refs into the pointers themselves so we can mutate these
          * things. */
         #define apply_down(x) do { \
-                err = apply_downwards_transform(resolving_name, &x, req); \
+                err = apply_downwards_transform( \
+                        resolving_name, &x, expr_bound_to, req); \
                 if (err != OK) return err; } while (0)
         subast = NULL;
         switch (expr->expr_type)
@@ -192,7 +198,7 @@ apply_downwards_transform(
                         struct ubik_ast_binding *bind;
                         bind = subast->bindings.elems[i];
                         err = apply_downwards_transform(
-                                resolving_name, &bind->expr, req);
+                                resolving_name, &bind->expr, NULL, req);
                         if (err != OK)
                                 return err;
                 }
@@ -200,7 +206,10 @@ apply_downwards_transform(
                 if (subast->immediate != NULL)
                 {
                         err = apply_downwards_transform(
-                                resolving_name, &subast->immediate, req);
+                                resolving_name,
+                                &subast->immediate,
+                                NULL,
+                                req);
                         if (err != OK)
                                 return err;
                 }
@@ -290,15 +299,10 @@ apply_upwards_transform(
         if (is_top)
         {
                 *resolving_name_ref = NULL;
-                err = apply_downwards_transform(resolving_name, expr_ref, req);
+                err = apply_downwards_transform(
+                        resolving_name, expr_ref, expr_bound_to, req);
                 if (err != OK)
                         return err;
-                if (expr_bound_to != NULL &&
-                        strcmp(expr_bound_to, resolving_name) == 0)
-                {
-                        ubik_assert((*expr_ref)->expr_type == EXPR_APPLY);
-                        (*expr_ref)->apply.recursive_app = true;
-                }
                 return OK;
         }
         return OK;
@@ -347,8 +351,10 @@ traverse_expr(
         /* can't use subexpr here, because we need the actual ref inside
          * this expression struct. Taking refs to elements in an array doesn't
          * help us. */
-        #define traverse(e) do { \
-                err = traverse_expr(resolving_name, changed, &e, NULL, req); \
+        #define traverse(e, break_scope) do { \
+                err = traverse_expr( \
+                        resolving_name, changed, &e, \
+                        break_scope ? NULL : expr_bound_to, req); \
                 if (err != OK) return err; \
                 if (*resolving_name != NULL) { \
                         err = apply_upwards_transform( \
@@ -362,19 +368,19 @@ traverse_expr(
                 break;
 
         case EXPR_APPLY:
-                traverse(expr->apply.head);
-                traverse(expr->apply.tail);
+                traverse(expr->apply.head, false);
+                traverse(expr->apply.tail, false);
                 break;
 
         case EXPR_LAMBDA:
-                traverse(expr->lambda.body);
+                traverse(expr->lambda.body, true);
                 break;
 
         case EXPR_COND_BLOCK:
                 switch (expr->cond_block.block_type)
                 {
                 case COND_PATTERN:
-                        traverse(expr->cond_block.to_match);
+                        traverse(expr->cond_block.to_match, false);
                         break;
                 case COND_PREDICATE:
                         break;
@@ -388,8 +394,8 @@ traverse_expr(
                          * a normal expression. */
                         if (case_stmt->head != NULL
                                 && expr->cond_block.block_type != COND_PATTERN)
-                                traverse(case_stmt->head);
-                        traverse(case_stmt->tail);
+                                traverse(case_stmt->head, false);
+                        traverse(case_stmt->tail, false);
                         case_stmt = case_stmt->next;
                 }
                 return OK;
