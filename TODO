@@ -14,3 +14,4 @@
 - matches against nonatomic expressions (? f x { . A => ...)
 - splatted imports shouldn't appear under the importing package's name
 - runtime applyable types
+- recursion needs a lot of work
