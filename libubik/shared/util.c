@@ -134,14 +134,11 @@ ubik_word_explain(ubik_word word)
 no_ignore ubik_error
 ubik_check_add(ubik_word *res, ubik_word w1, ubik_word w2)
 {
-#if __has_builtin(__builtin_uaddl_overflow)
+#if __GNUC__ >= 5 || __has_builtin(__builtin_uaddl_overflow)
         if (__builtin_uaddl_overflow(w1, w2, res))
                 return ubik_raise(ERR_OVERFLOW, "addition overflowed");
         return OK;
 #else
-        if (UINT64_MAX - w1 > w2)
-                return ubik_raise(ERR_OVERFLOW, "addition overflowed");
-        *res = w1 + w2;
-        return OK;
+#error Compiler must support __builtin_uaddl_overflow
 #endif
 }
