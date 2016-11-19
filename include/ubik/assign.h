@@ -35,11 +35,11 @@ struct ubik_assign_error
 
 struct ubik_assign_context
 {
-        /* Elements are struct ubik_assign_error * */
-        struct ubik_vector errors;
         struct ubik_alloc_region *region;
         struct ubik_stream *feedback;
         struct ubik_workspace *workspace;
+        /* Elements are struct ubik_assign_error * */
+        struct ubik_vector errors;
 };
 
 void

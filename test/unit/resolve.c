@@ -210,7 +210,7 @@ recursive_inner_ref()
         assert_jump(ubik_stream_buffer(&progstream, &req.region) == OK);
         /* drop the null byte off the end, it makes the lexer unhappy */
         assert_jump(ubik_stream_write(
-                       &progstream, testprog4, sizeof(testprog4) - 1)
+                       &progstream, testprog5, sizeof(testprog5) - 1)
                == sizeof(testprog4) - 1);
         assert_jump(ubik_parse(
                 &ast, &req.region, &feedback, "testprog5", &progstream) == OK);

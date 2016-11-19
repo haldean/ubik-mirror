@@ -27,6 +27,10 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#ifndef __has_builtin
+#define __has_builtin(x) 0
+#endif
+
 size_t
 size_max(size_t a, size_t b)
 {
@@ -130,7 +134,14 @@ ubik_word_explain(ubik_word word)
 no_ignore ubik_error
 ubik_check_add(ubik_word *res, ubik_word w1, ubik_word w2)
 {
+#if __has_builtin(__builtin_uaddl_overflow)
         if (__builtin_uaddl_overflow(w1, w2, res))
                 return ubik_raise(ERR_OVERFLOW, "addition overflowed");
         return OK;
+#else
+        if (UINT64_MAX - w1 > w2)
+                return ubik_raise(ERR_OVERFLOW, "addition overflowed");
+        *res = w1 + w2;
+        return OK;
+#endif
 }
