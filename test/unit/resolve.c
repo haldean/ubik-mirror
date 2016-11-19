@@ -162,6 +162,8 @@ recursive_ref()
         struct ubik_ast *ast;
         struct ubik_stream progstream;
         struct ubik_stream feedback;
+        struct ubik_ast_binding *t_bind;
+        struct ubik_ast_expr *t_expr;
         jump_init();
 
         assert_jump(ubik_stream_wfilep(&feedback, stdout) == OK);
@@ -176,10 +178,9 @@ recursive_ref()
                 &ast, &req.region, &feedback, "testprog4", &progstream) == OK);
         assert_jump(ubik_resolve(ast, &req) == OK);
 
-        struct ubik_ast_binding *t_bind =
-                (struct ubik_ast_binding *)
+        t_bind = (struct ubik_ast_binding *)
                 ast->immediate->block->bindings.elems[0];
-        struct ubik_ast_expr *t_expr = t_bind->expr;
+        t_expr = t_bind->expr;
         assert_jump(t_expr->expr_type == EXPR_APPLY);
         assert_jump(t_expr->apply.recursive_app);
 
@@ -202,6 +203,8 @@ recursive_inner_ref()
         struct ubik_ast *ast;
         struct ubik_stream progstream;
         struct ubik_stream feedback;
+        struct ubik_ast_binding *b0, *b1;
+        struct ubik_ast_expr *e;
         jump_init();
 
         assert_jump(ubik_stream_wfilep(&feedback, stdout) == OK);
@@ -211,17 +214,19 @@ recursive_inner_ref()
         /* drop the null byte off the end, it makes the lexer unhappy */
         assert_jump(ubik_stream_write(
                        &progstream, testprog5, sizeof(testprog5) - 1)
-               == sizeof(testprog4) - 1);
+               == sizeof(testprog5) - 1);
         assert_jump(ubik_parse(
                 &ast, &req.region, &feedback, "testprog5", &progstream) == OK);
         assert_jump(ubik_resolve(ast, &req) == OK);
 
-        struct ubik_ast_binding *t_bind =
-                (struct ubik_ast_binding *)
-                ast->immediate->block->bindings.elems[0];
-        struct ubik_ast_expr *t_expr = t_bind->expr;
-        assert_jump(t_expr->expr_type == EXPR_APPLY);
-        assert_jump(t_expr->apply.recursive_app);
+        b0 = (struct ubik_ast_binding *) ast->bindings.elems[0];
+        e = b0->expr;
+        assert_jump(e->expr_type == EXPR_LAMBDA);
+        b1 = (struct ubik_ast_binding *)
+                b0->expr->lambda.body->block->bindings.elems[0];
+        e = b1->expr;
+        assert_jump(e->expr_type == EXPR_APPLY);
+        assert_jump(e->apply.recursive_app);
 
 assert_failed:
         ubik_alloc_free(&req.region);
@@ -236,5 +241,6 @@ main()
         run(closure_regression);
         run(pattern_define);
         run(recursive_ref);
+        run(recursive_inner_ref);
         finish();
 }
