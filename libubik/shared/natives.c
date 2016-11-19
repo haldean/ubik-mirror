@@ -55,6 +55,10 @@ extern ubik_error _register_humanize(
         struct ubik_env *env, struct ubik_workspace *ws);
 extern ubik_error _register_concat(
         struct ubik_env *env, struct ubik_workspace *ws);
+extern ubik_error _register_boolean_true(
+        struct ubik_env *env, struct ubik_workspace *ws);
+extern ubik_error _register_boolean_false(
+        struct ubik_env *env, struct ubik_workspace *ws);
 
 no_ignore ubik_error
 ubik_internal_native_uri(struct ubik_uri **uri, char *name)
@@ -130,6 +134,8 @@ struct ubik_native_record ubik_native_funcs[] = {
         { "emit", "String -> String", NULL },
         { "humanize", NULL, NULL },
         { "concat", "String -> String -> String", NULL },
+        { "ubik-native-boolean-true", "Boolean", NULL },
+        { "ubik-native-boolean-false", "Boolean", NULL },
         { "ubik-adt-ctor-matches?", NULL, NULL },
         { "ubik-adt-get", NULL, NULL },
         { "ubik-adt-new-0", NULL, NULL },
@@ -295,6 +301,14 @@ ubik_natives_register(struct ubik_env *env, struct ubik_workspace *ws)
                 return err;
 
         err = _register_adt_get(env, ws);
+        if (err != OK)
+                return err;
+
+        err = _register_boolean_true(env, ws);
+        if (err != OK)
+                return err;
+
+        err = _register_boolean_false(env, ws);
         if (err != OK)
                 return err;
 

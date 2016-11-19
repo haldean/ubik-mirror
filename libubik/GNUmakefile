@@ -51,6 +51,7 @@ c_sources = \
     ./shared/vector.c \
     ./shared/natives/native-adt.c \
     ./shared/natives/native-arithmetic.c \
+    ./shared/natives/native-bool.c \
     ./shared/natives/native-seq.c \
     ./shared/natives/native-util.c
 

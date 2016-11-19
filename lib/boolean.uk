@@ -1,5 +1,4 @@
 ~ boolean
 
-^ Boolean
-    = True
-    = False
+: true ^ Boolean = ubik-native-boolean-true
+: false ^ Boolean = ubik-native-boolean-false
