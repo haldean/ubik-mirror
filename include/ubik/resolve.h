@@ -58,6 +58,8 @@ struct ubik_resolve_name_loc
         /* Pointer to the location that defines this name. Shared by all
         references to the same object. */
         struct ubik_resolve_name *def;
+        /* True if this name refers to a function that encloses it */
+        bool recursive_ref;
 };
 
 /* Scope boundaries are used to determine whether something is

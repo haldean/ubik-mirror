@@ -38,6 +38,8 @@
 #include "ubik/types.h"
 #include "ubik/util.h"
 
+#define MAX_AST_DEPTH 64
+
 struct ubik_resolve_context
 {
         struct ubik_resolve_scope *global_scope;
@@ -67,6 +69,16 @@ no_ignore ubik_error
 update_names_with_resolution_types(
         struct ubik_resolve_context *ctx,
         struct ubik_ast *ast);
+
+/* The name stack contains all names associated with the functions the given
+ * AST sits inside. name_stack_top points to the first empty item in the stack;
+ * if top == bottom, the stack is empty. */
+no_ignore ubik_error
+find_recursive_references(
+        struct ubik_resolve_context *ctx,
+        struct ubik_ast *ast,
+        char **name_stack_top,
+        char **name_stack_bottom);
 
 no_ignore ubik_error
 ubik_resolve_context_missing_name(
@@ -681,6 +693,93 @@ update_names_with_resolution_types(
         return OK;
 }
 
+no_ignore ubik_error
+find_recursive_references_expr(
+        struct ubik_resolve_context *ctx,
+        struct ubik_ast_expr *expr,
+        char **name_stack_top,
+        char **name_stack_bottom)
+{
+        struct ubik_ast_expr *subexprs[UBIK_MAX_SUBEXPRS];
+        struct ubik_ast *subast;
+        size_t n_subexprs;
+        size_t i;
+        char **ns;
+        ubik_error err;
+
+        if (expr->expr_type == EXPR_ATOM && expr->atom->atom_type == ATOM_NAME)
+        {
+                expr->atom->name_loc->recursive_ref = false;
+                for (ns = name_stack_bottom; ns != name_stack_top; ns++)
+                {
+                        if (strcmp(expr->atom->str, *ns) == 0) {
+                                expr->atom->name_loc->recursive_ref = true;
+                                break;
+                        }
+                }
+        }
+
+        err = ubik_ast_subexprs(&subast, subexprs, &n_subexprs, expr);
+        if (err != OK)
+                return err;
+
+        if (subast != NULL)
+        {
+                err = find_recursive_references(
+                        ctx, subast, name_stack_top, name_stack_bottom);
+                if (err != OK)
+                        return err;
+        }
+
+        for (i = 0; i < n_subexprs; i++)
+        {
+                err = find_recursive_references_expr(
+                        ctx, subexprs[i], name_stack_top, name_stack_bottom);
+                if (err != OK)
+                        return err;
+        }
+
+        return OK;
+}
+
+no_ignore ubik_error
+find_recursive_references(
+        struct ubik_resolve_context *ctx,
+        struct ubik_ast *ast,
+        char **name_stack_top,
+        char **name_stack_bottom)
+{
+        struct ubik_ast_binding *bind;
+        size_t i;
+        ubik_error err;
+
+        ubik_assert(
+                ((uintptr_t) name_stack_top - (uintptr_t) name_stack_bottom)
+                < sizeof(char *) * MAX_AST_DEPTH);
+
+        for (i = 0; i < ast->bindings.n; i++)
+        {
+                bind = ast->bindings.elems[i];
+                *name_stack_top = bind->name;
+                err = find_recursive_references_expr(
+                        ctx, bind->expr, name_stack_top + 1,
+                        name_stack_bottom);
+                if (err != OK)
+                        return err;
+        }
+
+        if (ast->immediate != NULL)
+        {
+                err = find_recursive_references_expr(
+                        ctx, ast->immediate, name_stack_top,
+                        name_stack_bottom);
+                if (err != OK)
+                        return err;
+        }
+
+        return OK;
+}
+
 no_ignore static ubik_error
 create_global_scope(struct ubik_resolve_context *ctx, struct ubik_ast *ast)
 {
@@ -726,6 +825,7 @@ ubik_resolve(
         struct ubik_resolve_error *resolv_err;
         ubik_error err;
         size_t i;
+        char *name_stack[MAX_AST_DEPTH];
 
         ctx.region = &req->region;
         ctx.feedback = req->feedback;
@@ -752,6 +852,10 @@ ubik_resolve(
                 return err;
 
         err = update_names_with_resolution_types(&ctx, ast);
+        if (err != OK)
+                return err;
+
+        err = find_recursive_references(&ctx, ast, name_stack, name_stack);
         if (err != OK)
                 return err;
 

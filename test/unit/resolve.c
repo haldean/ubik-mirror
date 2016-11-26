@@ -205,6 +205,7 @@ recursive_inner_ref()
         struct ubik_stream feedback;
         struct ubik_ast_binding *b0, *b1;
         struct ubik_ast_expr *e;
+        struct ubik_resolve_name_loc *nl;
         jump_init();
 
         assert_jump(ubik_stream_wfilep(&feedback, stdout) == OK);
@@ -227,6 +228,9 @@ recursive_inner_ref()
         e = b1->expr;
         assert_jump(e->expr_type == EXPR_APPLY);
         assert_jump(e->apply.recursive_app);
+
+        nl = e->apply.head->lambda.body->apply.head->atom->name_loc;
+        assert_jump(nl->recursive_ref);
 
 assert_failed:
         ubik_alloc_free(&req.region);
