@@ -2,7 +2,7 @@ Recursive closures =====================================================
 Haldean Brown                                      First draft: Nov 2016
                                                   Last updated: Nov 2016
 
-Status: Complete
+Status: In progress
 
 ------------------------------------------------------------------------
 
@@ -48,106 +48,58 @@ this snippet:
         ! t 1
     }
 
-In this example, the closure transformation should take t and turn it
-into this:
+In this example, t needs access to its own value from within its definition.
+However, since t is a local binding, it's never actually assigned to a name
+that persists past its own scope. To handle this, we transform t to take itself
+as a parameter; callers then call t by passing it itself. The resulting
+function then looks like:
 
-        : t = (\t x -> ? {
+        : t = \$t x -> ? {
             . eq x 0 => "ok\n"
-            . => t 0
-        }) t
-
-But now we find ourselves referencing t before we've defined it, and we
-can quickly get into a circular reference. Here, we transform t into a
-top-level anonymous function with its own value:
-
-    : anonymous-t =
-        \t x -> ? {
-            . eq x 0 => "ok\n"
-            . => t 0
+            . => $t $t 0
         }
 
-    ! {
-        : t = anonymous-t (anonymous-t anonymous-t)
-        ! t 1
-    }
+This poses a problem for the callers of this function, though; now all callers
+have to know that t needs to be passed itself as its first argument, so the
+immediate value of the block would be transformed to:
 
-In so doing, we can fully define anonymous-t without any
-self-references, and ditto with t. Note that in the actual
-implementation of this feature, anonymous-t does not have a name in the
-global namespace; it is fully anonymous and is only defined by its
-value.
+        ! t t 1
 
-In order to accomplish this, the closure transformation code marks the
-application of the function to itself as the application of a recursion
-parameter, but otherwise performs the closure transformation normally.
-In the above example, this then becomes:
+But this is clunky; we don't want to have to transform every call site that
+references t. Instead, we transform t to a partially-applied function, with
+itself already applied (for brevity, B is used to represent the body of the
+function t as given in the previous listing):
 
-        : t = (\t x -> ? {
-            . eq x 0 => "ok\n"
-            . => t 0
-        }) $t
+        : t = (\$t x -> B) (\$t x -> B)
 
-With the dollar sign here being shorthand for is-recursive-parameter.
-Then, in the code-generation stage, when the code generation visitor
-sees an apply statement with a recursion parameter, it transforms:
+Note that this can be very succinctly represented in Ubik bytecode, without
+requiring a double-definition of the function, as the function must be its own
+value:
 
-        (f $f)
+    000 VALUE &B
+    001 APPLY 000 000
 
-Into a new top-level value inserted into the workspace and a reference
-to that value, replacing the recursion parameter with a reference to the
-same value.
+This seems nice in practice, but there's one more sticky bit: the original
+closure transformation. Let's take a slightly more complicated example:
 
-        &f = f
-        ((const &f) ((const &f) (const &f)))
-
-The closure transformation is maintained on f, allowing it to
-self-recurse without any self-references.
-
-This gets a little more complicated when there are multiple closed
-parameters being applied. Take this useless function as an example:
-
-        {
-            : x = 8
-            : f = \y -> f x
+        : top = \x -> {
+            : inner = \y -> inner (+ x y)
+            ! inner
         }
 
-Both of these would be valid closure transformations for f:
+Never mind that this is infinitely recursive: it's a nice simple example for
+our syntactic transformations. The closure transformation takes inner from that
+given in the previous listing to this:
 
-        : f = (\f x y -> f x) *f x
-        : f = (\x f y -> f x) x *f
+            : inner = (\x y -> inner (+ x y)) x
 
-And their associated recusion transformations are:
+Which works fine. The recursion transformation would then take it to:
 
-        : anonymous-f = \f x y -> f x
-        : f = anonymous-f anonymous-f x
+            : inner =
+                (\inner x y -> inner inner (+ x y))
+                    (\inner x y -> inner inner (+ x y))
+                    x
 
-        : anonymous-f = \x f y -> f x
-        : f = anonymous-f x anonymous-f
-
-There are no statements here that look exactly like our (f *f) pattern
-above, though, in the example where f is not the first closure
-parameter. We end up with:
-
-        ((f x) *f)
-
-And (f x) isn't extractable, because x is local. We also can't
-successfully partially-apply this function to itself, because we would
-have to apply the arguments ahead of the recursive application. We get
-around this by forcing the recursive application to happen before any
-other closure application.
-
-Note that top level bindings do not need this transformation, because
-they can reference themselves by name. So this function at the top
-level:
-
-        ~ p
-        : f = \t -> f 0
-
-Gets turned into the following pseudo-bytecode:
-
-        000 INPUT 0
-        001 LOAD "p:f"
-        002 CONST 0
-        003 APPLY 001 002
-
-and the LOAD breaks the cycle.
+This looks okay, but doesn't properly work, because the reference to inner in
+the body of the function doesn't pass any of the closed-over parameters. What
+we want 
