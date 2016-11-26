@@ -66,6 +66,8 @@ _print_atom(struct ubik_ast_atom *atom)
                         printf("%%");
                         break;
                 }
+                if (atom->name_loc->recursive_ref)
+                        printf("%%");
         }
         switch (atom->atom_type)
         {
