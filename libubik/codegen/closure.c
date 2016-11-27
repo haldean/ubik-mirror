@@ -210,7 +210,6 @@ apply_downwards_transform(
 
         if (expr->scope->needs_closure_appl)
         {
-                printf("apply closure with rn %s\n", resolving_name);
                 err = apply_closure(
                         expr_ref, resolving_name, expr_bound_to, req);
                 if (err != OK)
@@ -350,7 +349,6 @@ apply_upwards_transform(
 
                 expr->lambda.args = args;
                 expr->scope->needs_closure_appl = true;
-                printf("mark need-closure for rn %s\n", resolving_name);
 
                 ubik_alloc1(&rname, struct ubik_resolve_name, &req->region);
                 rname->name = args->name;
@@ -428,7 +426,6 @@ traverse_expr(
         {
                 ubik_assert(*resolving_name == NULL);
                 *resolving_name = expr->atom->str;
-                printf("found closure ref for %s\n", expr->atom->str);
                 expr->atom->name_loc->type = RESOLVE_LOCAL;
                 *changed = true;
                 return OK;
@@ -552,7 +549,6 @@ ubik_reduce_closures(
                 if (err != OK)
                         return err;
                 ubik_assert(resolving_name == NULL);
-                ubik_assert(ubik_ast_print(ast) == OK);
         } while (changed);
 
         return OK;
