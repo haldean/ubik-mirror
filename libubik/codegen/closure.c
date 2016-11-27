@@ -55,16 +55,22 @@
  *             upwards.
  *          b. For all other expressions, do nothing and recurse to its
  *             parent.
- *      3. Let X by the top expression (this, as well as steps 4 and 5,
- *         happen in apply_downwards_transform).
+ *      3. Let X by the top expression (this, as well as steps 4 through
+ *         6, happen in apply_downwards_transform).
  *      4. Examine each subexpression of X. If a subexpression Y is
  *         marked as needing application, replace Y in X with an apply
  *         expression whose function is Y and whose argument is an
  *         atomic expression with name A and local resolution (this
  *         specific transformation happens in apply_closure).
- *      5. For each subexpression Y of X, let X = Y and goto 3.
- *      6. Change the resolution of B to local.
- *      7. Repeat until there are no more names resolved to a closure.
+ *      5. Examine each subexpression of X. If a subexpression Z is
+ *         an atomic name marked as a recursive reference, replace that
+ *         expression with an apply expression whose function is Z and
+ *         whose argument is an atomic expression with name A and local
+ *         resolution (this specific transforation happens in
+ *         apply_recursive).
+ *      6. For each subexpression Y of X, let X = Y and goto 3.
+ *      7. Change the resolution of B to local.
+ *      8. Repeat until there are no more names resolved to a closure.
  */
 
 no_ignore static ubik_error
@@ -120,6 +126,60 @@ apply_closure(
 }
 
 no_ignore static ubik_error
+apply_recursive(
+        struct ubik_ast_expr **head_ref,
+        char *resolving_name,
+        struct ubik_compile_request *req)
+{
+        struct ubik_ast_expr *apply;
+        struct ubik_ast_expr *head;
+        struct ubik_ast_expr *name;
+        struct ubik_resolve_name *bind;
+        size_t i;
+
+        head = *head_ref;
+
+        ubik_alloc1(&name, struct ubik_ast_expr, &req->region);
+        name->expr_type = EXPR_ATOM;
+
+        ubik_alloc1(&name->atom, struct ubik_ast_atom, &req->region);
+        name->atom->atom_type = ATOM_NAME;
+
+        bind = NULL;
+        for (i = 0; i < head->scope->names.n; i++)
+        {
+                bind = (struct ubik_resolve_name *)
+                        head->scope->names.elems[i];
+                if (strcmp(bind->name, resolving_name) == 0)
+                        break;
+        }
+        ubik_assert(bind && strcmp(bind->name, resolving_name) == 0);
+        /* this starts out pointing to the definition outside the local
+         * scope, but we want it to point to the argument in the
+         * function instead. */
+        head->atom->name_loc->def = bind;
+
+        ubik_alloc1(
+                &name->atom->name_loc, struct ubik_resolve_name_loc,
+                &req->region);
+        name->atom->name_loc->type = RESOLVE_LOCAL;
+        name->atom->name_loc->def = bind;
+        name->atom->str = resolving_name;
+
+        name->scope = (*head_ref)->scope;
+
+        ubik_alloc1(&apply, struct ubik_ast_expr, &req->region);
+        apply->expr_type = EXPR_APPLY;
+        apply->scope = head->scope->parent;
+        apply->apply.head = head;
+        apply->apply.tail = name;
+        apply->apply.recursive_app = false;
+
+        *head_ref = apply;
+        return OK;
+}
+
+no_ignore static ubik_error
 apply_downwards_transform(
         char *resolving_name,
         struct ubik_ast_expr **expr_ref,
@@ -142,6 +202,16 @@ apply_downwards_transform(
                 if (err != OK)
                         return err;
                 expr = *expr_ref;
+        }
+        if (expr->expr_type == EXPR_ATOM && expr->atom->atom_type == ATOM_NAME)
+        {
+                if (expr->atom->name_loc->recursive_ref)
+                {
+                        /* We can't keep recurring here, otherwise we'll
+                         * end up just smacking the same name with this
+                         * argument over and over and over and over and */
+                        return apply_recursive(expr_ref, resolving_name, req);
+                }
         }
 
         /* Unfortunately, we can't use the subexprs stuff here because we need

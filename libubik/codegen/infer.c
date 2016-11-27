@@ -237,6 +237,15 @@ infer_apply(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
                 new_tyvar(t1, ctx);
                 ubik_type_make_applyable(&t2, t0, t1, &ctx->req->region);
 
+                if (ctx->debug)
+                {
+                        printf("    expanding type ");
+                        ubik_assert(ubik_type_expr_print(h) == OK);
+                        printf(" into ");
+                        ubik_assert(ubik_type_expr_print(t2) == OK);
+                        printf("\n");
+                }
+
                 ubik_assert(expr->apply.head->expr_type == EXPR_ATOM);
                 expr->apply.head->atom->name_loc->def->inferred_type = t2;
                 expr->apply.head->type = t2;
