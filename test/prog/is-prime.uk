@@ -15,7 +15,7 @@
         ! inner-check (rational-subtract x 1)
     }
 
-! ? {
-    . is-prime 7 => "7 is prime!"
-    .            => "7 isn't prime?!"
-}
+! emit (? {
+    . is-prime 7 => "7 is prime!\n"
+    .            => "7 isn't prime?!\n"
+})
