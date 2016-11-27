@@ -213,6 +213,7 @@ infer_apply(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
         struct ubik_infer_error *ierr;
         struct ubik_typesystem_unified unified;
         struct ubik_type_expr *t0, *t1, *t2;
+        struct ubik_ast_expr *e;
         ubik_error err;
 
         h = expr->apply.head->type;
@@ -246,10 +247,36 @@ infer_apply(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
                         printf("\n");
                 }
 
-                ubik_assert(expr->apply.head->expr_type == EXPR_ATOM);
-                expr->apply.head->atom->name_loc->def->inferred_type = t2;
-                expr->apply.head->type = t2;
-                h = t2;
+                /* Replace the head with an applyable type. We use a
+                 * unification here to make sure that we recursively update
+                 * whatever got us to the type variable we're expanding. */
+                err = ubik_typesystem_unify(
+                        &unified, ctx->type_system, NULL, h, t2,
+                        &ctx->req->region, ctx->debug);
+                if (!unified.success)
+                        return ubik_raise(
+                                ERR_UNEXPECTED_FAILURE,
+                                "unifying to an unbound variable should "
+                                "always work");
+
+                e = expr;
+                while (e->expr_type == EXPR_APPLY)
+                {
+                        err = ubik_typesystem_apply_substs(
+                                e->apply.head->type, &unified.substs);
+                        if (err != OK)
+                                return err;
+                        e = e->apply.head;
+                        if (e->expr_type == EXPR_ATOM &&
+                                e->atom->atom_type == ATOM_NAME)
+                        {
+                                err = ubik_typesystem_apply_substs(
+                                        e->atom->name_loc->def->inferred_type,
+                                        &unified.substs);
+                                if (err != OK)
+                                        return err;
+                        }
+                }
         }
 
         ubik_alloc1(&inst, struct ubik_type_expr, &ctx->req->region);
