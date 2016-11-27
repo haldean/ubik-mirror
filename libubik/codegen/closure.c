@@ -135,7 +135,9 @@ apply_recursive(
         struct ubik_ast_expr *head;
         struct ubik_ast_expr *name;
         struct ubik_resolve_name *bind;
+        struct ubik_resolve_scope *scope;
         size_t i;
+        bool found;
 
         head = *head_ref;
 
@@ -145,15 +147,25 @@ apply_recursive(
         ubik_alloc1(&name->atom, struct ubik_ast_atom, &req->region);
         name->atom->atom_type = ATOM_NAME;
 
+        found = false;
         bind = NULL;
-        for (i = 0; i < head->scope->names.n; i++)
+        scope = head->scope;
+        while (!found && scope != NULL)
         {
-                bind = (struct ubik_resolve_name *)
-                        head->scope->names.elems[i];
-                if (strcmp(bind->name, resolving_name) == 0)
-                        break;
+                for (i = 0; i < scope->names.n; i++)
+                {
+                        bind = (struct ubik_resolve_name *)
+                                scope->names.elems[i];
+                        if (strcmp(bind->name, resolving_name) == 0)
+                        {
+                                found = true;
+                                break;
+                        }
+                }
+                scope = scope->parent;
         }
-        ubik_assert(bind && strcmp(bind->name, resolving_name) == 0);
+        ubik_assert(found);
+
         /* this starts out pointing to the definition outside the local
          * scope, but we want it to point to the argument in the
          * function instead. */
