@@ -9,6 +9,7 @@ tests = \
 	boolean.uk \
 	boolean-splat.uk \
 	fib.uk \
+	global-recursive.uk \
 	hello.uk \
 	import.uk \
 	import-splat.uk \

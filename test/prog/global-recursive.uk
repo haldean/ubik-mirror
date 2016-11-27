@@ -1,0 +1,10 @@
+~ ubik-tests/global-recursive
+
+: top-recursive
+    ^ Number -> String
+    = \x -> ? {
+        . eq x 0 => "hit bottom\n"
+        . => top-recursive (rational-subtract x 1)
+    }
+
+! emit (top-recursive 100)
