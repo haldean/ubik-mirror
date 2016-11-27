@@ -238,7 +238,6 @@ _assign_apply_node(
 {
         struct ubik_ast_expr *head;
         struct ubik_node *argref;
-        struct ubik_node *selfapply;
         ubik_error err;
 
         if (expr->apply.recursive_app)
@@ -256,16 +255,7 @@ _assign_apply_node(
                 if (err != OK)
                         return err;
 
-                ubik_alloc1(&selfapply, struct ubik_node, ctx->region);
-                selfapply->node_type = UBIK_APPLY;
-                selfapply->id = nodes->n;
-                selfapply->apply.func = argref->id;
-                selfapply->apply.arg = argref->id;
-                err = ubik_vector_append(nodes, selfapply);
-                if (err != OK)
-                        return err;
-
-                expr->apply.tail->gen = selfapply->id;
+                expr->apply.tail->gen = argref->id;
         }
 
         n->node_type = UBIK_APPLY;
