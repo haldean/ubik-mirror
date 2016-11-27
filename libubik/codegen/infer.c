@@ -590,16 +590,17 @@ infer_expr(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
                 if (err != OK)
                         return err;
         }
-        if (subast != NULL && subast->immediate != NULL &&
-            subast->immediate->type == NULL)
+        if (subast != NULL && subast->immediate != NULL)
         {
+                if (subast->immediate->type == NULL)
+                {
+                        expr->type = NULL;
+                        return OK;
+                }
                 err = ubik_typesystem_apply_substs(
                         subast->immediate->type, &ctx->substs);
                 if (err != OK)
                         return err;
-
-                expr->type = NULL;
-                return OK;
         }
 
         switch (expr->expr_type)
