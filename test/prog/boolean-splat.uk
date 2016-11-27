@@ -1,10 +1,10 @@
 ~ ubik-tests/boolean
 + *boolean
 
-: x ^ Boolean = True
+: x ^ Boolean = true
 
-! emit (? x {
-    . True => "yes :)\n"
-    . False => "no :(\n"
+! emit (? {
+    . x => "yes :)\n"
+    .   => "no :(\n"
 })
 

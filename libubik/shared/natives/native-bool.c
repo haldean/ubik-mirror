@@ -49,8 +49,8 @@ _native_bool_true(struct ubik_exec_graph *gexec)
         err = ubik_type_boo(type_decl);
         if (err != OK)
                 return err;
-        gexec->nv[gexec->v->pap.base_func->fun.result] = res;
-        gexec->nt[gexec->v->pap.base_func->fun.result] = type_decl;
+        gexec->nv[gexec->v->fun.result] = res;
+        gexec->nt[gexec->v->fun.result] = type_decl;
         return OK;
 }
 
@@ -76,8 +76,8 @@ _native_bool_false(struct ubik_exec_graph *gexec)
         err = ubik_type_boo(type_decl);
         if (err != OK)
                 return err;
-        gexec->nv[gexec->v->pap.base_func->fun.result] = res;
-        gexec->nt[gexec->v->pap.base_func->fun.result] = type_decl;
+        gexec->nv[gexec->v->fun.result] = res;
+        gexec->nt[gexec->v->fun.result] = type_decl;
         return OK;
 }
 
@@ -91,7 +91,7 @@ _register_boolean_true(struct ubik_env *env, struct ubik_workspace *ws)
 
         graph = NULL;
         err = ubik_internal_native_create_op(
-                &graph, 2, _native_bool_true, ws);
+                &graph, 0, _native_bool_true, ws);
         if (err != OK)
                 return err;
 
@@ -123,7 +123,7 @@ _register_boolean_false(struct ubik_env *env, struct ubik_workspace *ws)
 
         graph = NULL;
         err = ubik_internal_native_create_op(
-                &graph, 2, _native_bool_false, ws);
+                &graph, 0, _native_bool_false, ws);
         if (err != OK)
                 return err;
 

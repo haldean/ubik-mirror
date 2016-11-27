@@ -100,7 +100,7 @@ ubik_internal_native_create_op(
         graph->type = UBIK_FUN;
         graph->fun.n = arity + 1;
         graph->fun.arity = arity;
-        graph->fun.result = graph->fun.n - 1;
+        graph->fun.result = arity;
         graph->fun.evaluator = evaluator;
 
         ubik_galloc((void**) &graph->fun.nodes,
