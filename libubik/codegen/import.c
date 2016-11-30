@@ -60,7 +60,13 @@ add_splat(
         size_t i;
         ubik_error err;
 
+        cres = NULL;
         err = find_compile_result(&cres, cenv, canonical);
+        if (err != OK)
+                return err;
+        if (cres == NULL)
+                return ubik_raise(
+                        ERR_ABSENT, "couldn't find splat compilation result");
 
         for (i = 0; i < cres->ast->bindings.n; i++)
         {
@@ -124,9 +130,12 @@ add_import_bindings(
         ubik_error err;
         size_t i;
 
+        cres = NULL;
         err = find_compile_result(&cres, cenv, canonical);
         if (err != OK)
                 return err;
+        if (cres == NULL)
+                return ubik_raise(ERR_ABSENT, "couldn't find import result");
 
         for (i = 0; i < cres->ast->bindings.n; i++)
         {

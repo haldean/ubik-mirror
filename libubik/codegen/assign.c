@@ -397,6 +397,7 @@ _assign_block(
                 if (err != OK)
                         return err;
 
+                node_index = 0;
                 err = _find_name_in_scope(
                         &node_index, expr->block->scope, bind->name);
                 if (err != OK)
