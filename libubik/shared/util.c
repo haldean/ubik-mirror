@@ -21,11 +21,14 @@
 #include "ubik/util.h"
 
 #include <arpa/inet.h>
-#include <execinfo.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+
+#ifdef __GLIBC__
+#include <execinfo.h>
+#endif
 
 #ifndef __has_builtin
 #define __has_builtin(x) 0
@@ -91,6 +94,7 @@ ntohw(ubik_word w)
 
 #define UBIK_TRACE_SIZE 128
 
+#ifdef __GLIBC__
 /* Obtain a backtrace and print it to stdout. */
 void
 ubik_trace_print(void)
@@ -112,6 +116,20 @@ ubik_trace_get(char ***res, size_t *n_lines)
         *res = backtrace_symbols(array, size);
         *n_lines = size;
 }
+#else
+void
+ubik_trace_print(void)
+{
+        printf("stack traces not supported on this platform.\n");
+}
+
+void
+ubik_trace_get(char ***res, size_t *n_lines)
+{
+        *res = NULL;
+        *n_lines = 0;
+}
+#endif
 
 char *
 ubik_word_explain(ubik_word word)
