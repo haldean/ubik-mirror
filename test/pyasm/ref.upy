@@ -1,7 +1,0 @@
-# vi: ft=python
-from pyasm import *
-
-c0 = const_word(42)
-r = ref(c0, terminal=True)
-
-encode([graph([c0, r], -1)], expect=t(42, 0))
