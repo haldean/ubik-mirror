@@ -23,10 +23,10 @@
 
 struct ubik_debug_info
 {
-        /* null-terminated string */
-        char *name;
         uint16_t line;
         uint8_t col;
+        /* null-terminated string */
+        char *name;
 };
 
 struct ubik_workspace;
