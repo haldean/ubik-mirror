@@ -27,6 +27,7 @@
 #include <stdint.h>
 
 #include "ubik/const.h"
+#include "ubik/dbgsym.h"
 #include "ubik/ubik.h"
 
 /* The maximum Ubik bytecode version that this library supports. */
@@ -37,7 +38,7 @@ struct ubik_value;
 struct ubik_node;
 struct ubik_exec_graph;
 
-struct ubik_gc_record
+struct ubik_runtime_info
 {
         ubik_word id;
         /* true if there is a reference from a root value to this value. */
@@ -47,6 +48,8 @@ struct ubik_gc_record
         /* true if this value is a runtime-managed value that can't be GCed and
            can't be persisted. */
         bool runtime_managed:1;
+        /* true if this value is being traced for debugging */
+        bool traced:1;
 };
 
 enum ubik_value_type
@@ -215,7 +218,8 @@ struct ubik_value
                 struct ubik_boo boo;
                 struct ubik_pap pap;
         };
-        struct ubik_gc_record gc;
+        struct ubik_debug_info *dbginfo;
+        struct ubik_runtime_info gc;
 };
 
 struct ubik_workspace

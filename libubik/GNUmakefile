@@ -31,6 +31,7 @@ c_sources = \
     ./shared/assert.c \
     ./shared/bytecode.c \
     ./shared/charstack.c \
+    ./shared/dbgsym.c \
     ./shared/env.c \
     ./shared/error.c \
     ./shared/explain.c \
