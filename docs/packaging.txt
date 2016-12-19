@@ -98,8 +98,8 @@ other packages that it depends on, by using lines that begin with the
 modules as dependencies of the package:
 
     ~ example-package
-    / io
-    / list
+    ` io
+    ` list
 
 A package must be provided as a single file. Unlike in other languages,
 there is no meaning to directory hierarchies or file names that specify
@@ -111,9 +111,9 @@ relationship between them would be purely textual. They would be
 imported as:
 
     ~ brain-trust
-    / ibm/deep-blue
-    / ibm/watson
-    / ibm/watson/jeopardy
+    ` ibm/deep-blue
+    ` ibm/watson
+    ` ibm/watson/jeopardy
 
 Once imported, the members of all of these packages are accessed using
 qualified names, like so:
@@ -127,13 +127,13 @@ Of course, this can get pretty verbose pretty quickly:
 So with that in mind, you can bind imports to shorter names using
 everyone's favorite fat arrow:
 
-    / ibm/watson/jeopardy => jeopardy
+    ` ibm/watson/jeopardy => jeopardy
     : question = jeopardy:guess-question answer
 
 You can also import all of the names in a package into the local
 namespace using a brand-new operator, splat:
 
-    / *ibm/watson/jeopardy
+    ` *ibm/watson/jeopardy
     : better-question = guess-question harder-answer
 
 If you write a package, note that importing with a splat makes the
@@ -141,11 +141,11 @@ imported names accessible in your namespace, so if you write this
 package:
 
     ~ weird-science
-    / *ibm/watson/jeopardy
+    ` *ibm/watson/jeopardy
 
 Then someone using your library could do:
 
-    / weird-science
+    ` weird-science
     : x = weird-science:guess-question "Danny Elfman"
 
 Packages may have an optional "immediate" expression, which is an

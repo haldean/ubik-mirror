@@ -88,7 +88,9 @@ NAME [a-z_\-][a-zA-Z0-9/_\-']*
 "+"                       TOKEN(ADD)
 "~"                       TOKEN(DEFINES)
 "_"                       TOKEN(INTERFACE)
-"/"                       TOKEN(IMPORT)
+"`"                       TOKEN(IMPORT)
+"/"                       TOKEN(DIV)
+"%"                       TOKEN(MOD)
 ([0-9]+(\.[0-9]*)?|\.[0-9]+) { yylval->string = yytext; return NUMBER; }
 {NAME}                    TSTRING(NAME)
 {NAME}:{NAME}             TSTRING(QUALIFIED_NAME)

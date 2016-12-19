@@ -1,5 +1,5 @@
 ~ ubik-tests/boolean
-/ boolean
+` boolean
 
 : x ^ Boolean = boolean:true
 

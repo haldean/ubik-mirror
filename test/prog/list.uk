@@ -1,5 +1,5 @@
 ~ ubik-tests/list
-/ *list
+` *list
 
 : my-list ^ List Number = Cons 1 (Cons 2 (Cons 3 Nil))
 

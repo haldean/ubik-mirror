@@ -103,6 +103,7 @@ ubik_rat_mul(
         struct ubik_value *restrict v1,
         struct ubik_value *restrict v2)
 {
+        r->type = UBIK_RAT;
         r->rat.num = v1->rat.num * v2->rat.num;
         r->rat.den = v1->rat.den * v2->rat.den;
         rsimplify(r);
@@ -114,6 +115,7 @@ ubik_rat_div(
         struct ubik_value *restrict v1,
         struct ubik_value *restrict v2)
 {
+        r->type = UBIK_RAT;
         r->rat.num = v1->rat.num * v2->rat.den;
         r->rat.den = v1->rat.den * v2->rat.num;
         rsimplify(r);
