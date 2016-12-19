@@ -7,5 +7,5 @@
         ! \ z -> rational-add x (rational-add y z)
     }
 
-# + 4 (+ (+ 4 2) 8) == 18
+# / 4 (/ (/ 4 2) 8) == 18
 ! emit (humanize ((so-deep 4) 8))

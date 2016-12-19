@@ -25,21 +25,21 @@ package
 ;
 
 import
-: ADD NAME
+: IMPORT NAME
 {
         alloc($$, 1, struct ubik_ast_import_list);
         $$->canonical = $2;
         $$->name = ubik_strdup($2, ctx->region);
         load_loc($$->loc);
 }
-| ADD NAME IMPLIES NAME
+| IMPORT NAME IMPLIES NAME
 {
         alloc($$, 1, struct ubik_ast_import_list);
         $$->canonical = $2;
         $$->name = $4;
         load_loc($$->loc);
 }
-| ADD SPLAT NAME
+| IMPORT SPLAT NAME
 {
         alloc($$, 1, struct ubik_ast_import_list);
         $$->canonical = $3;

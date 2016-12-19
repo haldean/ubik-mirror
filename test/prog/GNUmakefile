@@ -21,6 +21,7 @@ tests = \
 	literate.rst \
 	literate-ooo.rst \
 	literate-simple.ul \
+	operators.uk \
 	num.uk \
 	pattern-bind.uk \
 	pattern-bind-simple.uk \

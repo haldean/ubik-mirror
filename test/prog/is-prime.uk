@@ -1,6 +1,6 @@
 ~ ubik-tests/is-prime
 
-+ *boolean
+/ *boolean
 
 # naive primality checking; checks divisibility by every number between X and
 # 1, exclusive.

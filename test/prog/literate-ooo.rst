@@ -24,7 +24,7 @@ evaluated:
 
 .. code:: c
 
-    int y = x + 5;
+    int y = x / 5;
     int x = 4;
 
 But in Ubik, *not so!* In fact, you can define stuff well before you

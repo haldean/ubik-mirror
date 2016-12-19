@@ -161,4 +161,18 @@ atom
         $$->str = $1;
         load_loc($$->loc);
 }
+| ADD
+{
+        alloc($$, 1, struct ubik_ast_atom);
+        $$->atom_type = ATOM_NAME;
+        $$->str = ubik_strdup("+", ctx->region);
+        load_loc($$->loc);
+}
+| SPLAT
+{
+        alloc($$, 1, struct ubik_ast_atom);
+        $$->atom_type = ATOM_NAME;
+        $$->str = ubik_strdup("*", ctx->region);
+        load_loc($$->loc);
+}
 ;

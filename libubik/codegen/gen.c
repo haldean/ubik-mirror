@@ -59,7 +59,8 @@ ubik_compile_binding(
         ubik_fun_from_vector(res, &nodes, binding->expr->gen);
 
         res->dbg = binding->expr->dbginfo;
-        res->dbg.name = ubik_strdup(binding->expr->dbginfo.name, NULL);
+        if (binding->expr->dbginfo.name != NULL)
+                res->dbg.name = ubik_strdup(binding->expr->dbginfo.name, NULL);
 
         /* TODO: add binding type here */
         err = ubik_value_new(&type, ctx->workspace);

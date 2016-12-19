@@ -1,4 +1,4 @@
 ~ ubik-tests/import
-+ ubik-tests/print-lib
+/ ubik-tests/print-lib
 
 ! ubik-tests/print-lib:number 7

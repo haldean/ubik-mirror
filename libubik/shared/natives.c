@@ -125,6 +125,11 @@ ubik_internal_native_create_op(
 }
 
 struct ubik_native_record ubik_native_funcs[] = {
+        { "+", "Number -> Number -> Number", NULL },
+        { "-", "Number -> Number -> Number", NULL },
+        { "*", "Number -> Number -> Number", NULL },
+        { "/", "Number -> Number -> Number", NULL },
+        { "%", "Number -> Number -> Number", NULL },
         { "rational-add", "Number -> Number -> Number", NULL },
         { "rational-subtract", "Number -> Number -> Number", NULL },
         { "rational-multiply", "Number -> Number -> Number", NULL },

@@ -67,6 +67,17 @@ _op_name(struct ubik_env *env, struct ubik_workspace *ws)
         if (err != OK)
                 return err;
 
+#ifdef DEF_OP_ALIAS
+        err = ubik_internal_native_uri(&uri, DEF_OP_ALIAS);
+        if (err != OK)
+                return err;
+
+        err = ubik_env_set(env, uri, ngraph, type);
+        ubik_uri_free(uri);
+        if (err != OK)
+                return err;
+#endif
+
         return OK;
 }
 
@@ -101,6 +112,17 @@ _op_name(struct ubik_env *env, struct ubik_workspace *ws)
         if (err != OK)
                 return err;
 
+#ifdef DEF_OP_ALIAS
+        err = ubik_internal_native_uri(&uri, DEF_OP_ALIAS);
+        if (err != OK)
+                return err;
+
+        err = ubik_env_set(env, uri, ngraph, type);
+        ubik_uri_free(uri);
+        if (err != OK)
+                return err;
+#endif
+
         return OK;
 }
 
@@ -111,6 +133,7 @@ _op_name(struct ubik_env *env, struct ubik_workspace *ws)
 #undef DEF_OP
 #undef DEF_OP_EVAL
 #undef DEF_OP_URI
+#undef DEF_OP_ALIAS
 #undef DEF_BINARY
 #undef DEF_UNARY
 #undef _op_name

@@ -60,7 +60,7 @@ static size_t get_input(struct ubik_parse_context *ctx, char *buf, size_t max_si
 %option bison-locations
 
 NAMECHARS [a-zA-Z0-9/_\-']*
-NAME [a-z_][a-zA-Z0-9/_\-']*
+NAME [a-z_\-][a-zA-Z0-9/_\-']*
 
 %%
 
@@ -84,10 +84,11 @@ NAME [a-z_][a-zA-Z0-9/_\-']*
 "|"                       TOKEN(GIVEN)
 "'"                       TOKEN(EXISTS)
 "?"                       TOKEN(COND)
-"+"                       TOKEN(ADD)
 "*"                       TOKEN(SPLAT)
+"+"                       TOKEN(ADD)
 "~"                       TOKEN(DEFINES)
 "_"                       TOKEN(INTERFACE)
+"/"                       TOKEN(IMPORT)
 ([0-9]+(\.[0-9]*)?|\.[0-9]+) { yylval->string = yytext; return NUMBER; }
 {NAME}                    TSTRING(NAME)
 {NAME}:{NAME}             TSTRING(QUALIFIED_NAME)

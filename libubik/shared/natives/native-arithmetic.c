@@ -46,6 +46,7 @@ _native_rational_add(struct ubik_exec_graph *gexec)
 #define DEF_OP rational_add
 #define DEF_OP_EVAL _native_rational_add
 #define DEF_OP_URI "rational-add"
+#define DEF_OP_ALIAS "+"
 #include "ubik/def-native.h"
 
 static ubik_error
@@ -70,6 +71,7 @@ _native_rational_subtract(struct ubik_exec_graph *gexec)
 #define DEF_OP rational_subtract
 #define DEF_OP_EVAL _native_rational_subtract
 #define DEF_OP_URI "rational-subtract"
+#define DEF_OP_ALIAS "-"
 #include "ubik/def-native.h"
 
 static ubik_error
@@ -94,6 +96,7 @@ _native_rational_multiply(struct ubik_exec_graph *gexec)
 #define DEF_OP rational_multiply
 #define DEF_OP_EVAL _native_rational_multiply
 #define DEF_OP_URI "rational-multiply"
+#define DEF_OP_ALIAS "*"
 #include "ubik/def-native.h"
 
 static ubik_error
@@ -118,6 +121,7 @@ _native_rational_divide(struct ubik_exec_graph *gexec)
 #define DEF_OP rational_divide
 #define DEF_OP_EVAL _native_rational_divide
 #define DEF_OP_URI "rational-divide"
+#define DEF_OP_ALIAS "/"
 #include "ubik/def-native.h"
 
 static ubik_error
@@ -142,4 +146,5 @@ _native_rational_remainder(struct ubik_exec_graph *gexec)
 #define DEF_OP rational_remainder
 #define DEF_OP_EVAL _native_rational_remainder
 #define DEF_OP_URI "rational-remainder"
+#define DEF_OP_ALIAS "%"
 #include "ubik/def-native.h"
