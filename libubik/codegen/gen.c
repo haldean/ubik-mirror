@@ -26,6 +26,7 @@
 #include "ubik/gen.h"
 #include "ubik/resolve.h"
 #include "ubik/rttypes.h"
+#include "ubik/string.h"
 #include "ubik/ubik.h"
 #include "ubik/uri.h"
 #include "ubik/util.h"
@@ -56,6 +57,9 @@ ubik_compile_binding(
         if (err != OK)
                 return err;
         ubik_fun_from_vector(res, &nodes, binding->expr->gen);
+
+        res->dbg = binding->expr->dbginfo;
+        res->dbg.name = ubik_strdup(binding->expr->dbginfo.name, NULL);
 
         /* TODO: add binding type here */
         err = ubik_value_new(&type, ctx->workspace);

@@ -29,6 +29,7 @@
 #include "ubik/pointerset.h"
 #include "ubik/schedule.h"
 #include "ubik/util.h"
+#include "ubik/value.h"
 #include "ubik/vector.h"
 
 struct ubik_scheduler
@@ -326,6 +327,8 @@ ubik_schedule_push(
         struct ubik_value *pap;
         size_t i;
         size_t j;
+        char *arginfo;
+        size_t arginfo_len;
 
         graph = get_fun(val);
         ubik_galloc1(&gexec, struct ubik_exec_graph);
@@ -357,6 +360,28 @@ ubik_schedule_push(
                         gexec->nt[j] = pap->pap.arg_type;
                         break;
                 }
+        }
+
+        if (unlikely(graph->gc.traced))
+        {
+                if (graph->dbg.used)
+                {
+                        printf("calling traced value %s, rev-args:",
+                               graph->dbg.name);
+                        pap = val;
+                        while (pap->type == UBIK_PAP)
+                        {
+                                err = ubik_value_humanize(
+                                        &arginfo, &arginfo_len, pap->pap.arg);
+                                if (err != OK)
+                                        return err;
+                                printf(" %s", arginfo);
+                                pap = pap->pap.func;
+                        }
+                        printf("\n");
+                }
+                else
+                        printf("calling traced value, no debugging info\n");
         }
 
         /* Graphs with special evaluators get to cheat and skip all this biz. */
@@ -462,14 +487,18 @@ _notify_node(
 {
         ubik_error err;
 
-#ifdef UBIK_SCHEDULE_DEBUG
-        printf("notifying %d on completion of %d\n",
-               waiting->node, complete->node);
-#endif
-
         waiting->gexec->nv[waiting->node] = complete->gexec->nv[complete->node];
         waiting->gexec->nt[waiting->node] = complete->gexec->nt[complete->node];
         waiting->gexec->status[waiting->node] = UBIK_STATUS_COMPLETE;
+
+        /* Results of traced functions are also traced. */
+        if (complete->gexec->v->gc.traced)
+        {
+                waiting->gexec->nv[waiting->node]->dbg =
+                        complete->gexec->v->dbg;
+                waiting->gexec->nv[waiting->node]->dbg.nofree = true;
+                waiting->gexec->nv[waiting->node]->gc.traced = true;
+        }
 
         err = ubik_schedule_complete(s, waiting);
         if (err != OK)
@@ -486,14 +515,6 @@ _collapse_graph(
         struct ubik_exec_notify *notify;
         struct ubik_env *child_env;
         ubik_error err;
-
-#if UBIK_SCHEDULE_DEBUG
-        {
-                char *buf = ubik_uri_explain(e->node->known.graph->identity);
-                printf("collapsing node graph %s to value\n", buf);
-                free(buf);
-        }
-#endif
 
         ubik_galloc1(&notify, struct ubik_exec_notify);
         notify->notify = (ubik_exec_notify_func) _notify_node;
@@ -610,10 +631,6 @@ _run_single_pass(struct ubik_scheduler *s)
 
                 if (is_ready(u))
                 {
-#ifdef UBIK_SCHEDULE_DEBUG
-                        printf("moving %s from waiting to ready\n",
-                               ubik_node_explain(u->node));
-#endif
                         u->next = s->ready;
                         s->ready = u;
                         if (prev != NULL)

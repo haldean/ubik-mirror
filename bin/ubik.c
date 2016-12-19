@@ -49,6 +49,7 @@ run_file(char *fname, bool timing)
         struct ubik_workspace *ws;
         struct ubik_env env;
         struct ubik_scheduler *s;
+        char *trace_str;
         ubik_error err, teardown_err;
         struct ubik_timer *timer;
         int64_t elapsed;
@@ -82,6 +83,10 @@ run_file(char *fname, bool timing)
                 CHECK_ERR("couldn't read timer");
                 printf("time from start to loaded:    %" PRId64 " usec\n", elapsed);
         }
+
+        trace_str = getenv("UBIK_TRACE");
+        if (trace_str != NULL)
+                ubik_dbgsym_mark_trace(ws, trace_str);
 
         err = ubik_env_init(&env);
         CHECK_ERR("couldn't create environment");

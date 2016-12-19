@@ -218,7 +218,7 @@ struct ubik_value
                 struct ubik_boo boo;
                 struct ubik_pap pap;
         };
-        struct ubik_debug_info *dbginfo;
+        struct ubik_debug_info dbg;
         struct ubik_runtime_info gc;
 };
 

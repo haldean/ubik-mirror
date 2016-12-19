@@ -41,6 +41,7 @@ ubik_value_new(
         {
                 *res = &ws->values[ws->n++];
                 (*res)->gc.alive = true;
+                (*res)->gc.traced = false;
                 return OK;
         }
         while (ws->next != NULL)
@@ -64,6 +65,7 @@ ubik_value_new(
 
         *res = &ws->values[0];
         (*res)->gc.alive = true;
+        (*res)->gc.traced = false;
         ws->n = 1;
         return OK;
 }
@@ -125,6 +127,9 @@ free_value(struct ubik_value *v)
 {
         size_t i;
         struct ubik_node *n;
+
+        if (v->dbg.used && v->dbg.name != NULL && !v->dbg.nofree)
+                free(v->dbg.name);
 
         switch (v->type)
         {

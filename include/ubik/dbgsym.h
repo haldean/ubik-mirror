@@ -24,12 +24,22 @@
 struct ubik_debug_info
 {
         uint16_t line;
-        uint8_t col;
-        /* null-terminated string */
+        uint16_t col;
+        uint8_t used;
+        /* if set to true, the name stored in debug_info shouldn't be freed
+         * when the value is freed. */
+        uint8_t nofree;
+        /* null-terminated string; we don't want dependencies on rt in here, so
+         * we can't use a ubik_str. */
         char *name;
 };
 
+struct ubik_alloc_region;
+struct ubik_ast;
 struct ubik_workspace;
 
 void
 ubik_dbgsym_mark_trace(struct ubik_workspace *ws, char *name);
+
+void
+ubik_dbgsym_attach(struct ubik_ast *ast, struct ubik_alloc_region *r);

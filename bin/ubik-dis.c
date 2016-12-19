@@ -118,6 +118,13 @@ dis(struct ubik_stream *s, struct ubik_value *v)
                 return;
         ubik_fprintf(s, "\n%" PRIxPTR "%s\n", v->gc.id, v->gc.root ? "*" : "");
 
+        if (v->dbg.used)
+        {
+                ubik_fprintf(s, "DBG L%" PRIu16 " C%" PRIu8 " %s\n",
+                             v->dbg.line, v->dbg.col,
+                             v->dbg.name);
+        }
+
         switch (v->type)
         {
         case UBIK_STR:

@@ -63,6 +63,10 @@ _eval_apply(struct ubik_exec_unit *u, struct ubik_node *n)
                 return ubik_raise(
                         ERR_BAD_TYPE, "func in apply is not applyable");
         }
+        /* PAPs inherit the traced flag from their base function, so the
+         * tracer doesn't have to crawl back up to the base function to see if
+         * the function is being traced. */
+        res->gc.traced = res->pap.base_func->gc.traced;
 
         err = ubik_type_func_apply(
                 type, u->gexec->nt[n->apply.func], u->gexec->nt[n->apply.arg]);

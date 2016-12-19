@@ -316,6 +316,10 @@ compile_job(
                         return err;
         }
 
+        /* Needs to happen after resolve, so that the package_names are set on
+         * everything in the stack. */
+        ubik_dbgsym_attach(job->ast, &job->request->region);
+
         infer_ctx.req = job->request;
         infer_ctx.debug = cenv->debug;
         infer_ctx.type_system = cenv->type_system;

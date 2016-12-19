@@ -198,16 +198,16 @@ read_value(
         READ_INTO(t8, in);
         v->gc.root = t8 != 0;
 
-        v->dbginfo = NULL;
+        v->dbg.used = false;
         READ_INTO(t32, in);
         if (t32 != 0)
         {
-                ubik_galloc1(&v->dbginfo, struct ubik_debug_info);
-                v->dbginfo->line = t32 & 0xFFFF;
-                v->dbginfo->col = (t32 >> 16) & 0xFF;
+                v->dbg.line = t32 & 0xFFFF;
+                v->dbg.col = (t32 >> 16) & 0xFF;
+                v->dbg.used = true;
                 READ_INTO(t64, in);
-                ubik_galloc((void **) &v->dbginfo->name, t64, sizeof(char));
-                read = ubik_stream_read(v->dbginfo->name, in, t64);
+                ubik_galloc((void **) &v->dbg.name, t64 + 1, sizeof(char));
+                read = ubik_stream_read(v->dbg.name, in, t64);
                 if (read != t64)
                         return ubik_raise(ERR_NO_DATA, "debug name data");
         }
@@ -572,20 +572,20 @@ write_value(
         t8 = v->gc.root ? 1 : 0;
         WRITE_INTO(out, t8);
 
-        if (v->dbginfo == NULL)
+        if (v->dbg.used)
         {
-                t32 = 0;
+                t32 = v->dbg.col << 16 | v->dbg.line;
                 WRITE_INTO(out, t32);
+                t64 = strlen(v->dbg.name);
+                WRITE_INTO(out, t64);
+                written = ubik_stream_write(out, v->dbg.name, t64);
+                if (written != t64)
+                        return ubik_raise(ERR_WRITE_FAILED, "string data");
         }
         else
         {
-                t32 = v->dbginfo->col << 16 | v->dbginfo->line;
+                t32 = 0;
                 WRITE_INTO(out, t32);
-                t64 = strlen(v->dbginfo->name);
-                WRITE_INTO(out, t64);
-                written = ubik_stream_write(out, v->dbginfo->name, t64);
-                if (written != t64)
-                        return ubik_raise(ERR_WRITE_FAILED, "string data");
         }
 
         switch (v->type)

@@ -139,6 +139,7 @@ struct ubik_ast_expr
         };
         enum ubik_expr_type expr_type;
         struct ubik_ast_loc loc;
+        struct ubik_debug_info dbginfo;
 
         struct ubik_resolve_scope *scope;
         ubik_word gen;
