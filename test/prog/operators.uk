@@ -1,3 +1,5 @@
 ~ ubik-tests/operators
 
-! emit (concat (humanize (/ (- (* 10 (+ 3 2)) 8) 10)) "\n")
+: s21/5 ^ String = (humanize (/ (- (* 10 (+ 3 2)) 8) 10))
+: s17 ^ String = (humanize (% 37 20))
+! emit (concat (concat s21/5 "\n") (concat s17 "\n"))
