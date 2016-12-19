@@ -122,7 +122,7 @@ apply_closure(
         apply->apply.tail = name;
         apply->apply.recursive_app = false;
 
-        for (size_t i = 0; i < name_stack->n; i++)
+        for (i = 0; i < name_stack->n; i++)
         {
                 if (strcmp(name_stack->data[i], resolving_name) == 0)
                 {
