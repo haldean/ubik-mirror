@@ -22,6 +22,8 @@ Now we're back to the body of f1. If a1 is zero, it returns zero. If a1 isn't
 zero, it's going to call f2 with zero. f2 then, in turn, calls f1 with zero,
 which returns zero. So this function always returns zero::
 
+    # comment for proper code formatting with RST :/
+
             ! ? {
                 . eq a1 0 => 0
                 .         => f2 0

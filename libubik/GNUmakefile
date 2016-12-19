@@ -30,6 +30,7 @@ c_sources = \
     ./shared/alloc.c \
     ./shared/assert.c \
     ./shared/bytecode.c \
+    ./shared/charstack.c \
     ./shared/env.c \
     ./shared/error.c \
     ./shared/explain.c \

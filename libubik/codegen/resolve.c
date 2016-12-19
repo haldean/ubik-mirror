@@ -38,7 +38,7 @@
 #include "ubik/types.h"
 #include "ubik/util.h"
 
-#define MAX_AST_DEPTH 64
+const size_t MAX_AST_DEPTH = 64;
 
 struct ubik_resolve_context
 {

@@ -26,7 +26,6 @@ tests = \
 	pattern-bind-simple.uk \
 	pattern-block.uk \
 	pred-block.uk \
-	recursion-hard.rst \
 	scope.uk \
 	scope-simple.uk \
 	simple-adt.uk \
