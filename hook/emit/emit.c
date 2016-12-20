@@ -17,6 +17,10 @@ eval_emit(struct ubik_exec_graph *gexec)
         return OK;
 }
 
-struct ubik_native_record __ubik_hooks_present[] = {
+size_t
+__ubik_hooks_count = 1;
+
+struct ubik_native_record
+__ubik_hooks[] = {
         { "emit", "String -> String", NULL, eval_emit },
 };

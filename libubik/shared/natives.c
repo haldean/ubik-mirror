@@ -29,6 +29,7 @@
 #include "ubik/ubik.h"
 #include "ubik/util.h"
 
+#include <dlfcn.h>
 #include <string.h>
 
 extern ubik_error _register_adt_ctor_matches(
@@ -120,6 +121,30 @@ ubik_internal_native_create_op(
         graph->fun.nodes[arity].node_type = UBIK_NATIVE;
         graph->fun.nodes[arity].id = arity;
         graph->fun.nodes[arity].is_terminal = true;
+
+        return OK;
+}
+
+no_ignore ubik_error
+ubik_natives_load_hook(char *path)
+{
+        void *dl;
+        size_t n;
+        struct ubik_native_record *nrs;
+
+        dl = dlopen(path, RTLD_LAZY);
+        if (dl == NULL)
+        {
+                printf("could not open hook %s: %s\n", path, dlerror());
+                return ubik_raise(ERR_SYSTEM, "could not open hook");
+        }
+
+        n = *((size_t *) dlsym(dl, "__ubik_hooks_count"));
+        nrs = *((struct ubik_native_record **) dlsym(dl, "__ubik_hooks"));
+
+        printf("hook %s contains %lu entries:\n", path, n);
+        for (size_t i = 0; i < n; i++)
+                printf("\t%s\n", nrs[i].name);
 
         return OK;
 }
@@ -255,7 +280,7 @@ ubik_natives_get_type(
         size_t i;
         for (i = 0; i < ubik_native_funcs.n; i++)
         {
-                n = (struct ubik_native_record *)  ubik_native_funcs.elems[i];
+                n = (struct ubik_native_record *) ubik_native_funcs.elems[i];
                 if (strcmp(n->name, name) != 0)
                         continue;
                 if (n->type_record == NULL)
@@ -270,7 +295,17 @@ ubik_natives_get_type(
 no_ignore ubik_error
 ubik_natives_register(struct ubik_env *env, struct ubik_workspace *ws)
 {
+        struct ubik_native_record *n;
+        size_t i;
         ubik_error err;
+
+        for (i = 0; i < ubik_native_funcs.n; i++)
+        {
+                n = (struct ubik_native_record *) ubik_native_funcs.elems[i];
+                if (n->eval == NULL)
+                        continue;
+                printf("load native %s %s\n", n->name, n->type_string);
+        }
 
         err = _register_rational_add(env, ws);
         if (err != OK)

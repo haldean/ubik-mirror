@@ -6,6 +6,8 @@ c_sources = emit.c
 objects = $(patsubst %.c,%.o,$(c_sources))
 deps = $(patsubst %.c,%.d,$(c_sources))
 
+all: emit.so
+
 emit.so: $(objects)
 	$(CC) -fPIC -shared -g -o $@ $(objects)
 
@@ -17,4 +19,4 @@ $(objects): %.o: %.c
 clean:
 	rm -f libubik.a $(objects) $(deps)
 
-.PHONY: clean
+.PHONY: clean all

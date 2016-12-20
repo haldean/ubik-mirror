@@ -38,6 +38,10 @@ ubik_start(struct ubik_workspace *ws)
 {
         ubik_error err;
 
+        err = ubik_natives_load_hook("hook/emit/emit.so");
+        if (err != OK)
+                return err;
+
         err = ubik_natives_register(ubik_env_get_root(), ws);
         if (err != OK)
                 return err;
