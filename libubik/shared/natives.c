@@ -137,6 +137,7 @@ struct ubik_native_record const_natives[] = {
         { "rational-remainder", "Number -> Number -> Number", NULL, NULL},
         { "eq", "a -> a -> Boolean", NULL, NULL},
         { "humanize", "a -> String", NULL, NULL},
+        { "emit", "String -> String", NULL, NULL},
         { "concat", "String -> String -> String", NULL, NULL},
         { "ubik-native-boolean-true", "Boolean", NULL, NULL},
         { "ubik-native-boolean-false", "Boolean", NULL, NULL},

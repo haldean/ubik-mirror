@@ -19,6 +19,7 @@
 
 #include "ubik/ast.h"
 #include "ubik/compile.h"
+#include "ubik/natives.h"
 #include "ubik/parse.h"
 #include "ubik/resolve.h"
 #include "unit.h"
@@ -243,6 +244,8 @@ assert_failed:
 int
 main()
 {
+        if (ubik_natives_cache_types() != OK)
+                return 2;
         init();
         run(resolve);
         run(closure_regression);
