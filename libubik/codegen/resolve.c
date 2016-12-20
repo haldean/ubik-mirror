@@ -787,14 +787,16 @@ create_global_scope(struct ubik_resolve_context *ctx, struct ubik_ast *ast)
         ubik_error err;
         struct ubik_ast_imported_binding *ibind;
         struct ubik_resolve_name *name;
+        struct ubik_native_record *r;
 
         ubik_alloc1(&ctx->global_scope, struct ubik_resolve_scope, ctx->region);
         ctx->global_scope->names.region = ctx->region;
 
-        for (i = 0; i < ubik_native_funcs_n; i++)
+        for (i = 0; i < ubik_native_funcs.n; i++)
         {
+                r = (struct ubik_native_record *) ubik_native_funcs.elems[i];
                 ubik_alloc1(&name, struct ubik_resolve_name, ctx->region);
-                name->name = ubik_strdup(ubik_native_funcs[i].name, ctx->region);
+                name->name = ubik_strdup(r->name, ctx->region);
                 name->type = RESOLVE_GLOBAL;
                 err = ubik_vector_append(&ctx->global_scope->names, name);
                 if (err != OK)

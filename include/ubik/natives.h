@@ -23,6 +23,7 @@
 #include "ubik/env.h"
 #include "ubik/typesystem.h"
 #include "ubik/ubik.h"
+#include "ubik/vector.h"
 #include <stdbool.h>
 
 struct ubik_native_record
@@ -30,10 +31,13 @@ struct ubik_native_record
         char *name;
         char *type_string;
         struct ubik_type_expr *type_record;
+        ubik_graph_evaluator_t eval;
 };
 
-extern struct ubik_native_record ubik_native_funcs[];
-extern const size_t ubik_native_funcs_n;
+extern struct ubik_vector ubik_native_funcs;
+
+no_ignore ubik_error
+ubik_natives_load_hook(char *path);
 
 no_ignore ubik_error
 ubik_natives_register(
