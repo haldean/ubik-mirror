@@ -209,6 +209,10 @@ ubik_natives_cache_types()
         ubik_error err;
         for (i = 0; i < ubik_native_funcs_n; i++)
         {
+                err = ubik_vector_append(
+                        &ubik_native_funcs, &const_natives[i]);
+                if (err != OK)
+                        return err;
                 if (const_natives[i].type_string == NULL)
                         continue;
                 err = ubik_parse_type_expr(
@@ -223,10 +227,6 @@ ubik_natives_cache_types()
                         free(err);
                         continue;
                 }
-                err = ubik_vector_append(
-                        &ubik_native_funcs, &const_natives[i]);
-                if (err != OK)
-                        return err;
         }
         return OK;
 }
