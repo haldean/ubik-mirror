@@ -51,7 +51,14 @@ ubik_start(struct ubik_workspace *ws)
                 &hook_path, hook_root, "emit.so", &r);
         if (err != OK)
                 return err;
+        err = ubik_natives_load_hook(hook_path);
+        if (err != OK)
+                return err;
 
+        err = ubik_string_path_concat(
+                &hook_path, hook_root, "math.so", &r);
+        if (err != OK)
+                return err;
         err = ubik_natives_load_hook(hook_path);
         if (err != OK)
                 return err;

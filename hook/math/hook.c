@@ -113,10 +113,11 @@ ubik_error
 __ubik_install(struct ubik_vector *hooks, struct ubik_alloc_region *region)
 {
         struct ubik_native_record *r;
+        ubik_error err;
+
         ubik_alloc1(&r, struct ubik_native_record, region);
-        r->name = "+";
-        r->arity = 2;
-        r->type_string = "Number -> Number -> Number";
-        r->eval = add;
-        return ubik_vector_append(hooks, r);
+        *r = ubik_rcast { "+", 2, "Number -> Number -> Number", NULL, add };
+        err = ubik_vector_append(hooks, r);
+        if (err != OK)
+                return err;
 }

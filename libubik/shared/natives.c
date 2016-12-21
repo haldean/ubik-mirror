@@ -156,7 +156,6 @@ ubik_natives_load_hook(char *path)
 }
 
 struct ubik_native_record const_natives[] = {
-        { "+", 2, "Number -> Number -> Number", NULL, NULL},
         { "-", 2, "Number -> Number -> Number", NULL, NULL},
         { "*", 2, "Number -> Number -> Number", NULL, NULL},
         { "/", 2, "Number -> Number -> Number", NULL, NULL},
@@ -307,26 +306,6 @@ ubik_natives_register(struct ubik_env *env, struct ubik_workspace *ws)
                 if (err != OK)
                         return err;
         }
-
-        err = _register_rational_add(env, ws);
-        if (err != OK)
-                return err;
-
-        err = _register_rational_subtract(env, ws);
-        if (err != OK)
-                return err;
-
-        err = _register_rational_multiply(env, ws);
-        if (err != OK)
-                return err;
-
-        err = _register_rational_divide(env, ws);
-        if (err != OK)
-                return err;
-
-        err = _register_rational_remainder(env, ws);
-        if (err != OK)
-                return err;
 
         err = _register_eq(env, ws);
         if (err != OK)
