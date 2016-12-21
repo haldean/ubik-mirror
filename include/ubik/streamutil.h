@@ -33,3 +33,6 @@ ubik_streamutil_print_line_char(
         struct ubik_stream *stream,
         size_t line,
         size_t column);
+
+no_ignore ubik_error
+ubik_streamutil_next_line(char **res, struct ubik_stream *stream);

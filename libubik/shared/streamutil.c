@@ -17,6 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include <string.h>
 #include <strings.h>
 #include <stdlib.h>
 #include "ubik/streamutil.h"
@@ -110,4 +111,55 @@ ubik_streamutil_print_line_char(
                 for (i = 0; i < column - 1; i++)
                         putchar(' ');
         printf("^\n");
+}
+
+no_ignore ubik_error
+ubik_streamutil_next_line(char **res, struct ubik_stream *stream)
+{
+        char *buf;
+        char *tbuf;
+        size_t oldsize;
+        size_t size;
+        size_t i;
+        size_t read;
+
+        size = GET_LINE_BUF_SIZE;
+        buf = calloc(size, sizeof(char));
+
+        for (i = 0;; i++)
+        {
+                if (i > size)
+                {
+                        oldsize = size;
+                        size *= 1.5;
+                        tbuf = realloc(buf, size);
+                        if (tbuf == NULL)
+                        {
+                                free(buf);
+                                return ubik_raise(
+                                        ERR_NO_MEMORY, "buf alloc failed");
+                        }
+                        memset(tbuf + oldsize, 0x00, size - oldsize);
+                        buf = tbuf;
+                }
+                read = ubik_stream_read(&buf[i], stream, 1);
+                if (read != 1)
+                        break;
+                if (buf[i] == '\n')
+                        break;
+        }
+
+        if (i == 0)
+        {
+                free(buf);
+                return ubik_raise(ERR_NO_DATA, "file is empty");
+        }
+
+        *res = realloc(buf, i + 2);
+        if (*res == NULL)
+        {
+                free(buf);
+                return ubik_raise(ERR_NO_MEMORY, "buf alloc failed");
+        }
+        return OK;
 }

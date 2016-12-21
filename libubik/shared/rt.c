@@ -20,8 +20,12 @@
 #include "ubik/alloc.h"
 #include "ubik/env.h"
 #include "ubik/natives.h"
+#include "ubik/stream.h"
+#include "ubik/streamutil.h"
 #include "ubik/string.h"
 #include "ubik/ubik.h"
+
+#include <string.h>
 
 /* these are used so that we can bit-shift them and still have a constexpr for
    UBIK_VERSION. */
@@ -35,31 +39,61 @@ const uint32_t UBIK_PATCH = PATCH;
 const uint64_t UBIK_VERSION =
         (uint64_t) MAJOR << 48 | (uint64_t) MINOR << 32 | PATCH;
 
-ubik_error
+static no_ignore ubik_error
+load_hook_file(char *hookfile)
+{
+        struct ubik_stream s;
+        ubik_error err;
+        char *line;
+        size_t line_len;
+
+        err = ubik_stream_rfile(&s, hookfile);
+        if (err != OK)
+        {
+                printf("could not open hook file:\n");
+                return err;
+        }
+
+        for (;;)
+        {
+                line = NULL;
+                err = ubik_streamutil_next_line(&line, &s);
+                if (err != OK)
+                {
+                        if (err->error_code == ERR_NO_DATA)
+                        {
+                                free(err);
+                                break;
+                        }
+                        return err;
+                }
+                line_len = strlen(line);
+                if (line_len == 0)
+                        continue;
+                if (line[line_len - 1] == '\n')
+                        line[line_len - 1] = '\0';
+
+                err = ubik_natives_load_hook(line);
+                if (err != OK)
+                        return err;
+                free(line);
+        }
+
+        return OK;
+}
+
+no_ignore ubik_error
 ubik_start(struct ubik_workspace *ws)
 {
         ubik_local_region(r);
         ubik_error err;
-        char *hook_root;
-        char *hook_path;
+        char *hookfile;
 
-        hook_root = getenv("UBIK_HOOK_ROOT");
-        if (hook_root == NULL)
-                hook_root = "hook";
+        hookfile = getenv("UBIK_HOOKFILE");
+        if (hookfile == NULL)
+                hookfile = "hook/hook.txt";
 
-        err = ubik_string_path_concat(
-                &hook_path, hook_root, "emit.so", &r);
-        if (err != OK)
-                return err;
-        err = ubik_natives_load_hook(hook_path);
-        if (err != OK)
-                return err;
-
-        err = ubik_string_path_concat(
-                &hook_path, hook_root, "math.so", &r);
-        if (err != OK)
-                return err;
-        err = ubik_natives_load_hook(hook_path);
+        err = load_hook_file(hookfile);
         if (err != OK)
                 return err;
 

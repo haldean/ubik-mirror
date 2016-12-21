@@ -273,7 +273,6 @@ ubik_natives_register(struct ubik_env *env, struct ubik_workspace *ws)
                 n = (struct ubik_native_record *) ubik_native_funcs.elems[i];
                 if (n->eval == NULL)
                         continue;
-                printf("load native %s %s\n", n->name, n->type_string);
 
                 ngraph = NULL;
                 err = ubik_internal_native_create_op(
