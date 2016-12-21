@@ -48,7 +48,7 @@ ubik_start(struct ubik_workspace *ws)
                 hook_root = "hook";
 
         err = ubik_string_path_concat(
-                &hook_path, hook_root, "emit/emit.so", &r);
+                &hook_path, hook_root, "emit.so", &r);
         if (err != OK)
                 return err;
 

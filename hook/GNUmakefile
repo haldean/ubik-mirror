@@ -1,0 +1,24 @@
+top = ..
+-include ../res/build-config.mk
+
+hooks = emit math
+
+c_sources_rel = $(patsubst %,%.c,$(hooks))
+c_sources = $(foreach H,$(hooks),$H/$H.c)
+objects = $(patsubst %,%.so,$(hooks))
+deps = $(patsubst %.c,%.d,$(c_sources))
+
+all: $(objects) hooks.txt
+
+$(objects): %.so: %/hook.c
+	$(CC) -fPIC -shared $(CFLAGS) $(LDFLAGS) -o $@ $<
+
+hooks.txt: $(objects)
+	find $(PWD) -name "*.so" > $@
+
+-include $(patsubst %.c,%.d,$(c_sources))
+
+clean:
+	rm -f $(objects) $(deps)
+
+.PHONY: clean all

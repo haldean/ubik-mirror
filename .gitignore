@@ -1,7 +1,3 @@
-ub/ubic
-ub/ubi
-ubik/ubik
-
 dist
 build
 *.pyc
@@ -18,26 +14,8 @@ a.out
 **/*.in
 **/.deps
 
-aclocal.m4
-ar-lib
-autom4te.cache
-config.h*
-configure
-configure.scan
-compile
-config.log
-config.status
-depcomp
-install-sh
-missing
-stamp-h1
-test-driver
-ylwrap
-
 TAGS
 .dirstamp
 
 afl-out
 core.*
-
-libubik/codegen/grammar.y

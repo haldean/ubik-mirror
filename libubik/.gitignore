@@ -4,3 +4,4 @@ grammar.output
 token.c
 uri-value.h
 humanize-poly.h
+codegen/grammar.y
