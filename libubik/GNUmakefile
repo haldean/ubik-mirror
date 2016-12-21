@@ -52,7 +52,6 @@ c_sources = \
     ./shared/value.c \
     ./shared/vector.c \
     ./shared/natives/native-adt.c \
-    ./shared/natives/native-seq.c \
     ./shared/natives/native-util.c
 
 CFLAGS := $(CFLAGS) -Itree -I.

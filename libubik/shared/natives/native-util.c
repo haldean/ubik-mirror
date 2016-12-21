@@ -35,27 +35,6 @@
 #include <string.h>
 
 static ubik_error
-_native_emit(struct ubik_exec_graph *gexec)
-{
-        /* this uses fwrite to remove the requirement for a NULL byte at the end
-           of the string. */
-        fwrite(gexec->nv[0]->str.data, sizeof(char),
-               gexec->nv[0]->str.length, stdout);
-
-        gexec->nv[1] = gexec->nv[0];
-        gexec->nt[1] = gexec->nt[0];
-
-        return OK;
-}
-
-#define DEF_UNARY
-#define DEF_OP emit
-#define DEF_ARG_TYPE ubik_type_str
-#define DEF_OP_EVAL _native_emit
-#define DEF_OP_URI "emit"
-#include "ubik/def-native.h"
-
-static ubik_error
 _native_eq(struct ubik_exec_graph *gexec)
 {
         struct ubik_value *res;
@@ -87,40 +66,3 @@ _native_eq(struct ubik_exec_graph *gexec)
 #define DEF_OP_URI "eq"
 #include "ubik/def-native.h"
 
-no_ignore static ubik_error
-_native_humanize(struct ubik_exec_graph *gexec)
-{
-        struct ubik_value *res;
-        struct ubik_value *type;
-        ubik_error err;
-        char *str;
-        size_t str_size;
-
-        err = ubik_value_new(&res, gexec->workspace);
-        if (err != OK)
-                return err;
-        err = ubik_value_new(&type, gexec->workspace);
-        if (err != OK)
-                return err;
-
-        err = ubik_value_humanize(&str, &str_size, gexec->nv[0]);
-        if (err != OK)
-                return err;
-        res->type = UBIK_STR;
-        res->str.data = str;
-        res->str.length = str_size;
-
-        err = ubik_type_str(type);
-        if (err != OK)
-                return err;
-
-        gexec->nv[1] = res;
-        gexec->nt[1] = type;
-        return OK;
-}
-
-#define DEF_UNARY
-#define DEF_OP humanize
-#define DEF_OP_EVAL _native_humanize
-#define DEF_OP_URI "humanize"
-#include "ubik/def-native.h"
