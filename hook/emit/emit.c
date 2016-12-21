@@ -17,10 +17,14 @@ eval_emit(struct ubik_exec_graph *gexec)
         return OK;
 }
 
-size_t
-__ubik_hooks_count = 1;
-
-struct ubik_native_record
-__ubik_hooks[] = {
-        { "emit", "String -> String", NULL, eval_emit },
-};
+ubik_error
+__ubik_install(struct ubik_vector *hooks)
+{
+        struct ubik_native_record *r;
+        ubik_galloc1(&r, struct ubik_native_record);
+        r->name = "emit";
+        r->arity = 1;
+        r->type_string = "String -> String";
+        r->eval = eval_emit;
+        return ubik_vector_append(hooks, r);
+}

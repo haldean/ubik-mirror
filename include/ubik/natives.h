@@ -29,12 +29,15 @@
 struct ubik_native_record
 {
         char *name;
+        ubik_word arity;
         char *type_string;
         struct ubik_type_expr *type_record;
         ubik_graph_evaluator_t eval;
 };
 
 extern struct ubik_vector ubik_native_funcs;
+
+typedef ubik_error(*ubik_hook_installer)(struct ubik_vector *);
 
 no_ignore ubik_error
 ubik_natives_load_hook(char *path);

@@ -129,98 +129,60 @@ no_ignore ubik_error
 ubik_natives_load_hook(char *path)
 {
         void *dl;
-        size_t n;
-        struct ubik_native_record *nrs;
+        ubik_hook_installer inst;
 
-        dl = dlopen(path, RTLD_LAZY);
+        dl = dlopen(path, RTLD_NOW);
         if (dl == NULL)
         {
                 printf("could not open hook %s: %s\n", path, dlerror());
                 return ubik_raise(ERR_SYSTEM, "could not open hook");
         }
 
-        n = *((size_t *) dlsym(dl, "__ubik_hooks_count"));
-        nrs = *((struct ubik_native_record **) dlsym(dl, "__ubik_hooks"));
-
-        printf("hook %s contains %lu entries:\n", path, n);
-        for (size_t i = 0; i < n; i++)
-                printf("\t%s\n", nrs[i].name);
-
+        /* Weird syntax alert: dlsym returns a function pointer disguised as a
+         * void pointer. ISO C doesn't let you cast that to a function pointer,
+         * so instead, we cast a reference to our function pointer to an
+         * object-pointer-pointer, dereference that, and assign to it. */
+        *((void **) &inst) = dlsym(dl, "__ubik_install");
+        inst(&ubik_native_funcs);
         return OK;
 }
 
 struct ubik_native_record const_natives[] = {
-        { "+", "Number -> Number -> Number", NULL, NULL},
-        { "-", "Number -> Number -> Number", NULL, NULL},
-        { "*", "Number -> Number -> Number", NULL, NULL},
-        { "/", "Number -> Number -> Number", NULL, NULL},
-        { "%", "Number -> Number -> Number", NULL, NULL},
-        { "rational-add", "Number -> Number -> Number", NULL, NULL},
-        { "rational-subtract", "Number -> Number -> Number", NULL, NULL},
-        { "rational-multiply", "Number -> Number -> Number", NULL, NULL},
-        { "rational-divide", "Number -> Number -> Number", NULL, NULL},
-        { "rational-remainder", "Number -> Number -> Number", NULL, NULL},
-        { "eq", "a -> a -> Boolean", NULL, NULL},
-        { "humanize", "a -> String", NULL, NULL},
-        { "emit", "String -> String", NULL, NULL},
-        { "concat", "String -> String -> String", NULL, NULL},
-        { "ubik-native-boolean-true", "Boolean", NULL, NULL},
-        { "ubik-native-boolean-false", "Boolean", NULL, NULL},
-        { "ubik-adt-ctor-matches?", NULL, NULL, NULL},
-        { "ubik-adt-get", NULL, NULL, NULL},
-        { "ubik-adt-new-0", NULL, NULL, NULL},
-        { "ubik-adt-new-1", NULL, NULL, NULL},
-        { "ubik-adt-new-2", NULL, NULL, NULL},
-        { "ubik-adt-new-3", NULL, NULL, NULL},
-        { "ubik-adt-new-4", NULL, NULL, NULL},
-        { "ubik-adt-new-5", NULL, NULL, NULL},
-        { "ubik-adt-new-6", NULL, NULL, NULL},
-        { "ubik-adt-new-7", NULL, NULL, NULL},
-        { "ubik-adt-new-8", NULL, NULL, NULL},
-        { "ubik-adt-new-9", NULL, NULL, NULL},
-        { "ubik-adt-new-10", NULL, NULL, NULL},
-        { "ubik-adt-new-11", NULL, NULL, NULL},
-        { "ubik-adt-new-12", NULL, NULL, NULL},
-        { "ubik-adt-new-13", NULL, NULL, NULL},
-        { "ubik-adt-new-14", NULL, NULL, NULL},
-        { "ubik-adt-new-15", NULL, NULL, NULL},
-        { "ubik-adt-new-16", NULL, NULL, NULL},
-        { "ubik-adt-new-17", NULL, NULL, NULL},
-        { "ubik-adt-new-18", NULL, NULL, NULL},
-        { "ubik-adt-new-19", NULL, NULL, NULL},
-        { "ubik-adt-new-20", NULL, NULL, NULL},
-        { "ubik-adt-new-21", NULL, NULL, NULL},
-        { "ubik-adt-new-22", NULL, NULL, NULL},
-        { "ubik-adt-new-23", NULL, NULL, NULL},
-        { "ubik-adt-new-24", NULL, NULL, NULL},
-        { "ubik-adt-new-25", NULL, NULL, NULL},
-        { "ubik-adt-new-26", NULL, NULL, NULL},
-        { "ubik-adt-new-27", NULL, NULL, NULL},
-        { "ubik-adt-new-28", NULL, NULL, NULL},
-        { "ubik-adt-new-29", NULL, NULL, NULL},
-        { "ubik-adt-new-30", NULL, NULL, NULL},
-        { "ubik-adt-new-31", NULL, NULL, NULL},
-        { "ubik-adt-new-32", NULL, NULL, NULL},
-        #if UBIK_MAX_ADT_FIELDS != 32
-        #error "the list of native funcs needs to be updated"
-        #endif
-        { "ubik-multimethod-call-0", NULL, NULL, NULL},
-        { "ubik-multimethod-call-1", NULL, NULL, NULL},
-        { "ubik-multimethod-call-2", NULL, NULL, NULL},
-        { "ubik-multimethod-call-3", NULL, NULL, NULL},
-        { "ubik-multimethod-call-4", NULL, NULL, NULL},
-        { "ubik-multimethod-call-5", NULL, NULL, NULL},
-        { "ubik-multimethod-call-6", NULL, NULL, NULL},
-        { "ubik-multimethod-call-7", NULL, NULL, NULL},
-        { "ubik-multimethod-call-8", NULL, NULL, NULL},
-        { "ubik-multimethod-call-9", NULL, NULL, NULL},
-        { "ubik-multimethod-call-10", NULL, NULL, NULL},
-        { "ubik-multimethod-call-11", NULL, NULL, NULL},
-        { "ubik-multimethod-call-12", NULL, NULL, NULL},
-        { "ubik-multimethod-call-13", NULL, NULL, NULL},
-        { "ubik-multimethod-call-14", NULL, NULL, NULL},
-        { "ubik-multimethod-call-15", NULL, NULL, NULL},
-        { "ubik-multimethod-call-16", NULL, NULL, NULL},
+        { "+", 2, "Number -> Number -> Number", NULL, NULL},
+        { "-", 2, "Number -> Number -> Number", NULL, NULL},
+        { "*", 2, "Number -> Number -> Number", NULL, NULL},
+        { "/", 2, "Number -> Number -> Number", NULL, NULL},
+        { "%", 2, "Number -> Number -> Number", NULL, NULL},
+        { "rational-add", 2, "Number -> Number -> Number", NULL, NULL},
+        { "rational-subtract", 2, "Number -> Number -> Number", NULL, NULL},
+        { "rational-multiply", 2, "Number -> Number -> Number", NULL, NULL},
+        { "rational-divide", 2, "Number -> Number -> Number", NULL, NULL},
+        { "rational-remainder", 2, "Number -> Number -> Number", NULL, NULL},
+        { "eq", 2, "a -> a -> Boolean", NULL, NULL},
+        { "humanize", 1, "a -> String", NULL, NULL},
+        { "concat", 2, "String -> String -> String", NULL, NULL},
+        { "ubik-native-boolean-true", 0, "Boolean", NULL, NULL},
+        { "ubik-native-boolean-false", 0, "Boolean", NULL, NULL},
+        { "ubik-adt-ctor-matches?", 2, "String -> a -> Boolean", NULL, NULL},
+        { "ubik-adt-get", 2, "Number -> a -> b", NULL, NULL},
+#include "natives/adt-defs.h"
+        { "ubik-multimethod-call-0", 0, NULL, NULL, NULL},
+        { "ubik-multimethod-call-1", 0, NULL, NULL, NULL},
+        { "ubik-multimethod-call-2", 0, NULL, NULL, NULL},
+        { "ubik-multimethod-call-3", 0, NULL, NULL, NULL},
+        { "ubik-multimethod-call-4", 0, NULL, NULL, NULL},
+        { "ubik-multimethod-call-5", 0, NULL, NULL, NULL},
+        { "ubik-multimethod-call-6", 0, NULL, NULL, NULL},
+        { "ubik-multimethod-call-7", 0, NULL, NULL, NULL},
+        { "ubik-multimethod-call-8", 0, NULL, NULL, NULL},
+        { "ubik-multimethod-call-9", 0, NULL, NULL, NULL},
+        { "ubik-multimethod-call-10", 0, NULL, NULL, NULL},
+        { "ubik-multimethod-call-11", 0, NULL, NULL, NULL},
+        { "ubik-multimethod-call-12", 0, NULL, NULL, NULL},
+        { "ubik-multimethod-call-13", 0, NULL, NULL, NULL},
+        { "ubik-multimethod-call-14", 0, NULL, NULL, NULL},
+        { "ubik-multimethod-call-15", 0, NULL, NULL, NULL},
+        { "ubik-multimethod-call-16", 0, NULL, NULL, NULL},
 };
 
 const size_t ubik_native_funcs_n =
@@ -232,23 +194,25 @@ ubik_natives_cache_types()
 {
         size_t i;
         ubik_error err;
+        struct ubik_native_record *r;
         for (i = 0; i < ubik_native_funcs_n; i++)
         {
                 err = ubik_vector_append(
                         &ubik_native_funcs, &const_natives[i]);
                 if (err != OK)
                         return err;
-                if (const_natives[i].type_string == NULL)
+        }
+        for (i = 0; i < ubik_native_funcs.n; i++)
+        {
+                r = (struct ubik_native_record *) ubik_native_funcs.elems[i];
+                if (r->type_string == NULL)
                         continue;
                 err = ubik_parse_type_expr(
-                        &const_natives[i].type_record,
-                        NULL,
-                        const_natives[i].type_string);
+                        &r->type_record, NULL, r->type_string);
                 if (err != OK)
                 {
                         printf("couldn't parse type for %s: %s\n",
-                                const_natives[i].name,
-                                const_natives[i].type_string);
+                                r->name, r->type_string);
                         free(err);
                         continue;
                 }
@@ -296,6 +260,9 @@ no_ignore ubik_error
 ubik_natives_register(struct ubik_env *env, struct ubik_workspace *ws)
 {
         struct ubik_native_record *n;
+        struct ubik_value *ngraph;
+        struct ubik_value *type;
+        struct ubik_uri *uri;
         size_t i;
         ubik_error err;
 
@@ -305,6 +272,28 @@ ubik_natives_register(struct ubik_env *env, struct ubik_workspace *ws)
                 if (n->eval == NULL)
                         continue;
                 printf("load native %s %s\n", n->name, n->type_string);
+
+                ngraph = NULL;
+                err = ubik_internal_native_create_op(
+                        &ngraph, n->arity, n->eval, ws);
+                if (err != OK)
+                        return err;
+
+                err = ubik_value_new(&type, ws);
+                if (err != OK)
+                        return err;
+                type->gc.runtime_managed = true;
+                type->type = UBIK_TYP;
+                /* TODO: set type here */
+
+                err = ubik_internal_native_uri(&uri, n->name);
+                if (err != OK)
+                        return err;
+
+                err = ubik_env_set(env, uri, ngraph, type);
+                ubik_uri_free(uri);
+                if (err != OK)
+                        return err;
         }
 
         err = _register_rational_add(env, ws);
@@ -328,10 +317,6 @@ ubik_natives_register(struct ubik_env *env, struct ubik_workspace *ws)
                 return err;
 
         err = _register_eq(env, ws);
-        if (err != OK)
-                return err;
-
-        err = _register_emit(env, ws);
         if (err != OK)
                 return err;
 
