@@ -1,5 +1,5 @@
 /*
- * native-arithmetic.c: built-in native arithmetic methods
+ * math/hook.c: built-in native arithmetic methods
  * Copyright (C) 2016, Haldean Brown
  *
  * This program is free software; you can redistribute it and/or modify

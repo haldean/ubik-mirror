@@ -1,5 +1,5 @@
 /*
- * bool.c: boolean constructors
+ * bool/hook.c: boolean constructors
  * Copyright (C) 2016, Haldean Brown
  *
  * This program is free software; you can redistribute it and/or modify
