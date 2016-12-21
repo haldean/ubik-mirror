@@ -150,7 +150,7 @@ static char testprog4[] =
         "~ t "
         "! {"
         "    : t = \\x -> ? {"
-        "        . eq x 0 => \"ok\\n\""
+        "        . x x 0 => \"ok\\n\""
         "        . => t 0"
         "    }"
         "    ! t 1"
