@@ -1,7 +1,7 @@
 top = ..
 -include ../res/build-config.mk
 
-hooks = bool emit math string
+hooks = bool emit eq math string
 
 c_sources_rel = $(patsubst %,%.c,$(hooks))
 c_sources = $(foreach H,$(hooks),$H/$H.c)

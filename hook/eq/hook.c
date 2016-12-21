@@ -1,6 +1,6 @@
 /*
- * native-util.c: built-in native methods
- * Copyright (C) 2015, Haldean Brown
+ * eq/hook.c: equality comparison
+ * Copyright (C) 2016, Haldean Brown
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,25 +17,14 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#ifndef _GNU_SOURCE
-#define _GNU_SOURCE
-#endif
-
-#include "ubik/env.h"
 #include "ubik/natives.h"
 #include "ubik/rttypes.h"
 #include "ubik/schedule.h"
 #include "ubik/ubik.h"
-#include "ubik/util.h"
 #include "ubik/value.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <inttypes.h>
-#include <string.h>
-
 static ubik_error
-_native_eq(struct ubik_exec_graph *gexec)
+eq(struct ubik_exec_graph *gexec)
 {
         struct ubik_value *res;
         struct ubik_value *res_type;
@@ -60,9 +49,19 @@ _native_eq(struct ubik_exec_graph *gexec)
         return OK;
 }
 
-#define DEF_BINARY
-#define DEF_OP eq
-#define DEF_OP_EVAL _native_eq
-#define DEF_OP_URI "eq"
-#include "ubik/def-native.h"
+#define rcast (struct ubik_native_record)
 
+ubik_error
+__ubik_install(struct ubik_vector *hooks, struct ubik_alloc_region *region)
+{
+        struct ubik_native_record *r;
+        ubik_error err;
+
+        ubik_alloc1(&r, struct ubik_native_record, region);
+        *r = rcast { "eq", 2, "a -> a -> Boolean", NULL, eq };
+        err = ubik_vector_append(hooks, r);
+        if (err != OK)
+                return err;
+
+        return OK;
+}

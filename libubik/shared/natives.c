@@ -140,8 +140,6 @@ ubik_natives_load_hook(char *path)
 }
 
 struct ubik_native_record const_natives[] = {
-        { "eq", 2, "a -> a -> Boolean", NULL, NULL},
-        { "humanize", 1, "a -> String", NULL, NULL},
         { "ubik-adt-ctor-matches?", 2, "String -> a -> Boolean", NULL, NULL},
         { "ubik-adt-get", 2, "Number -> a -> b", NULL, NULL},
 #include "natives/adt-defs.h"
@@ -277,10 +275,6 @@ ubik_natives_register(struct ubik_env *env, struct ubik_workspace *ws)
                 if (err != OK)
                         return err;
         }
-
-        err = _register_eq(env, ws);
-        if (err != OK)
-                return err;
 
         err = _register_all_adt_new(env, ws);
         if (err != OK)
