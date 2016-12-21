@@ -1,5 +1,5 @@
 /*
- * native-bool.c: boolean constructors
+ * bool.c: boolean constructors
  * Copyright (C) 2016, Haldean Brown
  *
  * This program is free software; you can redistribute it and/or modify
@@ -28,7 +28,7 @@
 #include "ubik/schedule.h"
 
 static ubik_error
-_native_bool_true(struct ubik_exec_graph *gexec)
+native_true(struct ubik_exec_graph *gexec)
 {
         struct ubik_value *res;
         struct ubik_value *type_decl;
@@ -55,7 +55,7 @@ _native_bool_true(struct ubik_exec_graph *gexec)
 }
 
 static ubik_error
-_native_bool_false(struct ubik_exec_graph *gexec)
+native_false(struct ubik_exec_graph *gexec)
 {
         struct ubik_value *res;
         struct ubik_value *type_decl;
@@ -81,64 +81,27 @@ _native_bool_false(struct ubik_exec_graph *gexec)
         return OK;
 }
 
-ubik_error
-_register_boolean_true(struct ubik_env *env, struct ubik_workspace *ws)
-{
-        struct ubik_value *graph;
-        struct ubik_uri *uri;
-        struct ubik_value *type;
-        ubik_error err;
-
-        graph = NULL;
-        err = ubik_internal_native_create_op(
-                &graph, 0, _native_bool_true, ws);
-        if (err != OK)
-                return err;
-
-        err = ubik_value_new(&type, ws);
-        if (err != OK)
-                return err;
-        type->gc.runtime_managed = true;
-        type->type = UBIK_TYP;
-
-        err = ubik_internal_native_uri(&uri, "ubik-native-boolean-true");
-        if (err != OK)
-                return err;
-
-        err = ubik_env_set(env, uri, graph, type);
-        ubik_uri_free(uri);
-        if (err != OK)
-                return err;
-
-        return OK;
-}
+#define rcast (struct ubik_native_record)
 
 ubik_error
-_register_boolean_false(struct ubik_env *env, struct ubik_workspace *ws)
+__ubik_install(struct ubik_vector *hooks, struct ubik_alloc_region *region)
 {
-        struct ubik_value *graph;
-        struct ubik_uri *uri;
-        struct ubik_value *type;
+        struct ubik_native_record *r;
         ubik_error err;
 
-        graph = NULL;
-        err = ubik_internal_native_create_op(
-                &graph, 0, _native_bool_false, ws);
+        ubik_alloc1(&r, struct ubik_native_record, region);
+        *r = rcast {
+                "ubik-native-boolean-true", 0, "Boolean", NULL, native_true
+        };
+        err = ubik_vector_append(hooks, r);
         if (err != OK)
                 return err;
 
-        err = ubik_value_new(&type, ws);
-        if (err != OK)
-                return err;
-        type->gc.runtime_managed = true;
-        type->type = UBIK_TYP;
-
-        err = ubik_internal_native_uri(&uri, "ubik-native-boolean-false");
-        if (err != OK)
-                return err;
-
-        err = ubik_env_set(env, uri, graph, type);
-        ubik_uri_free(uri);
+        ubik_alloc1(&r, struct ubik_native_record, region);
+        *r = rcast {
+                "ubik-native-boolean-false", 0, "Boolean", NULL, native_false
+        };
+        err = ubik_vector_append(hooks, r);
         if (err != OK)
                 return err;
 

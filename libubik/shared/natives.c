@@ -42,27 +42,11 @@ extern ubik_error _register_adt_get(
         struct ubik_env *env, struct ubik_workspace *ws);
 extern ubik_error _register_all_adt_new(
         struct ubik_env *env, struct ubik_workspace *ws);
-extern ubik_error _register_rational_add(
-        struct ubik_env *env, struct ubik_workspace *ws);
-extern ubik_error _register_rational_subtract(
-        struct ubik_env *env, struct ubik_workspace *ws);
-extern ubik_error _register_rational_multiply(
-        struct ubik_env *env, struct ubik_workspace *ws);
-extern ubik_error _register_rational_divide(
-        struct ubik_env *env, struct ubik_workspace *ws);
-extern ubik_error _register_rational_remainder(
-        struct ubik_env *env, struct ubik_workspace *ws);
 extern ubik_error _register_eq(
-        struct ubik_env *env, struct ubik_workspace *ws);
-extern ubik_error _register_emit(
         struct ubik_env *env, struct ubik_workspace *ws);
 extern ubik_error _register_humanize(
         struct ubik_env *env, struct ubik_workspace *ws);
 extern ubik_error _register_concat(
-        struct ubik_env *env, struct ubik_workspace *ws);
-extern ubik_error _register_boolean_true(
-        struct ubik_env *env, struct ubik_workspace *ws);
-extern ubik_error _register_boolean_false(
         struct ubik_env *env, struct ubik_workspace *ws);
 
 no_ignore ubik_error
@@ -159,8 +143,6 @@ struct ubik_native_record const_natives[] = {
         { "eq", 2, "a -> a -> Boolean", NULL, NULL},
         { "humanize", 1, "a -> String", NULL, NULL},
         { "concat", 2, "String -> String -> String", NULL, NULL},
-        { "ubik-native-boolean-true", 0, "Boolean", NULL, NULL},
-        { "ubik-native-boolean-false", 0, "Boolean", NULL, NULL},
         { "ubik-adt-ctor-matches?", 2, "String -> a -> Boolean", NULL, NULL},
         { "ubik-adt-get", 2, "Number -> a -> b", NULL, NULL},
 #include "natives/adt-defs.h"
@@ -318,14 +300,6 @@ ubik_natives_register(struct ubik_env *env, struct ubik_workspace *ws)
                 return err;
 
         err = _register_adt_get(env, ws);
-        if (err != OK)
-                return err;
-
-        err = _register_boolean_true(env, ws);
-        if (err != OK)
-                return err;
-
-        err = _register_boolean_false(env, ws);
         if (err != OK)
                 return err;
 
