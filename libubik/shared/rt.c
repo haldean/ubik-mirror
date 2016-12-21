@@ -17,9 +17,11 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include "ubik/alloc.h"
 #include "ubik/env.h"
-#include "ubik/ubik.h"
 #include "ubik/natives.h"
+#include "ubik/string.h"
+#include "ubik/ubik.h"
 
 /* these are used so that we can bit-shift them and still have a constexpr for
    UBIK_VERSION. */
@@ -36,9 +38,21 @@ const uint64_t UBIK_VERSION =
 ubik_error
 ubik_start(struct ubik_workspace *ws)
 {
+        ubik_local_region(r);
         ubik_error err;
+        char *hook_root;
+        char *hook_path;
 
-        err = ubik_natives_load_hook("hook/emit/emit.so");
+        hook_root = getenv("UBIK_HOOK_ROOT");
+        if (hook_root == NULL)
+                hook_root = "hook";
+
+        err = ubik_string_path_concat(
+                &hook_path, hook_root, "emit/emit.so", &r);
+        if (err != OK)
+                return err;
+
+        err = ubik_natives_load_hook(hook_path);
         if (err != OK)
                 return err;
 
@@ -62,5 +76,6 @@ ubik_teardown()
         if (err != OK)
                 return err;
 
+        ubik_natives_teardown();
         return OK;
 }

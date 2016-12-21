@@ -330,4 +330,5 @@ ubik_error_explain(ubik_error err);
 #define ubik_raise(code, tag) \
         ubik_error_new((code), (tag), __FILE__, __LINE__, __func__)
 
-#define local(type) __attribute__((cleanup(ubik_ ## type ## _free)))
+#define local(type) defer(ubik_ ## type ## _free)
+#define defer(func) __attribute__((cleanup(func)))

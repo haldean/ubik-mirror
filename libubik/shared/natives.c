@@ -32,6 +32,10 @@
 #include <dlfcn.h>
 #include <string.h>
 
+struct ubik_vector ubik_native_funcs;
+static struct ubik_vector hooks;
+static struct ubik_alloc_region native_region = {0};
+
 extern ubik_error _register_adt_ctor_matches(
         struct ubik_env *env, struct ubik_workspace *ws);
 extern ubik_error _register_adt_get(
@@ -130,6 +134,7 @@ ubik_natives_load_hook(char *path)
 {
         void *dl;
         ubik_hook_installer inst;
+        ubik_error err;
 
         dl = dlopen(path, RTLD_NOW);
         if (dl == NULL)
@@ -137,13 +142,16 @@ ubik_natives_load_hook(char *path)
                 printf("could not open hook %s: %s\n", path, dlerror());
                 return ubik_raise(ERR_SYSTEM, "could not open hook");
         }
+        err = ubik_vector_append(&hooks, dl);
+        if (err != OK)
+                return err;
 
         /* Weird syntax alert: dlsym returns a function pointer disguised as a
          * void pointer. ISO C doesn't let you cast that to a function pointer,
          * so instead, we cast a reference to our function pointer to an
          * object-pointer-pointer, dereference that, and assign to it. */
         *((void **) &inst) = dlsym(dl, "__ubik_install");
-        inst(&ubik_native_funcs);
+        inst(&ubik_native_funcs, &native_region);
         return OK;
 }
 
@@ -187,7 +195,6 @@ struct ubik_native_record const_natives[] = {
 
 const size_t ubik_native_funcs_n =
         sizeof(const_natives) / sizeof(struct ubik_native_record);
-struct ubik_vector ubik_native_funcs;
 
 no_ignore ubik_error
 ubik_natives_cache_types()
@@ -195,20 +202,25 @@ ubik_natives_cache_types()
         size_t i;
         ubik_error err;
         struct ubik_native_record *r;
+
         for (i = 0; i < ubik_native_funcs_n; i++)
         {
-                err = ubik_vector_append(
-                        &ubik_native_funcs, &const_natives[i]);
+                /* we want these to be heap-allocated to mimic the
+                 * user-generated records. */
+                ubik_alloc1(&r, struct ubik_native_record, &native_region);
+                *r = const_natives[i];
+                err = ubik_vector_append(&ubik_native_funcs, r);
                 if (err != OK)
                         return err;
         }
+
         for (i = 0; i < ubik_native_funcs.n; i++)
         {
                 r = (struct ubik_native_record *) ubik_native_funcs.elems[i];
                 if (r->type_string == NULL)
                         continue;
                 err = ubik_parse_type_expr(
-                        &r->type_record, NULL, r->type_string);
+                        &r->type_record, &native_region, r->type_string);
                 if (err != OK)
                 {
                         printf("couldn't parse type for %s: %s\n",
@@ -349,4 +361,22 @@ ubik_natives_register(struct ubik_env *env, struct ubik_workspace *ws)
                 return err;
 
         return OK;
+}
+
+void
+ubik_natives_teardown()
+{
+        ubik_hook_uninstaller uninst;
+        size_t i;
+
+        for (i = 0; i < hooks.n; i++)
+        {
+                *((void **) &uninst) = dlsym(
+                        hooks.elems[i], "__ubik_uninstall");
+                if (uninst != NULL)
+                        uninst();
+        }
+        ubik_vector_free(&hooks);
+        ubik_alloc_free(&native_region);
+        ubik_vector_free(&ubik_native_funcs);
 }

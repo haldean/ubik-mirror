@@ -18,10 +18,10 @@ eval_emit(struct ubik_exec_graph *gexec)
 }
 
 ubik_error
-__ubik_install(struct ubik_vector *hooks)
+__ubik_install(struct ubik_vector *hooks, struct ubik_alloc_region *region)
 {
         struct ubik_native_record *r;
-        ubik_galloc1(&r, struct ubik_native_record);
+        ubik_alloc1(&r, struct ubik_native_record, region);
         r->name = "emit";
         r->arity = 1;
         r->type_string = "String -> String";

@@ -37,7 +37,9 @@ struct ubik_native_record
 
 extern struct ubik_vector ubik_native_funcs;
 
-typedef ubik_error(*ubik_hook_installer)(struct ubik_vector *);
+typedef ubik_error(*ubik_hook_installer)(
+        struct ubik_vector *, struct ubik_alloc_region *);
+typedef void(*ubik_hook_uninstaller)();
 
 no_ignore ubik_error
 ubik_natives_load_hook(char *path);
@@ -52,6 +54,11 @@ ubik_natives_register(
  * function types is used. */
 no_ignore ubik_error
 ubik_natives_cache_types();
+
+/* Frees all runtime information stored about native functions. Consider
+ * the runtime unusable after calling this. */
+void
+ubik_natives_teardown();
 
 /* Puts the type of the given native function in the result object.
  *

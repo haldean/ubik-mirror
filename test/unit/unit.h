@@ -57,6 +57,7 @@ typedef struct
                 return 1; \
         } \
         init(); run(test); \
+        ubik_workspace_free(ws); \
         err = ubik_teardown(); \
         if (err != OK) { \
                 printf("couldn't close ubik: %s\n", ubik_error_explain(err)); \

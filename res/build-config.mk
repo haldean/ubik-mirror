@@ -13,5 +13,5 @@ ifneq ($(sanitize),no)
 endif
 endif
 
-LDFLAGS := $(LDFLAGS) -rdynamic
+LDFLAGS := $(LDFLAGS) -rdynamic -ldl
 
