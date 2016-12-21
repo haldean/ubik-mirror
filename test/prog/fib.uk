@@ -5,8 +5,7 @@
     = \x -> ? {
         . eq x 0 => 1
         . eq x 1 => 1
-        .        => rational-add (fib (rational-subtract x 1))
-                                 (fib (rational-subtract x 2))
+        .        => + (fib (- x 1)) (fib (- x 2))
     }
 
 ! emit (concat (humanize (fib 5)) "\n")

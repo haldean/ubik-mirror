@@ -41,8 +41,6 @@ typedef ubik_error(*ubik_hook_installer)(
         struct ubik_vector *, struct ubik_alloc_region *);
 typedef void(*ubik_hook_uninstaller)();
 
-#define ubik_rcast (struct ubik_native_record)
-
 no_ignore ubik_error
 ubik_natives_load_hook(char *path);
 

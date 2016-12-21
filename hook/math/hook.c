@@ -109,6 +109,8 @@ remain(struct ubik_exec_graph *gexec)
         return OK;
 }
 
+#define rcast (struct ubik_native_record)
+
 ubik_error
 __ubik_install(struct ubik_vector *hooks, struct ubik_alloc_region *region)
 {
@@ -116,8 +118,34 @@ __ubik_install(struct ubik_vector *hooks, struct ubik_alloc_region *region)
         ubik_error err;
 
         ubik_alloc1(&r, struct ubik_native_record, region);
-        *r = ubik_rcast { "+", 2, "Number -> Number -> Number", NULL, add };
+        *r = rcast { "+", 2, "Number -> Number -> Number", NULL, add };
         err = ubik_vector_append(hooks, r);
         if (err != OK)
                 return err;
+
+        ubik_alloc1(&r, struct ubik_native_record, region);
+        *r = rcast { "-", 2, "Number -> Number -> Number", NULL, subtract };
+        err = ubik_vector_append(hooks, r);
+        if (err != OK)
+                return err;
+
+        ubik_alloc1(&r, struct ubik_native_record, region);
+        *r = rcast { "*", 2, "Number -> Number -> Number", NULL, multiply };
+        err = ubik_vector_append(hooks, r);
+        if (err != OK)
+                return err;
+
+        ubik_alloc1(&r, struct ubik_native_record, region);
+        *r = rcast { "/", 2, "Number -> Number -> Number", NULL, divide };
+        err = ubik_vector_append(hooks, r);
+        if (err != OK)
+                return err;
+
+        ubik_alloc1(&r, struct ubik_native_record, region);
+        *r = rcast { "%", 2, "Number -> Number -> Number", NULL, remain };
+        err = ubik_vector_append(hooks, r);
+        if (err != OK)
+                return err;
+
+        return OK;
 }

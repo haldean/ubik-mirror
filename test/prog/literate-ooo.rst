@@ -37,7 +37,7 @@ But we haven't even defined ``y`` yet! We can then go on to define ``y``
 (but check it out, the value of ``y`` depends on something we define
 *after* it)::
 
-    : y ^ Number = rational-add x 5
+    : y ^ Number = + x 5
     : x ^ Number = 4
 
 In fact, you can do that even before you specify what package you're

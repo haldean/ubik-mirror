@@ -156,15 +156,6 @@ ubik_natives_load_hook(char *path)
 }
 
 struct ubik_native_record const_natives[] = {
-        { "-", 2, "Number -> Number -> Number", NULL, NULL},
-        { "*", 2, "Number -> Number -> Number", NULL, NULL},
-        { "/", 2, "Number -> Number -> Number", NULL, NULL},
-        { "%", 2, "Number -> Number -> Number", NULL, NULL},
-        { "rational-add", 2, "Number -> Number -> Number", NULL, NULL},
-        { "rational-subtract", 2, "Number -> Number -> Number", NULL, NULL},
-        { "rational-multiply", 2, "Number -> Number -> Number", NULL, NULL},
-        { "rational-divide", 2, "Number -> Number -> Number", NULL, NULL},
-        { "rational-remainder", 2, "Number -> Number -> Number", NULL, NULL},
         { "eq", 2, "a -> a -> Boolean", NULL, NULL},
         { "humanize", 1, "a -> String", NULL, NULL},
         { "concat", 2, "String -> String -> String", NULL, NULL},

@@ -3,8 +3,8 @@
 : so-deep
     ^ Number -> (Number -> Number)
     = \ x -> {
-        : y ^ Number = rational-add x 2
-        ! \ z -> rational-add x (rational-add y z)
+        : y ^ Number = + x 2
+        ! \ z -> + x (+ y z)
     }
 
 # / 4 (/ (/ 4 2) 8) == 18

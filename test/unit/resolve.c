@@ -26,7 +26,7 @@
 #include <stdio.h>
 
 static char testprog1[] =
-        "~ testprog\n: test-resolve\n= \\x -> rational-add x ((\\x -> x) x)\n";
+        "~ testprog\n: test-resolve\n= \\x -> test-resolve x ((\\x -> x) x)\n";
 
 test_t
 resolve()

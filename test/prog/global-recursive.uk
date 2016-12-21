@@ -4,7 +4,7 @@
     ^ Number -> String
     = \x -> ? {
         . eq x 0 => "hit bottom\n"
-        . => top-recursive (rational-subtract x 1)
+        . => top-recursive (- x 1)
     }
 
 ! emit (top-recursive 100)

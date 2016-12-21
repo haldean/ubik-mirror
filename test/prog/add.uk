@@ -3,6 +3,6 @@
 
 : add-two-numbers
   ^ Number
-  = rational-add 2 64
+  = + 2 64
 
 ! emit (concat (humanize add-two-numbers) "\nhello world!\n")

@@ -9,10 +9,10 @@
     = \x -> {
         : inner-check = \y -> ? {
             . eq y 1 => true
-            . eq (rational-remainder x y) 0 => false
-            . => inner-check (rational-subtract y 1)
+            . eq (% x y) 0 => false
+            . => inner-check (- y 1)
         }
-        ! inner-check (rational-subtract x 1)
+        ! inner-check (- x 1)
     }
 
 ! emit (? {
