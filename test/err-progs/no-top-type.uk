@@ -1,7 +1,7 @@
 ~ err-progs/no-top-type
 
 : this-one-is-okay
-    ^ Word
+    ^ Number
     = 10
 
 : this-one-is-bad

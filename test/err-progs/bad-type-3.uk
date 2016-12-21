@@ -1,9 +1,9 @@
 ~ err-progs/bad-type-3
 
 : a-number
-    ^ Word
+    ^ Number
     = 7
 
 : another-number
-    ^ Word
+    ^ Number
     = a-number 10

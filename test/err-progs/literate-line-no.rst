@@ -9,4 +9,4 @@ They should! It's true. Hard to read compiler error messages otherwise.
 That should do it.
 
 ::
-    . ubik-tests/literate-line-no
+    ~ ubik-tests/literate-line-no

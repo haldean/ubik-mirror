@@ -1,7 +1,7 @@
 ~ err-progs/unknown-name
 
 : test-thing
-    ^ Word
-    = \x -> uadd (uadd x y) z
+    ^ Number
+    = \x -> + (+ x y) z
 
 ! test-thing 8
