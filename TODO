@@ -6,13 +6,10 @@
 - real parser for URIs instead of hacky shit
 - make sure that pattern blocks match all patterns
 - values are in the PAP value on the executor
-- UBIK_SCHEDULE_DEBUG introduces a bunch of compiler errors
 - delete the list module
 - more tests for rational functions
-- short-aliases for arithmetic
 - matches against nonatomic expressions (? f x { . A => ...)
 - splatted imports shouldn't appear under the importing package's name
 - runtime applyable types
-- Boolean not showing up in list of known types
 - support equality testing for pattern blocks as well (to match numbers/bools)
 
