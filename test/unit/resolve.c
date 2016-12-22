@@ -244,7 +244,7 @@ assert_failed:
 int
 main()
 {
-        if (ubik_natives_cache_types() != OK)
+        if (ubik_hooks_cache_types() != OK)
                 return 2;
         init();
         run(resolve);

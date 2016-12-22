@@ -81,15 +81,15 @@ native_false(struct ubik_exec_graph *gexec)
         return OK;
 }
 
-#define rcast (struct ubik_native_record)
+#define rcast (struct ubik_hook)
 
 ubik_error
 __ubik_install(struct ubik_vector *hooks, struct ubik_alloc_region *region)
 {
-        struct ubik_native_record *r;
+        struct ubik_hook *r;
         ubik_error err;
 
-        ubik_alloc1(&r, struct ubik_native_record, region);
+        ubik_alloc1(&r, struct ubik_hook, region);
         *r = rcast {
                 "ubik-native-boolean-true", 0, "Boolean", NULL, native_true
         };
@@ -97,7 +97,7 @@ __ubik_install(struct ubik_vector *hooks, struct ubik_alloc_region *region)
         if (err != OK)
                 return err;
 
-        ubik_alloc1(&r, struct ubik_native_record, region);
+        ubik_alloc1(&r, struct ubik_hook, region);
         *r = rcast {
                 "ubik-native-boolean-false", 0, "Boolean", NULL, native_false
         };

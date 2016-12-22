@@ -73,7 +73,7 @@ load_hook_file(char *hookfile)
                 if (line[line_len - 1] == '\n')
                         line[line_len - 1] = '\0';
 
-                err = ubik_natives_load_hook(line);
+                err = ubik_hooks_load(line);
                 if (err != OK)
                         return err;
                 free(line);
@@ -97,11 +97,11 @@ ubik_start(struct ubik_workspace *ws)
         if (err != OK)
                 return err;
 
-        err = ubik_natives_register(ubik_env_get_root(), ws);
+        err = ubik_hooks_register(ubik_env_get_root(), ws);
         if (err != OK)
                 return err;
 
-        err = ubik_natives_cache_types();
+        err = ubik_hooks_cache_types();
         if (err != OK)
                 return err;
 
@@ -117,6 +117,6 @@ ubik_teardown()
         if (err != OK)
                 return err;
 
-        ubik_natives_teardown();
+        ubik_hooks_teardown();
         return OK;
 }

@@ -26,7 +26,7 @@
 #include "ubik/vector.h"
 #include <stdbool.h>
 
-struct ubik_native_record
+struct ubik_hook
 {
         char *name;
         ubik_word arity;
@@ -35,17 +35,17 @@ struct ubik_native_record
         ubik_graph_evaluator_t eval;
 };
 
-extern struct ubik_vector ubik_native_funcs;
+extern struct ubik_vector ubik_hooks;
 
 typedef ubik_error(*ubik_hook_installer)(
         struct ubik_vector *, struct ubik_alloc_region *);
 typedef void(*ubik_hook_uninstaller)();
 
 no_ignore ubik_error
-ubik_natives_load_hook(char *path);
+ubik_hooks_load(char *path);
 
 no_ignore ubik_error
-ubik_natives_register(
+ubik_hooks_register(
         struct ubik_env *env,
         struct ubik_workspace *ws);
 
@@ -53,12 +53,12 @@ ubik_natives_register(
  * table. Must be called before any operation that checks for native
  * function types is used. */
 no_ignore ubik_error
-ubik_natives_cache_types();
+ubik_hooks_cache_types();
 
 /* Frees all runtime information stored about native functions. Consider
  * the runtime unusable after calling this. */
 void
-ubik_natives_teardown();
+ubik_hooks_teardown();
 
 /* Puts the type of the given native function in the result object.
  *
@@ -73,15 +73,3 @@ ubik_natives_get_type(
 /* Returns true if the provided name is the name of a native function. */
 bool
 ubik_natives_is_defined(char *func_name);
-
-/* Internal-only convenience functions for native URI definitions. */
-no_ignore ubik_error
-ubik_internal_native_uri(struct ubik_uri **uri, char *name);
-
-no_ignore ubik_error
-ubik_internal_native_create_op(
-        struct ubik_value **graph_ptr,
-        size_t arity,
-        ubik_graph_evaluator_t evaluator,
-        struct ubik_workspace *ws);
-

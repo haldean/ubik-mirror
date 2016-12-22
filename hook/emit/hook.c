@@ -39,8 +39,8 @@ eval_emit(struct ubik_exec_graph *gexec)
 ubik_error
 __ubik_install(struct ubik_vector *hooks, struct ubik_alloc_region *region)
 {
-        struct ubik_native_record *r;
-        ubik_alloc1(&r, struct ubik_native_record, region);
+        struct ubik_hook *r;
+        ubik_alloc1(&r, struct ubik_hook, region);
         r->name = "emit";
         r->arity = 1;
         r->type_string = "String -> String";

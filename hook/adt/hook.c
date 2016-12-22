@@ -158,13 +158,13 @@ adt_get(struct ubik_exec_graph *gexec)
         return OK;
 }
 
-#define rcast (struct ubik_native_record)
+#define rcast (struct ubik_hook)
 #define TYPEBUF_SIZE 512
 
 ubik_error
 __ubik_install(struct ubik_vector *hooks, struct ubik_alloc_region *region)
 {
-        struct ubik_native_record *r;
+        struct ubik_hook *r;
         ubik_error err;
         size_t i;
         size_t j;
@@ -172,7 +172,7 @@ __ubik_install(struct ubik_vector *hooks, struct ubik_alloc_region *region)
         char typebuf[TYPEBUF_SIZE];
         char *funcname;
 
-        ubik_alloc1(&r, struct ubik_native_record, region);
+        ubik_alloc1(&r, struct ubik_hook, region);
         *r = rcast {
                 "ubik-adt-ctor-matches?", 2, "String -> a -> Boolean",
                 NULL, ctor_matches
@@ -181,7 +181,7 @@ __ubik_install(struct ubik_vector *hooks, struct ubik_alloc_region *region)
         if (err != OK)
                 return err;
 
-        ubik_alloc1(&r, struct ubik_native_record, region);
+        ubik_alloc1(&r, struct ubik_hook, region);
         *r = rcast {
                 "ubik-adt-get", 2, "Number -> a -> b", NULL, adt_get
         };
@@ -209,7 +209,7 @@ __ubik_install(struct ubik_vector *hooks, struct ubik_alloc_region *region)
 
                 ubik_asprintf(&funcname, region, "ubik-adt-new-%" PRIu64, i);
 
-                ubik_alloc1(&r, struct ubik_native_record, region);
+                ubik_alloc1(&r, struct ubik_hook, region);
                 *r = rcast {
                         funcname,
                         i + 2,

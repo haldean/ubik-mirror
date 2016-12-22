@@ -32,7 +32,7 @@
 #include <dlfcn.h>
 #include <string.h>
 
-struct ubik_vector ubik_native_funcs;
+struct ubik_vector ubik_hooks;
 static struct ubik_vector hooks;
 static struct ubik_alloc_region native_region = {0};
 
@@ -101,7 +101,7 @@ ubik_internal_native_create_op(
 }
 
 no_ignore ubik_error
-ubik_natives_load_hook(char *path)
+ubik_hooks_load(char *path)
 {
         void *dl;
         ubik_hook_installer inst;
@@ -122,11 +122,11 @@ ubik_natives_load_hook(char *path)
          * so instead, we cast a reference to our function pointer to an
          * object-pointer-pointer, dereference that, and assign to it. */
         *((void **) &inst) = dlsym(dl, "__ubik_install");
-        inst(&ubik_native_funcs, &native_region);
+        inst(&ubik_hooks, &native_region);
         return OK;
 }
 
-struct ubik_native_record const_natives[] = {
+struct ubik_hook const_natives[] = {
         { "ubik-multimethod-call-0", 0, NULL, NULL, NULL},
         { "ubik-multimethod-call-1", 0, NULL, NULL, NULL},
         { "ubik-multimethod-call-2", 0, NULL, NULL, NULL},
@@ -146,30 +146,30 @@ struct ubik_native_record const_natives[] = {
         { "ubik-multimethod-call-16", 0, NULL, NULL, NULL},
 };
 
-const size_t ubik_native_funcs_n =
-        sizeof(const_natives) / sizeof(struct ubik_native_record);
+const size_t ubik_hooks_n =
+        sizeof(const_natives) / sizeof(struct ubik_hook);
 
 no_ignore ubik_error
-ubik_natives_cache_types()
+ubik_hooks_cache_types()
 {
         size_t i;
         ubik_error err;
-        struct ubik_native_record *r;
+        struct ubik_hook *r;
 
-        for (i = 0; i < ubik_native_funcs_n; i++)
+        for (i = 0; i < ubik_hooks_n; i++)
         {
                 /* we want these to be heap-allocated to mimic the
                  * user-generated records. */
-                ubik_alloc1(&r, struct ubik_native_record, &native_region);
+                ubik_alloc1(&r, struct ubik_hook, &native_region);
                 *r = const_natives[i];
-                err = ubik_vector_append(&ubik_native_funcs, r);
+                err = ubik_vector_append(&ubik_hooks, r);
                 if (err != OK)
                         return err;
         }
 
-        for (i = 0; i < ubik_native_funcs.n; i++)
+        for (i = 0; i < ubik_hooks.n; i++)
         {
-                r = (struct ubik_native_record *) ubik_native_funcs.elems[i];
+                r = (struct ubik_hook *) ubik_hooks.elems[i];
                 if (r->type_string == NULL)
                         continue;
                 err = ubik_parse_type_expr(
@@ -189,10 +189,10 @@ bool
 ubik_natives_is_defined(char *name)
 {
         size_t i;
-        struct ubik_native_record *n;
-        for (i = 0; i < ubik_native_funcs.n; i++)
+        struct ubik_hook *n;
+        for (i = 0; i < ubik_hooks.n; i++)
         {
-                n = (struct ubik_native_record *)  ubik_native_funcs.elems[i];
+                n = (struct ubik_hook *)  ubik_hooks.elems[i];
                 if (strcmp(n->name, name) == 0)
                         return true;
         }
@@ -205,11 +205,11 @@ ubik_natives_get_type(
         char *name,
         struct ubik_alloc_region *r)
 {
-        struct ubik_native_record *n;
+        struct ubik_hook *n;
         size_t i;
-        for (i = 0; i < ubik_native_funcs.n; i++)
+        for (i = 0; i < ubik_hooks.n; i++)
         {
-                n = (struct ubik_native_record *) ubik_native_funcs.elems[i];
+                n = (struct ubik_hook *) ubik_hooks.elems[i];
                 if (strcmp(n->name, name) != 0)
                         continue;
                 if (n->type_record == NULL)
@@ -222,18 +222,18 @@ ubik_natives_get_type(
 }
 
 no_ignore ubik_error
-ubik_natives_register(struct ubik_env *env, struct ubik_workspace *ws)
+ubik_hooks_register(struct ubik_env *env, struct ubik_workspace *ws)
 {
-        struct ubik_native_record *n;
+        struct ubik_hook *n;
         struct ubik_value *ngraph;
         struct ubik_value *type;
         struct ubik_uri *uri;
         size_t i;
         ubik_error err;
 
-        for (i = 0; i < ubik_native_funcs.n; i++)
+        for (i = 0; i < ubik_hooks.n; i++)
         {
-                n = (struct ubik_native_record *) ubik_native_funcs.elems[i];
+                n = (struct ubik_hook *) ubik_hooks.elems[i];
                 if (n->eval == NULL)
                         continue;
 
@@ -264,7 +264,7 @@ ubik_natives_register(struct ubik_env *env, struct ubik_workspace *ws)
 }
 
 void
-ubik_natives_teardown()
+ubik_hooks_teardown()
 {
         ubik_hook_uninstaller uninst;
         size_t i;
@@ -278,5 +278,5 @@ ubik_natives_teardown()
         }
         ubik_vector_free(&hooks);
         ubik_alloc_free(&native_region);
-        ubik_vector_free(&ubik_native_funcs);
+        ubik_vector_free(&ubik_hooks);
 }
