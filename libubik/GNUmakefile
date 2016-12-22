@@ -37,8 +37,8 @@ c_sources = \
     ./shared/explain.c \
     ./shared/feedback.c \
     ./shared/fun.c \
+    ./shared/hooks.c \
     ./shared/list.c \
-    ./shared/natives.c \
     ./shared/pointerset.c \
     ./shared/print-ast.c \
     ./shared/rt.c \

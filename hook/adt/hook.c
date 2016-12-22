@@ -25,7 +25,7 @@
 #include "ubik/assert.h"
 #include "ubik/env.h"
 #include "ubik/list.h"
-#include "ubik/natives.h"
+#include "ubik/hooks.h"
 #include "ubik/rttypes.h"
 #include "ubik/schedule.h"
 #include "ubik/string.h"

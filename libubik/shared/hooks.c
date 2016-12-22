@@ -23,7 +23,7 @@
 
 #include "ubik/adt.h"
 #include "ubik/env.h"
-#include "ubik/natives.h"
+#include "ubik/hooks.h"
 #include "ubik/parse.h"
 #include "ubik/types.h"
 #include "ubik/ubik.h"

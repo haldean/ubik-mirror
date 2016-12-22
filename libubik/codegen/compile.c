@@ -33,7 +33,7 @@
 #include "ubik/infer.h"
 #include "ubik/interfaces.h"
 #include "ubik/literate.h"
-#include "ubik/natives.h"
+#include "ubik/hooks.h"
 #include "ubik/parse.h"
 #include "ubik/patterns.h"
 #include "ubik/resolve.h"

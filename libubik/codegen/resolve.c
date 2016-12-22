@@ -30,7 +30,7 @@
 #include "ubik/closure.h"
 #include "ubik/env.h"
 #include "ubik/feedback.h"
-#include "ubik/natives.h"
+#include "ubik/hooks.h"
 #include "ubik/package.h"
 #include "ubik/resolve.h"
 #include "ubik/streamutil.h"

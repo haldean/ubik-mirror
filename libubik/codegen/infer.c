@@ -21,7 +21,7 @@
 #include "ubik/assert.h"
 #include "ubik/feedback.h"
 #include "ubik/infer.h"
-#include "ubik/natives.h"
+#include "ubik/hooks.h"
 #include "ubik/resolve.h"
 #include "ubik/string.h"
 #include "ubik/types.h"

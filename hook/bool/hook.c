@@ -22,7 +22,7 @@
 #endif
 
 #include "ubik/assert.h"
-#include "ubik/natives.h"
+#include "ubik/hooks.h"
 #include "ubik/rt.h"
 #include "ubik/rttypes.h"
 #include "ubik/schedule.h"

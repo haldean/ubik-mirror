@@ -19,7 +19,7 @@
 
 #include "ubik/ast.h"
 #include "ubik/compile.h"
-#include "ubik/natives.h"
+#include "ubik/hooks.h"
 #include "ubik/parse.h"
 #include "ubik/resolve.h"
 #include "unit.h"

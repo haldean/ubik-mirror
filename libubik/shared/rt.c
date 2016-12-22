@@ -19,7 +19,7 @@
 
 #include "ubik/alloc.h"
 #include "ubik/env.h"
-#include "ubik/natives.h"
+#include "ubik/hooks.h"
 #include "ubik/stream.h"
 #include "ubik/streamutil.h"
 #include "ubik/string.h"

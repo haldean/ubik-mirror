@@ -18,7 +18,7 @@
  */
 
 #include "ubik/env.h"
-#include "ubik/natives.h"
+#include "ubik/hooks.h"
 #include "ubik/rat.h"
 #include "ubik/schedule.h"
 #include "ubik/ubik.h"
