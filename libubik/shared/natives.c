@@ -36,19 +36,6 @@ struct ubik_vector ubik_native_funcs;
 static struct ubik_vector hooks;
 static struct ubik_alloc_region native_region = {0};
 
-extern ubik_error _register_adt_ctor_matches(
-        struct ubik_env *env, struct ubik_workspace *ws);
-extern ubik_error _register_adt_get(
-        struct ubik_env *env, struct ubik_workspace *ws);
-extern ubik_error _register_all_adt_new(
-        struct ubik_env *env, struct ubik_workspace *ws);
-extern ubik_error _register_eq(
-        struct ubik_env *env, struct ubik_workspace *ws);
-extern ubik_error _register_humanize(
-        struct ubik_env *env, struct ubik_workspace *ws);
-extern ubik_error _register_concat(
-        struct ubik_env *env, struct ubik_workspace *ws);
-
 no_ignore ubik_error
 ubik_internal_native_uri(struct ubik_uri **uri, char *name)
 {
@@ -140,9 +127,6 @@ ubik_natives_load_hook(char *path)
 }
 
 struct ubik_native_record const_natives[] = {
-        { "ubik-adt-ctor-matches?", 2, "String -> a -> Boolean", NULL, NULL},
-        { "ubik-adt-get", 2, "Number -> a -> b", NULL, NULL},
-#include "natives/adt-defs.h"
         { "ubik-multimethod-call-0", 0, NULL, NULL, NULL},
         { "ubik-multimethod-call-1", 0, NULL, NULL, NULL},
         { "ubik-multimethod-call-2", 0, NULL, NULL, NULL},
@@ -275,18 +259,6 @@ ubik_natives_register(struct ubik_env *env, struct ubik_workspace *ws)
                 if (err != OK)
                         return err;
         }
-
-        err = _register_all_adt_new(env, ws);
-        if (err != OK)
-                return err;
-
-        err = _register_adt_ctor_matches(env, ws);
-        if (err != OK)
-                return err;
-
-        err = _register_adt_get(env, ws);
-        if (err != OK)
-                return err;
 
         return OK;
 }

@@ -1,5 +1,5 @@
 /*
- * native-adt.c: built-in native methods for ADTs
+ * adt/hook.c: built-in native methods for ADTs
  * Copyright (C) 2016, Haldean Brown
  *
  * This program is free software; you can redistribute it and/or modify
@@ -28,14 +28,16 @@
 #include "ubik/natives.h"
 #include "ubik/rttypes.h"
 #include "ubik/schedule.h"
+#include "ubik/string.h"
 #include "ubik/ubik.h"
 #include "ubik/util.h"
 #include "ubik/value.h"
 
+#include <inttypes.h>
 #include <string.h>
 
-static ubik_error
-_native_adt_new(struct ubik_exec_graph *gexec)
+ubik_error
+adt_new(struct ubik_exec_graph *gexec)
 {
         struct ubik_value *type_decl;
         struct ubik_value *ctor;
@@ -84,51 +86,8 @@ _native_adt_new(struct ubik_exec_graph *gexec)
         return OK;
 }
 
-ubik_error
-_register_all_adt_new(struct ubik_env *env, struct ubik_workspace *ws)
-{
-        struct ubik_value *graph;
-        struct ubik_uri *uri;
-        struct ubik_value *type;
-        ubik_error err;
-        char *func_name;
-        int res;
-        int i;
-
-        for (i = 0; i < UBIK_MAX_ADT_FIELDS; i++)
-        {
-                graph = NULL;
-                err = ubik_internal_native_create_op(
-                        &graph, i + 2, _native_adt_new, ws);
-                if (err != OK)
-                        return err;
-
-                err = ubik_value_new(&type, ws);
-                if (err != OK)
-                        return err;
-                type->gc.runtime_managed = true;
-                type->type = UBIK_TYP;
-
-                res = asprintf(&func_name, "ubik-adt-new-%d", i);
-                if (res < 0)
-                        return ubik_raise(ERR_NO_MEMORY, "adt new name alloc");
-
-                err = ubik_internal_native_uri(&uri, func_name);
-                free(func_name);
-                if (err != OK)
-                        return err;
-
-                err = ubik_env_set(env, uri, graph, type);
-                ubik_uri_free(uri);
-                if (err != OK)
-                        return err;
-        }
-
-        return OK;
-}
-
-no_ignore static ubik_error
-_native_adt_ctor_matches(struct ubik_exec_graph *gexec)
+no_ignore ubik_error
+ctor_matches(struct ubik_exec_graph *gexec)
 {
         struct ubik_value *inst;
         struct ubik_value *match_name;
@@ -169,40 +128,8 @@ _native_adt_ctor_matches(struct ubik_exec_graph *gexec)
         return OK;
 }
 
-ubik_error
-_register_adt_ctor_matches(struct ubik_env *env, struct ubik_workspace *ws)
-{
-        struct ubik_value *graph;
-        struct ubik_uri *uri;
-        struct ubik_value *type;
-        ubik_error err;
-
-        graph = NULL;
-        err = ubik_internal_native_create_op(
-                &graph, 2, _native_adt_ctor_matches, ws);
-        if (err != OK)
-                return err;
-
-        err = ubik_value_new(&type, ws);
-        if (err != OK)
-                return err;
-        type->gc.runtime_managed = true;
-        type->type = UBIK_TYP;
-
-        err = ubik_internal_native_uri(&uri, "ubik-adt-ctor-matches?");
-        if (err != OK)
-                return err;
-
-        err = ubik_env_set(env, uri, graph, type);
-        ubik_uri_free(uri);
-        if (err != OK)
-                return err;
-
-        return OK;
-}
-
-no_ignore static ubik_error
-_native_adt_get(struct ubik_exec_graph *gexec)
+no_ignore ubik_error
+adt_get(struct ubik_exec_graph *gexec)
 {
         struct ubik_value *inst;
         struct ubik_value *index_val;
@@ -231,33 +158,69 @@ _native_adt_get(struct ubik_exec_graph *gexec)
         return OK;
 }
 
+#define rcast (struct ubik_native_record)
+#define TYPEBUF_SIZE 512
+
 ubik_error
-_register_adt_get(struct ubik_env *env, struct ubik_workspace *ws)
+__ubik_install(struct ubik_vector *hooks, struct ubik_alloc_region *region)
 {
-        struct ubik_value *graph;
-        struct ubik_uri *uri;
-        struct ubik_value *type;
+        struct ubik_native_record *r;
         ubik_error err;
+        size_t i;
+        size_t j;
+        size_t k;
+        char typebuf[TYPEBUF_SIZE];
+        char *funcname;
 
-        graph = NULL;
-        err = ubik_internal_native_create_op(&graph, 2, _native_adt_get, ws);
+        ubik_alloc1(&r, struct ubik_native_record, region);
+        *r = rcast {
+                "ubik-adt-ctor-matches?", 2, "String -> a -> Boolean",
+                NULL, ctor_matches
+        };
+        err = ubik_vector_append(hooks, r);
         if (err != OK)
                 return err;
 
-        err = ubik_value_new(&type, ws);
-        if (err != OK)
-                return err;
-        type->gc.runtime_managed = true;
-        type->type = UBIK_TYP;
-
-        err = ubik_internal_native_uri(&uri, "ubik-adt-get");
+        ubik_alloc1(&r, struct ubik_native_record, region);
+        *r = rcast {
+                "ubik-adt-get", 2, "Number -> a -> b", NULL, adt_get
+        };
+        err = ubik_vector_append(hooks, r);
         if (err != OK)
                 return err;
 
-        err = ubik_env_set(env, uri, graph, type);
-        ubik_uri_free(uri);
-        if (err != OK)
-                return err;
+        for (i = 0; i < UBIK_MAX_ADT_FIELDS; i++)
+        {
+                memset(typebuf, 0x00, TYPEBUF_SIZE);
+                memcpy(typebuf, "t -> String", strlen("t -> String"));
+                for (j = 0; j < i; j++)
+                {
+                        strcat(typebuf, " -> arg-0");
+                        k = strlen(typebuf) - 1;
+                        /* assigns a simple single-char encoding to
+                         * each argument, counting from 0 to 9, then a
+                         * to z, then A to Z. */
+                        if (j < 10) typebuf[k] += j;
+                        else if (j < 26 + 10) typebuf[k] = 'a' + j - 10;
+                        else if (j < 26 + 26 + 10) typebuf[k] = 'A' + j - 36;
+                        else return ubik_raise(
+                                ERR_SYSTEM, "too many adt fields to encode");
+                }
+
+                ubik_asprintf(&funcname, region, "ubik-adt-new-%" PRIu64, i);
+
+                ubik_alloc1(&r, struct ubik_native_record, region);
+                *r = rcast {
+                        funcname,
+                        i + 2,
+                        ubik_strdup(typebuf, region),
+                        NULL,
+                        adt_new
+                };
+                err = ubik_vector_append(hooks, r);
+                if (err != OK)
+                        return err;
+        }
 
         return OK;
 }
