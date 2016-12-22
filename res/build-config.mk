@@ -14,5 +14,5 @@ ifneq ($(sanitize),no)
 endif
 endif
 
-LDFLAGS := $(LDFLAGS) -rdynamic -ldl
+LDFLAGS := $(LDFLAGS) -rdynamic -ldl -pthread
 LINK_LIBUBIK = -Wl,--whole-archive $(top)/libubik/libubik.a -Wl,--no-whole-archive

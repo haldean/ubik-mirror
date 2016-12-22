@@ -17,7 +17,6 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#ifndef UBIK_RECKLESS
 #include <stdio.h>
 #include <stdlib.h>
 #include "ubik/util.h"
@@ -43,8 +42,3 @@ break_on_assert();
                 exit(EXIT_FAILURE);                                     \
                 __builtin_unreachable();                                \
         } while (0)
-
-#else
-#define ubik_assert(x)
-#define ubik_unreachable(msg)
-#endif

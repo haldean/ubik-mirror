@@ -29,11 +29,17 @@
 #define ENV_INIT_CAP 8
 #define ENV_CAP_SCALE 2
 
-static struct ubik_env root;
-
 struct ubik_env *
 ubik_env_get_root()
 {
+        static bool root_initialized = false;
+        static struct ubik_env root;
+
+        if (!root_initialized)
+        {
+                root_initialized = true;
+                ubik_rwlock_init(&root.lock);
+        }
         return &root;
 }
 
@@ -45,6 +51,7 @@ ubik_env_init(struct ubik_env *env)
         env->cap = 0;
         env->parent = ubik_env_get_root();
         env->watches = NULL;
+        ubik_rwlock_init(&env->lock);
         return OK;
 }
 
@@ -62,6 +69,8 @@ ubik_env_make_child(struct ubik_env *child, struct ubik_env *parent)
 no_ignore ubik_error
 ubik_env_free(struct ubik_env *env)
 {
+        ubik_rwlock_write(&env->lock);
+
         struct ubik_env_watch_list *to_free;
         size_t i;
 
@@ -90,6 +99,9 @@ ubik_env_free(struct ubik_env *env)
         env->watches = NULL;
         if (env != ubik_env_get_root())
                 env->parent = ubik_env_get_root();
+
+        ubik_rwlock_release(&env->lock);
+        ubik_rwlock_destroy(&env->lock);
         return OK;
 }
 
@@ -101,6 +113,8 @@ ubik_env_iterate(
 {
         ubik_error err;
         size_t i;
+
+        ubik_rwlock_read(&env->lock);
 
         for (i = 0; i < env->cap; i++)
         {
@@ -125,6 +139,8 @@ ubik_env_get(
         size_t probed;
         size_t h;
         bool found;
+
+        ubik_rwlock_read(&env->lock);
 
         found = false;
 
@@ -167,6 +183,8 @@ ubik_env_present(
         struct ubik_uri *uri)
 {
         ubik_error err;
+
+        ubik_rwlock_read(&env->lock);
 
         err = ubik_env_get(NULL, NULL, env, uri);
         if (err == OK)
@@ -349,6 +367,7 @@ ubik_env_set(
         struct ubik_value *value,
         struct ubik_value *type)
 {
+        ubik_rwlock_write(&env->lock);
         return _set(env, uri, value, type, false);
 }
 
@@ -359,6 +378,7 @@ ubik_env_overwrite(
         struct ubik_value *value,
         struct ubik_value *type)
 {
+        ubik_rwlock_write(&env->lock);
         return _set(env, uri, value, type, true);
 }
 
@@ -371,6 +391,7 @@ ubik_env_watch(
 {
         struct ubik_env_watch *watcher;
         struct ubik_env_watch_list *watchlist;
+        ubik_rwlock_write(&env->lock);
 
         watcher = calloc(1, sizeof(struct ubik_env_watch));
         if (watcher == NULL)

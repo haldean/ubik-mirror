@@ -23,6 +23,7 @@ c_sources = \
     ./rt/eval.c \
     ./rt/mem.c \
     ./rt/rat.c \
+    ./rt/rwlock.c \
     ./rt/schedule.c \
     ./rt/str.c \
     ./rt/timer.c \

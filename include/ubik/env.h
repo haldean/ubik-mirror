@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include "ubik/rwlock.h"
 #include "ubik/ubik.h"
 #include "ubik/uri.h"
 
@@ -73,6 +74,7 @@ struct ubik_env
         struct ubik_env *parent;
 
         struct ubik_env_watch_list *watches;
+        struct ubik_rwlock lock;
 };
 
 /* Initializes a new environment struct. */
