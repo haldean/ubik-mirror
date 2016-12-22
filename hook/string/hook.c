@@ -80,8 +80,6 @@ humanize(struct ubik_exec_graph *gexec)
         return OK;
 }
 
-#define rcast (struct ubik_hook)
-
 ubik_error
 __ubik_install(struct ubik_vector *hooks, struct ubik_alloc_region *region)
 {
@@ -89,13 +87,13 @@ __ubik_install(struct ubik_vector *hooks, struct ubik_alloc_region *region)
         ubik_error err;
 
         ubik_alloc1(&r, struct ubik_hook, region);
-        *r = rcast { "concat", 2, "String -> String -> String", NULL, concat };
+        *r = (struct ubik_hook) { "concat", 2, "String -> String -> String", NULL, concat };
         err = ubik_vector_append(hooks, r);
         if (err != OK)
                 return err;
 
         ubik_alloc1(&r, struct ubik_hook, region);
-        *r = rcast { "humanize", 1, "a -> String", NULL, humanize };
+        *r = (struct ubik_hook) { "humanize", 1, "a -> String", NULL, humanize };
         err = ubik_vector_append(hooks, r);
         if (err != OK)
                 return err;

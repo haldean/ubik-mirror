@@ -158,7 +158,6 @@ adt_get(struct ubik_exec_graph *gexec)
         return OK;
 }
 
-#define rcast (struct ubik_hook)
 #define TYPEBUF_SIZE 512
 
 ubik_error
@@ -173,7 +172,7 @@ __ubik_install(struct ubik_vector *hooks, struct ubik_alloc_region *region)
         char *funcname;
 
         ubik_alloc1(&r, struct ubik_hook, region);
-        *r = rcast {
+        *r = (struct ubik_hook) {
                 "ubik-adt-ctor-matches?", 2, "String -> a -> Boolean",
                 NULL, ctor_matches
         };
@@ -182,7 +181,7 @@ __ubik_install(struct ubik_vector *hooks, struct ubik_alloc_region *region)
                 return err;
 
         ubik_alloc1(&r, struct ubik_hook, region);
-        *r = rcast {
+        *r = (struct ubik_hook) {
                 "ubik-adt-get", 2, "Number -> a -> b", NULL, adt_get
         };
         err = ubik_vector_append(hooks, r);
@@ -210,7 +209,7 @@ __ubik_install(struct ubik_vector *hooks, struct ubik_alloc_region *region)
                 ubik_asprintf(&funcname, region, "ubik-adt-new-%" PRIu64, i);
 
                 ubik_alloc1(&r, struct ubik_hook, region);
-                *r = rcast {
+                *r = (struct ubik_hook) {
                         funcname,
                         i + 2,
                         ubik_strdup(typebuf, region),

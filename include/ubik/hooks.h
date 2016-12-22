@@ -39,6 +39,7 @@ extern struct ubik_vector ubik_hooks;
 
 typedef ubik_error(*ubik_hook_installer)(
         struct ubik_vector *, struct ubik_alloc_region *);
+
 typedef void(*ubik_hook_uninstaller)();
 
 no_ignore ubik_error
