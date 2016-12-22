@@ -18,7 +18,7 @@ all: $(tests)
 	$(BASH) ../run_tests.sh $(shell pwd)/runner.sh $(tests)
 
 $(tests): %-test: %.c ../../libubik/libubik.a
-	$(CC) -o $@ $(CFLAGS) $(LDFLAGS) $< ../../libubik/libubik.a
+	$(CC) -o $@ $(CFLAGS) $(LDFLAGS) $< $(LINK_LIBUBIK)
 
 clean:
 	rm -f $(tests)

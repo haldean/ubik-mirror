@@ -1,3 +1,4 @@
+top ?= .
 AWK ?= gawk
 BASH ?= bash
 BISON ?= bison
@@ -13,5 +14,5 @@ ifneq ($(sanitize),no)
 endif
 endif
 
-LDFLAGS := $(LDFLAGS) -rdynamic -ldl
-
+LDFLAGS := $(LDFLAGS) -rdynamic -ldl -Wl,--export-dynamic
+LINK_LIBUBIK = -Wl,--whole-archive $(top)/libubik/libubik.a -Wl,--no-whole-archive

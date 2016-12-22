@@ -50,8 +50,7 @@ c_sources = \
     ./shared/uri.c \
     ./shared/util.c \
     ./shared/value.c \
-    ./shared/vector.c \
-    ./shared/natives/native-adt.c
+    ./shared/vector.c
 
 CFLAGS := $(CFLAGS) -Itree -I.
 objects = $(patsubst %.c,%.o,$(c_sources))
