@@ -114,7 +114,7 @@ ubik_env_iterate(
         ubik_error err;
         size_t i;
 
-        ubik_rwlock_read(&env->lock);
+        ubik_rwlock_read_scope(&env->lock);
 
         for (i = 0; i < env->cap; i++)
         {
@@ -140,7 +140,7 @@ ubik_env_get(
         size_t h;
         bool found;
 
-        ubik_rwlock_read(&env->lock);
+        ubik_rwlock_read_scope(&env->lock);
 
         found = false;
 
@@ -184,7 +184,7 @@ ubik_env_present(
 {
         ubik_error err;
 
-        ubik_rwlock_read(&env->lock);
+        ubik_rwlock_read_scope(&env->lock);
 
         err = ubik_env_get(NULL, NULL, env, uri);
         if (err == OK)
@@ -367,7 +367,7 @@ ubik_env_set(
         struct ubik_value *value,
         struct ubik_value *type)
 {
-        ubik_rwlock_write(&env->lock);
+        ubik_rwlock_write_scope(&env->lock);
         return _set(env, uri, value, type, false);
 }
 
@@ -378,7 +378,7 @@ ubik_env_overwrite(
         struct ubik_value *value,
         struct ubik_value *type)
 {
-        ubik_rwlock_write(&env->lock);
+        ubik_rwlock_write_scope(&env->lock);
         return _set(env, uri, value, type, true);
 }
 
@@ -391,7 +391,7 @@ ubik_env_watch(
 {
         struct ubik_env_watch *watcher;
         struct ubik_env_watch_list *watchlist;
-        ubik_rwlock_write(&env->lock);
+        ubik_rwlock_write_scope(&env->lock);
 
         watcher = calloc(1, sizeof(struct ubik_env_watch));
         if (watcher == NULL)

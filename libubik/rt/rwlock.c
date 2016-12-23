@@ -25,7 +25,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#define RWLOCK_DEBUG 1
+#define RWLOCK_DEBUG 0
 
 #define MAX_ATTEMPTS 8
 
