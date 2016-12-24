@@ -1,0 +1,5 @@
+~ ubik-tests/list-range
+
+` list
+
+! emit (humanize-list (range 0 10))
