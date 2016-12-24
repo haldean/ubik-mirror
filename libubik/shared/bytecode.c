@@ -45,6 +45,12 @@ read_ref(
         READ_INTO(i, in);
         i = ntohw(i);
 
+        if (i == 0)
+        {
+                *ref = 0;
+                return OK;
+        }
+
         while (i >= root->n)
         {
                 i -= root->n;
@@ -200,12 +206,14 @@ read_value(
 
         v->dbg.used = false;
         READ_INTO(t32, in);
+        t32 = ntohl(t32);
         if (t32 != 0)
         {
                 v->dbg.line = t32 & 0xFFFF;
                 v->dbg.col = (t32 >> 16) & 0xFF;
                 v->dbg.used = true;
                 READ_INTO(t64, in);
+                t64 = ntohw(t64);
                 ubik_galloc((void **) &v->dbg.name, t64 + 1, sizeof(char));
                 read = ubik_stream_read(v->dbg.name, in, t64);
                 if (read != t64)
@@ -445,7 +453,10 @@ write_ref(
         struct ubik_value *v)
 {
         ubik_word i;
-        i = htonw(v->gc.id);
+        if (v == NULL)
+                i = 0;
+        else
+                i = htonw(v->gc.id);
         WRITE_INTO(out, i);
         return OK;
 }
@@ -561,7 +572,7 @@ write_value(
         uint8_t t8;
         ubik_word i, j;
         ubik_error err;
-        size_t written;
+        size_t written, len;
         struct ubik_typ_ctor *ctor;
 
         if (v->gc.runtime_managed)
@@ -580,11 +591,13 @@ write_value(
         if (v->dbg.used)
         {
                 t32 = v->dbg.col << 16 | v->dbg.line;
+                t32 = htonl(t32);
                 WRITE_INTO(out, t32);
-                t64 = strlen(v->dbg.name);
+                len = strlen(v->dbg.name);
+                t64 = htonw(len);
                 WRITE_INTO(out, t64);
-                written = ubik_stream_write(out, v->dbg.name, t64);
-                if (written != t64)
+                written = ubik_stream_write(out, v->dbg.name, len);
+                if (written != len)
                         return ubik_raise(ERR_WRITE_FAILED, "string data");
         }
         else
