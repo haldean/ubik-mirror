@@ -160,12 +160,6 @@ free_value(struct ubik_value *v)
         case UBIK_TYP:
                 switch (v->typ.t)
                 {
-                case UBIK_TYPE_STR:
-                case UBIK_TYPE_RAT:
-                case UBIK_TYPE_BOO:
-                case UBIK_TYPE_APP:
-                        return;
-
                 case UBIK_TYPE_ADT:
                         for (i = 0; i < v->typ.adt.n_ctors; i++)
                         {
@@ -173,6 +167,16 @@ free_value(struct ubik_value *v)
                                 free(v->typ.adt.ctors[i].arg_types);
                         }
                         free(v->typ.adt.ctors);
+                        for (i = 0; i < v->typ.adt.n_params; i++)
+                                free(v->typ.adt.params[i].data);
+                        free(v->typ.adt.params);
+                        return;
+
+                case UBIK_TYPE_STR:
+                case UBIK_TYPE_RAT:
+                case UBIK_TYPE_BOO:
+                case UBIK_TYPE_APP:
+                        return;
                 }
 
         case UBIK_BOO:

@@ -17,6 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -45,10 +46,6 @@ adt_typ(
         if (err != OK)
                 return err;
 
-        src_params = t->adt.params;
-        if (src_params != NULL)
-                return ubik_raise(ERR_NOT_IMPLEMENTED, "no params on ADTs yet");
-
         src_constraints = t->adt.constraints;
         if (src_constraints != NULL)
                 return ubik_raise(
@@ -57,6 +54,12 @@ adt_typ(
         res->type = UBIK_TYP;
         res->typ.t = UBIK_TYPE_ADT;
         res->typ.adt.n_ctors = 0;
+
+        for (src_params = t->adt.params;
+             src_params != NULL; src_params = src_params->next)
+                res->typ.adt.n_params++;
+        res->typ.adt.params = calloc(
+                res->typ.adt.n_params, sizeof(struct ubik_str));
 
         for (src_ctors = t->adt.ctors;
              src_ctors != NULL; src_ctors = src_ctors->next)
@@ -93,6 +96,14 @@ adt_typ(
                 }
         }
 
+        for (src_params = t->adt.params, i = 0;
+             src_params != NULL && i < res->typ.adt.n_params;
+             src_params = src_params->next, i++)
+        {
+                res->typ.adt.params[i].data = strdup(src_params->name);
+                res->typ.adt.params[i].length = strlen(src_params->name);
+        }
+
         *res_ptr = res;
 
         return OK;
@@ -105,6 +116,7 @@ cleanup:
                         free(res->typ.adt.ctors[j].arg_types);
         }
         free(res->typ.adt.ctors);
+        free(res->typ.adt.params);
         ubik_value_release(res, ws);
         return err;
 }
