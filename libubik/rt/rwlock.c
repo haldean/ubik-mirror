@@ -19,6 +19,7 @@
 
 #include "ubik/assert.h"
 #include "ubik/rwlock.h"
+#include "ubik/util.h"
 
 #include <errno.h>
 #include <inttypes.h>
@@ -26,7 +27,6 @@
 #include <string.h>
 
 #define RWLOCK_DEBUG 0
-
 #define MAX_ATTEMPTS 8
 
 #define retry_loop(op, opname)                                               \
@@ -36,6 +36,8 @@
         if (__err != 0)                                                      \
                 printf(opname " failed: %s (%d)\n", strerror(__err), __err); \
         ubik_assert(__err == 0);
+
+#if !UBIK_SINGLETHREAD
 
 void
 ubik_rwlock_init(struct ubik_rwlock *rwl)
@@ -88,6 +90,16 @@ ubik_rwlock_destroy(struct ubik_rwlock *rwl)
          * are given by POSIX. */
         ubik_assert(pthread_rwlock_destroy(&rwl->p) == 0);
 }
+
+#else
+
+void ubik_rwlock_init(struct ubik_rwlock *rwl) { unused(rwl); }
+void ubik_rwlock_read(struct ubik_rwlock *rwl) { unused(rwl); }
+void ubik_rwlock_write(struct ubik_rwlock *rwl) { unused(rwl); }
+void ubik_rwlock_release(struct ubik_rwlock *rwl) { unused(rwl); }
+void ubik_rwlock_destroy(struct ubik_rwlock *rwl) { unused(rwl); }
+
+#endif
 
 void
 __ubik_rwguard_finish(struct __ubik_rwguard *rwg)

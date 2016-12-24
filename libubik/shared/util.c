@@ -24,6 +24,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/syscall.h>
 #include <unistd.h>
 
 #ifdef __GLIBC__
@@ -159,4 +160,10 @@ ubik_check_add(ubik_word *res, ubik_word w1, ubik_word w2)
 #else
 #error compiler does not support __builtin_uaddl_overflow
 #endif
+}
+
+int64_t
+ubik_gettid()
+{
+        return (int64_t) syscall(SYS_gettid);
 }

@@ -6,6 +6,7 @@ tests = \
 	env-test \
 	generator-test \
 	host_to_net-test \
+	parenv-test \
 	path_concat-test \
 	pointer_set-test \
 	rat-test \

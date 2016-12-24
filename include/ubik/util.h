@@ -58,3 +58,7 @@ ubik_word_explain(ubik_word);
    not overflow. */
 no_ignore ubik_error
 ubik_check_add(ubik_word *res, ubik_word w1, ubik_word w2);
+
+/* Returns a unique ID for the current thread */
+int64_t
+ubik_gettid();
