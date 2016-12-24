@@ -184,6 +184,9 @@ dis(struct ubik_stream *s, struct ubik_value *v)
                                      v->typ.app.arg->gc.id,
                                      v->typ.app.res->gc.id);
                         return;
+                case UBIK_TYPE_VAR:
+                        ubik_fprintf(s, "var\n%" PRIuPTR "\n", v->typ.var.id);
+                        return;
                 default:
                         ubik_fprintf(s, "unknown %d\n", v->typ.t);
                         return;

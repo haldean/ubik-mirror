@@ -292,6 +292,11 @@ read_value(
                 case UBIK_TYPE_BOO:
                         return OK;
 
+                case UBIK_TYPE_VAR:
+                        READ_INTO(t64, in);
+                        v->typ.var.id = ntohw(t64);
+                        return OK;
+
                 case UBIK_TYPE_APP:
                         err = read_ref(&v->typ.app.arg, in, root);
                         if (err != OK)
@@ -663,6 +668,11 @@ write_value(
                 case UBIK_TYPE_STR:
                 case UBIK_TYPE_RAT:
                 case UBIK_TYPE_BOO:
+                        return OK;
+
+                case UBIK_TYPE_VAR:
+                        t64 = htonw(v->typ.var.id);
+                        WRITE_INTO(out, t64);
                         return OK;
 
                 case UBIK_TYPE_APP:

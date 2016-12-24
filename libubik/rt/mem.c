@@ -176,6 +176,7 @@ free_value(struct ubik_value *v)
                 case UBIK_TYPE_RAT:
                 case UBIK_TYPE_BOO:
                 case UBIK_TYPE_APP:
+                case UBIK_TYPE_VAR:
                         return;
                 }
 

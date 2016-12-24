@@ -153,6 +153,9 @@ ubik_value_eq(struct ubik_value *v1, struct ubik_value *v2)
                 case UBIK_TYPE_RAT:
                         return true;
 
+                case UBIK_TYPE_VAR:
+                        return v1->typ.var.id == v2->typ.var.id;
+
                 case UBIK_TYPE_APP:
                         return ubik_value_eq(v1->typ.app.arg, v2->typ.app.arg) &&
                                ubik_value_eq(v1->typ.app.res, v2->typ.app.res);
@@ -258,6 +261,10 @@ ubik_value_humanize(char **res, size_t *res_len, struct ubik_value *v)
                 case UBIK_TYPE_APP:
                         *res = strdup("type=app (details not implemented)");
                         *res_len = strlen(*res);
+                        return OK;
+                case UBIK_TYPE_VAR:
+                        *res_len = asprintf(
+                                res, "type=var(%" PRIuPTR ")", v->typ.var.id);
                         return OK;
                 }
                 ubik_unreachable("unknown type type");

@@ -108,6 +108,8 @@ enum ubik_rt_type
         UBIK_TYPE_ADT = 4,
         /* applyable (these are callable functions) */
         UBIK_TYPE_APP = 5,
+        /* a type variable */
+        UBIK_TYPE_VAR = 6,
 };
 
 struct ubik_str
@@ -180,6 +182,10 @@ struct ubik_typ
                         struct ubik_str *params;
                         size_t n_params;
                 } adt;
+                struct
+                {
+                        size_t id;
+                } var;
         };
 };
 
