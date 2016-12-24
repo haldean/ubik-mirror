@@ -16,14 +16,14 @@
     ^ List a -> a -> Boolean
     = \lst x -> ? lst {
         . Cons head tail => (? {
-            . eq head x => True
+            . eq head x => true
             .           => contains tail x
         })
-        . Nil => False
+        . Nil => false
     }
 
 : humanize-list
-    ^ List a -> List a
+    ^ List a -> String
     = \lst -> {
         : rec = \x -> ? x {
             . Cons a xs => (
@@ -33,3 +33,9 @@
         ! concat "[" (concat (rec lst) "]")
     }
 
+: range
+    ^ Number -> Number -> List Number
+    = \start end -> ? {
+        . eq start end => Nil
+        . => Cons start (range (+ start 1) end)
+    }
