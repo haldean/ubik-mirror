@@ -20,16 +20,6 @@
 - when the project is made. Lines that begin with - are ignored. The format is
 - "  packed.NAME_OF_CONSTANT"; the packed value must be 8 characters long.
 
-    word.BASE_TYPE_WORD
-   sword.BASE_TYPE_SWORD
-  packed.BASE_TYPE_PACKED
-  lambda.BASE_TYPE_FUNC
-    bool.BASE_TYPE_BOOL
-   float.BASE_TYPE_FLOAT
-   tuple.BASE_TYPE_TUPLE
-
-    char.PACK_TYPE_CHAR
-
    rfile.STREAM_TYPE_FILE_R
    wfile.STREAM_TYPE_FILE_W
   buffer.STREAM_TYPE_BUFFER
@@ -60,19 +50,7 @@ eundrflw.ERR_UNDERFLOW
  ebadver.ERR_UNSUPPORTED_VERSION
   ewfail.ERR_WRITE_FAILED
 
-   apply.NODE_APPLY
-    cond.NODE_COND
-   input.NODE_INPUT
-    load.NODE_LOAD
-  native.NODE_NATIVE
-     ref.NODE_REF
-   store.NODE_STORE
-   value.NODE_VALUE
-
   native.SCOPE_NATIVE
  package.SCOPE_PACKAGE
  userdef.SCOPE_USER_DEFINED
  unknown.SCOPE_UNKNOWN
-
-    uadd.NATIVE_UNSIGNED_ADD
-    sadd.NATIVE_SIGNED_ADD
