@@ -1,0 +1,16 @@
+~ ubik-tests/is-prime
+
+` *boolean
+` list
+
+: is-prime
+^ Number -> Number
+= \x -> {
+    : divisors = list:range 2 (- x 1)
+    ! any (list:map (\y -> eq (% x y) 0) divisors)
+}
+
+! emit (? {
+    . is-prime 7 => "7 is prime!\n"
+    .            => "7 isn't prime?!\n"
+})

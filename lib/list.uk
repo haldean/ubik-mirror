@@ -1,5 +1,5 @@
 ~ list
-+ *boolean
+` *boolean
 
 ^ List a
     = Cons a (List a)
