@@ -159,8 +159,14 @@ create_import_request(
 
         err = OK;
 
+        if (cenv->debug)
+                printf("searching for source for \"%s\"\n", name);
+
         for (i = 0; i < cenv->n_include_dirs; i++)
         {
+                if (cenv->debug)
+                        printf("\tchecking directory \"%s\"\n",
+                                cenv->include_dirs[i]);
                 test_dir = opendir(cenv->include_dirs[i]);
                 if (test_dir == NULL)
                 {
@@ -171,6 +177,8 @@ create_import_request(
                 while ((test_f = readdir(test_dir)) != NULL)
                 {
                         ubik_local_region(r);
+                        if (cenv->debug)
+                                printf("\tchecking \"%s\"\n", test_f->d_name);
 
                         if (!ubik_string_endswith(test_f->d_name, ".uk"))
                                 continue;
