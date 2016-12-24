@@ -148,10 +148,11 @@ ubik_typesystem_load(
                 ubik_alloc1(&tst, struct ts_type, tsys->region);
                 tst->name = ubik_strdup(t->name, tsys->region);
                 tst->package = ubik_strdup(ast->package_name, tsys->region);
-                err = ubik_typ_from_ast(&tst->v, t, tsys, req->workspace);
+                /* add to list first, to enable recursive type definitions */
+                err = ubik_vector_append(&tsys->types, tst);
                 if (err != OK)
                         return err;
-                err = ubik_vector_append(&tsys->types, tst);
+                err = ubik_typ_from_ast(&tst->v, t, tsys, req->workspace);
                 if (err != OK)
                         return err;
         }
@@ -723,6 +724,7 @@ ubik_typesystem_get(
                 *res = t->v;
                 return OK;
         }
+        printf("failed to find type %s:%s\n", package, name);
         return ubik_raise(
                 ERR_ABSENT, "type not found in typesystem");
 }

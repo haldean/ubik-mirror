@@ -36,10 +36,13 @@ adt_typ(
         struct ubik_type_constraints *src_constraints;
         struct ubik_ast_adt_ctors *src_ctors;
         struct ubik_type_list *src_ctor_param;
+        struct ubik_type_expr *argtype;
         struct ubik_value *res;
+        struct ubik_value *t0;
         ubik_error err;
         size_t i;
         size_t j;
+        size_t n_vars;
         unused(ws);
 
         err = ubik_value_new(&res, ws);
@@ -84,15 +87,30 @@ adt_typ(
                         res->typ.adt.ctors[i].arity,
                         sizeof(struct ubik_value *));
 
+                n_vars = 0;
                 for (src_ctor_param = src_ctors->params, j = 0;
                      src_ctor_param != NULL;
                      src_ctor_param = src_ctor_param->next, j++)
                 {
-                        err = ubik_typesystem_get_from_expr(
-                                &res->typ.adt.ctors[i].arg_types[j],
-                                tsys, src_ctor_param->type_expr, ws);
-                        if (err != OK)
-                                goto cleanup;
+                        argtype = src_ctor_param->type_expr;
+                        if (argtype->type_expr_type == TYPE_EXPR_VAR)
+                        {
+                                err = ubik_value_new(&t0, ws);
+                                if (err != OK)
+                                        return err;
+                                t0->type = UBIK_TYP;
+                                t0->typ.t = UBIK_TYPE_VAR;
+                                t0->typ.var.id = n_vars++;
+                                res->typ.adt.ctors[i].arg_types[j] = t0;
+                        }
+                        else
+                        {
+                                err = ubik_typesystem_get_from_expr(
+                                        &res->typ.adt.ctors[i].arg_types[j],
+                                        tsys, argtype, ws);
+                                if (err != OK)
+                                        goto cleanup;
+                        }
                 }
         }
 
