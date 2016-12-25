@@ -157,6 +157,8 @@ read_lit(void *vdst, struct ubik_generator *gen, size_t len)
         ls = asls(gen);
         dst_filled = 0;
 
+        memset(dst, 0x00, len);
+
         if (ls->raw)
         {
                 while (dst_filled < len)
@@ -164,7 +166,7 @@ read_lit(void *vdst, struct ubik_generator *gen, size_t len)
                         to_copy = size_min(
                                 len - dst_filled,
                                 ls->buf_end - ls->buf_loc);
-                        memcpy(dst, &ls->buf[ls->buf_loc], to_copy);
+                        memcpy(dst + dst_filled, &ls->buf[ls->buf_loc], to_copy);
 
                         ls->buf_loc += to_copy;
                         dst_filled += to_copy;
