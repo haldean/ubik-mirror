@@ -31,9 +31,15 @@
 /* this is less innocuous, but there's not much I can do about it. */
 #pragma GCC diagnostic ignored "-Wsign-compare"
 
-#define TOKEN(x) { yylval->token = x; return x; }
+#define PRINT_TOKENS 0
+
+#define TOKEN(x) { \
+        if (PRINT_TOKENS) printf(#x "\n"); \
+        yylval->token = x; \
+        return x; }
 #define TSTRING(token) { \
         yylval->string = ubik_strdup(yytext, ctx->region); \
+        if (PRINT_TOKENS) printf(#token ": %s\n", yytext); \
         return token; \
 }
 
