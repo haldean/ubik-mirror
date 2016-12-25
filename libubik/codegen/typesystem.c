@@ -744,8 +744,14 @@ ubik_typesystem_get_from_expr(
                 /* TODO: should have package! */
                 return ubik_typesystem_get(res, tsys, t->name, NULL);
 
-        case TYPE_EXPR_APPLY:
         case TYPE_EXPR_VAR:
+                return ubik_raise(
+                        ERR_BAD_TYPE, "cannot get variable from typesystem");
+
+        case TYPE_EXPR_APPLY:
+                return ubik_typesystem_get_from_expr(
+                        res, tsys, t->apply.head, ws);
+
         case TYPE_EXPR_CONSTRAINED:
                 return ubik_raise(
                         ERR_NOT_IMPLEMENTED, "complicated type expr lookup");
