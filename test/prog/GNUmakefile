@@ -30,6 +30,7 @@ tests = \
 	scope.uk \
 	scope-simple.uk \
 	simple-adt.uk \
+	simple-test.uk \
 	zero-arity.uk
 
 all: $(tests)

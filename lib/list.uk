@@ -11,9 +11,9 @@
         . Cons head tail => Cons head (append tail x)
         . Nil => Cons x Nil
     }
-?: (append 5 Nil) (Cons 5 Nil)
-?: (append Nil Nil) (Cons Nil Nil)
-?: (append 5 (Cons 3 (Cons 8 Nil)) (Cons 3 (Cons 8 (Cons 5 Nil)))
+?: append 5 Nil = Cons 5 Nil
+?: append Nil Nil = Cons Nil Nil
+?: append 5 (Cons 3 (Cons 8 Nil) = Cons 3 (Cons 8 (Cons 5 Nil))
 
 : contains
     ^ List a -> a -> Boolean
@@ -24,10 +24,10 @@
         })
         . Nil => false
     }
-?: (contains (Cons "a" (Cons "hello" (Cons "world" Nil))) "hello") true
-?: (contains (Cons "a" (Cons "hello" (Cons "world" Nil))) "foobar") false
-?: (contains Nil "nope") false
-?: (contains Nil Nil) false
+?: contains (Cons "a" (Cons "hello" (Cons "world" Nil))) "hello" = true
+?: contains (Cons "a" (Cons "hello" (Cons "world" Nil))) "foobar" = false
+?: contains Nil "nope" = false
+?: contains Nil Nil = false
 
 : humanize-list
     ^ List a -> String
@@ -39,8 +39,8 @@
         }
         ! concat "[" (concat (rec lst) "]")
     }
-?: (humanize-list (range 0 4)) "[ 0 1 2 3 ]"
-?: (humanize-list Nil) "[ ]"
+?: humanize-list (range 0 4) = "[ 0 1 2 3 ]"
+?: humanize-list Nil = "[ ]"
 
 : range
     ^ Number -> Number -> List Number
@@ -48,8 +48,8 @@
         . eq start end => Nil
         . => Cons start (range (+ start 1) end)
     }
-?: (range 0 3) (Cons 0 (Cons 1 (Cons 2 Nil)))
-?: (range 100 150) Nil
+?: range 0 3 = Cons 0 (Cons 1 (Cons 2 Nil))
+?: range 100 150 = Nil
 
 : any
     ^ List Boolean -> Boolean
@@ -60,5 +60,5 @@
             . => any tail
         })
     }
-?: (any [true false false]) true
-?: (any [false false false]) false
+?: any [true false false] = true
+?: any [false false false] = false

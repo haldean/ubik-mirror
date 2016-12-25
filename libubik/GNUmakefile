@@ -17,6 +17,7 @@ c_sources = \
     ./codegen/patterns.c \
     ./codegen/print-expr.c \
     ./codegen/resolve.c \
+    ./codegen/testing.c \
     ./codegen/token.c \
     ./codegen/types.c \
     ./codegen/typesystem.c \

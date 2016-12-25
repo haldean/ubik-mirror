@@ -179,6 +179,13 @@ struct ubik_ast_imported_binding
         struct ubik_type_expr *type;
 };
 
+struct ubik_ast_test
+{
+        struct ubik_ast_expr *actual;
+        struct ubik_ast_expr *expected;
+        struct ubik_ast_loc loc;
+};
+
 struct ubik_ast
 {
         /* members are struct ubik_ast_binding pointers */
@@ -189,6 +196,8 @@ struct ubik_ast
         struct ubik_vector interfaces;
         /* members are struct ubik_ast_implementation pointers */
         struct ubik_vector implementations;
+        /* members are struct ubik_ast_test pointers */
+        struct ubik_vector tests;
         /* to run when ast is evaluted */
         struct ubik_ast_expr *immediate;
         /* things this depends on existing */

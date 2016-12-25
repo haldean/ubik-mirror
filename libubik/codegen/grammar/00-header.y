@@ -71,6 +71,8 @@
 
         struct ubik_ast_case *case_stmt;
 
+        struct ubik_ast_test *test;
+
         union {
                 struct ubik_ast *prog;
                 struct ubik_type_expr *type_expr;
@@ -104,6 +106,7 @@
 %type <interface> interface_def
 %type <member_list> interface_members interface_member impl_member impl_members
 %type <implementation> impl_def
+%type <test> test_expr
 
 %define api.pure full
 %define api.push-pull push

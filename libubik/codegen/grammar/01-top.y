@@ -72,6 +72,12 @@ prog
         $$ = $1;
         merge_loc($$, $$, $2);
 }
+| prog test_expr
+{
+        wrap_err(ubik_vector_append(&$1->tests, $2));
+        $$ = $1;
+        merge_loc($$, $$, $2);
+}
 | %empty
 {
         ubik_ast_new(&$$, ctx->region);

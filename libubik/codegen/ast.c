@@ -182,4 +182,5 @@ ubik_ast_new(struct ubik_ast **ast, struct ubik_alloc_region *region)
         (*ast)->interfaces.region = region;
         (*ast)->implementations.region = region;
         (*ast)->imported_bindings.region = region;
+        (*ast)->tests.region = region;
 }

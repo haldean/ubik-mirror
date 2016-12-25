@@ -177,12 +177,14 @@ ubik_create_modinit(
         }
         else
         {
-                return ubik_raise(ERR_NO_DATA, "nothing to bind in modinit");
+                *modinit = NULL;
+                return OK;
         }
 
         err = ubik_value_new(modinit, ctx->workspace);
         if (err != OK)
                 return err;
+
         ubik_fun_from_vector(*modinit, &nodes, result);
         return OK;
 }
@@ -223,7 +225,8 @@ ubik_gen_graphs(
                         printf("source has no data in it\n");
                 goto cleanup_env;
         }
-        modinit->gc.root = true;
+        if (modinit != NULL)
+                modinit->gc.root = true;
 
         if (ubik_assign_emit_errors(&ctx))
         {
