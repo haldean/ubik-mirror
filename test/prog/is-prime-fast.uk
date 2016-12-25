@@ -7,7 +7,7 @@
 ^ Number -> Number
 = \x -> {
     : divisors = list:range 2 (- x 1)
-    ! any (list:map (\y -> eq (% x y) 0) divisors)
+    ! list:any (list:map (\y -> eq (% x y) 0) divisors)
 }
 
 ! emit (? {

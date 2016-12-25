@@ -1,0 +1,5 @@
+~ ubik-tests/list-range
+` list
+
+# should fail, should be list:range
+! range 0 10

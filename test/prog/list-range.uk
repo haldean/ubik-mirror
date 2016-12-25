@@ -2,4 +2,7 @@
 
 ` list
 
-! emit (humanize-list (range 0 10))
+: printed-list ^ String
+= (list:humanize-list (list:range 0 10))
+
+! emit (concat printed-list "\n")

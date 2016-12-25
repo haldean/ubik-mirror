@@ -15,6 +15,7 @@ tests = \
 	no-package.uk \
 	no-top-type.uk \
 	not-total-pred-block.uk \
+	qualified-imports.uk \
 	syntax.uk \
 	unapplyable.uk \
 	unknown-name.uk
