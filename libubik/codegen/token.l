@@ -69,6 +69,7 @@ NAME [a-z_\-][a-zA-Z0-9/_\-']*
 
 #.*                       /* swallow comments */
 
+"?:"                      TOKEN(TEST)
 "!"                       TOKEN(IMMEDIATE)
 ":"                       TOKEN(BIND)
 "^"                       TOKEN(TYPE)
