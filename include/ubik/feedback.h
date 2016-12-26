@@ -26,18 +26,19 @@ enum feedback_level
 {
         UBIK_FEEDBACK_ERR = 1,
         UBIK_FEEDBACK_WARN,
+        UBIK_FEEDBACK_SUCCESS,
 };
 
 /* Prints an error message with all location information, the given message, and
  * the contents of the line on which the error occurred. */
 void __attribute__((format(printf, 4, 5)))
-ubik_feedback_error_line(
+ubik_feedback_line(
         struct ubik_stream *s, enum feedback_level, struct ubik_ast_loc *loc,
         char *fmt, ...);
 
 /* Prints an error message with all location information and the given message. */
 void __attribute__((format(printf, 4, 5)))
-ubik_feedback_error_header(
+ubik_feedback_header(
         struct ubik_stream *s, enum feedback_level, struct ubik_ast_loc *loc,
         char *fmt, ...);
 

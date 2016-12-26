@@ -555,7 +555,7 @@ ubik_assign_emit_errors(struct ubik_assign_context *ctx)
                 switch (ass_err->err_type)
                 {
                 case ASSIGN_ERR_PRED_BLOCK_NOT_TOTAL:
-                        ubik_feedback_error_line(
+                        ubik_feedback_line(
                                 ctx->feedback,
                                 UBIK_FEEDBACK_ERR,
                                 &ass_err->loc,

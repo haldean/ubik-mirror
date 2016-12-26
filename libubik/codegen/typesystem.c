@@ -169,7 +169,7 @@ ubik_typesystem_load(
 
                 if (tsif->n_params > UBIK_MAX_INTERFACE_PARAMS)
                 {
-                        ubik_feedback_error_line(
+                        ubik_feedback_line(
                                 req->feedback,
                                 UBIK_FEEDBACK_ERR,
                                 &iface->loc,
@@ -208,7 +208,7 @@ ubik_typesystem_load(
                 }
                 if (tsim->iface == NULL && impl->iface_package == NULL)
                 {
-                        ubik_feedback_error_line(
+                        ubik_feedback_line(
                                 req->feedback,
                                 UBIK_FEEDBACK_ERR,
                                 &impl->loc,
@@ -223,7 +223,7 @@ ubik_typesystem_load(
                         type_list = type_list->next, n_params++);
                 if (n_params != tsim->iface->n_params)
                 {
-                        ubik_feedback_error_line(
+                        ubik_feedback_line(
                                 req->feedback,
                                 UBIK_FEEDBACK_ERR,
                                 &impl->loc,

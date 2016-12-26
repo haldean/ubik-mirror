@@ -105,7 +105,7 @@ ubik_package_add_to_scope(
 {
         if (ast->package_name == NULL)
         {
-                ubik_feedback_error_header(
+                ubik_feedback_header(
                         req->feedback, UBIK_FEEDBACK_ERR, &ast->loc,
                         "module does not specify a package name");
                 return ubik_raise(

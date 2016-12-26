@@ -199,7 +199,7 @@ create_import_request(
                         if (err != OK)
                         {
                                 err_loc.source_name = fullpath;
-                                ubik_feedback_error_header(
+                                ubik_feedback_header(
                                         parent->feedback,
                                         UBIK_FEEDBACK_WARN,
                                         &err_loc,
@@ -231,7 +231,7 @@ create_import_request(
                 closedir(test_dir);
         }
 
-        ubik_feedback_error_line(
+        ubik_feedback_line(
                 parent->feedback, UBIK_FEEDBACK_ERR, loc,
                 "could not find source for imported package %s", name);
         return ubik_raise(ERR_ABSENT, "couldn't find import source");

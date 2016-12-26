@@ -81,7 +81,7 @@ ubik_parse(
         }
 
         if (ctx.err_loc != NULL && feedback != NULL)
-                ubik_feedback_error_line(
+                ubik_feedback_line(
                         feedback, UBIK_FEEDBACK_ERR, ctx.err_loc, ctx.err_msg);
 
         return ubik_raise(ERR_BAD_VALUE, "could not parse input");

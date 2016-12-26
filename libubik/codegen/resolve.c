@@ -873,7 +873,7 @@ ubik_resolve(
                         switch (resolv_err->err_type)
                         {
                         case RESOLVE_ERR_NAME_NOT_FOUND:
-                                ubik_feedback_error_line(
+                                ubik_feedback_line(
                                         ctx.feedback, UBIK_FEEDBACK_ERR,
                                         &resolv_err->loc, "name not found: %s",
                                         resolv_err->name);

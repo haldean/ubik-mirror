@@ -793,7 +793,7 @@ infer_error_print(
         switch (ierr->error_type)
         {
         case INFER_ERR_APPLY_HEAD_UNAPPL:
-                ubik_feedback_error_header(
+                ubik_feedback_header(
                         ctx->req->feedback,
                         UBIK_FEEDBACK_ERR,
                         &ierr->bad_expr->loc,
@@ -810,7 +810,7 @@ infer_error_print(
                 break;
 
         case INFER_ERR_FUNC_ARG_INCOMPAT:
-                ubik_feedback_error_header(
+                ubik_feedback_header(
                         ctx->req->feedback,
                         UBIK_FEEDBACK_ERR,
                         &ierr->bad_expr->loc,
@@ -832,7 +832,7 @@ infer_error_print(
                 break;
 
         case INFER_ERR_UNTYPEABLE:
-                ubik_feedback_error_header(
+                ubik_feedback_header(
                         ctx->req->feedback,
                         UBIK_FEEDBACK_WARN,
                         &ierr->bad_expr->loc,
@@ -845,7 +845,7 @@ infer_error_print(
                 break;
 
         case INFER_ERR_BIND_TYPE:
-                ubik_feedback_error_line(
+                ubik_feedback_line(
                         ctx->req->feedback,
                         UBIK_FEEDBACK_ERR,
                         &ierr->bad_bind->loc,
@@ -863,7 +863,7 @@ infer_error_print(
                 break;
 
         case INFER_ERR_TOP_TYPE_MISSING:
-                ubik_feedback_error_line(
+                ubik_feedback_line(
                         ctx->req->feedback,
                         UBIK_FEEDBACK_ERR,
                         &ierr->bad_bind->loc,
@@ -877,7 +877,7 @@ infer_error_print(
                 break;
 
         case INFER_ERR_BLOCK_MISSING_VALUE:
-                ubik_feedback_error_line(
+                ubik_feedback_line(
                         ctx->req->feedback,
                         UBIK_FEEDBACK_ERR,
                         &ierr->bad_expr->loc,
@@ -888,7 +888,7 @@ infer_error_print(
                 break;
 
         case INFER_ERR_CASE_TAILS:
-                ubik_feedback_error_line(
+                ubik_feedback_line(
                         ctx->req->feedback,
                         UBIK_FEEDBACK_ERR,
                         &ierr->bad_expr2->loc,
@@ -905,7 +905,7 @@ infer_error_print(
                 break;
 
         case INFER_ERR_CASE_HEAD:
-                ubik_feedback_error_line(
+                ubik_feedback_line(
                         ctx->req->feedback,
                         UBIK_FEEDBACK_ERR,
                         &ierr->bad_expr2->loc,

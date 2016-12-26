@@ -21,6 +21,7 @@
 #include "ubik/assign.h"
 #include "ubik/ast.h"
 #include "ubik/env.h"
+#include "ubik/feedback.h"
 #include "ubik/fun.h"
 #include "ubik/resolve.h"
 #include "ubik/schedule.h"
@@ -91,19 +92,32 @@ test_callback(void *arg, struct ubik_scheduler *s, struct ubik_exec_unit *e)
         unused(s);
         struct test_callback_info *cb;
         struct ubik_value *res;
+        bool success;
 
         res = e->gexec->nv[e->node];
         ubik_assert(res->type == UBIK_BOO);
+        success = res->boo.value;
 
         cb = (struct test_callback_info *) arg;
-        ubik_fprintf(cb->feedback, res->boo.value ? "ok:   " : "fail: ");
-        ubik_ast_expr_pretty(cb->feedback, cb->test->actual, 0);
-        ubik_fprintf(cb->feedback, " == ");
-        ubik_ast_expr_pretty(cb->feedback, cb->test->expected, 0);
-        ubik_fprintf(cb->feedback, "\n");
 
-        if (!res->boo.value)
+        if (success)
+        {
+                ubik_feedback_header(
+                        cb->feedback, UBIK_FEEDBACK_SUCCESS, &cb->test->loc,
+                        "test passed");
+        }
+        else
+        {
+                ubik_feedback_header(
+                        cb->feedback, UBIK_FEEDBACK_ERR, &cb->test->loc,
+                        "test failed");
+                ubik_fprintf(cb->feedback, "\t\x1b[32mactual:\x1b[0m   ");
+                ubik_ast_expr_pretty(cb->feedback, cb->test->actual, 16);
+                ubik_fprintf(cb->feedback, "\n\t\x1b[32mexpected:\x1b[0m ");
+                ubik_ast_expr_pretty(cb->feedback, cb->test->expected, 16);
+                ubik_fprintf(cb->feedback, "\n");
                 *cb->mark_failed = true;
+        }
         return OK;
 }
 

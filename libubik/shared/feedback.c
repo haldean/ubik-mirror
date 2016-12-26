@@ -48,19 +48,22 @@ vheader(
         switch (lvl)
         {
         case UBIK_FEEDBACK_ERR:
-                ubik_fprintf(stream, "\x1b[31merror");
+                ubik_fprintf(stream, "\x1b[31merror:  ");
                 break;
         case UBIK_FEEDBACK_WARN:
-                ubik_fprintf(stream, "\x1b[33mwarning");
+                ubik_fprintf(stream, "\x1b[33mwarning:");
+                break;
+        case UBIK_FEEDBACK_SUCCESS:
+                ubik_fprintf(stream, "\x1b[32msuccess:");
                 break;
         }
-        ubik_fprintf(stream, ":\x1b[0m ");
+        ubik_fprintf(stream, "\x1b[0m ");
         ubik_vfprintf(stream, fmt, args);
         ubik_fprintf(stream, "\n");
 }
 
 void
-ubik_feedback_error_line(
+ubik_feedback_line(
         struct ubik_stream *stream,
         enum feedback_level lvl,
         struct ubik_ast_loc *loc,
@@ -76,7 +79,7 @@ ubik_feedback_error_line(
 }
 
 void
-ubik_feedback_error_header(
+ubik_feedback_header(
         struct ubik_stream *stream,
         enum feedback_level lvl,
         struct ubik_ast_loc *loc,
