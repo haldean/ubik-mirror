@@ -336,12 +336,24 @@ ubik_patterns_compile_all(
 {
         size_t i;
         struct ubik_ast_binding *bind;
+        struct ubik_ast_test *test;
         ubik_error err;
 
         for (i = 0; i < ast->bindings.n; i++)
         {
                 bind = ast->bindings.elems[i];
                 err = _compile_all_subexprs(bind->expr, req);
+                if (err != OK)
+                        return err;
+        }
+
+        for (i = 0; i < ast->tests.n; i++)
+        {
+                test = ast->tests.elems[i];
+                err = _compile_all_subexprs(test->actual, req);
+                if (err != OK)
+                        return err;
+                err = _compile_all_subexprs(test->expected, req);
                 if (err != OK)
                         return err;
         }
