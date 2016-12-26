@@ -17,9 +17,29 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include "ubik/ast.h"
 #include "ubik/env.h"
-#include "ubik/testing.h"
 #include "ubik/schedule.h"
+#include "ubik/string.h"
+#include "ubik/testing.h"
+#include "ubik/util.h"
+
+static no_ignore ubik_error
+compile_test(
+        struct ubik_value **v,
+        struct ubik_ast_test *test,
+        struct ubik_stream *feedback,
+        struct ubik_workspace *ws)
+{
+        unused(v);
+        unused(ws);
+        ubik_fprintf(feedback, "test: ");
+        ubik_ast_expr_pretty(feedback, test->actual, 0);
+        ubik_fprintf(feedback, " == ");
+        ubik_ast_expr_pretty(feedback, test->expected, 0);
+        ubik_fprintf(feedback, "\n");
+        return OK;
+}
 
 no_ignore ubik_error
 ubik_testing_run(struct ubik_compile_result *compiled)
@@ -45,15 +65,21 @@ ubik_testing_run(struct ubik_compile_result *compiled)
         if (err != OK)
                 return err;
 
+        err = ubik_workspace_new(&ws);
+        if (err != OK)
+                return err;
+
         for (i = 0; i < compiled->ast->tests.n; i++)
         {
                 test = (struct ubik_ast_test *) compiled->ast->tests.elems[i];
 
-                err = compile_test(&v, test, ws);
+                err = compile_test(&v, test, compiled->request->feedback, ws);
                 if (err != OK)
                         return err;
 
-                err = ubik_schedule_push(sched, v, &env, false, notify, ws);
+                if (v == NULL)
+                        continue;
+                err = ubik_schedule_push(sched, v, &env, false, NULL, ws);
                 if (err != OK)
                         return err;
         }
@@ -65,6 +91,7 @@ ubik_testing_run(struct ubik_compile_result *compiled)
         err = ubik_schedule_free(sched);
         if (err != OK)
                 return err;
+        free(sched);
 
         err = ubik_env_free(&env);
         if (err != OK)

@@ -38,6 +38,7 @@
 #include "ubik/patterns.h"
 #include "ubik/resolve.h"
 #include "ubik/string.h"
+#include "ubik/testing.h"
 #include "ubik/typesystem.h"
 #include "ubik/util.h"
 
@@ -388,6 +389,10 @@ compile_job(
         ubik_alloc1(&res, struct ubik_compile_result, &job->request->region);
         res->request = job->request;
         res->ast = job->ast;
+
+        err = ubik_testing_run(res);
+        if (err != OK)
+                return err;
 
         if (job->request->cb != NULL)
         {
