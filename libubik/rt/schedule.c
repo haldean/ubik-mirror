@@ -32,6 +32,8 @@
 #include "ubik/value.h"
 #include "ubik/vector.h"
 
+#define UBIK_SCHEDULE_STEP 0
+
 struct ubik_scheduler
 {
         struct ubik_exec_unit *wait;
@@ -655,7 +657,7 @@ _run_single_pass(struct ubik_scheduler *s)
                 return ubik_raise(ERR_DEADLOCK, "all jobs are waiting");
         }
 
-#ifdef UBIK_SCHEDULE_STEP
+#if UBIK_SCHEDULE_STEP
         err = ubik_schedule_dump(s);
         if (err != OK)
                 return err;
