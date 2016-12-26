@@ -13,7 +13,7 @@
     }
 ?: append 5 Nil = Cons 5 Nil
 ?: append Nil Nil = Cons Nil Nil
-?: append 5 (Cons 3 (Cons 8 Nil) = Cons 3 (Cons 8 (Cons 5 Nil))
+?: append 5 (Cons 3 (Cons 8 Nil)) = Cons 3 (Cons 8 (Cons 5 Nil))
 
 : contains
     ^ List a -> a -> Boolean
@@ -60,5 +60,6 @@
             . => any tail
         })
     }
-?: any [true false false] = true
-?: any [false false false] = false
+?: any (Cons true (Cons false (Cons false Nil))) = true
+?: any (Cons false (Cons false (Cons false Nil))) = false
+?: any Nil = false

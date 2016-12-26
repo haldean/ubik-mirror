@@ -370,6 +370,7 @@ infer_block(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
 {
         struct ubik_infer_error *ierr;
         struct ubik_ast_binding *bind;
+        struct ubik_ast_test *test;
         size_t i;
         ubik_error err;
 
@@ -380,6 +381,19 @@ infer_block(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
                         continue;
                 err = ubik_typesystem_apply_substs(
                         bind->type_expr, &ctx->substs);
+                if (err != OK)
+                        return err;
+        }
+
+        for (i = 0; i < expr->block->tests.n; i++)
+        {
+                test = expr->block->tests.elems[i];
+                err = ubik_typesystem_apply_substs(
+                        test->actual->type, &ctx->substs);
+                if (err != OK)
+                        return err;
+                err = ubik_typesystem_apply_substs(
+                        test->expected->type, &ctx->substs);
                 if (err != OK)
                         return err;
         }
@@ -684,6 +698,7 @@ infer_ast(
         struct ubik_type *type;
         struct ubik_ast_adt_ctors *ctor;
         struct ubik_ast_binding *bind;
+        struct ubik_ast_test *test;
         struct ubik_infer_error *ierr;
         struct ubik_typesystem_unified unified;
         size_t i;
@@ -769,6 +784,44 @@ infer_ast(
                                 if (err != OK)
                                         return err;
                         }
+                }
+        }
+
+        for (i = 0; i < ast->tests.n; i++)
+        {
+                test = ast->tests.elems[i];
+                err = infer_expr(test->actual, ctx);
+                if (err != OK)
+                        return err;
+                err = infer_expr(test->expected, ctx);
+                if (err != OK)
+                        return err;
+
+                err = ubik_typesystem_unify(
+                        &unified, ctx->type_system, ast->package_name,
+                        test->actual->type, test->expected->type,
+                        &ctx->req->region, ctx->debug);
+                if (err != OK)
+                        return err;
+                if (!unified.success)
+                {
+                        ubik_alloc1(
+                                &ierr, struct ubik_infer_error,
+                                &ctx->req->region);
+                        ierr->error_type = INFER_ERR_TEST_TYPE;
+                        ierr->bad_test = test;
+                        ierr->extra_info = unified.failure_info;
+                        err = ubik_vector_append(&ctx->errors, ierr);
+                        if (err != OK)
+                                return err;
+                        ierr = NULL;
+                }
+                else
+                {
+                        err = ubik_vector_extend(
+                                &ctx->substs, &unified.substs);
+                        if (err != OK)
+                                return err;
                 }
         }
 
@@ -859,6 +912,24 @@ infer_error_print(
                 ubik_type_expr_pretty(
                         ctx->req->feedback,
                         ierr->bad_bind->expr->type);
+                pf("\x1b[0m\n");
+                break;
+
+        case INFER_ERR_TEST_TYPE:
+                ubik_feedback_line(
+                        ctx->req->feedback,
+                        UBIK_FEEDBACK_ERR,
+                        &ierr->bad_bind->loc,
+                        "types of expected and actual values of test "
+                        "disagree");
+                pf("    type of expected value is \x1b[32m");
+                ubik_type_expr_pretty(
+                        ctx->req->feedback,
+                        ierr->bad_test->expected->type);
+                pf("\x1b[0m but actual value had type \x1b[32m");
+                ubik_type_expr_pretty(
+                        ctx->req->feedback,
+                        ierr->bad_test->actual->type);
                 pf("\x1b[0m\n");
                 break;
 

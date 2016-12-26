@@ -222,6 +222,7 @@ assign_all_initial_scopes(
 {
         size_t i;
         struct ubik_ast_binding *bind;
+        struct ubik_ast_test *test;
         ubik_error err;
 
         ubik_alloc1(&ast->scope, struct ubik_resolve_scope, ctx->region);
@@ -234,6 +235,17 @@ assign_all_initial_scopes(
         {
                 bind = ast->bindings.elems[i];
                 err = assign_initial_scopes(ctx, bind->expr, ast->scope);
+                if (err != OK)
+                        return err;
+        }
+
+        for (i = 0; i < ast->tests.n; i++)
+        {
+                test = ast->tests.elems[i];
+                err = assign_initial_scopes(ctx, test->actual, ast->scope);
+                if (err != OK)
+                        return err;
+                err = assign_initial_scopes(ctx, test->expected, ast->scope);
                 if (err != OK)
                         return err;
         }
@@ -290,6 +302,7 @@ update_scopes_with_bindings(
         struct ubik_ast_adt_ctors *ctor;
         struct ubik_ast_member_list *member;
         struct ubik_ast_interface *iface;
+        struct ubik_ast_test *test;
         struct ubik_resolve_name *name;
         ubik_error err;
 
@@ -364,6 +377,17 @@ update_scopes_with_bindings(
 
                         member = member->next;
                 }
+        }
+
+        for (i = 0; i < ast->tests.n; i++)
+        {
+                test = ast->tests.elems[i];
+                err = find_blocks_and_bind(ctx, test->actual);
+                if (err != OK)
+                        return err;
+                err = find_blocks_and_bind(ctx, test->expected);
+                if (err != OK)
+                        return err;
         }
 
         if (ast->immediate != NULL)
@@ -509,12 +533,24 @@ update_scopes_with_args(
 {
         size_t i;
         struct ubik_ast_binding *bind;
+        struct ubik_ast_test *test;
         ubik_error err;
 
         for (i = 0; i < ast->bindings.n; i++)
         {
                 bind = ast->bindings.elems[i];
                 err = find_lambdas_and_bind(ctx, bind->expr);
+                if (err != OK)
+                        return err;
+        }
+
+        for (i = 0; i < ast->tests.n; i++)
+        {
+                test = ast->tests.elems[i];
+                err = find_lambdas_and_bind(ctx, test->actual);
+                if (err != OK)
+                        return err;
+                err = find_lambdas_and_bind(ctx, test->expected);
                 if (err != OK)
                         return err;
         }
@@ -673,12 +709,24 @@ update_names_with_resolution_types(
 {
         size_t i;
         struct ubik_ast_binding *bind;
+        struct ubik_ast_test *test;
         ubik_error err;
 
         for (i = 0; i < ast->bindings.n; i++)
         {
                 bind = ast->bindings.elems[i];
                 err = find_name_resolution_types(ctx, bind->expr);
+                if (err != OK)
+                        return err;
+        }
+
+        for (i = 0; i < ast->tests.n; i++)
+        {
+                test = ast->tests.elems[i];
+                err = find_name_resolution_types(ctx, test->actual);
+                if (err != OK)
+                        return err;
+                err = find_name_resolution_types(ctx, test->expected);
                 if (err != OK)
                         return err;
         }
@@ -750,6 +798,7 @@ find_recursive_references(
         char **name_stack_bottom)
 {
         struct ubik_ast_binding *bind;
+        struct ubik_ast_test *test;
         size_t i;
         ubik_error err;
 
@@ -763,6 +812,20 @@ find_recursive_references(
                 *name_stack_top = bind->name;
                 err = find_recursive_references_expr(
                         ctx, bind->expr, name_stack_top + 1,
+                        name_stack_bottom);
+                if (err != OK)
+                        return err;
+        }
+
+        for (i = 0; i < ast->tests.n; i++)
+        {
+                test = ast->tests.elems[i];
+                err = find_recursive_references_expr(
+                        ctx, test->actual, name_stack_top, name_stack_bottom);
+                if (err != OK)
+                        return err;
+                err = find_recursive_references_expr(
+                        ctx, test->expected, name_stack_top,
                         name_stack_bottom);
                 if (err != OK)
                         return err;

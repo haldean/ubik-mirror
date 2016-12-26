@@ -65,6 +65,9 @@ enum ubik_infer_error_type
         /* Raised when a pattern and the expression to match have disagreeing
          * types. */
         INFER_ERR_CASE_HEAD,
+        /* Raised when the types of the actual and expected on a test don't
+         * unify properly. */
+        INFER_ERR_TEST_TYPE,
 };
 
 struct ubik_infer_error
@@ -75,6 +78,7 @@ struct ubik_infer_error
         struct ubik_ast_expr *bad_expr;
         struct ubik_ast_expr *bad_expr2;
         struct ubik_ast_binding *bad_bind;
+        struct ubik_ast_test *bad_test;
         char *extra_info;
 };
 

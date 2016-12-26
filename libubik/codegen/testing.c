@@ -135,6 +135,8 @@ ubik_testing_run(struct ubik_compile_result *compiled)
         size_t i;
         ubik_error err;
 
+        any_failed = false;
+
         err = ubik_schedule_new(&sched);
         if (err != OK)
                 return err;
