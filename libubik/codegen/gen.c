@@ -168,16 +168,14 @@ ubik_create_modinit(
                  * We'll end up executing all of them anyway, and nothing reads
                  * the modinit's result. */
                 result = nodes.n - 1;
+
+                err = ubik_value_new(&modinit, ctx->workspace);
+                if (err != OK)
+                        return err;
+
+                ubik_fun_from_vector(modinit, &nodes, result);
+                modinit->gc.root = true;
         }
-        else
-                return OK;
-
-        err = ubik_value_new(&modinit, ctx->workspace);
-        if (err != OK)
-                return err;
-
-        ubik_fun_from_vector(modinit, &nodes, result);
-        modinit->gc.root = true;
 
         if (ast->immediate != NULL
                 && (load_reason == LOAD_MAIN || load_reason == LOAD_BLOCK))
