@@ -44,6 +44,7 @@ struct ubik_resolve_name
 {
         char *package;
         char *name;
+        bool package_required;
         ubik_word node;
         struct ubik_type_expr *inferred_type;
         enum ubik_resolve_type type;

@@ -629,6 +629,11 @@ find_name_resolution_types(
                                                    check_name->package) != 0)
                                                 continue;
                                 }
+                                else
+                                {
+                                        if (check_name->package_required)
+                                                continue;
+                                }
                                 found = true;
                                 name_loc->def = check_name;
                         }
@@ -874,6 +879,7 @@ create_global_scope(struct ubik_resolve_context *ctx, struct ubik_ast *ast)
                 name->package = ibind->package;
                 name->type = RESOLVE_GLOBAL;
                 name->inferred_type = ibind->type;
+                name->package_required = true;
                 err = ubik_vector_append(&ctx->global_scope->names, name);
                 if (err != OK)
                         return err;
