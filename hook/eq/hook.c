@@ -41,8 +41,7 @@ eq(struct ubik_exec_graph *gexec)
                 return err;
 
         res->type = UBIK_BOO;
-        res->boo.value = ubik_value_eq(gexec->nv[0], gexec->nv[1]) &&
-                ubik_value_eq(gexec->nt[0], gexec->nt[1]);
+        res->boo.value = ubik_value_eq(gexec->nv[0], gexec->nv[1]);
         gexec->nv[2] = res;
         gexec->nt[2] = res_type;
 
