@@ -30,6 +30,9 @@
 #include "ubik/util.h"
 #include "ubik/value.h"
 
+#include <inttypes.h>
+#include <stdatomic.h>
+
 static no_ignore ubik_error
 compile_test(
         struct ubik_value **v,
@@ -84,7 +87,7 @@ struct test_callback_info
 {
         struct ubik_ast_test *test;
         struct ubik_stream *feedback;
-        bool *mark_failed;
+        atomic_uint_fast32_t *successes;
 };
 
 static void
@@ -126,13 +129,7 @@ test_callback(void *arg, struct ubik_scheduler *s, struct ubik_exec_unit *e)
         expected = e->gexec->nv[cb->test->expected->gen];
         actual = e->gexec->nv[cb->test->actual->gen];
 
-        if (success)
-        {
-                ubik_feedback_header(
-                        cb->feedback, UBIK_FEEDBACK_SUCCESS, &cb->test->loc,
-                        "test passed");
-        }
-        else
+        if (!success)
         {
                 ubik_feedback_header(
                         cb->feedback, UBIK_FEEDBACK_ERR, &cb->test->loc,
@@ -145,8 +142,9 @@ test_callback(void *arg, struct ubik_scheduler *s, struct ubik_exec_unit *e)
                 print_value(cb->feedback, expected);
 
                 ubik_fprintf(cb->feedback, "\n");
-                *cb->mark_failed = true;
         }
+        else
+                atomic_fetch_add(cb->successes, 1);
         return OK;
 }
 
@@ -160,11 +158,12 @@ ubik_testing_run(struct ubik_compile_result *compiled)
         struct ubik_workspace *ws;
         struct ubik_exec_notify *notify;
         struct test_callback_info *tcb;
-        bool any_failed;
+        struct ubik_ast_loc loc = {0};
+        atomic_uint_fast32_t successes;
         size_t i;
         ubik_error err;
 
-        any_failed = false;
+        atomic_store(&successes, 0);
 
         err = ubik_schedule_new(&sched);
         if (err != OK)
@@ -211,7 +210,7 @@ ubik_testing_run(struct ubik_compile_result *compiled)
                             &compiled->request->region);
                 tcb->feedback = compiled->request->feedback;
                 tcb->test = test;
-                tcb->mark_failed = &any_failed;
+                tcb->successes = &successes;
                 notify->arg = tcb;
                 err = ubik_schedule_push(sched, v, &env, false, notify, ws);
                 if (err != OK)
@@ -235,8 +234,13 @@ ubik_testing_run(struct ubik_compile_result *compiled)
         if (err != OK)
                 return err;
 
-        if (any_failed)
+        if (atomic_load(&successes) != compiled->ast->tests.n)
                 return ubik_raise(ERR_TEST_FAILED, "tests failed, aborting");
+
+        loc.source_name = compiled->ast->loc.source_name;
+        ubik_feedback_header(
+                compiled->request->feedback, UBIK_FEEDBACK_SUCCESS, &loc,
+                "%" PRIuFAST64 " tests passed", atomic_load(&successes));
         return OK;
 }
 
