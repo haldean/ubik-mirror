@@ -47,7 +47,7 @@ run_file(char *fname, bool timing)
         struct ubik_stream stream;
         struct ubik_stream sstdout;
         struct ubik_workspace *ws;
-        struct ubik_env env;
+        struct ubik_env env = {0};
         struct ubik_scheduler *s;
         char *trace_str;
         ubik_error err, teardown_err;

@@ -72,7 +72,7 @@ struct ubik_env
         size_t n;
         size_t cap;
         struct ubik_env *parent;
-
+        bool initialized;
         struct ubik_env_watch_list *watches;
         struct ubik_rwlock lock;
 };

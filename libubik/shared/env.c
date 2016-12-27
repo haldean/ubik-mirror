@@ -51,6 +51,7 @@ ubik_env_init(struct ubik_env *env)
         env->cap = 0;
         env->parent = ubik_env_get_root();
         env->watches = NULL;
+        env->initialized = true;
         ubik_rwlock_init(&env->lock);
         return OK;
 }
@@ -69,6 +70,8 @@ ubik_env_make_child(struct ubik_env *child, struct ubik_env *parent)
 no_ignore ubik_error
 ubik_env_free(struct ubik_env *env)
 {
+        if (!env->initialized)
+                return OK;
         ubik_rwlock_write(&env->lock);
 
         struct ubik_env_watch_list *to_free;
