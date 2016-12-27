@@ -72,7 +72,17 @@ run_file(char *fname, bool timing)
         CHECK_ERR("couldn't open stdout");
 
         err = ubik_bytecode_read(&ws, &stream);
-        CHECK_ERR("couldn't load file");
+        if (err != OK)
+        {
+                /* this gets special handling; if bytecode loading fails, then
+                 * the workspace could contain invalid values that will cause
+                 * workspace-freeing to fail. */
+                char *expl = ubik_error_explain(err);
+                printf("couldn't load bytecode: %s\n", expl);
+                free(expl);
+                free(err);
+                return err;
+        }
 
         err = ubik_start(ws);
         CHECK_ERR("couldn't start ubik");
