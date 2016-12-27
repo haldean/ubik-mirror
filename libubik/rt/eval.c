@@ -189,13 +189,25 @@ _eval_cond(struct ubik_exec_unit *u, struct ubik_node *n)
 no_ignore static ubik_error
 _eval_store(struct ubik_exec_unit *u, struct ubik_node *n)
 {
+        char *buf;
+        ubik_error err;
+
         u->gexec->nv[n->id] = u->gexec->nv[n->store.value];
         u->gexec->nt[n->id] = u->gexec->nt[n->store.value];
         u->gexec->status[n->id] = UBIK_STATUS_COMPLETE;
 
-        return ubik_env_set(
+        err = ubik_env_set(
                 u->gexec->env, n->store.loc,
                 u->gexec->nv[n->id], u->gexec->nt[n->id]);
+        if (err == OK)
+                return err;
+        if (err->error_code == ERR_PRESENT)
+        {
+                buf = ubik_uri_explain(n->store.loc);
+                printf("tried to double-set uri: %s\n", buf);
+                free(buf);
+        }
+        return err;
 }
 
 no_ignore static ubik_error
