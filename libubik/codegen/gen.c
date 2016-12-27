@@ -175,6 +175,7 @@ ubik_create_modinit(
 
                 ubik_fun_from_vector(modinit, &nodes, result);
                 modinit->gc.root = true;
+                modinit->gc.modinit = true;
         }
 
         if (ast->immediate != NULL
@@ -191,6 +192,7 @@ ubik_create_modinit(
                 ubik_fun_from_vector(
                         imm_value, &imm_nodes, ast->immediate->gen);
                 imm_value->gc.root = true;
+                imm_value->gc.modinit = false;
         }
 
         return OK;

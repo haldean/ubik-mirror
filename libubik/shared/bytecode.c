@@ -204,6 +204,9 @@ read_value(
         READ_INTO(t8, in);
         v->gc.root = t8 != 0;
 
+        READ_INTO(t8, in);
+        v->gc.modinit = t8 != 0;
+
         v->dbg.used = false;
         READ_INTO(t32, in);
         t32 = ntohl(t32);
@@ -586,6 +589,9 @@ write_value(
         WRITE_INTO(out, t16);
 
         t8 = v->gc.root ? 1 : 0;
+        WRITE_INTO(out, t8);
+
+        t8 = v->gc.modinit ? 1 : 0;
         WRITE_INTO(out, t8);
 
         if (v->dbg.used)

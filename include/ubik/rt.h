@@ -50,6 +50,9 @@ struct ubik_runtime_info
         bool runtime_managed:1;
         /* true if this value is being traced for debugging */
         bool traced:1;
+        /* true if this is a function that installs a module into the
+         * environment. */
+        bool modinit:1;
 };
 
 enum ubik_value_type

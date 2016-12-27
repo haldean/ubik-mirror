@@ -145,10 +145,21 @@ ubik_testing_run(struct ubik_compile_result *compiled)
         if (err != OK)
                 return err;
 
-        err = ubik_schedule_push_roots(
-                sched, &env, compiled->request->workspace);
-        if (err != OK)
-                return err;
+        /* Push all modinits into the environment; this doesn't use push_roots,
+         * because we don't want user initializers, just the env setters. */
+        ws = compiled->request->workspace;
+        for (; ws != NULL; ws = ws->next)
+        {
+                for (i = 0; i < ws->n; i++)
+                {
+                        if (!ws->values[i].gc.modinit)
+                                continue;
+                        err = ubik_schedule_push(
+                                sched, &ws->values[i], &env, false, NULL, ws);
+                        if (err != OK)
+                                return err;
+                }
+        }
 
         err = ubik_workspace_new(&ws);
         if (err != OK)
