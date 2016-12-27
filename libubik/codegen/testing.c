@@ -102,7 +102,9 @@ print_value(struct ubik_stream *s, struct ubik_value *v)
                 free(buf);
                 return;
         }
+        ubik_fprintf(s, "\"");
         ubik_assert(ubik_stream_write(s, buf, buflen) == buflen);
+        ubik_fprintf(s, "\"");
         free(buf);
 }
 
