@@ -6,6 +6,7 @@ all:
 
 check: all
 	+make -C test
+	+make -C lib
 
 clean:
 	+make -C include clean
