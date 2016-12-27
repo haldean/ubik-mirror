@@ -392,7 +392,6 @@ unify(
         case TYPE_EXPR_APPLY:
                 if (assign_from->type_expr_type != TYPE_EXPR_APPLY)
                 {
-                        printf("unsupported comparison between applied types\n");
                         return OK;
                 }
                 err = unify(
