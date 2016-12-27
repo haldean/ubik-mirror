@@ -70,8 +70,8 @@ ubik_value_new(
         return OK;
 }
 
-no_ignore ubik_error
-ubik_workspace_new(struct ubik_workspace **ref)
+static no_ignore ubik_error
+new_workspace_with_offset(struct ubik_workspace **ref, size_t id_offset)
 {
         struct ubik_workspace *ws;
         size_t i;
@@ -87,11 +87,17 @@ ubik_workspace_new(struct ubik_workspace **ref)
         ws->next = 0;
         ws->n = 0;
         for (i = 0; i < workspace_cap; i++)
-                ws->values[i].gc.id = i;
+                ws->values[i].gc.id = i + id_offset;
 
         *ref = ws;
 
         return OK;
+}
+
+no_ignore ubik_error
+ubik_workspace_new(struct ubik_workspace **ref)
+{
+        return new_workspace_with_offset(ref, 0);
 }
 
 no_ignore ubik_error
@@ -105,12 +111,13 @@ ubik_workspace_prealloced(struct ubik_workspace **ws, size_t prealloc)
         if (err != OK)
                 return err;
         ws0->n = size_min(prealloc, workspace_cap);
+        *ws = ws0;
 
         for (alloced = workspace_cap;
              alloced < prealloc;
              alloced += workspace_cap)
         {
-                err = ubik_workspace_new(&ws1);
+                err = new_workspace_with_offset(&ws1, alloced);
                 if (err != OK)
                         return err;
                 ws1->n = size_min(prealloc - alloced, workspace_cap);
@@ -118,7 +125,6 @@ ubik_workspace_prealloced(struct ubik_workspace **ws, size_t prealloc)
                 ws0 = ws1;
         }
 
-        *ws = ws0;
         return OK;
 }
 
