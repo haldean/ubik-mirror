@@ -11,9 +11,9 @@
         . Cons head tail => Cons head (append tail x)
         . Nil => Cons x Nil
     }
-?: append 5 Nil = Cons 5 Nil
+?: append Nil 5 = Cons 5 Nil
 ?: append Nil Nil = Cons Nil Nil
-?: append 5 (Cons 3 (Cons 8 Nil)) = Cons 3 (Cons 8 (Cons 5 Nil))
+?: append (Cons 3 (Cons 8 Nil)) 5 = Cons 3 (Cons 8 (Cons 5 Nil))
 
 : contains
     ^ List a -> a -> Boolean
