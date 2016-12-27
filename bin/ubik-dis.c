@@ -37,6 +37,42 @@
                         return 1;                               \
                 } } while(0)
 
+static void
+safe_print_str(struct ubik_stream *s, struct ubik_str *str)
+{
+        size_t i;
+        char *to_write;
+        size_t write_len;
+        char c;
+
+        for (i = 0; i < str->length; i++)
+        {
+                c = str->data[i];
+                if (c == '\n')
+                {
+                        to_write = "\\n";
+                        write_len = 2;
+                }
+                else if (c == '\t')
+                {
+                        to_write = "\\t";
+                        write_len = 2;
+                }
+                else if (c == '\r')
+                {
+                        to_write = "\\r";
+                        write_len = 2;
+                }
+                else
+                {
+                        to_write = &c;
+                        write_len = 1;
+                }
+                ubik_assert(ubik_stream_write(s, to_write, write_len)
+                            == write_len);
+        }
+}
+
 void
 dis_ctor(struct ubik_stream *s, struct ubik_typ_ctor *c, ubik_word i)
 {
@@ -129,9 +165,7 @@ dis(struct ubik_stream *s, struct ubik_value *v)
         {
         case UBIK_STR:
                 ubik_fprintf(s, "STR\n%" PRIu64 "\n", v->str.length);
-                ubik_assert(
-                        ubik_stream_write(s, v->str.data, v->str.length)
-                        == v->str.length);
+                safe_print_str(s, &v->str);
                 ubik_fprintf(s, "\n");
                 return;
 
@@ -242,7 +276,6 @@ main(int argc, char *argv[])
         CHECK_ERR("open stdout");
 
         err = ubik_bytecode_read(&root, &stream);
-        CHECK_ERR("read bytecode");
 
         for (ws = root, j = 0; ws != NULL; ws = ws->next)
         {
@@ -255,6 +288,11 @@ main(int argc, char *argv[])
                 for (i = 0; i < ws->n; i++)
                         dis(&sstdout, &ws->values[i]);
         }
+
+        /* we do our best to print out what we can read from the bytecode, even
+         * if the whole read fails. We still want to report an error message,
+         * though, so we check the error after running the disassembly. */
+        CHECK_ERR("read bytecode");
 
         ubik_workspace_free(root);
         return 0;
