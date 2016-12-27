@@ -49,7 +49,7 @@
         . => Cons start (range (+ start 1) end)
     }
 ?: range 0 3 = Cons 0 (Cons 1 (Cons 2 Nil))
-?: range 100 150 = Nil
+?: range 150 150 = Nil
 
 : any
     ^ List Boolean -> Boolean
