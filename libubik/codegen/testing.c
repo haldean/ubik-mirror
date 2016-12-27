@@ -28,6 +28,7 @@
 #include "ubik/string.h"
 #include "ubik/testing.h"
 #include "ubik/util.h"
+#include "ubik/value.h"
 
 static no_ignore ubik_error
 compile_test(
@@ -86,19 +87,42 @@ struct test_callback_info
         bool *mark_failed;
 };
 
+static void
+print_value(struct ubik_stream *s, struct ubik_value *v)
+{
+        char *buf;
+        size_t buflen;
+        ubik_error err;
+
+        err = ubik_value_humanize(&buf, &buflen, v);
+        if (err != OK)
+        {
+                buf = ubik_error_explain(err);
+                ubik_fprintf(s, "(unable to print value: %s)", buf);
+                free(buf);
+                return;
+        }
+        ubik_assert(ubik_stream_write(s, buf, buflen) == buflen);
+        free(buf);
+}
+
 static no_ignore ubik_error
 test_callback(void *arg, struct ubik_scheduler *s, struct ubik_exec_unit *e)
 {
         unused(s);
         struct test_callback_info *cb;
         struct ubik_value *res;
+        struct ubik_value *expected;
+        struct ubik_value *actual;
         bool success;
+
+        cb = (struct test_callback_info *) arg;
 
         res = e->gexec->nv[e->node];
         ubik_assert(res->type == UBIK_BOO);
         success = res->boo.value;
-
-        cb = (struct test_callback_info *) arg;
+        expected = e->gexec->nv[cb->test->expected->gen];
+        actual = e->gexec->nv[cb->test->actual->gen];
 
         if (success)
         {
@@ -111,10 +135,13 @@ test_callback(void *arg, struct ubik_scheduler *s, struct ubik_exec_unit *e)
                 ubik_feedback_header(
                         cb->feedback, UBIK_FEEDBACK_ERR, &cb->test->loc,
                         "test failed");
+
                 ubik_fprintf(cb->feedback, "\t\x1b[32mactual:\x1b[0m   ");
-                ubik_ast_expr_pretty(cb->feedback, cb->test->actual, 16);
+                print_value(cb->feedback, actual);
+
                 ubik_fprintf(cb->feedback, "\n\t\x1b[32mexpected:\x1b[0m ");
-                ubik_ast_expr_pretty(cb->feedback, cb->test->expected, 16);
+                print_value(cb->feedback, expected);
+
                 ubik_fprintf(cb->feedback, "\n");
                 *cb->mark_failed = true;
         }

@@ -206,7 +206,8 @@ ubik_value_humanize(char **res, size_t *res_len, struct ubik_value *v)
                 return OK;
 
         case UBIK_STR:
-                *res = v->str.data;
+                *res = calloc(v->str.length + 1, sizeof(char));
+                memcpy(*res, v->str.data, v->str.length);
                 *res_len = v->str.length;
                 return OK;
 
@@ -229,6 +230,7 @@ ubik_value_humanize(char **res, size_t *res_len, struct ubik_value *v)
                                 asprintf(&t0, "(%s", t1);
                         else
                                 asprintf(&t0, "%s, %s", t0, t1);
+                        free(t1);
                 }
                 *res_len = asprintf(res, "%s)", t0);
                 return OK;
