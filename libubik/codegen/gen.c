@@ -141,7 +141,6 @@ _add_modinit_setter(
 
 no_ignore static ubik_error
 ubik_create_modinit(
-        struct ubik_value **modinit,
         struct ubik_ast *ast,
         struct ubik_env *local_env,
         enum ubik_load_reason load_reason,
@@ -149,6 +148,9 @@ ubik_create_modinit(
 {
         struct modinit_iterator iter;
         struct ubik_vector nodes = {.region = ctx->region};
+        struct ubik_vector imm_nodes = {.region = ctx->region};
+        struct ubik_value *imm_value;
+        struct ubik_value *modinit;
         ubik_word result;
         ubik_error err;
 
@@ -160,15 +162,7 @@ ubik_create_modinit(
         if (err != OK)
                 return err;
 
-        if (ast->immediate != NULL
-                && (load_reason == LOAD_MAIN || load_reason == LOAD_BLOCK))
-        {
-                err = ubik_assign_nodes(ctx, &nodes, ast->immediate);
-                if (err != OK)
-                        return err;
-                result = ast->immediate->gen;
-        }
-        else if (nodes.n > 0)
+        if (nodes.n > 0)
         {
                 /* All graphs have to have a result, so we just pick one here.
                  * We'll end up executing all of them anyway, and nothing reads
@@ -176,16 +170,31 @@ ubik_create_modinit(
                 result = nodes.n - 1;
         }
         else
-        {
-                *modinit = NULL;
                 return OK;
-        }
 
-        err = ubik_value_new(modinit, ctx->workspace);
+        err = ubik_value_new(&modinit, ctx->workspace);
         if (err != OK)
                 return err;
 
-        ubik_fun_from_vector(*modinit, &nodes, result);
+        ubik_fun_from_vector(modinit, &nodes, result);
+        modinit->gc.root = true;
+
+        if (ast->immediate != NULL
+                && (load_reason == LOAD_MAIN || load_reason == LOAD_BLOCK))
+        {
+                err = ubik_assign_nodes(ctx, &imm_nodes, ast->immediate);
+                if (err != OK)
+                        return err;
+
+                err = ubik_value_new(&imm_value, ctx->workspace);
+                if (err != OK)
+                        return err;
+
+                ubik_fun_from_vector(
+                        imm_value, &imm_nodes, ast->immediate->gen);
+                imm_value->gc.root = true;
+        }
+
         return OK;
 }
 
@@ -197,7 +206,6 @@ ubik_gen_graphs(
         size_t i;
         ubik_error err, rerr;
         struct ubik_env local_env;
-        struct ubik_value *modinit;
         local(assign_context) struct ubik_assign_context ctx = {0};
 
         ctx.region = &req->region;
@@ -217,16 +225,13 @@ ubik_gen_graphs(
                         goto cleanup_env;
         }
 
-        err = ubik_create_modinit(
-                &modinit, ast, &local_env, req->reason, &ctx);
+        err = ubik_create_modinit(ast, &local_env, req->reason, &ctx);
         if (err != OK)
         {
                 if (err->error_code == ERR_NO_DATA)
                         printf("source has no data in it\n");
                 goto cleanup_env;
         }
-        if (modinit != NULL)
-                modinit->gc.root = true;
 
         if (ubik_assign_emit_errors(&ctx))
         {
