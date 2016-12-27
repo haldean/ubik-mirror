@@ -63,3 +63,11 @@
 ?: any (Cons true (Cons false (Cons false Nil))) = true
 ?: any (Cons false (Cons false (Cons false Nil))) = false
 ?: any Nil = false
+
+: map
+    ^ (a -> b) -> List a -> List b
+    = \f l -> ? l {
+        . Nil => Nil
+        . Cons head tail => Cons (f head) (map f tail)
+    }
+?: map (* 2) (range 0 3) = Cons 0 (Cons 2 (Cons 4 Nil))
