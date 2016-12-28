@@ -573,7 +573,7 @@ update_scopes_with_args(
         return OK;
 }
 
-static inline void
+static void
 load_global_name(
         struct ubik_resolve_name_loc *name_loc,
         struct ubik_resolve_scope *scope)
@@ -583,23 +583,122 @@ load_global_name(
         name_loc->package_name = scope->package_name;
 }
 
+static no_ignore ubik_error
+resolve_name(
+        struct ubik_resolve_context *ctx,
+        struct ubik_ast_expr *expr)
+{
+        struct ubik_resolve_name *check_name;
+        struct ubik_resolve_name_loc *name_loc;
+        struct ubik_resolve_scope *scope;
+        size_t i;
+        char *name;
+        ubik_error err;
+        enum ubik_resolve_boundary_type highest_bdry;
+        bool found;
+        bool package_found;
+
+        ubik_alloc1(
+                &name_loc, struct ubik_resolve_name_loc, ctx->region);
+        expr->atom->name_loc = name_loc;
+
+        if (expr->atom->atom_type == ATOM_QUALIFIED)
+                name = expr->atom->qualified.tail;
+        else
+                name = expr->atom->str;
+        highest_bdry = BOUNDARY_BLOCK;
+        scope = expr->scope;
+        found = false;
+
+        while (!found && scope != NULL)
+        {
+                for (i = 0; i < scope->names.n; i++)
+                {
+                        check_name = scope->names.elems[i];
+                        if (strcmp(name, check_name->name) != 0)
+                                continue;
+                        if (expr->atom->atom_type == ATOM_QUALIFIED)
+                        {
+                                if (check_name->package == NULL)
+                                        continue;
+                                if (strcmp(expr->atom->qualified.head,
+                                           check_name->package) != 0)
+                                        continue;
+                        }
+                        else
+                        {
+                                if (check_name->package_required)
+                                        continue;
+                        }
+                        found = true;
+                        name_loc->def = check_name;
+                }
+                if (scope->boundary == BOUNDARY_GLOBAL)
+                        highest_bdry = BOUNDARY_GLOBAL;
+                else if (!found && scope->boundary == BOUNDARY_FUNCTION)
+                        highest_bdry = BOUNDARY_FUNCTION;
+                scope = scope->parent;
+        }
+
+        package_found = true;
+        if (!found && expr->atom->atom_type == ATOM_QUALIFIED)
+        {
+                package_found = false;
+                for (i = 0; i < ctx->imported.n; i++)
+                {
+                        if (strcmp((char *) ctx->imported.elems[i],
+                                   expr->atom->qualified.head) == 0)
+                        {
+                                package_found = true;
+                                break;
+                        }
+                }
+                if (!package_found)
+                {
+                        err = ubik_resolve_context_missing_pkg(
+                                ctx, expr->atom->qualified.head,
+                                expr->loc);
+                        if (err != OK)
+                                return err;
+                }
+        }
+        if (!found && package_found)
+        {
+                err = ubik_resolve_context_missing_name(
+                        ctx, name, expr->loc);
+                if (err != OK)
+                        return err;
+        }
+
+        switch (highest_bdry)
+        {
+        case BOUNDARY_FUNCTION:
+                expr->atom->name_loc->type = RESOLVE_CLOSURE;
+                break;
+        case BOUNDARY_GLOBAL:
+                if (ubik_natives_is_defined(expr->atom->str))
+                        expr->atom->name_loc->type = RESOLVE_NATIVE;
+                else
+                        load_global_name(
+                                expr->atom->name_loc, expr->scope);
+                break;
+        case BOUNDARY_BLOCK:
+                expr->atom->name_loc->type = RESOLVE_LOCAL;
+                break;
+        }
+        return OK;
+}
+
 no_ignore ubik_error
 find_name_resolution_types(
         struct ubik_resolve_context *ctx,
         struct ubik_ast_expr *expr)
 {
-        bool found;
-        bool package_found;
         bool needs_resolve;
-        char *name;
         size_t i;
         size_t n_subexprs;
-        enum ubik_resolve_boundary_type highest_bdry;
         struct ubik_ast *subast;
         struct ubik_ast_expr *subexprs[UBIK_MAX_SUBEXPRS];
-        struct ubik_resolve_name_loc *name_loc;
-        struct ubik_resolve_scope *scope;
-        struct ubik_resolve_name *check_name;
         struct ubik_vector pattern_heads = {0};
         ubik_error err;
 
@@ -612,94 +711,9 @@ find_name_resolution_types(
                 needs_resolve &= expr->atom->name_loc == NULL;
         if (needs_resolve)
         {
-                ubik_alloc1(
-                        &name_loc, struct ubik_resolve_name_loc, ctx->region);
-                expr->atom->name_loc = name_loc;
-
-                if (expr->atom->atom_type == ATOM_QUALIFIED)
-                        name = expr->atom->qualified.tail;
-                else
-                        name = expr->atom->str;
-                highest_bdry = BOUNDARY_BLOCK;
-                scope = expr->scope;
-                found = false;
-
-                while (!found && scope != NULL)
-                {
-                        for (i = 0; i < scope->names.n; i++)
-                        {
-                                check_name = scope->names.elems[i];
-                                if (strcmp(name, check_name->name) != 0)
-                                        continue;
-                                if (expr->atom->atom_type == ATOM_QUALIFIED)
-                                {
-                                        if (check_name->package == NULL)
-                                                continue;
-                                        if (strcmp(expr->atom->qualified.head,
-                                                   check_name->package) != 0)
-                                                continue;
-                                }
-                                else
-                                {
-                                        if (check_name->package_required)
-                                                continue;
-                                }
-                                found = true;
-                                name_loc->def = check_name;
-                        }
-                        if (scope->boundary == BOUNDARY_GLOBAL)
-                                highest_bdry = BOUNDARY_GLOBAL;
-                        else if (!found && scope->boundary == BOUNDARY_FUNCTION)
-                                highest_bdry = BOUNDARY_FUNCTION;
-                        scope = scope->parent;
-                }
-
-                package_found = true;
-                if (!found && expr->atom->atom_type == ATOM_QUALIFIED)
-                {
-                        package_found = false;
-                        for (i = 0; i < ctx->imported.n; i++)
-                        {
-                                if (strcmp((char *) ctx->imported.elems[i],
-                                           expr->atom->qualified.head) == 0)
-                                {
-                                        package_found = true;
-                                        break;
-                                }
-                        }
-                        if (!package_found)
-                        {
-                                err = ubik_resolve_context_missing_pkg(
-                                        ctx, expr->atom->qualified.head,
-                                        expr->loc);
-                                if (err != OK)
-                                        return err;
-                        }
-                }
-                if (!found && package_found)
-                {
-                        err = ubik_resolve_context_missing_name(
-                                ctx, name, expr->loc);
-                        if (err != OK)
-                                return err;
-                }
-
-                switch (highest_bdry)
-                {
-                case BOUNDARY_FUNCTION:
-                        expr->atom->name_loc->type = RESOLVE_CLOSURE;
-                        break;
-                case BOUNDARY_GLOBAL:
-                        if (ubik_natives_is_defined(expr->atom->str))
-                                expr->atom->name_loc->type = RESOLVE_NATIVE;
-                        else
-                                load_global_name(
-                                        expr->atom->name_loc, expr->scope);
-                        break;
-                case BOUNDARY_BLOCK:
-                        expr->atom->name_loc->type = RESOLVE_LOCAL;
-                        break;
-                }
+                err = resolve_name(ctx, expr);
+                if (err != OK)
+                        return err;
         }
 
         err = ubik_ast_subexprs(&subast, subexprs, &n_subexprs, expr);
