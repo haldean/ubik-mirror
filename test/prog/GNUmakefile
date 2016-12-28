@@ -8,6 +8,7 @@ tests = \
 	block.uk \
 	boolean.uk \
 	boolean-splat.uk \
+	double-import.uk \
 	fib.uk \
 	global-recursive.uk \
 	hello.uk \
