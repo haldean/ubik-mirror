@@ -188,6 +188,12 @@ ubik_type_expr_pretty(
         struct ubik_type_constraints *c;
         struct ubik_type_params *p;
 
+        if (expr == NULL)
+        {
+                ubik_fprintf(out, "(unknown)");
+                return;
+        }
+
         switch (expr->type_expr_type)
         {
         case TYPE_EXPR_ATOM:
