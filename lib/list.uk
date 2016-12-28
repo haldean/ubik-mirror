@@ -64,6 +64,19 @@
 ?: any (Cons false (Cons false (Cons false Nil))) = false
 ?: any Nil = false
 
+: all
+    ^ List Boolean -> Boolean
+    = \l -> ? l {
+        . Nil => true
+        . Cons head tail => (? {
+            . head => all tail
+            . => false
+        })
+    }
+?: all (Cons true (Cons false Nil)) = false
+?: all (Cons true (Cons true Nil)) = true
+?: all Nil = true
+
 : map
     ^ (a -> b) -> List a -> List b
     = \f l -> ? l {

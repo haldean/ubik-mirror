@@ -2,3 +2,5 @@
 
 : true ^ Boolean = ubik-native-boolean-true
 : false ^ Boolean = ubik-native-boolean-false
+
+: not ^ Boolean -> Boolean = \x -> ? { .x => false .=> true }

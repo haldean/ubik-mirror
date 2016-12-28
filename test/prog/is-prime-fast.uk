@@ -4,13 +4,15 @@
 ` list
 
 : is-prime
-^ Number -> Number
+^ Number -> Boolean
 = \x -> {
     : divisors = list:range 2 (- x 1)
-    ! list:any (list:map (\y -> eq (% x y) 0) divisors)
+    ! list:all (list:map (\y -> not (eq (% x y) 0)) divisors)
 }
+?: is-prime 7 = true
+?: is-prime 12 = false
 
 ! emit (? {
-    . is-prime 7 => "7 is prime!\n"
-    .            => "7 isn't prime?!\n"
+    . is-prime 83 => "it's a prime\n"
+    . => "not a prime\n"
 })
