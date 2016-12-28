@@ -144,7 +144,7 @@ test_callback(void *arg, struct ubik_scheduler *s, struct ubik_exec_unit *e)
                 ubik_fprintf(cb->feedback, "\n");
         }
         else
-                atomic_fetch_add(cb->successes, 1);
+                (*cb->successes)++;
         return OK;
 }
 
@@ -163,7 +163,10 @@ ubik_testing_run(struct ubik_compile_result *compiled)
         size_t i;
         ubik_error err;
 
-        atomic_store(&successes, 0);
+        if (compiled->ast->tests.n == 0)
+                return OK;
+
+        successes = 0;
 
         err = ubik_schedule_new(&sched);
         if (err != OK)
@@ -234,13 +237,13 @@ ubik_testing_run(struct ubik_compile_result *compiled)
         if (err != OK)
                 return err;
 
-        if (atomic_load(&successes) != compiled->ast->tests.n)
+        if (successes != compiled->ast->tests.n)
                 return ubik_raise(ERR_TEST_FAILED, "tests failed, aborting");
 
         loc.source_name = compiled->ast->loc.source_name;
         ubik_feedback_header(
                 compiled->request->feedback, UBIK_FEEDBACK_SUCCESS, &loc,
-                "%" PRIuFAST64 " tests passed", atomic_load(&successes));
+                "%" PRIuFAST64 " tests passed", successes);
         return OK;
 }
 
