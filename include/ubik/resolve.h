@@ -99,6 +99,7 @@ struct ubik_resolve_scope
 enum ubik_resolve_error_type
 {
         RESOLVE_ERR_NAME_NOT_FOUND = 1,
+        RESOLVE_ERR_PKG_NOT_FOUND,
 };
 
 struct ubik_resolve_error

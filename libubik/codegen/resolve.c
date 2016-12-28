@@ -46,6 +46,8 @@ struct ubik_resolve_context
         struct ubik_vector errors;
         struct ubik_alloc_region *region;
         struct ubik_stream *feedback;
+        /* list of package names that have been imported */
+        struct ubik_vector imported;
 };
 
 no_ignore ubik_error
@@ -84,6 +86,12 @@ no_ignore ubik_error
 ubik_resolve_context_missing_name(
         struct ubik_resolve_context *ctx,
         char *name,
+        struct ubik_ast_loc loc);
+
+no_ignore ubik_error
+ubik_resolve_context_missing_pkg(
+        struct ubik_resolve_context *ctx,
+        char *package_name,
         struct ubik_ast_loc loc);
 
 /* Assembles a vector of all of the heads of any patterns appearing
@@ -581,6 +589,7 @@ find_name_resolution_types(
         struct ubik_ast_expr *expr)
 {
         bool found;
+        bool package_found;
         bool needs_resolve;
         char *name;
         size_t i;
@@ -645,7 +654,29 @@ find_name_resolution_types(
                         scope = scope->parent;
                 }
 
-                if (!found)
+                package_found = true;
+                if (!found && expr->atom->atom_type == ATOM_QUALIFIED)
+                {
+                        package_found = false;
+                        for (i = 0; i < ctx->imported.n; i++)
+                        {
+                                if (strcmp((char *) ctx->imported.elems[i],
+                                           expr->atom->qualified.head) == 0)
+                                {
+                                        package_found = true;
+                                        break;
+                                }
+                        }
+                        if (!package_found)
+                        {
+                                err = ubik_resolve_context_missing_pkg(
+                                        ctx, expr->atom->qualified.head,
+                                        expr->loc);
+                                if (err != OK)
+                                        return err;
+                        }
+                }
+                if (!found && package_found)
                 {
                         err = ubik_resolve_context_missing_name(
                                 ctx, name, expr->loc);
@@ -947,10 +978,36 @@ ubik_resolve(
                                         ctx.feedback, UBIK_FEEDBACK_ERR,
                                         &resolv_err->loc, "name not found: %s",
                                         resolv_err->name);
+                        case RESOLVE_ERR_PKG_NOT_FOUND:
+                                ubik_feedback_line(
+                                        ctx.feedback, UBIK_FEEDBACK_ERR,
+                                        &resolv_err->loc,
+                                        "package not imported: %s",
+                                        resolv_err->name);
                         }
                 }
                 return ubik_raise(ERR_BAD_VALUE, "couldn't resolve some names");
         }
+        return OK;
+}
+
+no_ignore ubik_error
+ubik_resolve_context_missing_pkg(
+        struct ubik_resolve_context *ctx,
+        char *package_name,
+        struct ubik_ast_loc loc)
+{
+        struct ubik_resolve_error *resolv_err;
+        ubik_error err;
+
+        ubik_alloc1(&resolv_err, struct ubik_resolve_error, ctx->region);
+        resolv_err->err_type = RESOLVE_ERR_PKG_NOT_FOUND;
+        resolv_err->name = package_name;
+        resolv_err->loc = loc;
+
+        err = ubik_vector_append(&ctx->errors, resolv_err);
+        if (err != OK)
+                return err;
         return OK;
 }
 
