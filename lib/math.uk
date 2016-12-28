@@ -5,7 +5,7 @@
 
 : lt ^ Number -> Number -> Boolean = ubik-native-lt
 ?: lt 4 5 = true
-?: lt 10/2 5 = false
+?: lt (/ 10 2) 5 = false
 ?: lt 8 4 = false
 
 : lte ^ Number -> Number -> Boolean = \a b -> or (ubik-native-lt a b) (eq a b)
@@ -14,4 +14,11 @@
 ?: lte 10 2 = false
 
 : gt ^ Number -> Number -> Boolean = \a b -> not (or (ubik-native-lt a b) (eq a b))
-: gte ^ Number -> Number -> Boolean = \a b -> func:compose not ubik-native-lt
+?: gt 12 12 = false
+?: gt 1.4 1.8 = false
+?: gt 10 2 = true
+
+: gte ^ Number -> Number -> Boolean = \a b -> not (ubik-native-lt a b)
+?: gte 4 5 = false
+?: gte (/ 10 2) 5 = true
+?: gte 8 4 = true
