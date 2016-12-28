@@ -797,10 +797,13 @@ infer_ast(
                 if (err != OK)
                         return err;
 
-                err = ubik_typesystem_unify(
-                        &unified, ctx->type_system, ast->package_name,
-                        test->actual->type, test->expected->type,
-                        &ctx->req->region, ctx->debug);
+                unified.success = false;
+                err = OK;
+                if (test->actual->type != NULL && test->expected->type != NULL)
+                        err = ubik_typesystem_unify(
+                                &unified, ctx->type_system, ast->package_name,
+                                test->actual->type, test->expected->type,
+                                &ctx->req->region, ctx->debug);
                 if (err != OK)
                         return err;
                 if (!unified.success)
@@ -919,7 +922,7 @@ infer_error_print(
                 ubik_feedback_line(
                         ctx->req->feedback,
                         UBIK_FEEDBACK_ERR,
-                        &ierr->bad_bind->loc,
+                        &ierr->bad_test->loc,
                         "types of expected and actual values of test "
                         "disagree");
                 pf("    type of expected value is \x1b[32m");
