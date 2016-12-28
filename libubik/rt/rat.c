@@ -143,6 +143,20 @@ ubik_rat_mod(
         ubik_rat_sub(r, v1, &t1);
 }
 
+bool
+ubik_rat_lt(
+        struct ubik_value *restrict v1,
+        struct ubik_value *restrict v2)
+{
+        int64_t s1;
+        int64_t s2;
+
+        s1 = v1->rat.num * v2->rat.den;
+        s2 = v2->rat.num * v1->rat.den;
+
+        return s1 < s2;
+}
+
 no_ignore ubik_error
 ubik_rat_read(
         struct ubik_rat *res,

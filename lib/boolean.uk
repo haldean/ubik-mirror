@@ -4,3 +4,8 @@
 : false ^ Boolean = ubik-native-boolean-false
 
 : not ^ Boolean -> Boolean = \x -> ? { .x => false .=> true }
+: or ^ Boolean -> Boolean -> Boolean = \a b -> ? {
+    . a => true . => (? { . b => true .=> false })}
+: and ^ Boolean -> Boolean -> Boolean = \a b -> ? {
+    . a => (? { . b => true .=> false }) . => false }
+

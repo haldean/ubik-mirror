@@ -1,0 +1,6 @@
+~ func
+
+: compose
+  ^ (b -> c) -> (a -> b) -> a -> c
+  = \g f x -> g (f x)
+?: (compose (+ 2) (* 4)) 1 = 6

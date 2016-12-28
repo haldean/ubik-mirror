@@ -57,6 +57,12 @@ ubik_rat_mod(
         struct ubik_value *restrict v1,
         struct ubik_value *restrict v2);
 
+/* Returns true if v1 is less than v2. */
+bool
+ubik_rat_lt(
+        struct ubik_value *restrict v1,
+        struct ubik_value *restrict v2);
+
 /* Reads a rational number from a string. */
 no_ignore ubik_error
 ubik_rat_read(
