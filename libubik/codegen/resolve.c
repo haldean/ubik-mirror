@@ -571,6 +571,7 @@ load_global_name(
         struct ubik_resolve_scope *scope)
 {
         name_loc->type = RESOLVE_GLOBAL;
+        ubik_assert(scope->package_name != NULL);;
         name_loc->package_name = scope->package_name;
 }
 

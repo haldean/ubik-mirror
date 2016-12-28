@@ -70,6 +70,7 @@ assign_package(
         char *package_name)
 {
         struct ubik_ast_binding *bind;
+        struct ubik_ast_test *test;
         size_t i;
         ubik_error err;
 
@@ -84,6 +85,17 @@ assign_package(
         {
                 bind = ast->bindings.elems[i];
                 err = assign_package_expr(r, bind->expr, package_name);
+                if (err != OK)
+                        return err;
+        }
+
+        for (i = 0; i < ast->tests.n; i++)
+        {
+                test = ast->tests.elems[i];
+                err = assign_package_expr(r, test->actual, package_name);
+                if (err != OK)
+                        return err;
+                err = assign_package_expr(r, test->expected, package_name);
                 if (err != OK)
                         return err;
         }
