@@ -412,26 +412,23 @@ ubik_compile_enqueue(
 {
         struct ubik_compile_request *req;
         struct ubik_compile_job *job;
-        struct ubik_compile_request *check_req;
+        struct ubik_compile_job *check_job;
         struct ubik_compile_result *check_res;
         char *src;
         size_t i;
 
         src = userreq->source_name;
-        printf("enqueue source %s\n", src);
         for (i = 0; i < cenv->to_compile.n; i++)
         {
-                check_req = (struct ubik_compile_request *)
+                check_job = (struct ubik_compile_job *)
                         cenv->to_compile.elems[i];
-                printf("  check req %s\n", check_req->source_name);
-                if (strcmp(check_req->source_name, src) == 0)
+                if (strcmp(check_job->request->source_name, src) == 0)
                         return OK;
         }
         for (i = 0; i < cenv->compiled.n; i++)
         {
                 check_res = (struct ubik_compile_result *)
                         cenv->compiled.elems[i];
-                printf("  check res %s\n", check_res->request->source_name);
                 if (strcmp(check_res->request->source_name, src) == 0)
                         return OK;
         }
