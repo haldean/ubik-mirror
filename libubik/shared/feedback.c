@@ -48,7 +48,7 @@ vheader(
         switch (lvl)
         {
         case UBIK_FEEDBACK_ERR:
-                ubik_fprintf(stream, "\x1b[31merror:  ");
+                ubik_fprintf(stream, "\x1b[31merror:");
                 break;
         case UBIK_FEEDBACK_WARN:
                 ubik_fprintf(stream, "\x1b[33mwarning:");
