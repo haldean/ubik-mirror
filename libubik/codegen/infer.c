@@ -45,8 +45,12 @@ static void
 new_tyvar(struct ubik_type_expr *t, struct ubik_infer_context *ctx)
 {
         t->type_expr_type = TYPE_EXPR_VAR;
+        /* It's important to add the package name here, otherwise imported
+         * definitions from other packages could bring in type vars that clash
+         * with type vars chosen during this inference process. */
         ubik_asprintf(
-                &t->name, &ctx->req->region, "_t%u", ctx->next_tyvar++);
+                &t->name, &ctx->req->region, "_%s_t%u",
+                ctx->req->package_name, ctx->next_tyvar++);
 }
 
 no_ignore static ubik_error
