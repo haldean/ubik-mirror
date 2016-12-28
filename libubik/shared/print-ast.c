@@ -442,6 +442,24 @@ _print_implementation(struct ubik_ast_implementation *i, int indent)
         return OK;
 }
 
+static no_ignore ubik_error
+_print_test(struct ubik_ast_test *test, int indent)
+{
+        ubik_error err;
+
+        _indent(indent);
+        printf("?: ");
+        err = _print_expr(test->actual, indent + 4);
+        if (err != OK)
+                return err;
+        printf(" = ");
+        err = _print_expr(test->expected, indent + 4);
+        if (err != OK)
+                return err;
+        printf("\n");
+        return OK;
+}
+
 no_ignore ubik_error
 _print_ast(struct ubik_ast *ast, int indent)
 {
@@ -521,6 +539,18 @@ _print_ast(struct ubik_ast *ast, int indent)
                 if (err != OK)
                         return err;
                 printf("\n");
+        }
+
+        if (ast->tests.n > 0)
+        {
+                _indent(indent);
+                printf("%lu tests:\n", ast->tests.n);
+                for (i = 0; i < ast->tests.n; i++)
+                {
+                        err = _print_test(ast->tests.elems[i], indent + 4);
+                        if (err != OK)
+                                return err;
+                }
         }
 
         if (ast->immediate != NULL)
