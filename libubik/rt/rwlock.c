@@ -27,6 +27,7 @@
 #include <string.h>
 
 #define RWLOCK_DEBUG 0
+#define RWLOCK_DEBUG_TRACE 0
 #define MAX_ATTEMPTS 8
 
 #define retry_loop(op, opname)                                               \
@@ -44,6 +45,9 @@ ubik_rwlock_init(struct ubik_rwlock *rwl)
 {
 #if RWLOCK_DEBUG
         printf("[rwlock] init %" PRIxPTR "\n", (uintptr_t) rwl);
+#if RWLOCK_DEBUG_TRACE
+        ubik_trace_print();
+#endif
 #endif
         retry_loop(pthread_rwlock_init(&rwl->p, NULL), "create rwlock");
 }
@@ -53,6 +57,9 @@ ubik_rwlock_read(struct ubik_rwlock *rwl)
 {
 #if RWLOCK_DEBUG
         printf("[rwlock] read %" PRIxPTR "\n", (uintptr_t) rwl);
+#if RWLOCK_DEBUG_TRACE
+        ubik_trace_print();
+#endif
 #endif
         retry_loop(pthread_rwlock_rdlock(&rwl->p), "acquire read rwlock");
 }
@@ -62,6 +69,9 @@ ubik_rwlock_write(struct ubik_rwlock *rwl)
 {
 #if RWLOCK_DEBUG
         printf("[rwlock] write %" PRIxPTR "\n", (uintptr_t) rwl);
+#if RWLOCK_DEBUG_TRACE
+        ubik_trace_print();
+#endif
 #endif
         retry_loop(pthread_rwlock_wrlock(&rwl->p), "acquire write rwlock");
 }
@@ -71,6 +81,9 @@ ubik_rwlock_release(struct ubik_rwlock *rwl)
 {
 #if RWLOCK_DEBUG
         printf("[rwlock] release %" PRIxPTR "\n", (uintptr_t) rwl);
+#if RWLOCK_DEBUG_TRACE
+        ubik_trace_print();
+#endif
 #endif
         /* The spec is a little vague on whether pthread_rwlock_unlock actually
          * ever returns an error; POSIX doesn't specify any, but still gives it
@@ -85,6 +98,9 @@ ubik_rwlock_destroy(struct ubik_rwlock *rwl)
 {
 #if RWLOCK_DEBUG
         printf("[rwlock] destroy %" PRIxPTR "\n", (uintptr_t) rwl);
+#if RWLOCK_DEBUG_TRACE
+        ubik_trace_print();
+#endif
 #endif
         /* Ditto here; error code is returned, even though no possible errors
          * are given by POSIX. */
@@ -106,6 +122,9 @@ __ubik_rwguard_finish(struct __ubik_rwguard *rwg)
 {
 #if RWLOCK_DEBUG
         printf("[rwlock] rwguard-exit %" PRIxPTR "\n", (uintptr_t) rwg->rwl);
+#if RWLOCK_DEBUG_TRACE
+        ubik_trace_print();
+#endif
 #endif
         ubik_rwlock_release(rwg->rwl);
 }
