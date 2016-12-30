@@ -9,7 +9,6 @@
 - delete the list module
 - more tests for rational functions
 - matches against nonatomic expressions (? f x { . A => ...)
-- splatted imports shouldn't appear under the importing package's name
 - runtime applyable types
 - support equality testing for pattern blocks as well (to match numbers/bools)
 - types should be declarable out-of-order (right now you can only use them
