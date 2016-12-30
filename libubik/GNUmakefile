@@ -41,6 +41,7 @@ c_sources = \
     ./shared/fun.c \
     ./shared/hooks.c \
     ./shared/list.c \
+    ./shared/mtio.c \
     ./shared/pointerset.c \
     ./shared/print-ast.c \
     ./shared/rt.c \

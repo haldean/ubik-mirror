@@ -18,6 +18,8 @@
  */
 
 #include <inttypes.h>
+#include <pthread.h>
+#include <stdatomic.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -26,6 +28,7 @@
 #include "ubik/env.h"
 #include "ubik/eval.h"
 #include "ubik/fun.h"
+#include "ubik/mtio.h"
 #include "ubik/pointerset.h"
 #include "ubik/rwlock.h"
 #include "ubik/schedule.h"
@@ -41,6 +44,11 @@ struct ubik_scheduler
         struct ubik_exec_unit *ready;
         /* all accesses of wait and ready must be holding this lock */
         struct ubik_rwlock queue_lock;
+
+        pthread_cond_t consume_sig;
+        atomic_bool consume_ready;
+        pthread_mutex_t consume_lock;
+        atomic_bool done;
 };
 
 struct ubik_value *
@@ -75,6 +83,8 @@ ubik_schedule_new(struct ubik_scheduler **s)
 {
         ubik_galloc1(s, struct ubik_scheduler);
         ubik_rwlock_init(&(*s)->queue_lock);
+        ubik_assert(pthread_cond_init(&(*s)->consume_sig, NULL) == 0);
+        ubik_assert(pthread_mutex_init(&(*s)->consume_lock, NULL) == 0);
         return OK;
 }
 
@@ -117,6 +127,8 @@ ubik_schedule_free(struct ubik_scheduler *s)
 
         ubik_rwlock_release(&s->queue_lock);
         ubik_rwlock_destroy(&s->queue_lock);
+        ubik_assert(pthread_cond_destroy(&s->consume_sig) == 0);
+        ubik_assert(pthread_mutex_destroy(&s->consume_lock) == 0);
         return OK;
 }
 
@@ -385,7 +397,7 @@ ubik_schedule_push(
         {
                 if (graph->dbg.used)
                 {
-                        printf("calling traced value %s, rev-args:",
+                        ubik_mtprintf("calling traced value %s, rev-args:",
                                graph->dbg.name);
                         pap = val;
                         while (pap->type == UBIK_PAP)
@@ -394,13 +406,14 @@ ubik_schedule_push(
                                         &arginfo, &arginfo_len, pap->pap.arg);
                                 if (err != OK)
                                         return err;
-                                printf(" %s", arginfo);
+                                ubik_mtprintf(" %s", arginfo);
                                 pap = pap->pap.func;
                         }
-                        printf("\n");
+                        ubik_mtprintf("\n");
                 }
                 else
-                        printf("calling traced value, no debugging info\n");
+                        ubik_mtprintf(
+                                "calling traced value, no debugging info\n");
         }
 
         /* Graphs with special evaluators get to cheat and skip all this biz. */
@@ -614,18 +627,18 @@ _dump_exec_unit(struct ubik_exec_unit *u)
 {
         ubik_rwlock_read_scope(&u->gexec->lock);
 
-        printf("\tvalue %08" PRIx64 " node %03" PRIx64 " ",
+        ubik_mtprintf("\tvalue %08" PRIx64 " node %03" PRIx64 " ",
                get_fun(u->gexec->v)->gc.id, u->node);
 
         uint8_t status = u->gexec->status[u->node];
-        printf("wait d1 %d d2 %d d3 %d eval %d data %d ",
+        ubik_mtprintf("wait d1 %d d2 %d d3 %d eval %d data %d ",
                !!(status & UBIK_STATUS_WAIT_D1),
                !!(status & UBIK_STATUS_WAIT_D2),
                !!(status & UBIK_STATUS_WAIT_D3),
                !!(status & UBIK_STATUS_WAIT_EVAL),
                !!(status & UBIK_STATUS_WAIT_DATA));
 
-        printf("env %04" PRIx16 " parent %04" PRIx16 "\n",
+        ubik_mtprintf("env %04" PRIx16 " parent %04" PRIx16 "\n",
                (uint16_t) ((uintptr_t) u->gexec->env),
                (uint16_t) ((uintptr_t) u->gexec->env->parent));
 
@@ -638,7 +651,7 @@ ubik_schedule_dump(struct ubik_scheduler *s)
         struct ubik_exec_unit *u;
         ubik_error err;
 
-        printf("\nscheduler dump\nwaiting jobs:\n");
+        ubik_mtprintf("\nscheduler dump\nwaiting jobs:\n");
         u = s->wait;
         while (u != NULL)
         {
@@ -648,7 +661,7 @@ ubik_schedule_dump(struct ubik_scheduler *s)
                 u = u->next;
         }
 
-        printf("\nready jobs:\n");
+        ubik_mtprintf("\nready jobs:\n");
         u = s->ready;
         while (u != NULL)
         {
@@ -657,44 +670,116 @@ ubik_schedule_dump(struct ubik_scheduler *s)
                         return err;
                 u = u->next;
         }
-        printf("\n");
+        ubik_mtprintf("\n");
 
         return OK;
 }
 
+no_ignore ubik_error
+_consume_one(struct ubik_scheduler *s, struct ubik_exec_unit *u)
+{
+        ubik_word status;
+        ubik_error err;
+
+        err = ubik_node_eval(u);
+        if (err != OK)
+                return err;
+
+        status = u->gexec->status[u->node];
+        if (can_collapse(u))
+        {
+                /* Here, we collapse the graph and don't mark the things
+                 * depending on the node as ready; when we finish
+                 * collapsing the graph we'll notify the dependent
+                 * nodes. */
+                err = _collapse_graph(s, u);
+                if (err != OK)
+                        return err;
+        }
+        else if (status & UBIK_STATUS_COMPLETE)
+        {
+                err = ubik_schedule_complete(s, u);
+                if (err != OK)
+                        return err;
+        }
+        else if (status & UBIK_STATUS_WAIT_MASK)
+        {
+                u->next = s->wait;
+                s->wait = u;
+
+                err = _push_deps(s, u->gexec, u->node);
+                if (err != OK)
+                        return err;
+        }
+        else return ubik_raise(
+                        ERR_BAD_HEADER,
+                        "eval'ed node is not complete or waiting");
+
+        return OK;
+}
+
+no_ignore ubik_error
+_consume(struct ubik_scheduler *s)
+{
+        struct ubik_exec_unit *u;
+        ubik_error err;
+
+        for (;;)
+        {
+                ubik_rwlock_write(&s->queue_lock);
+                u = s->ready;
+                if (u != NULL)
+                        s->ready = u->next;
+                ubik_rwlock_release(&s->queue_lock);
+
+                /* Queue is empty, we're good to go. */
+                if (u == NULL)
+                        return OK;
+
+                err = _consume_one(s, u);
+                if (err != OK)
+                        return err;
+        }
+
+        ubik_unreachable("broke out of infinite loop");
+}
+
 /* Runs a single pass of the scheduler. */
 no_ignore ubik_error
-_run_single_pass(struct ubik_scheduler *s)
+_monitor_loop(struct ubik_scheduler *s)
 {
-        struct ubik_exec_unit *u, *t, *next_exec;
+        struct ubik_exec_unit *u, *t;
         struct ubik_exec_unit *prev;
-        ubik_word status;
         ubik_error err;
 
         /* This proceeds in two phases; first, we move everything that is ready
          * to be executed from the wait pile to the ready pile, then we execute
          * everything in the ready pile. */
-        u = s->wait;
-        prev = NULL;
-        while (u != NULL)
         {
-                t = u->next;
-
-                if (is_ready(u))
+                ubik_rwlock_write_scope(&s->queue_lock);
+                s->consume_ready = false;
+                u = s->wait;
+                prev = NULL;
+                while (u != NULL)
                 {
-                        u->next = s->ready;
-                        s->ready = u;
-                        if (prev != NULL)
-                                prev->next = t;
+                        t = u->next;
+
+                        if (is_ready(u))
+                        {
+                                u->next = s->ready;
+                                s->ready = u;
+                                if (prev != NULL)
+                                        prev->next = t;
+                                else
+                                        s->wait = t;
+                        }
                         else
-                                s->wait = t;
-                }
-                else
-                {
-                        prev = u;
-                }
+                        {
+                                prev = u;
+                        }
 
-                u = t;
+                        u = t;
+                }
         }
 
         /* If the ready pile is still empty, then we're deadlocked. */
@@ -712,69 +797,92 @@ _run_single_pass(struct ubik_scheduler *s)
                 return err;
 #endif
 
-        /* Now all of the ready jobs are in the ready pile, so we just have to
-         * execute them. */
-        u = s->ready;
-        while (u != NULL)
-        {
-                err = ubik_node_eval(u);
-                if (err != OK)
-                        return err;
+        /* wake all the worker threads up... */
+        s->consume_ready = true;
+        pthread_cond_broadcast(&s->consume_sig);
 
-                next_exec = s->ready->next;
-
-                status = u->gexec->status[u->node];
-                if (can_collapse(u))
-                {
-                        /* Here, we collapse the graph and don't mark the things
-                         * depending on the node as ready; when we finish
-                         * collapsing the graph we'll notify the dependent
-                         * nodes. */
-                        err = _collapse_graph(s, u);
-                        if (err != OK)
-                                return err;
-                }
-                else if (status & UBIK_STATUS_COMPLETE)
-                {
-                        err = ubik_schedule_complete(s, u);
-                        if (err != OK)
-                                return err;
-                }
-                else if (status & UBIK_STATUS_WAIT_MASK)
-                {
-                        u->next = s->wait;
-                        s->wait = u;
-
-                        err = _push_deps(s, u->gexec, u->node);
-                        if (err != OK)
-                                return err;
-                }
-                else return ubik_raise(
-                        ERR_BAD_HEADER,
-                        "eval'ed node is not complete or waiting");
-
-                /* It's important we do this at the end; we want u to be
-                 * reachable when we free the environment if we end up
-                 * early-returning because of an error. */
-                s->ready = next_exec;
-                u = next_exec;
-        }
+        /* ...and transition this thread to a worker thread. */
+        err = _consume(s);
+        if (err != OK)
+                return err;
 
         return OK;
 }
+
+void *
+_worker_loop(void *vs)
+{
+        ubik_error err;
+        int res;
+        char *buf;
+        struct ubik_scheduler *s;
+
+        s = (struct ubik_scheduler *) vs;
+
+        for (;;)
+        {
+                ubik_assert(pthread_mutex_lock(&s->consume_lock) == 0);
+                do
+                {
+                        res = pthread_cond_wait(
+                                &s->consume_sig, &s->consume_lock);
+                        ubik_assert(res == 0);
+                }
+                while (!s->consume_ready && !s->done);
+                ubik_assert(pthread_mutex_unlock(&s->consume_lock) == 0);
+
+                if (s->done)
+                        return NULL;
+
+                err = _consume(s);
+                if (err != OK)
+                {
+                        buf = ubik_error_explain(err);
+                        ubik_mtprintf(
+                                "thread %lu shutting down: %s\n",
+                                ubik_gettid(), buf);
+                        free(buf);
+                        return NULL;
+                }
+        }
+
+        ubik_unreachable("broke out of infinite loop");
+}
+
+#define N_WORKERS 1
 
 /* Runs all queued jobs on the scheduler. */
 no_ignore ubik_error
 ubik_schedule_run(struct ubik_scheduler *s)
 {
         ubik_error err;
+        pthread_t workers[N_WORKERS];
+        size_t i;
+        int res;
+
+        for (i = 0; i < N_WORKERS; i++)
+        {
+                res = pthread_create(&workers[i], NULL, _worker_loop, s);
+                ubik_assert(res == 0);
+        }
 
         while (s->wait != NULL || s->ready != NULL)
         {
-                err = _run_single_pass(s);
+                err = _monitor_loop(s);
                 if (err != OK)
                         return err;
         }
+
+        /* wake all the worker threads up to shut them down */
+        s->done = true;
+        pthread_cond_broadcast(&s->consume_sig);
+
+        for (i = 0; i < N_WORKERS; i++)
+        {
+                res = pthread_join(workers[i], NULL);
+                ubik_assert(res == 0);
+        }
+
         return OK;
 }
 

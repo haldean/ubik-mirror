@@ -49,7 +49,7 @@ struct __ubik_rwguard
 
 #define ubik_rwlock_scope(l, lockfunc) \
         defer(__ubik_rwguard_finish) struct __ubik_rwguard __rwg; \
-        __rwg.rwl = l; lockfunc(__rwg.rwl);
+        (__rwg).rwl = l; lockfunc((__rwg).rwl);
 
 #define ubik_rwlock_read_scope(l) ubik_rwlock_scope(l, ubik_rwlock_read)
 #define ubik_rwlock_write_scope(l) ubik_rwlock_scope(l, ubik_rwlock_write)

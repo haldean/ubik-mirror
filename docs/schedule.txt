@@ -1,0 +1,21 @@
+Parallel Scheduling ====================================================
+Haldean Brown                                      First draft: Dec 2016
+                                                  Last updated: Dec 2016
+
+Status: Draft
+
+------------------------------------------------------------------------
+
+The Ubik scheduler takes Ubik values and produces their "base value":
+for most kinds of values, this is just the value itself. For PAP or FUN
+values with zero arity (fully-applied functions), this is the value
+obtained by calling the appropriate function with the supplied
+arguments, if applicable.
+
+The scheduler takes a list of tasks to accomplish, calculates data
+dependencies for each, and then executes them in turn. A number of
+worker threads are then spawned, one monitor thread and N consumer
+threads. The monitor thread's job is to keep the queue of ready tasks as
+full as possible; the consumer threads' job is to accomplish tasks and
+mark them as complete. The monitor observes the completed jobs and
+pushes the newly-ready tasks onto the queue.
