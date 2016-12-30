@@ -84,6 +84,10 @@ struct ubik_exec_graph
         /* If true, this is executing in a temporary environment that should be
            cleaned up when execution is complete */
         bool transient_env;
+
+        /* Any access to status, nv, nt, or refcount in this struct must be
+           done with this lock held. */
+        struct ubik_rwlock lock;
 };
 
 struct ubik_exec_unit

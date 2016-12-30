@@ -27,6 +27,7 @@
 #include "ubik/eval.h"
 #include "ubik/fun.h"
 #include "ubik/pointerset.h"
+#include "ubik/rwlock.h"
 #include "ubik/schedule.h"
 #include "ubik/util.h"
 #include "ubik/value.h"
@@ -38,9 +39,11 @@ struct ubik_scheduler
 {
         struct ubik_exec_unit *wait;
         struct ubik_exec_unit *ready;
+        /* all accesses of wait and ready must be holding this lock */
+        struct ubik_rwlock queue_lock;
 };
 
-static inline struct ubik_value *
+struct ubik_value *
 get_fun(struct ubik_value *v)
 {
         if (v->type == UBIK_PAP)
@@ -49,7 +52,7 @@ get_fun(struct ubik_value *v)
         return v;
 }
 
-static void
+void
 free_exec_graph(struct ubik_exec_graph *gexec)
 {
         if (gexec->transient_env)
@@ -59,6 +62,7 @@ free_exec_graph(struct ubik_exec_graph *gexec)
         }
         if (gexec->notify != NULL)
                 free(gexec->notify);
+        ubik_rwlock_destroy(&gexec->lock);
         free(gexec->nv);
         free(gexec->nt);
         free(gexec->status);
@@ -70,6 +74,7 @@ no_ignore ubik_error
 ubik_schedule_new(struct ubik_scheduler **s)
 {
         ubik_galloc1(s, struct ubik_scheduler);
+        ubik_rwlock_init(&(*s)->queue_lock);
         return OK;
 }
 
@@ -81,6 +86,8 @@ ubik_schedule_free(struct ubik_scheduler *s)
         struct ubik_vector gexecs = {0};
         ubik_error err;
         size_t i;
+
+        ubik_rwlock_write(&s->queue_lock);
 
         while (s->wait != NULL)
         {
@@ -108,11 +115,14 @@ ubik_schedule_free(struct ubik_scheduler *s)
         }
         ubik_vector_free(&gexecs);
 
+        ubik_rwlock_release(&s->queue_lock);
+        ubik_rwlock_destroy(&s->queue_lock);
         return OK;
 }
 
-/* Initializes the flags of a given node. */
-no_ignore static ubik_error
+/* Initializes the flags of a given node. Must be called with the gexec lock
+ * held. */
+no_ignore ubik_error
 _set_initial_ready(
         struct ubik_exec_graph *gexec,
         ubik_word node_id)
@@ -163,7 +173,7 @@ _set_initial_ready(
         return OK;
 }
 
-no_ignore static ubik_error
+no_ignore ubik_error
 _enqueue(
         struct ubik_scheduler *s,
         struct ubik_exec_graph *gexec,
@@ -172,6 +182,8 @@ _enqueue(
         struct ubik_exec_unit *u;
         ubik_error err;
         struct ubik_exec_unit *test;
+
+        ubik_rwlock_write_scope(&s->queue_lock);
 
         /* Check to make sure this node isn't already enqueued. */
         for (test = s->wait; test != NULL; test = test->next)
@@ -194,11 +206,15 @@ _enqueue(
         ubik_galloc1(&u, struct ubik_exec_unit);
         u->node = node;
         u->gexec = gexec;
-        gexec->refcount++;
 
-        err = _set_initial_ready(gexec, node);
-        if (err != OK)
-                return err;
+        {
+                ubik_rwlock_write_scope(&gexec->lock);
+                gexec->refcount++;
+
+                err = _set_initial_ready(gexec, node);
+                if (err != OK)
+                        return err;
+        }
 
         u->next = s->wait;
         s->wait = u;
@@ -206,7 +222,8 @@ _enqueue(
         return OK;
 }
 
-no_ignore static ubik_error
+/* Evaluates a native graph. Must be called with the gexec lock held. */
+no_ignore ubik_error
 _eval_native_dagc(
         struct ubik_scheduler *s,
         struct ubik_exec_graph *gexec)
@@ -236,14 +253,14 @@ _eval_native_dagc(
         return OK;
 }
 
-no_ignore static ubik_error
+no_ignore ubik_error
 _push_dep_tree(
         struct ubik_scheduler *s,
         struct ubik_exec_graph *gexec,
         ubik_word node);
 
 /* Enqueues the nodes on which the provided node is waiting. */
-no_ignore static ubik_error
+no_ignore ubik_error
 _push_deps(
         struct ubik_scheduler *s,
         struct ubik_exec_graph *gexec,
@@ -265,7 +282,6 @@ _push_deps(
         if (d1 != UBIK_INVALID_NODE_ID
             && (gexec->status[node] & UBIK_STATUS_WAIT_D1))
         {
-                /* only the root gets notified; everything below it doesn't */
                 err = _push_dep_tree(s, gexec, d1);
                 if (err != OK)
                         return err;
@@ -289,7 +305,7 @@ _push_deps(
 }
 
 /* Enqueues a node and all applicable dependencies. */
-no_ignore static ubik_error
+no_ignore ubik_error
 _push_dep_tree(
         struct ubik_scheduler *s,
         struct ubik_exec_graph *gexec,
@@ -346,6 +362,7 @@ ubik_schedule_push(
         gexec->workspace = workspace;
         gexec->refcount = 0;
         gexec->transient_env = transient_env;
+        ubik_rwlock_init(&gexec->lock);
 
         /* Add types and values for inputs to the executor */
         for (i = graph->fun.arity - 1, pap = val;
@@ -412,12 +429,6 @@ ubik_schedule_push(
         return OK;
 }
 
-static int scheduler_step()
-{
-        volatile int no_inline = 0;
-        return no_inline;
-}
-
 /* Marks an execution unit complete. */
 no_ignore ubik_error
 ubik_schedule_complete(
@@ -431,26 +442,28 @@ ubik_schedule_complete(
         ubik_error err;
         bool done;
 
-        scheduler_step();
-
         graph = get_fun(e->gexec->v);
         err = ubik_fun_get_parents(&parents, graph, e->node);
         if (err != OK)
                 return err;
 
-        for (i = 0; i < parents.n; i++)
         {
-                p = (ubik_word) parents.elems[i];
-                err = ubik_fun_get_deps(&d1, &d2, &d3, &graph->fun.nodes[p]);
-                if (err != OK)
-                        return err;
+                ubik_rwlock_write_scope(&e->gexec->lock);
+                for (i = 0; i < parents.n; i++)
+                {
+                        p = (ubik_word) parents.elems[i];
+                        err = ubik_fun_get_deps(
+                                &d1, &d2, &d3, &graph->fun.nodes[p]);
+                        if (err != OK)
+                                return err;
 
-                if (d1 == e->node)
-                        e->gexec->status[p] &= ~UBIK_STATUS_WAIT_D1;
-                if (d2 == e->node)
-                        e->gexec->status[p] &= ~UBIK_STATUS_WAIT_D2;
-                if (d3 == e->node)
-                        e->gexec->status[p] &= ~UBIK_STATUS_WAIT_D3;
+                        if (d1 == e->node)
+                                e->gexec->status[p] &= ~UBIK_STATUS_WAIT_D1;
+                        if (d2 == e->node)
+                                e->gexec->status[p] &= ~UBIK_STATUS_WAIT_D2;
+                        if (d3 == e->node)
+                                e->gexec->status[p] &= ~UBIK_STATUS_WAIT_D3;
+                }
         }
 
         /* If this was a terminal node, it's possible that we're done with this
@@ -458,10 +471,16 @@ ubik_schedule_complete(
            aren't, notify listeners. */
         if (graph->fun.nodes[e->node].is_terminal)
         {
+                /* Hold an exclusive lock on this section, to prevent
+                 * double-notifying races. */
+                ubik_rwlock_write(&e->gexec->lock);
                 done = true;
                 for (i = 0; i < graph->fun.n && done; i++)
                         if (i != e->node && graph->fun.nodes[i].is_terminal)
-                                done = false;
+                                done &= e->gexec->status[i]
+                                        == UBIK_STATUS_COMPLETE;
+                ubik_rwlock_release(&e->gexec->lock);
+
                 if (done)
                 {
                         if (e->gexec->notify != NULL) {
@@ -472,11 +491,15 @@ ubik_schedule_complete(
                         }
                 }
         }
-        ubik_assert(e->gexec->refcount > 0);
-        e->gexec->refcount--;
-        if (e->gexec->refcount == 0)
-                free_exec_graph(e->gexec);
 
+        {
+                ubik_rwlock_write_scope(&e->gexec->lock);
+                ubik_assert(e->gexec->refcount > 0);
+                done = --e->gexec->refcount == 0;
+        }
+
+        if (done)
+                free_exec_graph(e->gexec);
         free(e);
         return OK;
 }
@@ -489,17 +512,27 @@ _notify_node(
 {
         ubik_error err;
 
-        waiting->gexec->nv[waiting->node] = complete->gexec->nv[complete->node];
-        waiting->gexec->nt[waiting->node] = complete->gexec->nt[complete->node];
-        waiting->gexec->status[waiting->node] = UBIK_STATUS_COMPLETE;
-
-        /* Results of traced functions are also traced. */
-        if (complete->gexec->v->gc.traced)
         {
-                waiting->gexec->nv[waiting->node]->dbg =
-                        complete->gexec->v->dbg;
-                waiting->gexec->nv[waiting->node]->dbg.nofree = true;
-                waiting->gexec->nv[waiting->node]->gc.traced = true;
+                ubik_rwlock_write(&waiting->gexec->lock);
+                ubik_rwlock_read(&complete->gexec->lock);
+
+                waiting->gexec->nv[waiting->node] =
+                        complete->gexec->nv[complete->node];
+                waiting->gexec->nt[waiting->node] =
+                        complete->gexec->nt[complete->node];
+                waiting->gexec->status[waiting->node] = UBIK_STATUS_COMPLETE;
+
+                /* Results of traced functions are also traced. */
+                if (complete->gexec->v->gc.traced)
+                {
+                        waiting->gexec->nv[waiting->node]->dbg =
+                                complete->gexec->v->dbg;
+                        waiting->gexec->nv[waiting->node]->dbg.nofree = true;
+                        waiting->gexec->nv[waiting->node]->gc.traced = true;
+                }
+
+                ubik_rwlock_release(&waiting->gexec->lock);
+                ubik_rwlock_release(&complete->gexec->lock);
         }
 
         err = ubik_schedule_complete(s, waiting);
@@ -509,20 +542,25 @@ _notify_node(
         return OK;
 }
 
-no_ignore static ubik_error
+no_ignore ubik_error
 _collapse_graph(
         struct ubik_scheduler *s,
         struct ubik_exec_unit *e)
 {
         struct ubik_exec_notify *notify;
         struct ubik_env *child_env;
+        struct ubik_value *v;
         ubik_error err;
 
         ubik_galloc1(&notify, struct ubik_exec_notify);
         notify->notify = (ubik_exec_notify_func) _notify_node;
         notify->arg = e;
 
-        e->gexec->status[e->node] = UBIK_STATUS_WAIT_EVAL;
+        {
+                ubik_rwlock_write_scope(&e->gexec->lock);
+                e->gexec->status[e->node] = UBIK_STATUS_WAIT_EVAL;
+                v = e->gexec->nv[e->node];
+        }
 
         /* Create a child environment to execute the function in. */
         ubik_galloc1(&child_env, struct ubik_env);
@@ -530,26 +568,34 @@ _collapse_graph(
         if (err != OK)
                 return err;
 
+        /* Note: this can end up synchronously notifying on the node if the
+         * requested collapse calls a native function, so it can't be called
+         * with a lock held (notifying the node reasonably requires a write
+         * lock to be held. This is why we pull the value out before we call
+         * this function. */
         err = ubik_schedule_push(
-                s, e->gexec->nv[e->node], child_env, true, notify,
-                e->gexec->workspace);
+                s, v, child_env, true, notify, e->gexec->workspace);
         if (err != OK)
                 return err;
 
         return OK;
 }
 
-no_ignore static bool
+no_ignore bool
 is_ready(struct ubik_exec_unit *e)
 {
+        ubik_rwlock_read_scope(&e->gexec->lock);
         return !(e->gexec->status[e->node] & UBIK_STATUS_WAIT_MASK);
 }
 
-no_ignore static bool
+no_ignore bool
 can_collapse(struct ubik_exec_unit *e)
 {
         struct ubik_value *v;
         ubik_word arity;
+
+        ubik_rwlock_read_scope(&e->gexec->lock);
+
         if (e->gexec->status[e->node] != UBIK_STATUS_COMPLETE)
                 return false;
         v = e->gexec->nv[e->node];
@@ -558,13 +604,16 @@ can_collapse(struct ubik_exec_unit *e)
         if (v->type != UBIK_PAP)
                 return false;
         for (arity = 0; v->type == UBIK_PAP; arity++, v = v->pap.func);
+
         ubik_assert(v->type == UBIK_FUN);
         return arity == v->fun.arity;
 }
 
-no_ignore static ubik_error
+no_ignore ubik_error
 _dump_exec_unit(struct ubik_exec_unit *u)
 {
+        ubik_rwlock_read_scope(&u->gexec->lock);
+
         printf("\tvalue %08" PRIx64 " node %03" PRIx64 " ",
                get_fun(u->gexec->v)->gc.id, u->node);
 
@@ -614,7 +663,7 @@ ubik_schedule_dump(struct ubik_scheduler *s)
 }
 
 /* Runs a single pass of the scheduler. */
-no_ignore static ubik_error
+no_ignore ubik_error
 _run_single_pass(struct ubik_scheduler *s)
 {
         struct ubik_exec_unit *u, *t, *next_exec;
