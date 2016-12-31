@@ -48,6 +48,7 @@ struct ubik_scheduler
         pthread_cond_t consume_sig;
         atomic_bool consume_ready;
         pthread_mutex_t consume_lock;
+        atomic_int_fast16_t in_progress;
         atomic_bool done;
 };
 
@@ -729,7 +730,10 @@ _consume(struct ubik_scheduler *s)
                 ubik_rwlock_write(&s->queue_lock);
                 u = s->ready;
                 if (u != NULL)
+                {
                         s->ready = u->next;
+                        s->in_progress++;
+                }
                 ubik_rwlock_release(&s->queue_lock);
 
                 /* Queue is empty, we're good to go. */
@@ -737,6 +741,7 @@ _consume(struct ubik_scheduler *s)
                         return OK;
 
                 err = _consume_one(s, u);
+                s->in_progress--;
                 if (err != OK)
                         return err;
         }
@@ -780,15 +785,15 @@ _monitor_loop(struct ubik_scheduler *s)
 
                         u = t;
                 }
-        }
 
-        /* If the ready pile is still empty, then we're deadlocked. */
-        if (s->ready == NULL)
-        {
-                err = ubik_schedule_dump(s);
-                if (err != OK)
-                        return err;
-                return ubik_raise(ERR_DEADLOCK, "all jobs are waiting");
+                /* If the ready pile is still empty, then we're deadlocked. */
+                if (s->ready == NULL && s->in_progress == 0)
+                {
+                        err = ubik_schedule_dump(s);
+                        if (err != OK)
+                                return err;
+                        return ubik_raise(ERR_DEADLOCK, "all jobs waiting");
+                }
         }
 
 #if UBIK_SCHEDULE_STEP
@@ -813,8 +818,8 @@ void *
 _worker_loop(void *vs)
 {
         ubik_error err;
-        int res;
         char *buf;
+        int res;
         struct ubik_scheduler *s;
 
         s = (struct ubik_scheduler *) vs;
@@ -856,6 +861,8 @@ no_ignore ubik_error
 ubik_schedule_run(struct ubik_scheduler *s)
 {
         ubik_error err;
+
+#if !UBIK_SINGLETHREADED
         pthread_t workers[N_WORKERS];
         size_t i;
         int res;
@@ -865,6 +872,7 @@ ubik_schedule_run(struct ubik_scheduler *s)
                 res = pthread_create(&workers[i], NULL, _worker_loop, s);
                 ubik_assert(res == 0);
         }
+#endif
 
         while (s->wait != NULL || s->ready != NULL)
         {
@@ -873,6 +881,7 @@ ubik_schedule_run(struct ubik_scheduler *s)
                         return err;
         }
 
+#if !UBIK_SINGLETHREADED
         /* wake all the worker threads up to shut them down */
         s->done = true;
         pthread_cond_broadcast(&s->consume_sig);
@@ -882,6 +891,7 @@ ubik_schedule_run(struct ubik_scheduler *s)
                 res = pthread_join(workers[i], NULL);
                 ubik_assert(res == 0);
         }
+#endif
 
         return OK;
 }
