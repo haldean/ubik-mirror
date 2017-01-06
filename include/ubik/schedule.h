@@ -18,6 +18,7 @@
  */
 
 #pragma once
+#include "ubik/rwlock.h"
 #include "ubik/ubik.h"
 
 struct ubik_scheduler;
@@ -51,6 +52,8 @@ struct ubik_exec_notify
 #define UBIK_STATUS_WAIT_EVAL  0x10
 /* waiting on data to exist */
 #define UBIK_STATUS_WAIT_DATA  0x20
+/* node has not been enqueued */
+#define UBIK_STATUS_NOT_QUEUED 0x40
 /* wait_d1 | wait_d2 | wait_d3 | wait_eval */
 #define UBIK_STATUS_WAIT_MASK  0x2E
 

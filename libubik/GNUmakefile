@@ -25,6 +25,7 @@ c_sources = \
     ./rt/mem.c \
     ./rt/rat.c \
     ./rt/rwlock.c \
+    ./rt/queue.c \
     ./rt/schedule.c \
     ./rt/str.c \
     ./rt/timer.c \

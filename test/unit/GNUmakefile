@@ -9,6 +9,7 @@ tests = \
 	parenv-test \
 	path_concat-test \
 	pointer_set-test \
+	queue-test \
 	rat-test \
 	resolve-test \
 	split-test \
