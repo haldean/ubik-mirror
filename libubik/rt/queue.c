@@ -29,7 +29,6 @@ void
 ubik_queue_push(struct ubik_queue *q, struct ubik_exec_unit *u)
 {
         ubik_assert(pthread_mutex_lock(&lock) == 0);
-        printf("push %p:%lu\n", (void*) u->gexec, u->node);
 
         if (q->tail == NULL)
         {
@@ -68,7 +67,6 @@ ubik_queue_pop(struct ubik_exec_unit **res, struct ubik_queue *q)
                         q->head = q->head->next;
                 (*res)->next = NULL;
                 ret = true;
-                printf("pop  %p:%lu\n", (void*) (*res)->gexec, (*res)->node);
 
         }
 

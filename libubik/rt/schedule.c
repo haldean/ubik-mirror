@@ -94,7 +94,7 @@ no_ignore ubik_error
 ubik_schedule_new(struct ubik_scheduler **s)
 {
         ubik_galloc1(s, struct ubik_scheduler);
-        (*s)->n_workers = 1;
+        (*s)->n_workers = 4;
         (*s)->ok_votes = (*s)->n_workers;
         return OK;
 }
@@ -144,7 +144,10 @@ _set_initial_ready(
          * Only application of the graph they participate in can make
          * them ready, so these don't changed here. */
         if (node_type == UBIK_INPUT)
+        {
+                gexec->status[node_id] = UBIK_STATUS_READY;
                 return OK;
+        }
 
         err = ubik_fun_get_deps(&d1, &d2, &d3, &graph->fun.nodes[node_id]);
         if (err != OK)
@@ -597,12 +600,13 @@ _dump_exec_unit(struct ubik_exec_unit *u)
                get_fun(u->gexec->v)->gc.id, u->node);
 
         uint8_t status = u->gexec->status[u->node];
-        ubik_mtprintf("wait d1 %d d2 %d d3 %d eval %d data %d ",
+        ubik_mtprintf("wait d1 %d d2 %d d3 %d eval %d data %d noq %d",
                !!(status & UBIK_STATUS_WAIT_D1),
                !!(status & UBIK_STATUS_WAIT_D2),
                !!(status & UBIK_STATUS_WAIT_D3),
                !!(status & UBIK_STATUS_WAIT_EVAL),
-               !!(status & UBIK_STATUS_WAIT_DATA));
+               !!(status & UBIK_STATUS_WAIT_DATA),
+               !!(status & UBIK_STATUS_NOT_QUEUED));
 
         ubik_mtprintf("env %04" PRIx16 " parent %04" PRIx16 "\n",
                (uint16_t) ((uintptr_t) u->gexec->env),
@@ -687,6 +691,11 @@ _consume(struct ubik_scheduler *s)
 
         for (;;)
         {
+#if UBIK_SCHEDULE_STEP
+                err = ubik_schedule_dump(s);
+                ubik_assert(err == OK);
+#endif
+
                 /* If we're told to die, we die immediately. It's important to
                  * do this before we take ownership of a unit below, otherwise
                  * we'll leak the unit that we take off the queue when we die. */
