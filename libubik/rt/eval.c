@@ -40,9 +40,22 @@ _eval_apply(struct ubik_exec_unit *u, struct ubik_node *n)
                 return err;
 
         res->type = UBIK_PAP;
-        res->pap.func = u->gexec->nv[n->apply.func];
-        res->pap.arg = u->gexec->nv[n->apply.arg];
-        res->pap.arg_type = u->gexec->nt[n->apply.arg];
+        {
+                ubik_rwlock_read_scope(&u->gexec->lock);
+                res->pap.func = u->gexec->nv[n->apply.func];
+                res->pap.arg = u->gexec->nv[n->apply.arg];
+                res->pap.arg_type = u->gexec->nt[n->apply.arg];
+
+                err = ubik_type_func_apply(
+                        type, u->gexec->nt[n->apply.func],
+                        u->gexec->nt[n->apply.arg]);
+                if (err != OK) {
+                        /* TODO: don't discard this! we should have real run
+                           time types flowing here. */
+                        free(err);
+                }
+        }
+
         switch (res->pap.func->type)
         {
         case UBIK_FUN:
@@ -68,23 +81,19 @@ _eval_apply(struct ubik_exec_unit *u, struct ubik_node *n)
          * the function is being traced. */
         res->gc.traced = res->pap.base_func->gc.traced;
 
-        err = ubik_type_func_apply(
-                type, u->gexec->nt[n->apply.func], u->gexec->nt[n->apply.arg]);
-        if (err != OK) {
-                /* TODO: don't discard this! we should have real run time types
-                   flowing here. */
-                free(err);
+        {
+                ubik_rwlock_write_scope(&u->gexec->lock);
+                u->gexec->nv[n->id] = res;
+                u->gexec->nt[n->id] = type;
+                u->gexec->status[n->id] = UBIK_STATUS_COMPLETE;
         }
-
-        u->gexec->nv[n->id] = res;
-        u->gexec->nt[n->id] = type;
-        u->gexec->status[n->id] = UBIK_STATUS_COMPLETE;
         return OK;
 }
 
 no_ignore static ubik_error
 _eval_value(struct ubik_exec_unit *u, struct ubik_node *n)
 {
+        ubik_rwlock_write_scope(&u->gexec->lock);
         u->gexec->nv[n->id] = n->value.value;
         u->gexec->nt[n->id] = n->value.type;
         u->gexec->status[n->id] = UBIK_STATUS_COMPLETE;
@@ -94,6 +103,7 @@ _eval_value(struct ubik_exec_unit *u, struct ubik_node *n)
 no_ignore static ubik_error
 _eval_ref(struct ubik_exec_unit *u, struct ubik_node *n)
 {
+        ubik_rwlock_write_scope(&u->gexec->lock);
         u->gexec->nv[n->id] = u->gexec->nv[n->ref.referrent];
         u->gexec->nt[n->id] = u->gexec->nt[n->ref.referrent];
         u->gexec->status[n->id] = UBIK_STATUS_COMPLETE;
@@ -111,6 +121,7 @@ _mark_load_complete(
         unused(uri);
 
         u = unit_void;
+        ubik_rwlock_write_scope(&u->gexec->lock);
         u->gexec->status[u->node] &= ~UBIK_STATUS_WAIT_DATA;
         return OK;
 }
@@ -141,7 +152,10 @@ _eval_load(struct ubik_exec_unit *u, struct ubik_node *n)
                 if (err->error_code == ERR_ABSENT)
                 {
                         free(err);
-                        u->gexec->status[n->id] |= UBIK_STATUS_WAIT_DATA;
+                        {
+                                ubik_rwlock_write_scope(&u->gexec->lock);
+                                u->gexec->status[n->id] |= UBIK_STATUS_WAIT_DATA;
+                        }
                         err = ubik_env_watch(
                                 _mark_load_complete, u->gexec->env,
                                 n->load.loc, u);
@@ -152,9 +166,12 @@ _eval_load(struct ubik_exec_unit *u, struct ubik_node *n)
                 return err;
         }
 
-        u->gexec->nv[n->id] = value;
-        u->gexec->nt[n->id] = type;
-        u->gexec->status[n->id] = UBIK_STATUS_COMPLETE;
+        {
+                ubik_rwlock_write_scope(&u->gexec->lock);
+                u->gexec->nv[n->id] = value;
+                u->gexec->nt[n->id] = type;
+                u->gexec->status[n->id] = UBIK_STATUS_COMPLETE;
+        }
         return OK;
 }
 
@@ -162,27 +179,37 @@ no_ignore static ubik_error
 _eval_cond(struct ubik_exec_unit *u, struct ubik_node *n)
 {
         ubik_word res;
+        ubik_word status;
         bool condition;
 
-        ubik_assert(u->gexec->nv[n->cond.condition]->type == UBIK_BOO);
-        condition = u->gexec->nv[n->cond.condition]->boo.value;
-        res = condition ? n->cond.if_true : n->cond.if_false;
+        {
+                ubik_rwlock_read_scope(&u->gexec->lock);
+                ubik_assert(u->gexec->nv[n->cond.condition]->type == UBIK_BOO);
+                condition = u->gexec->nv[n->cond.condition]->boo.value;
 
-        if (u->gexec->status[res] != UBIK_STATUS_COMPLETE)
+                res = condition ? n->cond.if_true : n->cond.if_false;
+                status = u->gexec->status[res];
+        }
+
+        if (status != UBIK_STATUS_COMPLETE)
         {
                 /* If this is true, we just got done evaluating the condition
                  * but we haven't scheduled the if_true/if_false nodes. We set
                  * our wait flag on the appropriate node and let the scheduler
                  * pick it up and reevaluate us later. */
+                ubik_rwlock_write_scope(&u->gexec->lock);
                 u->gexec->status[n->id] |= condition
                         ? UBIK_STATUS_WAIT_D2
                         : UBIK_STATUS_WAIT_D3;
                 return OK;
         }
 
-        u->gexec->nv[n->id] = u->gexec->nv[res];
-        u->gexec->nt[n->id] = u->gexec->nt[res];
-        u->gexec->status[n->id] = UBIK_STATUS_COMPLETE;
+        {
+                ubik_rwlock_write_scope(&u->gexec->lock);
+                u->gexec->nv[n->id] = u->gexec->nv[res];
+                u->gexec->nt[n->id] = u->gexec->nt[res];
+                u->gexec->status[n->id] = UBIK_STATUS_COMPLETE;
+        }
         return OK;
 }
 
@@ -190,15 +217,20 @@ no_ignore static ubik_error
 _eval_store(struct ubik_exec_unit *u, struct ubik_node *n)
 {
         char *buf;
+        struct ubik_value *nv;
+        struct ubik_value *nt;
         ubik_error err;
 
-        u->gexec->nv[n->id] = u->gexec->nv[n->store.value];
-        u->gexec->nt[n->id] = u->gexec->nt[n->store.value];
-        u->gexec->status[n->id] = UBIK_STATUS_COMPLETE;
+        {
+                ubik_rwlock_write_scope(&u->gexec->lock);
+                u->gexec->nv[n->id] = u->gexec->nv[n->store.value];
+                u->gexec->nt[n->id] = u->gexec->nt[n->store.value];
+                nv = u->gexec->nv[n->id];
+                nt = u->gexec->nt[n->id];
+                u->gexec->status[n->id] = UBIK_STATUS_COMPLETE;
+        }
 
-        err = ubik_env_set(
-                u->gexec->env, n->store.loc,
-                u->gexec->nv[n->id], u->gexec->nt[n->id]);
+        err = ubik_env_set(u->gexec->env, n->store.loc, nv, nt);
         if (err == OK)
                 return err;
         if (err->error_code == ERR_PRESENT)
@@ -227,9 +259,12 @@ _eval_input(struct ubik_exec_unit *u, struct ubik_node *n)
         for (arity = arity - n->input.arg_num - 1, t = u->gexec->v;
              arity > 0; arity--, t = t->pap.func);
 
-        u->gexec->nv[n->id] = t->pap.arg;
-        u->gexec->nt[n->id] = t->pap.arg_type;
-        u->gexec->status[n->id] = UBIK_STATUS_COMPLETE;
+        {
+                ubik_rwlock_write_scope(&u->gexec->lock);
+                u->gexec->nv[n->id] = t->pap.arg;
+                u->gexec->nt[n->id] = t->pap.arg_type;
+                u->gexec->status[n->id] = UBIK_STATUS_COMPLETE;
+        }
         return OK;
 }
 
@@ -243,8 +278,8 @@ ubik_node_eval(struct ubik_exec_unit *u)
         ubik_assert(!(u->gexec->status[u->node] & UBIK_STATUS_WAIT_MASK));
 
         fun = u->gexec->v;
-        while (fun->type == UBIK_PAP)
-                fun = fun->pap.func;
+        if (fun->type == UBIK_PAP)
+                fun = fun->pap.base_func;
         ubik_assert(fun->type == UBIK_FUN);
         n = &fun->fun.nodes[u->node];
 
