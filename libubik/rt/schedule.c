@@ -778,7 +778,7 @@ ubik_schedule_run(struct ubik_scheduler *s)
 {
         ubik_error err;
         ubik_error worker_err;
-        pthread_t *workers;
+        pthread_t *workers = NULL;
         size_t i;
         int res;
 
@@ -804,6 +804,8 @@ ubik_schedule_run(struct ubik_scheduler *s)
                 ubik_assert(res == 0);
         }
 
+        if (workers != NULL)
+                free(workers);
         return err;
 }
 
