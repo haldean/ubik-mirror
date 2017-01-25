@@ -17,6 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include <pthread.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -28,6 +29,7 @@
 #include "ubik/util.h"
 
 static const size_t workspace_cap = 1024;
+static pthread_mutex_t alloc_lock = PTHREAD_MUTEX_INITIALIZER;
 
 no_ignore ubik_error
 ubik_value_new(
@@ -37,11 +39,18 @@ ubik_value_new(
         ubik_error err;
         size_t i;
 
+        for (i = 0; i < 5; i++)
+                if (pthread_mutex_lock(&alloc_lock) == 0)
+                        goto locked;
+        ubik_unreachable("failed to acquire alloc lock");
+locked:
+
         if (ws->n < workspace_cap)
         {
                 *res = &ws->values[ws->n++];
                 (*res)->gc.alive = true;
                 (*res)->gc.traced = false;
+                ubik_assert(pthread_mutex_unlock(&alloc_lock) == 0);
                 return OK;
         }
         while (ws->next != NULL)
@@ -51,13 +60,17 @@ ubik_value_new(
                 {
                         *res = &ws->values[ws->n++];
                         (*res)->gc.alive = true;
+                        ubik_assert(pthread_mutex_unlock(&alloc_lock) == 0);
                         return OK;
                 }
         }
 
         err = ubik_workspace_new(&ws->next);
         if (err != OK)
+        {
+                ubik_assert(pthread_mutex_unlock(&alloc_lock) == 0);
                 return err;
+        }
         ws->next->values[0].gc.id = ws->values[ws->n - 1].gc.id + 1;
         ws = ws->next;
         for (i = 1; i < workspace_cap; i++)
@@ -67,6 +80,7 @@ ubik_value_new(
         (*res)->gc.alive = true;
         (*res)->gc.traced = false;
         ws->n = 1;
+        ubik_assert(pthread_mutex_unlock(&alloc_lock) == 0);
         return OK;
 }
 
