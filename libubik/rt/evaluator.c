@@ -38,6 +38,7 @@ enum node_status
 struct ubik_evaluator
 {
         struct ubik_deque q;
+        struct ubik_env *env;
         struct ubik_workspace *ws;
 };
 
@@ -58,6 +59,7 @@ struct ubik_eval_state
         struct ubik_value **nt;
         size_t n;
         size_t term;
+        size_t waiting;
 };
 
 void
@@ -76,6 +78,30 @@ push(
         struct ubik_eval_state *waiting,
         size_t wait_node);
 
+struct node_ref
+{
+        struct ubik_eval_state *e;
+        size_t node;
+};
+
+no_ignore static ubik_error
+_load_callback(
+        void *node_ref_void,
+        struct ubik_env *env,
+        struct ubik_uri *uri)
+{
+        struct node_ref *r;
+        unused(env);
+        unused(uri);
+
+        r = node_ref_void;
+        r->e->s[r->node] = WAIT;
+        r->e->waiting--;
+        free(r);
+
+        return OK;
+}
+
 no_ignore static ubik_error
 run_state(
         struct ubik_evaluator *evaluator,
@@ -87,7 +113,13 @@ run_state(
         size_t i;
         size_t t;
         enum node_status old_status;
+        struct node_ref *node_ref;
         ubik_error err;
+
+        if (e->f->fun.evaluator != NULL)
+                return ubik_raise(
+                        ERR_NOT_IMPLEMENTED,
+                        "native funcs not implemented yet");
 
         for (i = 0; i < e->n; i++)
         {
@@ -212,10 +244,78 @@ run_state(
                         break;
 
                 case UBIK_LOAD:
+                        if (e->s[i] != WAIT && e->s[i] != NEEDED)
+                                break;
+                        err = ubik_env_get(
+                                &e->nv[i],
+                                &e->nt[i],
+                                evaluator->env,
+                                node->load.loc);
+                        if (err == OK)
+                        {
+                                e->s[i] = DONE;
+                                break;
+                        }
+                        /* native funcs never appear later. */
+                        if (node->load.loc->scope == SCOPE_NATIVE &&
+                                err->error_code == ERR_ABSENT)
+                        {
+                                char *buf = ubik_uri_explain(node->load.loc);
+                                printf("tried to access nonexistent "
+                                       "native function %s\n", buf);
+                                free(buf);
+                                return err;
+                        }
+
+                        if (err->error_code != ERR_ABSENT)
+                                return err;
+                        if (e->s[i] != NEEDED)
+                                break;
+
+                        /* file a wait request if we know we need this
+                         * node. */
+                        free(err);
+                        e->s[i] = DATA;
+                        e->waiting++;
+
+                        ubik_alloc1(&node_ref, struct node_ref, NULL);
+                        node_ref->e = e;
+                        node_ref->node = i;
+
+                        err = ubik_env_watch(
+                                _load_callback, evaluator->env,
+                                node->load.loc, node_ref);
+                        if (err != OK)
+                                return err;
+                        break;
+
                 case UBIK_STORE:
-                        return ubik_raise(
-                                ERR_NOT_IMPLEMENTED,
-                                "node evaluation not implemented yet");
+                        t = node->store.value;
+                        switch (e->s[t])
+                        {
+                        case DONE:
+                                e->nv[i] = e->nv[t];
+                                e->nt[i] = e->nt[t];
+                                e->s[i] = DONE;
+                                break;
+                        case WAIT:
+                                if (e->s[i] == NEEDED)
+                                        e->s[t] = NEEDED;
+                                break;
+                        case DATA:
+                        case APPLY:
+                        case NEEDED:
+                                break;
+                        }
+
+                        if (e->s[i] != DONE)
+                                break;
+                        err = ubik_env_set(
+                                evaluator->env, node->store.loc,
+                                e->nv[i], e->nt[i]);
+                        if (err != OK)
+                                return err;
+                        break;
 
                 case UBIK_NATIVE:
                 case UBIK_MAX_NODE_TYPE:
@@ -329,26 +429,36 @@ ubik_evaluate_run(struct ubik_evaluator *evaluator)
                 if (err != OK)
                         return err;
                 if (r->e->term != 0)
+                {
                         ubik_deque_pushl(&evaluator->q, r);
-                else
+                        continue;
+                }
+
+                if (r->waiting != NULL)
                 {
                         t0 = r->node;
                         t1 = r->e->f->fun.result;
                         r->waiting->nv[t0] = r->e->nv[t1];
                         r->waiting->nt[t0] = r->e->nt[t1];
-                        free_eval_state(r->e);
-                        free(r->e);
-                        free(r);
                 }
+
+                free_eval_state(r->e);
+                free(r->e);
+                free(r);
         }
 
         return OK;
 }
 
 no_ignore ubik_error
-ubik_evaluate_new(struct ubik_evaluator **evaluator)
+ubik_evaluate_new(
+        struct ubik_evaluator **evaluator,
+        struct ubik_env *env,
+        struct ubik_workspace *ws)
 {
         ubik_galloc((void **) evaluator, 1, sizeof(struct ubik_evaluator));
+        (*evaluator)->env = env;
+        (*evaluator)->ws = ws;
         return OK;
 }
 

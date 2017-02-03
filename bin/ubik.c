@@ -101,7 +101,7 @@ run_file(char *fname, bool timing)
         err = ubik_env_init(&env);
         CHECK_ERR("couldn't create environment");
 
-        err = ubik_evaluate_new(&evaluator);
+        err = ubik_evaluate_new(&evaluator, &env, ws);
         CHECK_ERR("couldn't create scheduler");
 
         err = ubik_evaluate_push_roots(evaluator, ws);

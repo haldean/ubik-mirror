@@ -17,12 +17,16 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include "ubik/env.h"
 #include "ubik/ubik.h"
 
 struct ubik_evaluator;
 
 no_ignore ubik_error
-ubik_evaluate_new(struct ubik_evaluator **evaluator);
+ubik_evaluate_new(
+        struct ubik_evaluator **evaluator,
+        struct ubik_env *env,
+        struct ubik_workspace *ws);
 
 void
 ubik_evaluate_free(struct ubik_evaluator *evaluator);

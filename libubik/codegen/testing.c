@@ -157,6 +157,7 @@ ubik_testing_run(struct ubik_compile_result *compiled)
         struct ubik_value *v;
         struct ubik_env env;
         struct ubik_workspace *ws;
+        struct ubik_workspace *compile_ws;
         struct ubik_ast_loc loc = {0};
         atomic_uint_fast32_t successes;
         size_t i;
@@ -167,32 +168,33 @@ ubik_testing_run(struct ubik_compile_result *compiled)
 
         successes = 0;
 
-        err = ubik_evaluate_new(&evaluator);
+        err = ubik_env_init(&env);
         if (err != OK)
                 return err;
 
-        err = ubik_env_init(&env);
+        err = ubik_workspace_new(&ws);
+        if (err != OK)
+                return err;
+
+        err = ubik_evaluate_new(&evaluator, &env, ws);
         if (err != OK)
                 return err;
 
         /* Push all modinits into the environment; this doesn't use push_roots,
          * because we don't want user initializers, just the env setters. */
-        ws = compiled->request->workspace;
-        for (; ws != NULL; ws = ws->next)
+        compile_ws = compiled->request->workspace;
+        for (; compile_ws != NULL; compile_ws = compile_ws->next)
         {
-                for (i = 0; i < ws->n; i++)
+                for (i = 0; i < compile_ws->n; i++)
                 {
-                        if (!ws->values[i].gc.modinit)
+                        if (!compile_ws->values[i].gc.modinit)
                                 continue;
-                        err = ubik_evaluate_push(evaluator, &ws->values[i]);
+                        err = ubik_evaluate_push(
+                                evaluator, &compile_ws->values[i]);
                         if (err != OK)
                                 return err;
                 }
         }
-
-        err = ubik_workspace_new(&ws);
-        if (err != OK)
-                return err;
 
         for (i = 0; i < compiled->ast->tests.n; i++)
         {
