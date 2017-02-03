@@ -24,7 +24,7 @@ struct ubik_evaluator;
 no_ignore ubik_error
 ubik_evaluate_new(struct ubik_evaluator **evaluator);
 
-no_ignore ubik_error
+void
 ubik_evaluate_free(struct ubik_evaluator *evaluator);
 
 no_ignore ubik_error

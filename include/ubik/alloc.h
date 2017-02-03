@@ -27,6 +27,11 @@ struct ubik_alloc_region
         size_t f_used;
         size_t f_cap;
 
+        /* The number of "holes" in the region; if this is zero, the next
+         * available element is freeable[f_used], if it is nonzero, you need to
+         * search through freeable looking for a NULL element. */
+        size_t noncontig;
+
         struct ubik_alloc_region *next;
         /* if true, this region is allocated on the heap and thus should be
          * freed when cleaning up the region. If false, it's assumed to be on
@@ -49,6 +54,10 @@ ubik_ralloc(void **dst, size_t n, size_t size, struct ubik_alloc_region *r);
  * the realloc succeeded. */
 void
 ubik_realloc(void **dst, size_t n, size_t size, struct ubik_alloc_region *r);
+
+/* Releases a previously region-allocated block from the given region. */
+void
+ubik_free(struct ubik_alloc_region *r, void *m);
 
 /* Initializes a region. */
 void

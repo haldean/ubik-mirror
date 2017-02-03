@@ -120,19 +120,8 @@ run_file(char *fname, bool timing)
 teardown:
         if (timing)
                 free(timer);
-
         if (evaluator != NULL)
-        {
-                teardown_err = ubik_evaluate_free(evaluator);
-                if (teardown_err != OK)
-                {
-                        char *explain = ubik_error_explain(teardown_err);
-                        printf("evaluator free failed: %s\n", explain);
-                        free(explain);
-                        free(teardown_err);
-                }
-                free(evaluator);
-        }
+                ubik_evaluate_free(evaluator);
 
         teardown_err = ubik_env_free(&env);
         if (teardown_err != OK)

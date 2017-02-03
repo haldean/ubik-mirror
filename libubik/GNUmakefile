@@ -33,6 +33,7 @@ c_sources = \
     ./shared/bytecode.c \
     ./shared/charstack.c \
     ./shared/dbgsym.c \
+    ./shared/deque.c \
     ./shared/env.c \
     ./shared/error.c \
     ./shared/explain.c \

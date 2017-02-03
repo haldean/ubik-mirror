@@ -344,3 +344,18 @@ ubik_evaluate_run(struct ubik_evaluator *evaluator)
 
         return OK;
 }
+
+no_ignore ubik_error
+ubik_evaluate_new(struct ubik_evaluator **evaluator)
+{
+        ubik_galloc((void **) evaluator, 1, sizeof(struct ubik_evaluator));
+        return OK;
+}
+
+void
+ubik_evaluate_free(struct ubik_evaluator *evaluator)
+{
+        while (!ubik_deque_empty(&evaluator->q))
+                ubik_deque_popl(&evaluator->q);
+        free(evaluator);
+}

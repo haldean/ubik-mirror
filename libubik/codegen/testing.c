@@ -227,10 +227,7 @@ ubik_testing_run(struct ubik_compile_result *compiled)
         if (err != OK)
                 return err;
 
-        err = ubik_evaluate_free(evaluator);
-        if (err != OK)
-                return err;
-        free(evaluator);
+        ubik_evaluate_free(evaluator);
 
         err = ubik_env_free(&env);
         if (err != OK)

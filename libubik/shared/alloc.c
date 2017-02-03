@@ -51,6 +51,7 @@ _append_region(struct ubik_alloc_region *r)
 static void
 _ralloc(void **dst, size_t size, struct ubik_alloc_region *r)
 {
+        size_t i;
         while (r->f_used == r->f_cap)
         {
                 if (r->next == NULL)
@@ -58,7 +59,22 @@ _ralloc(void **dst, size_t size, struct ubik_alloc_region *r)
                 r = r->next;
         }
         *dst = calloc(1, size);
-        r->freeable[r->f_used++] = *dst;
+        if (likely(r->noncontig == 0))
+                r->freeable[r->f_used++] = *dst;
+        else
+        {
+                for (i = 0; i < r->f_cap; i++)
+                {
+                        if (r->freeable[i] == NULL)
+                        {
+                                r->freeable[i] = *dst;
+                                r->f_used++;
+                                r->noncontig--;
+                                return;
+                        }
+                }
+                ubik_unreachable("region claimed noncontig but had no holes");
+        }
 }
 
 void
@@ -108,7 +124,7 @@ ubik_realloc(void **dst, size_t n, size_t elemsize, struct ubik_alloc_region *r)
 
         for (; r != NULL; r = r->next)
         {
-                for (i = 0; i < r->f_used; i++)
+                for (i = 0; i < r->f_cap; i++)
                 {
                         if (r->freeable[i] == *dst)
                         {
@@ -120,7 +136,44 @@ ubik_realloc(void **dst, size_t n, size_t elemsize, struct ubik_alloc_region *r)
         }
         /* this should be unreachable; we only get here if the original pointer
          * was not in any of our regions. */
-        ubik_assert(false);
+        ubik_unreachable("couldn't find realloced pointer in region");
+}
+
+void
+ubik_free(struct ubik_alloc_region *r, void *m)
+{
+        size_t i;
+
+        if (r == NULL)
+        {
+                free(m);
+                return;
+        }
+
+        if (m != r->freeable[r->f_used - 1])
+        {
+                for (i = 0; i < r->f_used; i++)
+                {
+                        if (r->freeable[i] == m)
+                        {
+                                r->freeable[i] = NULL;
+                                r->noncontig++;
+                                /* only decrement f_used if we actually find
+                                 * the block in the region; if the provided
+                                 * block isn't in the given region, we'll free
+                                 * it but region will be as full as before. */
+                                r->f_used--;
+                                break;
+                        }
+                }
+        }
+        else
+        {
+                r->freeable[r->f_used] = NULL;
+                r->f_used--;
+        }
+
+        free(m);
 }
 
 void
@@ -159,7 +212,7 @@ void
 ubik_alloc_free(struct ubik_alloc_region *r)
 {
         size_t i;
-        for (i = 0; i < r->f_used; i++)
+        for (i = 0; i < r->f_cap; i++)
                 if (r->freeable[i] != NULL)
                         free(r->freeable[i]);
         free(r->freeable);
