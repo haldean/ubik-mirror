@@ -69,6 +69,7 @@ free_eval_state(struct ubik_eval_state *e)
         free(e->argtypes);
         free(e->nv);
         free(e->nt);
+        free(e->s);
 }
 
 no_ignore static ubik_error
