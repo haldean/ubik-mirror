@@ -21,10 +21,10 @@
 #include "ubik/assign.h"
 #include "ubik/ast.h"
 #include "ubik/env.h"
+#include "ubik/evaluator.h"
 #include "ubik/feedback.h"
 #include "ubik/fun.h"
 #include "ubik/resolve.h"
-#include "ubik/schedule.h"
 #include "ubik/string.h"
 #include "ubik/testing.h"
 #include "ubik/util.h"
@@ -90,6 +90,7 @@ struct test_callback_info
         atomic_uint_fast32_t *successes;
 };
 
+#if 0
 static void
 print_value(struct ubik_stream *s, struct ubik_value *v)
 {
@@ -112,9 +113,8 @@ print_value(struct ubik_stream *s, struct ubik_value *v)
 }
 
 static no_ignore ubik_error
-test_callback(void *arg, struct ubik_scheduler *s, struct ubik_exec_unit *e)
+test_callback(void *arg, struct ubik_evaluator *eval, struct ubik_exec_unit *e)
 {
-        unused(s);
         struct test_callback_info *cb;
         struct ubik_value *res;
         struct ubik_value *expected;
@@ -147,17 +147,16 @@ test_callback(void *arg, struct ubik_scheduler *s, struct ubik_exec_unit *e)
                 (*cb->successes)++;
         return OK;
 }
+#endif
 
 no_ignore ubik_error
 ubik_testing_run(struct ubik_compile_result *compiled)
 {
-        struct ubik_scheduler *sched;
+        struct ubik_evaluator *evaluator;
         struct ubik_ast_test *test;
         struct ubik_value *v;
         struct ubik_env env;
         struct ubik_workspace *ws;
-        struct ubik_exec_notify *notify;
-        struct test_callback_info *tcb;
         struct ubik_ast_loc loc = {0};
         atomic_uint_fast32_t successes;
         size_t i;
@@ -168,7 +167,7 @@ ubik_testing_run(struct ubik_compile_result *compiled)
 
         successes = 0;
 
-        err = ubik_schedule_new(&sched);
+        err = ubik_evaluate_new(&evaluator);
         if (err != OK)
                 return err;
 
@@ -185,8 +184,7 @@ ubik_testing_run(struct ubik_compile_result *compiled)
                 {
                         if (!ws->values[i].gc.modinit)
                                 continue;
-                        err = ubik_schedule_push(
-                                sched, &ws->values[i], &env, false, NULL, ws);
+                        err = ubik_evaluate_push(evaluator, &ws->values[i]);
                         if (err != OK)
                                 return err;
                 }
@@ -206,6 +204,7 @@ ubik_testing_run(struct ubik_compile_result *compiled)
                 if (err != OK)
                         return err;
 
+#if 0
                 notify = calloc(1, sizeof(struct ubik_exec_notify));
                 ubik_assert(notify != NULL);
                 notify->notify = test_callback;
@@ -218,16 +217,20 @@ ubik_testing_run(struct ubik_compile_result *compiled)
                 err = ubik_schedule_push(sched, v, &env, false, notify, ws);
                 if (err != OK)
                         return err;
+#endif
+                return ubik_raise(
+                        ERR_NOT_IMPLEMENTED,
+                        "evaluator callbacks not supported yet");
         }
 
-        err = ubik_schedule_run(sched);
+        err = ubik_evaluate_run(evaluator);
         if (err != OK)
                 return err;
 
-        err = ubik_schedule_free(sched);
+        err = ubik_evaluate_free(evaluator);
         if (err != OK)
                 return err;
-        free(sched);
+        free(evaluator);
 
         err = ubik_env_free(&env);
         if (err != OK)

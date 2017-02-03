@@ -1,6 +1,6 @@
 /*
  * evaluator.c: evalutes functions in a queue
- * Copyright (C) 2015, Haldean Brown
+ * Copyright (C) 2017, Haldean Brown
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,6 +22,7 @@
 #include "ubik/alloc.h"
 #include "ubik/assert.h"
 #include "ubik/deque.h"
+#include "ubik/evaluator.h"
 #include "ubik/rttypes.h"
 #include "ubik/ubik.h"
 
@@ -85,7 +86,6 @@ run_state(
         struct ubik_node *node;
         size_t i;
         size_t t;
-        size_t arity;
         enum node_status old_status;
         ubik_error err;
 
@@ -199,7 +199,9 @@ run_state(
                         if (t == r->pap.base_func->fun.arity)
                         {
                                 e->s[i] = APPLY;
-                                push(evaluator, r, e, i);
+                                err = push(evaluator, r, e, i);
+                                if (err != OK)
+                                        return err;
                                 break;
                         }
                         err = ubik_type_func_apply(
@@ -216,6 +218,7 @@ run_state(
                                 "node evaluation not implemented yet");
 
                 case UBIK_NATIVE:
+                case UBIK_MAX_NODE_TYPE:
                 default:
                         return ubik_raise(ERR_BAD_TYPE, "unknown node type");
                 }
@@ -225,6 +228,8 @@ run_state(
                 if (e->term == 0)
                         break;
         }
+
+        return OK;
 }
 
 no_ignore static ubik_error
@@ -235,15 +240,10 @@ push(
         size_t wait_node)
 {
         struct ubik_value *a;
-        struct ubik_value *r;
-        struct ubik_node *node;
         struct ubik_eval_req *req;
         struct ubik_eval_state *e;
         size_t i;
-        size_t t;
         size_t arity;
-        enum node_status old_status;
-        ubik_error err;
 
         ubik_galloc((void **) &req, 1, sizeof(struct ubik_eval_req));
         ubik_galloc((void **) &e, 1, sizeof(struct ubik_eval_state));
@@ -282,7 +282,38 @@ push(
         return OK;
 }
 
-no_ignore static ubik_error
+no_ignore ubik_error
+ubik_evaluate_push(
+        struct ubik_evaluator *evaluator,
+        struct ubik_value *v)
+{
+        return push(evaluator, v, NULL, 0);
+}
+
+no_ignore ubik_error
+ubik_evaluate_push_roots(
+        struct ubik_evaluator *evaluator,
+        struct ubik_workspace *ws)
+{
+        ubik_error err;
+        size_t i;
+
+        for (; ws != NULL; ws = ws->next)
+        {
+                for (i = 0; i < ws->n; i++)
+                {
+                        if (!ws->values[i].gc.root)
+                                continue;
+                        err = push(evaluator, &ws->values[i], NULL, 0);
+                        if (err != OK)
+                                return err;
+                }
+        }
+
+        return OK;
+}
+
+no_ignore ubik_error
 ubik_evaluate_run(struct ubik_evaluator *evaluator)
 {
         struct ubik_eval_req *r;

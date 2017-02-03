@@ -25,8 +25,8 @@
 #include "ubik/assert.h"
 #include "ubik/bytecode.h"
 #include "ubik/env.h"
+#include "ubik/evaluator.h"
 #include "ubik/rt.h"
-#include "ubik/schedule.h"
 #include "ubik/stream.h"
 #include "ubik/timer.h"
 #include "ubik/ubik.h"
@@ -48,14 +48,14 @@ run_file(char *fname, bool timing)
         struct ubik_stream sstdout;
         struct ubik_workspace *ws;
         struct ubik_env env = {0};
-        struct ubik_scheduler *s;
+        struct ubik_evaluator *evaluator;
         char *trace_str;
         ubik_error err, teardown_err;
         struct ubik_timer *timer;
         int64_t elapsed;
 
         ws = NULL;
-        s = NULL;
+        evaluator = NULL;
 
         if (timing)
         {
@@ -101,13 +101,13 @@ run_file(char *fname, bool timing)
         err = ubik_env_init(&env);
         CHECK_ERR("couldn't create environment");
 
-        err = ubik_schedule_new(&s);
+        err = ubik_evaluate_new(&evaluator);
         CHECK_ERR("couldn't create scheduler");
 
-        err = ubik_schedule_push_roots(s, &env, ws);
+        err = ubik_evaluate_push_roots(evaluator, ws);
         CHECK_ERR("couldn't schedule root objects");
 
-        err = ubik_schedule_run(s);
+        err = ubik_evaluate_run(evaluator);
         CHECK_ERR("couldn't run scheduler");
 
         if (timing)
@@ -121,17 +121,17 @@ teardown:
         if (timing)
                 free(timer);
 
-        if (s != NULL)
+        if (evaluator != NULL)
         {
-                teardown_err = ubik_schedule_free(s);
+                teardown_err = ubik_evaluate_free(evaluator);
                 if (teardown_err != OK)
                 {
                         char *explain = ubik_error_explain(teardown_err);
-                        printf("scheduler free failed: %s\n", explain);
+                        printf("evaluator free failed: %s\n", explain);
                         free(explain);
                         free(teardown_err);
                 }
-                free(s);
+                free(evaluator);
         }
 
         teardown_err = ubik_env_free(&env);

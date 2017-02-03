@@ -21,12 +21,10 @@ c_sources = \
     ./codegen/token.c \
     ./codegen/types.c \
     ./codegen/typesystem.c \
-    ./rt/eval.c \
+    ./rt/evaluator.c \
     ./rt/mem.c \
     ./rt/rat.c \
     ./rt/rwlock.c \
-    ./rt/queue.c \
-    ./rt/schedule.c \
     ./rt/str.c \
     ./rt/timer.c \
     ./shared/adt.c \

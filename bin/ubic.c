@@ -27,7 +27,6 @@
 #include "ubik/compile.h"
 #include "ubik/env.h"
 #include "ubik/parse.h"
-#include "ubik/schedule.h"
 #include "ubik/ubik.h"
 #include "ubik/value.h"
 
