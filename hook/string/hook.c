@@ -21,35 +21,32 @@
 #include "ubik/env.h"
 #include "ubik/hooks.h"
 #include "ubik/rttypes.h"
-#include "ubik/schedule.h"
 #include "ubik/str.h"
 #include "ubik/ubik.h"
 #include "ubik/util.h"
 #include "ubik/value.h"
 
-static ubik_error
-concat(struct ubik_exec_graph *gexec)
+DEF_EVALUATOR(concat)
 {
         struct ubik_value *res;
         ubik_error err;
 
-        err = ubik_value_new(&res, gexec->workspace);
+        err = ubik_value_new(&res, ws);
         if (err != OK)
                 return err;
 
-        if (gexec->nv[0]->type != UBIK_STR)
+        if (args[0]->type != UBIK_STR)
                 return ubik_raise(ERR_BAD_TYPE, "concat value was not a str");
-        if (gexec->nv[1]->type != UBIK_STR)
+        if (args[1]->type != UBIK_STR)
                 return ubik_raise(ERR_BAD_TYPE, "concat value was not a str");
-        ubik_str_concat(res, gexec->nv[0], gexec->nv[1]);
-        gexec->nv[2] = res;
-        gexec->nt[2] = gexec->nv[0];
+        ubik_str_concat(res, args[0], args[1]);
+        *res_ref = res;
+        *res_type = argtypes[0];
 
         return OK;
 }
 
-no_ignore ubik_error
-humanize(struct ubik_exec_graph *gexec)
+DEF_EVALUATOR(humanize)
 {
         struct ubik_value *res;
         struct ubik_value *type;
@@ -57,14 +54,14 @@ humanize(struct ubik_exec_graph *gexec)
         char *str;
         size_t str_size;
 
-        err = ubik_value_new(&res, gexec->workspace);
+        err = ubik_value_new(&res, ws);
         if (err != OK)
                 return err;
-        err = ubik_value_new(&type, gexec->workspace);
+        err = ubik_value_new(&type, ws);
         if (err != OK)
                 return err;
 
-        err = ubik_value_humanize(&str, &str_size, gexec->nv[0]);
+        err = ubik_value_humanize(&str, &str_size, args[0]);
         if (err != OK)
                 return err;
         res->type = UBIK_STR;
@@ -75,8 +72,8 @@ humanize(struct ubik_exec_graph *gexec)
         if (err != OK)
                 return err;
 
-        gexec->nv[1] = res;
-        gexec->nt[1] = type;
+        *res_ref = res;
+        *res_type = type;
         return OK;
 }
 

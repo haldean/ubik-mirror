@@ -35,6 +35,15 @@ struct ubik_hook
         ubik_graph_evaluator_t eval;
 };
 
+#define DEF_EVALUATOR(name) \
+        static ubik_error name( \
+                __attribute__((unused)) struct ubik_value **res_ref, \
+                __attribute__((unused)) struct ubik_value **res_type, \
+                __attribute__((unused)) struct ubik_value **args, \
+                __attribute__((unused)) struct ubik_value **argtypes, \
+                __attribute__((unused)) struct ubik_value *fun, \
+                __attribute__((unused)) struct ubik_workspace *ws)
+
 extern struct ubik_vector ubik_hooks;
 
 typedef ubik_error(*ubik_hook_installer)(

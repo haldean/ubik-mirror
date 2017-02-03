@@ -27,7 +27,6 @@
 #include "ubik/list.h"
 #include "ubik/hooks.h"
 #include "ubik/rttypes.h"
-#include "ubik/schedule.h"
 #include "ubik/string.h"
 #include "ubik/ubik.h"
 #include "ubik/util.h"
@@ -36,71 +35,62 @@
 #include <inttypes.h>
 #include <string.h>
 
-ubik_error
-adt_new(struct ubik_exec_graph *gexec)
+DEF_EVALUATOR(adt_new)
 {
         struct ubik_value *type_decl;
         struct ubik_value *ctor;
-        struct ubik_value *args;
+        struct ubik_value *cargs;
         struct ubik_value *res;
-        struct ubik_value *graph;
         ubik_error err;
         size_t i;
 
-        ubik_assert(gexec->v->type == UBIK_PAP);
-        graph = gexec->v->pap.base_func;
+        type_decl = args[0];
+        ctor = args[1];
 
-        type_decl = gexec->nv[0];
-        ctor = gexec->nv[1];
-
-        err = ubik_value_new(&args, gexec->workspace);
+        err = ubik_value_new(&cargs, ws);
         if (err != OK)
                 return err;
-        args->gc.runtime_managed = true;
+        cargs->gc.runtime_managed = true;
 
-        args->type = UBIK_TUP;
-        args->tup.n = graph->fun.n - 3;
+        cargs->type = UBIK_TUP;
+        cargs->tup.n = fun->fun.n - 3;
         ubik_galloc(
-                (void**) &args->tup.elems,
-                args->tup.n, sizeof(struct ubik_value *));
+                (void**) &cargs->tup.elems,
+                cargs->tup.n, sizeof(struct ubik_value *));
         ubik_galloc(
-                (void**) &args->tup.types,
-                args->tup.n, sizeof(struct ubik_value *));
+                (void**) &cargs->tup.types,
+                cargs->tup.n, sizeof(struct ubik_value *));
 
-        for (i = 2; i < graph->fun.n - 1; i++)
+        for (i = 2; i < fun->fun.n - 1; i++)
         {
-                args->tup.elems[i - 2] = gexec->nv[i];
-                args->tup.types[i - 2] = gexec->nt[i];
+                cargs->tup.elems[i - 2] = args[i];
+                cargs->tup.types[i - 2] = argtypes[i];
         }
 
-        err = ubik_value_new(&res, gexec->workspace);
+        err = ubik_value_new(&res, ws);
         if (err != OK)
                 return err;
         res->gc.runtime_managed = true;
         err = ubik_adt_instantiate(
-                res, type_decl, ctor, args, gexec->workspace);
+                res, type_decl, ctor, cargs, ws);
         if (err != OK)
                 return err;
-        gexec->nv[graph->fun.result] = res;
-        gexec->nt[graph->fun.result] = type_decl;
+        *res_ref = res;
+        *res_type = type_decl;
         return OK;
 }
 
-no_ignore ubik_error
-ctor_matches(struct ubik_exec_graph *gexec)
+DEF_EVALUATOR(ctor_matches)
 {
         struct ubik_value *inst;
         struct ubik_value *match_name;
         struct ubik_value *ctor_name;
         struct ubik_value *res;
-        struct ubik_value *res_type;
         bool matches;
         ubik_error err;
 
-        ubik_assert(gexec->v->type == UBIK_PAP);
-
-        match_name = gexec->nv[0];
-        inst = gexec->nv[1];
+        match_name = args[0];
+        inst = args[1];
 
         err = ubik_adt_get_ctor(&ctor_name, inst);
         if (err != OK)
@@ -108,38 +98,35 @@ ctor_matches(struct ubik_exec_graph *gexec)
 
         matches = ubik_value_eq(match_name, ctor_name);
 
-        err = ubik_value_new(&res, gexec->workspace);
+        err = ubik_value_new(&res, ws);
         if (err != OK)
                 return err;
         res->gc.runtime_managed = true;
         res->type = UBIK_BOO;
         res->boo.value = matches;
-        gexec->nv[gexec->v->pap.base_func->fun.result] = res;
+        *res_ref = res;
 
-        err = ubik_value_new(&res_type, gexec->workspace);
+        err = ubik_value_new(res_type, ws);
         if (err != OK)
                 return err;
-        res_type->gc.runtime_managed = true;
-        err = ubik_type_boo(res_type);
+        (*res_type)->gc.runtime_managed = true;
+        err = ubik_type_boo(*res_type);
         if (err != OK)
                 return err;
-        gexec->nt[gexec->v->pap.base_func->fun.result] = res_type;
 
         return OK;
 }
 
-no_ignore ubik_error
-adt_get(struct ubik_exec_graph *gexec)
+DEF_EVALUATOR(adt_get)
 {
         struct ubik_value *inst;
         struct ubik_value *index_val;
         struct ubik_value *res;
-        struct ubik_value *res_type;
         ubik_word index;
         ubik_error err;
 
-        index_val = gexec->nv[0];
-        inst = gexec->nv[1];
+        index_val = args[0];
+        inst = args[1];
 
         ubik_assert(index_val->type == UBIK_RAT && index_val->rat.den == 1);
         index = index_val->rat.num;
@@ -147,14 +134,11 @@ adt_get(struct ubik_exec_graph *gexec)
         err = ubik_adt_get_field(&res, inst, index);
         if (err != OK)
                 return err;
-        err = ubik_adt_get_field_type(&res_type, inst, index);
+        err = ubik_adt_get_field_type(res_type, inst, index);
         if (err != OK)
                 return err;
 
-        ubik_assert(gexec->v->type == UBIK_PAP);
-        gexec->nv[gexec->v->pap.base_func->fun.result] = res;
-        gexec->nt[gexec->v->pap.base_func->fun.result] = res_type;
-
+        *res_ref = res;
         return OK;
 }
 

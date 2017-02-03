@@ -19,31 +19,27 @@
 
 #include "ubik/hooks.h"
 #include "ubik/rttypes.h"
-#include "ubik/schedule.h"
 #include "ubik/ubik.h"
 #include "ubik/value.h"
 
-static ubik_error
-eq(struct ubik_exec_graph *gexec)
+DEF_EVALUATOR(eq)
 {
         struct ubik_value *res;
-        struct ubik_value *res_type;
         ubik_error err;
 
-        err = ubik_value_new(&res, gexec->workspace);
+        err = ubik_value_new(&res, ws);
         if (err != OK)
                 return err;
-        err = ubik_value_new(&res_type, gexec->workspace);
+        err = ubik_value_new(res_type, ws);
         if (err != OK)
                 return err;
-        err = ubik_type_boo(res_type);
+        err = ubik_type_boo(*res_type);
         if (err != OK)
                 return err;
 
         res->type = UBIK_BOO;
-        res->boo.value = ubik_value_eq(gexec->nv[0], gexec->nv[1]);
-        gexec->nv[2] = res;
-        gexec->nt[2] = res_type;
+        res->boo.value = ubik_value_eq(args[0], args[1]);
+        *res_ref = res;
 
         return OK;
 }

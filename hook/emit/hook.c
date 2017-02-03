@@ -20,19 +20,15 @@
 #include <stdio.h>
 #include "ubik/hooks.h"
 #include "ubik/rt.h"
-#include "ubik/schedule.h"
 
-ubik_error
-eval_emit(struct ubik_exec_graph *gexec)
+DEF_EVALUATOR(emit)
 {
         /* this uses fwrite to remove the requirement for a NULL byte at the end
            of the string. */
-        fwrite(gexec->nv[0]->str.data, sizeof(char),
-               gexec->nv[0]->str.length, stdout);
+        fwrite(args[0]->str.data, sizeof(char), args[0]->str.length, stdout);
 
-        gexec->nv[1] = gexec->nv[0];
-        gexec->nt[1] = gexec->nt[0];
-
+        *res_ref = args[0];
+        *res_type = argtypes[0];
         return OK;
 }
 
@@ -41,7 +37,6 @@ __ubik_install(struct ubik_vector *hooks, struct ubik_alloc_region *region)
 {
         struct ubik_hook *r;
         ubik_alloc1(&r, struct ubik_hook, region);
-        *r = (struct ubik_hook) {
-                "emit", 1, "String -> String", NULL, eval_emit };
+        *r = (struct ubik_hook) { "emit", 1, "String -> String", NULL, emit };
         return ubik_vector_append(hooks, r);
 }

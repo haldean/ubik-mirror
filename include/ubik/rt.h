@@ -135,10 +135,12 @@ struct ubik_tup
         ubik_word n;
 };
 
-/* This syntax is terrible; it defines ubik_graph_evaluator_t as a
-   function pointer that takes an env and a dagc and returns an
-   ubik_error. */
-typedef ubik_error (*ubik_graph_evaluator_t)(struct ubik_exec_graph *gexec);
+/* Graph evaluators take a list of arguments and their types, and place the
+ * resulting value and its type in *res_ref and *res_type. */
+typedef ubik_error (*ubik_graph_evaluator_t)(
+        struct ubik_value **res_ref, struct ubik_value **res_type,
+        struct ubik_value **args, struct ubik_value **argtypes,
+        struct ubik_value *fun, struct ubik_workspace *ws);
 
 struct ubik_fun
 {

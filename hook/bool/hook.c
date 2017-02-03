@@ -25,20 +25,18 @@
 #include "ubik/hooks.h"
 #include "ubik/rt.h"
 #include "ubik/rttypes.h"
-#include "ubik/schedule.h"
 
-static ubik_error
-native_true(struct ubik_exec_graph *gexec)
+DEF_EVALUATOR(native_true)
 {
         struct ubik_value *res;
         struct ubik_value *type_decl;
         ubik_error err;
 
-        err = ubik_value_new(&res, gexec->workspace);
+        err = ubik_value_new(&res, ws);
         if (err != OK)
                 return err;
         res->gc.runtime_managed = true;
-        err = ubik_value_new(&type_decl, gexec->workspace);
+        err = ubik_value_new(&type_decl, ws);
         if (err != OK)
                 return err;
         type_decl->gc.runtime_managed = true;
@@ -49,23 +47,22 @@ native_true(struct ubik_exec_graph *gexec)
         err = ubik_type_boo(type_decl);
         if (err != OK)
                 return err;
-        gexec->nv[gexec->v->fun.result] = res;
-        gexec->nt[gexec->v->fun.result] = type_decl;
+        *res_ref = res;
+        *res_type = type_decl;
         return OK;
 }
 
-static ubik_error
-native_false(struct ubik_exec_graph *gexec)
+DEF_EVALUATOR(native_false)
 {
         struct ubik_value *res;
         struct ubik_value *type_decl;
         ubik_error err;
 
-        err = ubik_value_new(&res, gexec->workspace);
+        err = ubik_value_new(&res, ws);
         if (err != OK)
                 return err;
         res->gc.runtime_managed = true;
-        err = ubik_value_new(&type_decl, gexec->workspace);
+        err = ubik_value_new(&type_decl, ws);
         if (err != OK)
                 return err;
         type_decl->gc.runtime_managed = true;
@@ -76,8 +73,8 @@ native_false(struct ubik_exec_graph *gexec)
         err = ubik_type_boo(type_decl);
         if (err != OK)
                 return err;
-        gexec->nv[gexec->v->fun.result] = res;
-        gexec->nt[gexec->v->fun.result] = type_decl;
+        *res_ref = res;
+        *res_type = type_decl;
         return OK;
 }
 
