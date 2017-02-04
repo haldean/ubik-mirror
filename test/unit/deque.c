@@ -1,5 +1,5 @@
 /*
- * queue.c: run tests on queues
+ * deque.c: run tests on deques
  * Copyright (C) 2017, Haldean Brown
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,33 +17,23 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include "ubik/ubik.h"
-#include "ubik/queue.h"
+#include "ubik/deque.h"
 #include "unit.h"
 
 test_t
-queue()
+deque()
 {
-        struct ubik_exec_unit u0 = {0}, u1 = {0}, u2 = {0}, u3 = {0};
-        struct ubik_exec_unit *r;
-        struct ubik_queue q = {0};
+        struct ubik_deque d = {0};
+        int x, y;
 
-        ubik_queue_push(&q, &u0);
-        ubik_queue_push(&q, &u1);
-        ubik_queue_push(&q, &u2);
-        ubik_queue_push(&q, &u3);
-
-        assert(ubik_queue_pop(&r, &q));
-        assert(r == &u0);
-        assert(ubik_queue_pop(&r, &q));
-        assert(r == &u1);
-        assert(ubik_queue_pop(&r, &q));
-        assert(r == &u2);
-        assert(ubik_queue_pop(&r, &q));
-        assert(r == &u3);
-        assert(!ubik_queue_pop(&r, &q));
-
+        ubik_deque_pushl(&d, &x);
+        ubik_deque_pushl(&d, &y);
+        assert(!ubik_deque_empty(&d));
+        assert(ubik_deque_popr(&d) == &x);
+        assert(ubik_deque_popr(&d) == &y);
+        assert(ubik_deque_popr(&d) == NULL);
+        assert(ubik_deque_empty(&d));
         return ok;
 }
 
-run_single(queue)
+run_single(deque)

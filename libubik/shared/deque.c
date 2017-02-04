@@ -28,6 +28,8 @@ ubik_deque_pushl(struct ubik_deque *d, void *e)
         elem->e = e;
         elem->left = NULL;
         elem->right = d->left;
+        if (elem->right != NULL)
+                elem->right->left = elem;
         d->left = elem;
         if (d->right == NULL)
                 d->right = elem;
@@ -41,6 +43,8 @@ ubik_deque_pushr(struct ubik_deque *d, void *e)
         elem->e = e;
         elem->left = d->right;
         elem->right = NULL;
+        if (elem->left != NULL)
+                elem->left->right = elem;
         d->right = elem;
         if (d->left == NULL)
                 d->left = elem;

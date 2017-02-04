@@ -118,9 +118,16 @@ run_state(
         ubik_error err;
 
         if (e->f->fun.evaluator != NULL)
-                return ubik_raise(
-                        ERR_NOT_IMPLEMENTED,
-                        "native funcs not implemented yet");
+        {
+                t = e->f->fun.result;
+                err = e->f->fun.evaluator(
+                        &e->nv[t], &e->nt[t], e->args, e->argtypes, e->f,
+                        evaluator->ws);
+                if (err != OK)
+                        return err;
+                e->term = 0;
+                return OK;
+        }
 
         for (i = 0; i < e->n; i++)
         {
@@ -363,9 +370,9 @@ push(
         ubik_galloc((void **) &e->argtypes, arity, sizeof(struct ubik_value *));
         for (i = arity, a = v; i > 0; i--)
         {
-                ubik_assert(a->type == UBIK_PAP);;
-                e->args[i] = a->pap.arg;
-                e->argtypes[i] = a->pap.arg_type;
+                ubik_assert(a->type == UBIK_PAP);
+                e->args[i - 1] = a->pap.arg;
+                e->argtypes[i - 1] = a->pap.arg_type;
         }
 
         ubik_galloc((void **) &e->s, e->n, sizeof(enum node_status));

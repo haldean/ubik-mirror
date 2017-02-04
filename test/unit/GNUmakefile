@@ -3,13 +3,13 @@ top=../..
 
 tests = \
 	buffer-test \
+	deque-test \
 	env-test \
 	generator-test \
 	host_to_net-test \
 	parenv-test \
 	path_concat-test \
 	pointer_set-test \
-	queue-test \
 	rat-test \
 	resolve-test \
 	split-test \
