@@ -301,63 +301,73 @@ _set(
 {
         struct ubik_binding new_binding;
         struct ubik_env_watch_list *watch, *to_free;
+        float load;
         ubik_error err;
 
-        err = OK;
-        if (unlikely(env->cap == 0))
-                err = _resize_rebalance(env);
-        else if (unlikely((float) env->n / (float) env->cap > ENV_MAX_LOAD))
-                err = _resize_rebalance(env);
-        if (err != OK)
-                return err;
-
-        new_binding.uri = ubik_uri_dup(uri);
-        new_binding.value = value;
-        new_binding.type = type;
-
-        err = _insert(env->bindings, env->cap, &new_binding, overwrite);
-        if (err != OK)
         {
-                ubik_uri_free(new_binding.uri);
-                return err;
+                /* we don't want to hold the write lock when we notify
+                 * listeners */
+                ubik_rwlock_write_scope(&env->lock);
+                err = OK;
+                if (unlikely(env->cap == 0))
+                        err = _resize_rebalance(env);
+                load = (float) env->n / (float) env->cap;
+                if (unlikely(load > ENV_MAX_LOAD))
+                        err = _resize_rebalance(env);
+                if (err != OK)
+                        return err;
+
+                new_binding.uri = ubik_uri_dup(uri);
+                new_binding.value = value;
+                new_binding.type = type;
+
+                err = _insert(env->bindings, env->cap, &new_binding, overwrite);
+                if (err != OK)
+                {
+                        ubik_uri_free(new_binding.uri);
+                        return err;
+                }
+                env->n++;
         }
-        env->n++;
 
-        watch = env->watches;
-        while (watch != NULL)
         {
-                if (ubik_uri_eq(watch->watch->uri, uri))
+                ubik_rwlock_read_scope(&env->lock);
+                watch = env->watches;
+                while (watch != NULL)
                 {
-                        err = watch->watch->cb(
-                                watch->watch->arg,
-                                watch->watch->target_env,
-                                watch->watch->uri);
-                        if (err != OK)
-                                return err;
+                        if (ubik_uri_eq(watch->watch->uri, uri))
+                        {
+                                err = watch->watch->cb(
+                                        watch->watch->arg,
+                                        watch->watch->target_env,
+                                        watch->watch->uri);
+                                if (err != OK)
+                                        return err;
 
-                        watch->watch->fired = true;
+                                watch->watch->fired = true;
+                        }
+
+                        to_free = NULL;
+                        if (watch->watch->fired)
+                        {
+                                watch->watch->refcount--;
+
+                                to_free = watch;
+                                if (watch->prev != NULL)
+                                        watch->prev->next = watch->next;
+                                if (watch->next != NULL)
+                                        watch->next->prev = watch->prev;
+                                if (env->watches == watch)
+                                        env->watches = watch->prev;
+                        }
+
+                        watch = watch->prev;
+
+                        if (to_free != NULL && to_free->watch->refcount == 0)
+                                free(to_free->watch);
+                        if (to_free != NULL)
+                                free(to_free);
                 }
-
-                to_free = NULL;
-                if (watch->watch->fired)
-                {
-                        watch->watch->refcount--;
-
-                        to_free = watch;
-                        if (watch->prev != NULL)
-                                watch->prev->next = watch->next;
-                        if (watch->next != NULL)
-                                watch->next->prev = watch->prev;
-                        if (env->watches == watch)
-                                env->watches = watch->prev;
-                }
-
-                watch = watch->prev;
-
-                if (to_free != NULL && to_free->watch->refcount == 0)
-                        free(to_free->watch);
-                if (to_free != NULL)
-                        free(to_free);
         }
 
         return OK;
@@ -370,7 +380,6 @@ ubik_env_set(
         struct ubik_value *value,
         struct ubik_value *type)
 {
-        ubik_rwlock_write_scope(&env->lock);
         return _set(env, uri, value, type, false);
 }
 
@@ -381,7 +390,6 @@ ubik_env_overwrite(
         struct ubik_value *value,
         struct ubik_value *type)
 {
-        ubik_rwlock_write_scope(&env->lock);
         return _set(env, uri, value, type, true);
 }
 
