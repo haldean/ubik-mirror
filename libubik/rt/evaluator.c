@@ -221,11 +221,18 @@ run_state(
                         break;
 
                 case UBIK_APPLY:
+                        /* Don't evaluate any applications unless we need to;
+                         * without this, we'll end up doing tons of extra work
+                         * potentially infinitely evaluating the alternate
+                         * sides of conditionals. */
+                        if (e->s[i] != NEEDED)
+                                break;
+
                         t = node->apply.func;
-                        if (e->s[t] == WAIT && e->s[i] == NEEDED)
+                        if (e->s[t] == WAIT)
                                 e->s[t] = NEEDED;
                         t = node->apply.arg;
-                        if (e->s[t] == WAIT && e->s[i] == NEEDED)
+                        if (e->s[t] == WAIT)
                                 e->s[t] = NEEDED;
                         if (e->s[t] != DONE || e->s[node->apply.func] != DONE)
                                 break;
