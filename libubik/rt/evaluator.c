@@ -215,8 +215,8 @@ run_state(
                         }
                         if (e->s[t] != DONE)
                                 break;
-                        e->nv[i] = e->args[t];
-                        e->nt[i] = e->argtypes[t];
+                        e->nv[i] = e->nv[t];
+                        e->nt[i] = e->nt[t];
                         e->s[i] = DONE;
                         break;
 
