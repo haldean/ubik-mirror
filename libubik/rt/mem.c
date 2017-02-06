@@ -131,6 +131,7 @@ ubik_workspace_prealloced(struct ubik_workspace **ws, size_t prealloc)
              alloced < prealloc;
              alloced += workspace_cap)
         {
+                ws1 = NULL;
                 err = new_workspace_with_offset(&ws1, alloced);
                 if (err != OK)
                         return err;
