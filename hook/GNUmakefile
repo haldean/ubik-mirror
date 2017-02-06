@@ -11,7 +11,7 @@ deps = $(patsubst %.c,%.d,$(c_sources))
 all: $(objects) hooks.txt
 
 $(objects): %.so: %/hook.c
-	$(CC) -fPIC -shared $(CFLAGS) $(LDFLAGS) -o $@ $<
+	$(CC) -fPIC -shared $(UBIK_CFLAGS) $(UBIK_LDFLAGS) -o $@ $<
 
 hooks.txt: $(objects)
 	find $(PWD) -name "*.so" > $@

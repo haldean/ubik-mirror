@@ -64,7 +64,7 @@ libubik.a: $(objects)
 	$(AR) rcs $@ $(objects)
 
 $(objects): %.o: %.c $(built_headers)
-	$(CC) -c -fPIC -MD -o $@ $(CFLAGS) $<
+	$(CC) -c -fPIC -MD -o $@ -I. $(UBIK_CFLAGS) $<
 
 -include $(patsubst %.o,%.d,$(objects))
 

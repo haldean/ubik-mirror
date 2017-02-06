@@ -5,8 +5,9 @@ BISON ?= bison
 PYTHON ?= python2
 FLEX ?= flex
 
-CFLAGS := $(CFLAGS) -std=c11 -Werror -Wall -Wextra -Wswitch-enum -fno-strict-aliasing -pedantic
-CFLAGS := $(CFLAGS) -ggdb -rdynamic -I$(top)/include/ -O0 -D_GNU_SOURCE -fstack-protector-strong
+UBIK_CFLAGS := -std=c11 -Werror -Wall -Wextra -Wswitch-enum \
+	-fno-strict-aliasing -pedantic -ggdb -rdynamic -I$(top)/include/ \
+	-O0 -D_GNU_SOURCE -fstack-protector-strong $(CFLAGS)
 
 ifneq ($(CC), musl-gcc)
 ifneq ($(sanitize),no)
@@ -14,5 +15,5 @@ ifneq ($(sanitize),no)
 endif
 endif
 
-LDFLAGS := $(LDFLAGS) -rdynamic -ldl -pthread
+UBIK_LDFLAGS := -rdynamic -ldl -pthread $(LDFLAGS)
 LINK_LIBUBIK = -Wl,--whole-archive $(top)/libubik/libubik.a -Wl,--no-whole-archive
