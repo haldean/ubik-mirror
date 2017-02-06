@@ -25,11 +25,13 @@
 #include "ubik/evaluator.h"
 #include "ubik/rttypes.h"
 #include "ubik/ubik.h"
+#include "ubik/value.h"
 
 enum node_status
 {
         WAIT,
         DONE,
+        LOADED,
         DATA,
         APPLY,
         NEEDED,
@@ -59,7 +61,6 @@ struct ubik_eval_state
         struct ubik_value **nt;
         size_t n;
         size_t term;
-        size_t waiting;
 };
 
 void
@@ -92,12 +93,15 @@ _load_callback(
         struct ubik_uri *uri)
 {
         struct node_ref *r;
+        ubik_error err;
         unused(env);
         unused(uri);
 
         r = node_ref_void;
-        r->e->s[r->node] = WAIT;
-        r->e->waiting--;
+        err = ubik_env_get(&r->e->nv[r->node], &r->e->nt[r->node], env, uri);
+        if (err != OK)
+                return err;
+        r->e->s[r->node] = LOADED;
         free(r);
 
         return OK;
@@ -133,10 +137,22 @@ run_state(
         {
                 node = &e->f->fun.nodes[i];
                 old_status = e->s[i];
-                if (old_status == DONE)
+                switch (old_status)
+                {
+                case DONE:
+                case DATA:
+                case APPLY:
                         continue;
-                if (unlikely(node->is_terminal && e->s[i] == WAIT))
-                        e->s[i] = NEEDED;
+                case WAIT:
+                        if (unlikely(node->is_terminal))
+                                e->s[i] = NEEDED;
+                        break;
+                case LOADED:
+                        e->s[i] = DONE;
+                        goto postupdate;
+                case NEEDED:
+                        break;
+                }
 
                 switch (node->node_type)
                 {
@@ -152,6 +168,7 @@ run_state(
                         switch (e->s[t])
                         {
                         case DONE:
+                        case LOADED:
                                 e->nv[i] = e->nv[t];
                                 e->nt[i] = e->nt[t];
                                 e->s[i] = DONE;
@@ -165,6 +182,7 @@ run_state(
                         case NEEDED:
                                 break;
                         }
+                        break;
 
                 case UBIK_VALUE:
                         e->nv[i] = node->value.value;
@@ -223,31 +241,25 @@ run_state(
                         r->pap.arg = e->nv[node->apply.arg];
                         r->pap.arg_type = e->nt[node->apply.arg];
 
-                        e->nv[i] = r;
+                        /* PAPs inherit the traced flag from their base
+                         * function, so the tracer doesn't have to crawl back
+                         * up to the base function to see if the function is
+                         * being traced. */
+                        r->gc.traced = r->pap.base_func->gc.traced;
 
                         err = ubik_value_new(&e->nt[i], evaluator->ws);
                         if (err != OK)
                                 return err;
 
-                        t = 0;
-                        a = r;
-                        while (a->type == UBIK_PAP)
-                        {
-                                a = a->pap.func;
-                                t++;
-                        }
-                        if (t == r->pap.base_func->fun.arity)
-                        {
-                                e->s[i] = APPLY;
-                                err = push(evaluator, r, e, i);
-                                if (err != OK)
-                                        return err;
-                                break;
-                        }
+                        e->nv[i] = r;
                         err = ubik_type_func_apply(
                                 e->nt[i], e->nt[node->apply.func], e->nt[t]);
                         if (err != OK)
-                                return err;
+                        {
+                                /* TODO: runtime types shouldn't be silently
+                                 * ignored! */
+                                free(err);
+                        }
                         e->s[i] = DONE;
                         break;
 
@@ -277,14 +289,14 @@ run_state(
 
                         if (err->error_code != ERR_ABSENT)
                                 return err;
+
+                        free(err);
                         if (e->s[i] != NEEDED)
                                 break;
 
                         /* file a wait request if we know we need this
                          * node. */
-                        free(err);
                         e->s[i] = DATA;
-                        e->waiting++;
 
                         ubik_alloc1(&node_ref, struct node_ref, NULL);
                         node_ref->e = e;
@@ -302,6 +314,7 @@ run_state(
                         switch (e->s[t])
                         {
                         case DONE:
+                        case LOADED:
                                 e->nv[i] = e->nv[t];
                                 e->nt[i] = e->nt[t];
                                 e->s[i] = DONE;
@@ -329,6 +342,27 @@ run_state(
                 case UBIK_MAX_NODE_TYPE:
                 default:
                         return ubik_raise(ERR_BAD_TYPE, "unknown node type");
+                }
+
+postupdate:
+                r = e->nv[i];
+                if (e->s[i] == DONE &&
+                        (r->type == UBIK_PAP || r->type == UBIK_FUN))
+                {
+                        t = 0;
+                        a = r;
+                        while (a->type == UBIK_PAP)
+                        {
+                                a = a->pap.func;
+                                t++;
+                        }
+                        if (t == a->fun.arity)
+                        {
+                                e->s[i] = APPLY;
+                                err = push(evaluator, r, e, i);
+                                if (err != OK)
+                                        return err;
+                        }
                 }
 
                 if (node->is_terminal && old_status != DONE && e->s[i] == DONE)
@@ -368,7 +402,7 @@ push(
 
         ubik_galloc((void **) &e->args, arity, sizeof(struct ubik_value *));
         ubik_galloc((void **) &e->argtypes, arity, sizeof(struct ubik_value *));
-        for (i = arity, a = v; i > 0; i--)
+        for (i = arity, a = v; i > 0; i--, a = a->pap.func)
         {
                 ubik_assert(a->type == UBIK_PAP);
                 e->args[i - 1] = a->pap.arg;
@@ -448,6 +482,7 @@ ubik_evaluate_run(struct ubik_evaluator *evaluator)
                         t1 = r->e->f->fun.result;
                         r->waiting->nv[t0] = r->e->nv[t1];
                         r->waiting->nt[t0] = r->e->nt[t1];
+                        r->waiting->s[t0] = LOADED;
                 }
 
                 free_eval_state(r->e);
