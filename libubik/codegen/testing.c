@@ -85,12 +85,13 @@ compile_test(
 
 struct test_callback_info
 {
+        /* must be first, so test_callback_info can be treated as an ecb */
+        struct ubik_evaluate_callback ecb;
         struct ubik_ast_test *test;
         struct ubik_stream *feedback;
         atomic_uint_fast32_t *successes;
 };
 
-#if 0
 static void
 print_value(struct ubik_stream *s, struct ubik_value *v)
 {
@@ -113,21 +114,24 @@ print_value(struct ubik_stream *s, struct ubik_value *v)
 }
 
 static no_ignore ubik_error
-test_callback(void *arg, struct ubik_evaluator *eval, struct ubik_exec_unit *e)
+test_callback(
+        struct ubik_evaluate_callback *ecb,
+        struct ubik_value *res,
+        struct ubik_value *restype,
+        struct ubik_value **all_values)
 {
         struct test_callback_info *cb;
-        struct ubik_value *res;
         struct ubik_value *expected;
         struct ubik_value *actual;
         bool success;
 
-        cb = (struct test_callback_info *) arg;
+        cb = (struct test_callback_info *) ecb;
+        unused(restype);
 
-        res = e->gexec->nv[e->node];
         ubik_assert(res->type == UBIK_BOO);
         success = res->boo.value;
-        expected = e->gexec->nv[cb->test->expected->gen];
-        actual = e->gexec->nv[cb->test->actual->gen];
+        expected = all_values[cb->test->expected->gen];
+        actual = all_values[cb->test->actual->gen];
 
         if (!success)
         {
@@ -147,7 +151,6 @@ test_callback(void *arg, struct ubik_evaluator *eval, struct ubik_exec_unit *e)
                 (*cb->successes)++;
         return OK;
 }
-#endif
 
 no_ignore ubik_error
 ubik_testing_run(struct ubik_compile_result *compiled)
@@ -159,6 +162,7 @@ ubik_testing_run(struct ubik_compile_result *compiled)
         struct ubik_workspace *ws;
         struct ubik_workspace *compile_ws;
         struct ubik_ast_loc loc = {0};
+        struct test_callback_info *tcb;
         atomic_uint_fast32_t successes;
         size_t i;
         ubik_error err;
@@ -190,7 +194,7 @@ ubik_testing_run(struct ubik_compile_result *compiled)
                         if (!compile_ws->values[i].gc.modinit)
                                 continue;
                         err = ubik_evaluate_push(
-                                evaluator, &compile_ws->values[i]);
+                                evaluator, &compile_ws->values[i], NULL);
                         if (err != OK)
                                 return err;
                 }
@@ -206,23 +210,16 @@ ubik_testing_run(struct ubik_compile_result *compiled)
                 if (err != OK)
                         return err;
 
-#if 0
-                notify = calloc(1, sizeof(struct ubik_exec_notify));
-                ubik_assert(notify != NULL);
-                notify->notify = test_callback;
                 ubik_alloc1(&tcb, struct test_callback_info,
                             &compiled->request->region);
+                tcb->ecb.func = test_callback;
                 tcb->feedback = compiled->request->feedback;
                 tcb->test = test;
                 tcb->successes = &successes;
-                notify->arg = tcb;
-                err = ubik_schedule_push(sched, v, &env, false, notify, ws);
+
+                err = ubik_evaluate_push(evaluator, v, &tcb->ecb);
                 if (err != OK)
                         return err;
-#endif
-                return ubik_raise(
-                        ERR_NOT_IMPLEMENTED,
-                        "evaluator callbacks not supported yet");
         }
 
         err = ubik_evaluate_run(evaluator);

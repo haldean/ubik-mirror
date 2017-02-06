@@ -49,6 +49,7 @@ struct ubik_eval_req
         struct ubik_eval_state *e;
         struct ubik_eval_state *waiting;
         size_t node;
+        struct ubik_evaluate_callback *cb;
 };
 
 struct ubik_eval_state
@@ -78,7 +79,8 @@ push(
         struct ubik_evaluator *evaluator,
         struct ubik_value *v,
         struct ubik_eval_state *waiting,
-        size_t wait_node);
+        size_t wait_node,
+        struct ubik_evaluate_callback *cb);
 
 struct node_ref
 {
@@ -359,7 +361,7 @@ postupdate:
                         if (t == a->fun.arity)
                         {
                                 e->s[i] = APPLY;
-                                err = push(evaluator, r, e, i);
+                                err = push(evaluator, r, e, i, NULL);
                                 if (err != OK)
                                         return err;
                         }
@@ -379,7 +381,8 @@ push(
         struct ubik_evaluator *evaluator,
         struct ubik_value *v,
         struct ubik_eval_state *waiting,
-        size_t wait_node)
+        size_t wait_node,
+        struct ubik_evaluate_callback *cb)
 {
         struct ubik_value *a;
         struct ubik_eval_req *req;
@@ -392,6 +395,7 @@ push(
         req->e = e;
         req->waiting = waiting;
         req->node = wait_node;
+        req->cb = cb;
 
         if (v->type == UBIK_FUN)
                 e->f = v;
@@ -427,9 +431,10 @@ push(
 no_ignore ubik_error
 ubik_evaluate_push(
         struct ubik_evaluator *evaluator,
-        struct ubik_value *v)
+        struct ubik_value *v,
+        struct ubik_evaluate_callback *cb)
 {
-        return push(evaluator, v, NULL, 0);
+        return push(evaluator, v, NULL, 0, cb);
 }
 
 no_ignore ubik_error
@@ -446,7 +451,7 @@ ubik_evaluate_push_roots(
                 {
                         if (!ws->values[i].gc.root)
                                 continue;
-                        err = push(evaluator, &ws->values[i], NULL, 0);
+                        err = push(evaluator, &ws->values[i], NULL, 0, NULL);
                         if (err != OK)
                                 return err;
                 }
@@ -476,13 +481,20 @@ ubik_evaluate_run(struct ubik_evaluator *evaluator)
                         continue;
                 }
 
-                if (r->waiting != NULL)
+                t1 = r->e->f->fun.result;
+                if (likely(r->waiting != NULL))
                 {
                         t0 = r->node;
-                        t1 = r->e->f->fun.result;
                         r->waiting->nv[t0] = r->e->nv[t1];
                         r->waiting->nt[t0] = r->e->nt[t1];
                         r->waiting->s[t0] = LOADED;
+                }
+                if (unlikely(r->cb != NULL))
+                {
+                        err = r->cb->func(
+                                r->cb, r->e->nv[t1], r->e->nt[t1], r->e->nv);
+                        if (err != OK)
+                                return err;
                 }
 
                 free_eval_state(r->e);
