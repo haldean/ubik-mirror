@@ -25,6 +25,7 @@
 #include "ubik/deque.h"
 #include "ubik/evaluator.h"
 #include "ubik/rttypes.h"
+#include "ubik/rwlock.h"
 #include "ubik/ubik.h"
 #include "ubik/value.h"
 
@@ -68,6 +69,7 @@ struct ubik_eval_state
         struct ubik_value **nt;
         size_t n;
         size_t term;
+        struct ubik_rwlock lock;
 };
 
 void
@@ -101,15 +103,14 @@ _load_callback(
         struct ubik_uri *uri)
 {
         struct node_ref *r;
-        ubik_error err;
         unused(env);
         unused(uri);
 
+        /* Can't actually get the value here, because you aren't allowed to
+         * access the env from an env callback (deadlocks!). We mark the node
+         * as WAIT again, so the next pass will catch it. */
         r = node_ref_void;
-        err = ubik_env_get(&r->e->nv[r->node], &r->e->nt[r->node], env, uri);
-        if (err != OK)
-                return err;
-        setstatus(r->e, r->node, LOADED);
+        setstatus(r->e, r->node, WAIT);
         free(r);
 
         return OK;
@@ -274,8 +275,7 @@ run_load(
         node_ref->node = i;
 
         err = ubik_env_watch(
-                        _load_callback, evaluator->env,
-                        node->load.loc, node_ref);
+                _load_callback, evaluator->env, node->load.loc, node_ref);
         return err;
 }
 
@@ -293,6 +293,8 @@ run_state(
         enum node_status ts;
         ubik_error err;
         bool progress;
+
+        ubik_rwlock_write_scope(&e->lock);
 
         if (e->f->fun.evaluator != NULL)
         {
@@ -504,6 +506,7 @@ push(
                         e->term++;
 
         memset(e->s, WAIT, e->n * sizeof(enum node_status));
+        ubik_rwlock_init(&e->lock);
 
         ubik_deque_pushl(&evaluator->q, req);
         return OK;
@@ -541,17 +544,22 @@ ubik_evaluate_push_roots(
         return OK;
 }
 
-no_ignore ubik_error
-ubik_evaluate_run(struct ubik_evaluator *evaluator)
+no_ignore static void *
+run(void *e)
 {
+        struct ubik_evaluator *evaluator;
         struct ubik_eval_req *r;
         ubik_error err;
         size_t t0;
         size_t t1;
 
-        while (!ubik_deque_empty(&evaluator->q))
+        evaluator = (struct ubik_evaluator *) e;
+
+        for (;;)
         {
                 r = ubik_deque_popr(&evaluator->q);
+                if (r == NULL)
+                        break;
 
                 err = run_state(evaluator, r->e);
                 if (err != OK)
@@ -565,15 +573,23 @@ ubik_evaluate_run(struct ubik_evaluator *evaluator)
                 t1 = r->e->f->fun.result;
                 if (likely(r->waiting != NULL))
                 {
+                        ubik_rwlock_write(&r->waiting->lock);
+                        ubik_rwlock_read(&r->e->lock);
+
                         t0 = r->node;
                         r->waiting->nv[t0] = r->e->nv[t1];
                         r->waiting->nt[t0] = r->e->nt[t1];
                         setstatus(r->waiting, t0, LOADED);
+
+                        ubik_rwlock_release(&r->waiting->lock);
+                        ubik_rwlock_release(&r->e->lock);
                 }
                 if (unlikely(r->cb != NULL))
                 {
+                        ubik_rwlock_read(&r->e->lock);
                         err = r->cb->func(
                                 r->cb, r->e->nv[t1], r->e->nt[t1], r->e->nv);
+                        ubik_rwlock_release(&r->e->lock);
                         if (err != OK)
                                 return err;
                 }
@@ -584,6 +600,49 @@ ubik_evaluate_run(struct ubik_evaluator *evaluator)
         }
 
         return OK;
+}
+
+no_ignore ubik_error
+ubik_evaluate_run(struct ubik_evaluator *evaluator)
+{
+        size_t n_workers;
+        size_t i;
+        int res;
+        ubik_error err;
+        ubik_error worker_err;
+        pthread_t *workers;
+
+        n_workers = 1;
+        workers = NULL;
+
+        if (n_workers > 1)
+        {
+                ubik_galloc(
+                        (void**) &workers, n_workers - 1, sizeof(pthread_t));
+
+                for (i = 0; i < n_workers - 1; i++)
+                {
+                        res = pthread_create(
+                                &workers[i], NULL, run, evaluator);
+                        ubik_assert(res == 0);
+                }
+        }
+
+        err = run(evaluator);
+
+        if (n_workers > 1)
+        {
+                for (i = 0; i < n_workers - 1; i++)
+                {
+                        res = pthread_join(workers[i], (void **) &worker_err);
+                        ubik_assert(res == 0);
+                        if (err == OK && worker_err != OK)
+                                err = worker_err;
+                }
+                free(workers);
+        }
+
+        return err;
 }
 
 no_ignore ubik_error
