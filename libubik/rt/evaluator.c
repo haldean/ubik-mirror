@@ -17,6 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include <stdatomic.h>
 #include <stdlib.h>
 #include <string.h>
 #include "ubik/alloc.h"
@@ -36,6 +37,11 @@ enum node_status
         APPLY,
         NEEDED,
 };
+
+#define status(e, i) \
+        atomic_load_explicit(&e->s[i], memory_order_acquire)
+#define setstatus(e, i, new) \
+        atomic_store_explicit(&e->s[i], new, memory_order_release)
 
 struct ubik_evaluator
 {
@@ -103,7 +109,7 @@ _load_callback(
         err = ubik_env_get(&r->e->nv[r->node], &r->e->nt[r->node], env, uri);
         if (err != OK)
                 return err;
-        r->e->s[r->node] = LOADED;
+        setstatus(r->e, r->node, LOADED);
         free(r);
 
         return OK;
@@ -113,31 +119,37 @@ static inline void
 run_cond(struct ubik_eval_state *e, size_t i, struct ubik_node *node)
 {
         size_t t;
+        enum node_status is, ts;
+
         t = node->cond.condition;
-        if (e->s[t] == WAIT)
+        is = status(e, i);
+        ts = status(e, t);
+
+        if (ts == WAIT)
         {
-                if (e->s[i] == NEEDED)
-                        e->s[t] = NEEDED;
+                if (is == NEEDED)
+                        setstatus(e, t, NEEDED);
                 return;
         }
-        if (e->s[t] != DONE)
+        if (ts != DONE)
                 return;
 
         ubik_assert(e->nv[t]->type == UBIK_BOO);
         t = e->nv[t]->boo.value
                 ? node->cond.if_true
                 : node->cond.if_false;
-        if (e->s[t] == WAIT)
+        ts = status(e, t);
+        if (ts == WAIT)
         {
-                if (e->s[i] == NEEDED)
-                        e->s[t] = NEEDED;
+                if (is == NEEDED)
+                        setstatus(e, t, NEEDED);
                 return;
         }
-        if (e->s[t] != DONE)
+        if (ts != DONE)
                 return;
         e->nv[i] = e->nv[t];
         e->nt[i] = e->nt[t];
-        e->s[i] = DONE;
+        setstatus(e, i, DONE);
 }
 
 no_ignore static inline ubik_error
@@ -147,17 +159,32 @@ run_apply(
         size_t i,
         struct ubik_node *node)
 {
-        size_t t;
+        size_t f;
+        size_t a;
         struct ubik_value *r;
+        enum node_status is;
+        enum node_status fs;
+        enum node_status as;
         ubik_error err;
 
-        t = node->apply.func;
-        if (e->s[t] == WAIT)
-                e->s[t] = NEEDED;
-        t = node->apply.arg;
-        if (e->s[t] == WAIT)
-                e->s[t] = NEEDED;
-        if (e->s[t] != DONE || e->s[node->apply.func] != DONE)
+        /* Don't evaluate any applications unless we need to; without this,
+         * we'll end up doing tons of extra work potentially infinitely
+         * evaluating the alternate sides of conditionals. */
+        is = status(e, i);
+        if (is != NEEDED)
+                return OK;
+
+        f = node->apply.func;
+        a = node->apply.arg;
+
+        fs = status(e, f);
+        as = status(e, a);
+
+        if (fs == WAIT)
+                setstatus(e, f, NEEDED);
+        if (as == WAIT)
+                setstatus(e, a, NEEDED);
+        if (fs != DONE || as != DONE)
                 return OK;
 
         err = ubik_value_new(&r, evaluator->ws);
@@ -165,13 +192,13 @@ run_apply(
                 return err;
 
         r->type = UBIK_PAP;
-        r->pap.func = e->nv[node->apply.func];
+        r->pap.func = e->nv[f];
         if (r->pap.func->type == UBIK_FUN)
                 r->pap.base_func = r->pap.func;
         else if (r->pap.func->type == UBIK_PAP)
                 r->pap.base_func = r->pap.func->pap.base_func;
-        r->pap.arg = e->nv[node->apply.arg];
-        r->pap.arg_type = e->nt[node->apply.arg];
+        r->pap.arg = e->nv[a];
+        r->pap.arg_type = e->nt[a];
 
         /* PAPs inherit the traced flag from their base
          * function, so the tracer doesn't have to crawl back
@@ -185,14 +212,14 @@ run_apply(
 
         e->nv[i] = r;
         err = ubik_type_func_apply(
-                        e->nt[i], e->nt[node->apply.func], e->nt[t]);
+                        e->nt[i], e->nt[f], e->nt[a]);
         if (err != OK)
         {
                 /* TODO: runtime types shouldn't be silently
                  * ignored! */
                 free(err);
         }
-        e->s[i] = DONE;
+        setstatus(e, i, DONE);
         return OK;
 }
 
@@ -204,10 +231,13 @@ run_load(
         struct ubik_node *node)
 {
         struct node_ref *node_ref;
+        enum node_status is;
         ubik_error err;
 
-        if (e->s[i] != WAIT && e->s[i] != NEEDED)
+        is = status(e, i);
+        if (is != WAIT && is != NEEDED)
                 return OK;
+
         err = ubik_env_get(
                         &e->nv[i],
                         &e->nt[i],
@@ -215,9 +245,10 @@ run_load(
                         node->load.loc);
         if (err == OK)
         {
-                e->s[i] = DONE;
+                setstatus(e, i, DONE);
                 return OK;
         }
+
         /* native funcs never appear later. */
         if (node->load.loc->scope == SCOPE_NATIVE &&
                         err->error_code == ERR_ABSENT)
@@ -232,12 +263,11 @@ run_load(
                 return err;
 
         free(err);
-        if (e->s[i] != NEEDED)
+        if (is != NEEDED)
                 return OK;
 
-        /* file a wait request if we know we need this
-         * node. */
-        e->s[i] = DATA;
+        /* file a wait request if we know we need this node. */
+        setstatus(e, i, DATA);
 
         ubik_alloc1(&node_ref, struct node_ref, NULL);
         node_ref->e = e;
@@ -260,6 +290,7 @@ run_state(
         size_t i;
         size_t t;
         enum node_status old_status;
+        enum node_status ts;
         ubik_error err;
         bool progress;
 
@@ -284,7 +315,7 @@ run_state(
                 for (i = 0; i < e->n; i++)
                 {
                         node = &e->f->fun.nodes[i];
-                        old_status = e->s[i];
+                        old_status = status(e, i);
                         switch (old_status)
                         {
                         case DONE:
@@ -293,10 +324,10 @@ run_state(
                                 continue;
                         case WAIT:
                                 if (unlikely(node->is_terminal))
-                                        e->s[i] = NEEDED;
+                                        setstatus(e, i, NEEDED);
                                 break;
                         case LOADED:
-                                e->s[i] = DONE;
+                                setstatus(e, i, DONE);
                                 goto postupdate;
                         case NEEDED:
                                 break;
@@ -308,22 +339,23 @@ run_state(
                                 t = node->input.arg_num;
                                 e->nv[i] = e->args[t];
                                 e->nt[i] = e->argtypes[t];
-                                e->s[i] = DONE;
+                                setstatus(e, i, DONE);
                                 break;
 
                         case UBIK_REF:
                                 t = node->ref.referrent;
-                                switch (e->s[t])
+                                ts = status(e, t);
+                                switch (ts)
                                 {
                                 case DONE:
                                 case LOADED:
                                         e->nv[i] = e->nv[t];
                                         e->nt[i] = e->nt[t];
-                                        e->s[i] = DONE;
+                                        setstatus(e, i, DONE);
                                         break;
                                 case WAIT:
-                                        if (e->s[i] == NEEDED)
-                                                e->s[t] = NEEDED;
+                                        if (status(e, i) == NEEDED)
+                                                setstatus(e, t, NEEDED);
                                         break;
                                 case DATA:
                                 case APPLY:
@@ -335,7 +367,7 @@ run_state(
                         case UBIK_VALUE:
                                 e->nv[i] = node->value.value;
                                 e->nt[i] = node->value.type;
-                                e->s[i] = DONE;
+                                setstatus(e, i, DONE);
                                 break;
 
                         case UBIK_COND:
@@ -343,12 +375,6 @@ run_state(
                                 break;
 
                         case UBIK_APPLY:
-                                /* Don't evaluate any applications unless we need to;
-                                 * without this, we'll end up doing tons of extra work
-                                 * potentially infinitely evaluating the alternate
-                                 * sides of conditionals. */
-                                if (e->s[i] != NEEDED)
-                                        break;
                                 err = run_apply(evaluator, e, i, node);
                                 if (err != OK)
                                         return err;
@@ -362,17 +388,18 @@ run_state(
 
                         case UBIK_STORE:
                                 t = node->store.value;
-                                switch (e->s[t])
+                                ts = status(e, t);
+                                switch (ts)
                                 {
                                 case DONE:
                                 case LOADED:
                                         e->nv[i] = e->nv[t];
                                         e->nt[i] = e->nt[t];
-                                        e->s[i] = DONE;
+                                        setstatus(e, i, DONE);
                                         break;
                                 case WAIT:
-                                        if (e->s[i] == NEEDED)
-                                                e->s[t] = NEEDED;
+                                        if (status(e, i) == NEEDED)
+                                                setstatus(e, t, NEEDED);
                                         break;
                                 case DATA:
                                 case APPLY:
@@ -380,7 +407,7 @@ run_state(
                                         break;
                                 }
 
-                                if (e->s[i] != DONE)
+                                if (status(e, i) != DONE)
                                         break;
                                 err = ubik_env_set(
                                         evaluator->env, node->store.loc,
@@ -397,7 +424,7 @@ run_state(
 
 postupdate:
                         r = e->nv[i];
-                        if (e->s[i] == DONE &&
+                        if (status(e, i) == DONE &&
                                 (r->type == UBIK_PAP || r->type == UBIK_FUN))
                         {
                                 t = 0;
@@ -409,7 +436,7 @@ postupdate:
                                 }
                                 if (t == a->fun.arity)
                                 {
-                                        e->s[i] = APPLY;
+                                        setstatus(e, i, APPLY);
                                         err = push(evaluator, r, e, i, NULL);
                                         if (err != OK)
                                                 return err;
@@ -417,11 +444,12 @@ postupdate:
                         }
 
                         if (node->is_terminal &&
-                                        old_status != DONE && e->s[i] == DONE)
+                                        old_status != DONE &&
+                                        status(e, i) == DONE)
                                 e->term--;
                         if (e->term == 0)
                                 break;
-                        progress = progress || (old_status != e->s[i]);
+                        progress = progress || (old_status != status(e, i));
                 }
         }
 
@@ -539,7 +567,7 @@ ubik_evaluate_run(struct ubik_evaluator *evaluator)
                         t0 = r->node;
                         r->waiting->nv[t0] = r->e->nv[t1];
                         r->waiting->nt[t0] = r->e->nt[t1];
-                        r->waiting->s[t0] = LOADED;
+                        setstatus(r->waiting, t0, LOADED);
                 }
                 if (unlikely(r->cb != NULL))
                 {
