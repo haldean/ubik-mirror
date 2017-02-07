@@ -111,6 +111,10 @@ _load_callback(
          * access the env from an env callback (deadlocks!). We mark the node
          * as WAIT again, so the next pass will catch it. */
         r = node_ref_void;
+#ifdef EVALUATOR_DEBUG
+        printf("got data for %lu/%lu\n", (uintptr_t) r->e, r->node);
+        fflush(stdout);
+#endif
         setstatus(r->e, r->node, WAIT);
         free(r);
 
@@ -275,6 +279,10 @@ run_load(
         node_ref->e = e;
         node_ref->node = i;
 
+#ifdef EVALUATOR_DEBUG
+        printf("starting watch for %lu/%lu\n", (uintptr_t) e, i);
+        fflush(stdout);
+#endif
         err = ubik_env_watch(
                 _load_callback, evaluator->env, node->load.loc, node_ref);
         return err;
@@ -486,6 +494,12 @@ push(
         req->node = wait_node;
         req->cb = cb;
 
+#ifdef EVALUATOR_DEBUG
+        printf("pushing %lu notify %lu/%lu cb %lu\n",
+                (uintptr_t) e, (uintptr_t) waiting, wait_node, (uintptr_t) cb);
+        fflush(stdout);
+#endif
+
         if (v->type == UBIK_FUN)
                 e->f = v;
         else if (v->type == UBIK_PAP)
@@ -577,6 +591,11 @@ run(void *e)
                 }
 
                 t1 = r->e->f->fun.result;
+#ifdef EVALUATOR_DEBUG
+                printf("finished %lu notify %lu/%lu\n",
+                        (uintptr_t) r->e, (uintptr_t) r->waiting, r->node);
+                fflush(stdout);
+#endif
                 if (likely(r->waiting != NULL))
                 {
                         pthread_mutex_lock(&r->waiting->lock);
@@ -616,7 +635,7 @@ ubik_evaluate_run(struct ubik_evaluator *evaluator)
         ubik_error worker_err;
         pthread_t *workers;
 
-        n_workers = 1;
+        n_workers = 4;
         workers = NULL;
 
         if (n_workers > 1)

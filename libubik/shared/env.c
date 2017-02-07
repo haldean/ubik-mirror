@@ -131,8 +131,8 @@ ubik_env_iterate(
         return OK;
 }
 
-no_ignore ubik_error
-ubik_env_get(
+no_ignore static ubik_error
+_get_nolock(
         struct ubik_value **value,
         struct ubik_value **type,
         struct ubik_env *env,
@@ -142,8 +142,6 @@ ubik_env_get(
         size_t probed;
         size_t h;
         bool found;
-
-        ubik_rwlock_read_scope(&env->lock);
 
         found = false;
 
@@ -177,6 +175,17 @@ ubik_env_get(
         if (env->parent == NULL)
                 return ubik_raise(ERR_ABSENT, "ubik_get");
         return ubik_env_get(value, type, env->parent, uri);
+}
+
+no_ignore ubik_error
+ubik_env_get(
+        struct ubik_value **value,
+        struct ubik_value **type,
+        struct ubik_env *env,
+        struct ubik_uri *uri)
+{
+        ubik_rwlock_read_scope(&env->lock);
+        return _get_nolock(value, type, env, uri);
 }
 
 no_ignore ubik_error
@@ -395,7 +404,18 @@ ubik_env_watch(
 {
         struct ubik_env_watch *watcher;
         struct ubik_env_watch_list *watchlist;
+        ubik_error err;
         ubik_rwlock_write_scope(&env->lock);
+
+        /* First, check to see if the key already exists in the env; if it
+         * does, we immediately fire the callback. */
+        err = _get_nolock(NULL, NULL, env, uri);
+        if (err == OK)
+                return callback(callback_arg, env, uri);
+        else if (err->error_code == ERR_ABSENT)
+                free(err);
+        else
+                return err;
 
         watcher = calloc(1, sizeof(struct ubik_env_watch));
         if (watcher == NULL)
