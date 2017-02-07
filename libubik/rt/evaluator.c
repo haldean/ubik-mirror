@@ -109,6 +109,146 @@ _load_callback(
         return OK;
 }
 
+static inline void
+run_cond(struct ubik_eval_state *e, size_t i, struct ubik_node *node)
+{
+        size_t t;
+        t = node->cond.condition;
+        if (e->s[t] == WAIT)
+        {
+                if (e->s[i] == NEEDED)
+                        e->s[t] = NEEDED;
+                return;
+        }
+        if (e->s[t] != DONE)
+                return;
+
+        ubik_assert(e->nv[t]->type == UBIK_BOO);
+        t = e->nv[t]->boo.value
+                ? node->cond.if_true
+                : node->cond.if_false;
+        if (e->s[t] == WAIT)
+        {
+                if (e->s[i] == NEEDED)
+                        e->s[t] = NEEDED;
+                return;
+        }
+        if (e->s[t] != DONE)
+                return;
+        e->nv[i] = e->nv[t];
+        e->nt[i] = e->nt[t];
+        e->s[i] = DONE;
+}
+
+no_ignore static inline ubik_error
+run_apply(
+        struct ubik_evaluator *evaluator,
+        struct ubik_eval_state *e,
+        size_t i,
+        struct ubik_node *node)
+{
+        size_t t;
+        struct ubik_value *r;
+        ubik_error err;
+
+        t = node->apply.func;
+        if (e->s[t] == WAIT)
+                e->s[t] = NEEDED;
+        t = node->apply.arg;
+        if (e->s[t] == WAIT)
+                e->s[t] = NEEDED;
+        if (e->s[t] != DONE || e->s[node->apply.func] != DONE)
+                return OK;
+
+        err = ubik_value_new(&r, evaluator->ws);
+        if (err != OK)
+                return err;
+
+        r->type = UBIK_PAP;
+        r->pap.func = e->nv[node->apply.func];
+        if (r->pap.func->type == UBIK_FUN)
+                r->pap.base_func = r->pap.func;
+        else if (r->pap.func->type == UBIK_PAP)
+                r->pap.base_func = r->pap.func->pap.base_func;
+        r->pap.arg = e->nv[node->apply.arg];
+        r->pap.arg_type = e->nt[node->apply.arg];
+
+        /* PAPs inherit the traced flag from their base
+         * function, so the tracer doesn't have to crawl back
+         * up to the base function to see if the function is
+         * being traced. */
+        r->gc.traced = r->pap.base_func->gc.traced;
+
+        err = ubik_value_new(&e->nt[i], evaluator->ws);
+        if (err != OK)
+                return err;
+
+        e->nv[i] = r;
+        err = ubik_type_func_apply(
+                        e->nt[i], e->nt[node->apply.func], e->nt[t]);
+        if (err != OK)
+        {
+                /* TODO: runtime types shouldn't be silently
+                 * ignored! */
+                free(err);
+        }
+        e->s[i] = DONE;
+        return OK;
+}
+
+no_ignore static inline ubik_error
+run_load(
+        struct ubik_evaluator *evaluator,
+        struct ubik_eval_state *e,
+        size_t i,
+        struct ubik_node *node)
+{
+        struct node_ref *node_ref;
+        ubik_error err;
+
+        if (e->s[i] != WAIT && e->s[i] != NEEDED)
+                return OK;
+        err = ubik_env_get(
+                        &e->nv[i],
+                        &e->nt[i],
+                        evaluator->env,
+                        node->load.loc);
+        if (err == OK)
+        {
+                e->s[i] = DONE;
+                return OK;
+        }
+        /* native funcs never appear later. */
+        if (node->load.loc->scope == SCOPE_NATIVE &&
+                        err->error_code == ERR_ABSENT)
+        {
+                char *buf = ubik_uri_explain(node->load.loc);
+                printf("access nonexistent native function %s\n", buf);
+                free(buf);
+                return err;
+        }
+
+        if (err->error_code != ERR_ABSENT)
+                return err;
+
+        free(err);
+        if (e->s[i] != NEEDED)
+                return OK;
+
+        /* file a wait request if we know we need this
+         * node. */
+        e->s[i] = DATA;
+
+        ubik_alloc1(&node_ref, struct node_ref, NULL);
+        node_ref->e = e;
+        node_ref->node = i;
+
+        err = ubik_env_watch(
+                        _load_callback, evaluator->env,
+                        node->load.loc, node_ref);
+        return err;
+}
+
 no_ignore static ubik_error
 run_state(
         struct ubik_evaluator *evaluator,
@@ -120,7 +260,6 @@ run_state(
         size_t i;
         size_t t;
         enum node_status old_status;
-        struct node_ref *node_ref;
         ubik_error err;
 
         if (e->f->fun.evaluator != NULL)
@@ -193,31 +332,7 @@ run_state(
                         break;
 
                 case UBIK_COND:
-                        t = node->cond.condition;
-                        if (e->s[t] == WAIT)
-                        {
-                                if (e->s[i] == NEEDED)
-                                        e->s[t] = NEEDED;
-                                break;
-                        }
-                        if (e->s[t] != DONE)
-                                break;
-
-                        ubik_assert(e->nv[t]->type == UBIK_BOO);
-                        t = e->nv[t]->boo.value
-                                ? node->cond.if_true
-                                : node->cond.if_false;
-                        if (e->s[t] == WAIT)
-                        {
-                                if (e->s[i] == NEEDED)
-                                        e->s[t] = NEEDED;
-                                break;
-                        }
-                        if (e->s[t] != DONE)
-                                break;
-                        e->nv[i] = e->nv[t];
-                        e->nt[i] = e->nt[t];
-                        e->s[i] = DONE;
+                        run_cond(e, i, node);
                         break;
 
                 case UBIK_APPLY:
@@ -227,93 +342,13 @@ run_state(
                          * sides of conditionals. */
                         if (e->s[i] != NEEDED)
                                 break;
-
-                        t = node->apply.func;
-                        if (e->s[t] == WAIT)
-                                e->s[t] = NEEDED;
-                        t = node->apply.arg;
-                        if (e->s[t] == WAIT)
-                                e->s[t] = NEEDED;
-                        if (e->s[t] != DONE || e->s[node->apply.func] != DONE)
-                                break;
-
-                        err = ubik_value_new(&r, evaluator->ws);
+                        err = run_apply(evaluator, e, i, node);
                         if (err != OK)
                                 return err;
-
-                        r->type = UBIK_PAP;
-                        r->pap.func = e->nv[node->apply.func];
-                        if (r->pap.func->type == UBIK_FUN)
-                                r->pap.base_func = r->pap.func;
-                        else if (r->pap.func->type == UBIK_PAP)
-                                r->pap.base_func = r->pap.func->pap.base_func;
-                        r->pap.arg = e->nv[node->apply.arg];
-                        r->pap.arg_type = e->nt[node->apply.arg];
-
-                        /* PAPs inherit the traced flag from their base
-                         * function, so the tracer doesn't have to crawl back
-                         * up to the base function to see if the function is
-                         * being traced. */
-                        r->gc.traced = r->pap.base_func->gc.traced;
-
-                        err = ubik_value_new(&e->nt[i], evaluator->ws);
-                        if (err != OK)
-                                return err;
-
-                        e->nv[i] = r;
-                        err = ubik_type_func_apply(
-                                e->nt[i], e->nt[node->apply.func], e->nt[t]);
-                        if (err != OK)
-                        {
-                                /* TODO: runtime types shouldn't be silently
-                                 * ignored! */
-                                free(err);
-                        }
-                        e->s[i] = DONE;
                         break;
 
                 case UBIK_LOAD:
-                        if (e->s[i] != WAIT && e->s[i] != NEEDED)
-                                break;
-                        err = ubik_env_get(
-                                &e->nv[i],
-                                &e->nt[i],
-                                evaluator->env,
-                                node->load.loc);
-                        if (err == OK)
-                        {
-                                e->s[i] = DONE;
-                                break;
-                        }
-                        /* native funcs never appear later. */
-                        if (node->load.loc->scope == SCOPE_NATIVE &&
-                                err->error_code == ERR_ABSENT)
-                        {
-                                char *buf = ubik_uri_explain(node->load.loc);
-                                printf("tried to access nonexistent "
-                                       "native function %s\n", buf);
-                                free(buf);
-                                return err;
-                        }
-
-                        if (err->error_code != ERR_ABSENT)
-                                return err;
-
-                        free(err);
-                        if (e->s[i] != NEEDED)
-                                break;
-
-                        /* file a wait request if we know we need this
-                         * node. */
-                        e->s[i] = DATA;
-
-                        ubik_alloc1(&node_ref, struct node_ref, NULL);
-                        node_ref->e = e;
-                        node_ref->node = i;
-
-                        err = ubik_env_watch(
-                                _load_callback, evaluator->env,
-                                node->load.loc, node_ref);
+                        err = run_load(evaluator, e, i, node);
                         if (err != OK)
                                 return err;
                         break;
