@@ -33,7 +33,7 @@ struct ubik_deque
         struct ubik_deque_elem *left;
         struct ubik_deque_elem *right;
         struct ubik_alloc_region *r;
-        pthread_spinlock_t lock;
+        pthread_mutex_t lock;
 };
 
 void
