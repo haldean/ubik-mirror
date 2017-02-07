@@ -304,70 +304,63 @@ _set(
         float load;
         ubik_error err;
 
+        ubik_rwlock_write_scope(&env->lock);
+        err = OK;
+        if (unlikely(env->cap == 0))
+                err = _resize_rebalance(env);
+        load = (float) env->n / (float) env->cap;
+        if (unlikely(load > ENV_MAX_LOAD))
+                err = _resize_rebalance(env);
+        if (err != OK)
+                return err;
+
+        new_binding.uri = ubik_uri_dup(uri);
+        new_binding.value = value;
+        new_binding.type = type;
+
+        err = _insert(env->bindings, env->cap, &new_binding, overwrite);
+        if (err != OK)
         {
-                /* we don't want to hold the write lock when we notify
-                 * listeners */
-                ubik_rwlock_write_scope(&env->lock);
-                err = OK;
-                if (unlikely(env->cap == 0))
-                        err = _resize_rebalance(env);
-                load = (float) env->n / (float) env->cap;
-                if (unlikely(load > ENV_MAX_LOAD))
-                        err = _resize_rebalance(env);
-                if (err != OK)
-                        return err;
-
-                new_binding.uri = ubik_uri_dup(uri);
-                new_binding.value = value;
-                new_binding.type = type;
-
-                err = _insert(env->bindings, env->cap, &new_binding, overwrite);
-                if (err != OK)
-                {
-                        ubik_uri_free(new_binding.uri);
-                        return err;
-                }
-                env->n++;
+                ubik_uri_free(new_binding.uri);
+                return err;
         }
+        env->n++;
 
+        watch = env->watches;
+        while (watch != NULL)
         {
-                ubik_rwlock_read_scope(&env->lock);
-                watch = env->watches;
-                while (watch != NULL)
+                if (ubik_uri_eq(watch->watch->uri, uri))
                 {
-                        if (ubik_uri_eq(watch->watch->uri, uri))
-                        {
-                                err = watch->watch->cb(
+                        err = watch->watch->cb(
                                         watch->watch->arg,
                                         watch->watch->target_env,
                                         watch->watch->uri);
-                                if (err != OK)
-                                        return err;
+                        if (err != OK)
+                                return err;
 
-                                watch->watch->fired = true;
-                        }
-
-                        to_free = NULL;
-                        if (watch->watch->fired)
-                        {
-                                watch->watch->refcount--;
-
-                                to_free = watch;
-                                if (watch->prev != NULL)
-                                        watch->prev->next = watch->next;
-                                if (watch->next != NULL)
-                                        watch->next->prev = watch->prev;
-                                if (env->watches == watch)
-                                        env->watches = watch->prev;
-                        }
-
-                        watch = watch->prev;
-
-                        if (to_free != NULL && to_free->watch->refcount == 0)
-                                free(to_free->watch);
-                        if (to_free != NULL)
-                                free(to_free);
+                        watch->watch->fired = true;
                 }
+
+                to_free = NULL;
+                if (watch->watch->fired)
+                {
+                        watch->watch->refcount--;
+
+                        to_free = watch;
+                        if (watch->prev != NULL)
+                                watch->prev->next = watch->next;
+                        if (watch->next != NULL)
+                                watch->next->prev = watch->prev;
+                        if (env->watches == watch)
+                                env->watches = watch->prev;
+                }
+
+                watch = watch->prev;
+
+                if (to_free != NULL && to_free->watch->refcount == 0)
+                        free(to_free->watch);
+                if (to_free != NULL)
+                        free(to_free);
         }
 
         return OK;
