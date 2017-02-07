@@ -15,4 +15,7 @@ clean:
 	+make -C bin clean
 	+make -C test clean
 
-.PHONY: all clean
+bench: all
+	+make -C test/prog bench
+
+.PHONY: all clean bench

@@ -40,5 +40,8 @@ all: $(tests)
 clean:
 	rm -f *.ub
 
-.PHONY: all clean
+bench:
+	$(BASH) bench.sh
+
+.PHONY: all clean bench
 
