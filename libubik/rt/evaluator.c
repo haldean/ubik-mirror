@@ -50,6 +50,7 @@ struct ubik_evaluator
         struct ubik_deque q;
         struct ubik_env *env;
         struct ubik_workspace *ws;
+        atomic_bool die;
 };
 
 struct ubik_eval_req
@@ -574,8 +575,9 @@ run(void *e)
         size_t t1;
 
         evaluator = (struct ubik_evaluator *) e;
+        err = OK;
 
-        for (;;)
+        while (!evaluator->die)
         {
                 r = ubik_deque_popr(&evaluator->q);
                 if (r == NULL)
@@ -583,7 +585,7 @@ run(void *e)
 
                 err = run_state(evaluator, r->e);
                 if (err != OK)
-                        return err;
+                        goto exit;
                 if (r->e->term != 0)
                 {
                         ubik_deque_pushl(&evaluator->q, r);
@@ -614,7 +616,7 @@ run(void *e)
                                 r->cb, r->e->nv[t1], r->e->nt[t1], r->e->nv);
                         pthread_mutex_unlock(&r->e->lock);
                         if (err != OK)
-                                return err;
+                                goto exit;
                 }
 
                 free_eval_state(r->e);
@@ -622,7 +624,10 @@ run(void *e)
                 free(r);
         }
 
-        return OK;
+exit:
+        if (err != OK)
+                evaluator->die = true;
+        return err;
 }
 
 no_ignore ubik_error
@@ -677,6 +682,7 @@ ubik_evaluate_new(
         ubik_galloc((void **) evaluator, 1, sizeof(struct ubik_evaluator));
         (*evaluator)->env = env;
         (*evaluator)->ws = ws;
+        (*evaluator)->die = false;
         ubik_deque_init(&(*evaluator)->q);
         return OK;
 }
