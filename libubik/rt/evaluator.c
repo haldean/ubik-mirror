@@ -296,6 +296,7 @@ run_state(
         bool progress;
 
         pthread_mutex_lock(&e->lock);
+        err = OK;
 
         if (e->f->fun.evaluator != NULL)
         {
