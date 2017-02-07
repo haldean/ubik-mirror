@@ -19,6 +19,7 @@
 
 #pragma once
 #include "ubik/alloc.h"
+#include <pthread.h>
 
 struct ubik_deque_elem
 {
@@ -32,7 +33,11 @@ struct ubik_deque
         struct ubik_deque_elem *left;
         struct ubik_deque_elem *right;
         struct ubik_alloc_region *r;
+        pthread_spinlock_t lock;
 };
+
+void
+ubik_deque_init(struct ubik_deque *d);
 
 void
 ubik_deque_pushl(struct ubik_deque *d, void *e);

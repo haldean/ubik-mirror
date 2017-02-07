@@ -21,10 +21,18 @@
 #include "ubik/deque.h"
 
 void
+ubik_deque_init(struct ubik_deque *d)
+{
+        pthread_spin_init(&d->lock, PTHREAD_PROCESS_PRIVATE);
+}
+
+void
 ubik_deque_pushl(struct ubik_deque *d, void *e)
 {
         struct ubik_deque_elem *elem;
         ubik_alloc1(&elem, struct ubik_deque_elem, d->r);
+
+        pthread_spin_lock(&d->lock);
         elem->e = e;
         elem->left = NULL;
         elem->right = d->left;
@@ -33,6 +41,7 @@ ubik_deque_pushl(struct ubik_deque *d, void *e)
         d->left = elem;
         if (d->right == NULL)
                 d->right = elem;
+        pthread_spin_unlock(&d->lock);
 }
 
 void
@@ -48,6 +57,7 @@ ubik_deque_pushr(struct ubik_deque *d, void *e)
         d->right = elem;
         if (d->left == NULL)
                 d->left = elem;
+        pthread_spin_unlock(&d->lock);
 }
 
 void *
@@ -58,8 +68,8 @@ ubik_deque_popl(struct ubik_deque *d)
 
         if (ubik_deque_empty(d))
                 return NULL;
-        ubik_assert(d->left != NULL);
 
+        pthread_spin_lock(&d->lock);
         e = d->left;
         d->left = e->right;
         if (e->right != NULL)
@@ -67,6 +77,7 @@ ubik_deque_popl(struct ubik_deque *d)
         else
                 /* The case where e was the only element in the deque */
                 d->right = NULL;
+        pthread_spin_unlock(&d->lock);
 
         v = e->e;
         ubik_free(d->r, e);
@@ -81,8 +92,8 @@ ubik_deque_popr(struct ubik_deque *d)
 
         if (ubik_deque_empty(d))
                 return NULL;
-        ubik_assert(d->right != NULL);
 
+        pthread_spin_lock(&d->lock);
         e = d->right;
         d->right = e->left;
         if (e->left != NULL)
@@ -90,6 +101,7 @@ ubik_deque_popr(struct ubik_deque *d)
         else
                 /* The case where e was the only element in the deque */
                 d->left = NULL;
+        pthread_spin_unlock(&d->lock);
 
         v = e->e;
         ubik_free(d->r, e);
@@ -99,6 +111,12 @@ ubik_deque_popr(struct ubik_deque *d)
 bool
 ubik_deque_empty(struct ubik_deque *d)
 {
-        return d->left == NULL;
+        struct ubik_deque_elem *l;
+
+        pthread_spin_lock(&d->lock);
+        l = d->left;
+        pthread_spin_unlock(&d->lock);
+
+        return l == NULL;
 }
 

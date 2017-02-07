@@ -419,7 +419,8 @@ run_state(
                         case UBIK_NATIVE:
                         case UBIK_MAX_NODE_TYPE:
                         default:
-                                return ubik_raise(ERR_BAD_TYPE, "unknown node type");
+                                return ubik_raise(
+                                        ERR_BAD_TYPE, "unknown node type");
                         }
 
 postupdate:
@@ -594,6 +595,7 @@ ubik_evaluate_new(
         ubik_galloc((void **) evaluator, 1, sizeof(struct ubik_evaluator));
         (*evaluator)->env = env;
         (*evaluator)->ws = ws;
+        ubik_deque_init(&(*evaluator)->q);
         return OK;
 }
 

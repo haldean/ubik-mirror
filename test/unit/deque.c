@@ -26,6 +26,7 @@ deque()
         struct ubik_deque d = {0};
         int x, y;
 
+        ubik_deque_init(&d);
         ubik_deque_pushl(&d, &x);
         ubik_deque_pushl(&d, &y);
         assert(!ubik_deque_empty(&d));
