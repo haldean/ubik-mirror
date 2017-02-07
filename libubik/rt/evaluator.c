@@ -17,15 +17,16 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include <pthread.h>
 #include <stdatomic.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include "ubik/alloc.h"
 #include "ubik/assert.h"
 #include "ubik/deque.h"
 #include "ubik/evaluator.h"
 #include "ubik/rttypes.h"
-#include "ubik/rwlock.h"
 #include "ubik/ubik.h"
 #include "ubik/value.h"
 
@@ -69,7 +70,7 @@ struct ubik_eval_state
         struct ubik_value **nt;
         size_t n;
         size_t term;
-        struct ubik_rwlock lock;
+        pthread_mutex_t lock;
 };
 
 void
@@ -294,7 +295,7 @@ run_state(
         ubik_error err;
         bool progress;
 
-        ubik_rwlock_write_scope(&e->lock);
+        pthread_mutex_lock(&e->lock);
 
         if (e->f->fun.evaluator != NULL)
         {
@@ -303,8 +304,9 @@ run_state(
                         &e->nv[t], &e->nt[t], e->args, e->argtypes, e->f,
                         evaluator->ws);
                 if (err != OK)
-                        return err;
+                        goto exit;
                 e->term = 0;
+                pthread_mutex_unlock(&e->lock);
                 return OK;
         }
 
@@ -379,13 +381,13 @@ run_state(
                         case UBIK_APPLY:
                                 err = run_apply(evaluator, e, i, node);
                                 if (err != OK)
-                                        return err;
+                                        goto exit;
                                 break;
 
                         case UBIK_LOAD:
                                 err = run_load(evaluator, e, i, node);
                                 if (err != OK)
-                                        return err;
+                                        goto exit;
                                 break;
 
                         case UBIK_STORE:
@@ -415,14 +417,15 @@ run_state(
                                         evaluator->env, node->store.loc,
                                         e->nv[i], e->nt[i]);
                                 if (err != OK)
-                                        return err;
+                                        goto exit;
                                 break;
 
                         case UBIK_NATIVE:
                         case UBIK_MAX_NODE_TYPE:
                         default:
-                                return ubik_raise(
+                                err = ubik_raise(
                                         ERR_BAD_TYPE, "unknown node type");
+                                goto exit;
                         }
 
 postupdate:
@@ -442,7 +445,7 @@ postupdate:
                                         setstatus(e, i, APPLY);
                                         err = push(evaluator, r, e, i, NULL);
                                         if (err != OK)
-                                                return err;
+                                                goto exit;
                                 }
                         }
 
@@ -456,7 +459,9 @@ postupdate:
                 }
         }
 
-        return OK;
+exit:
+        pthread_mutex_unlock(&e->lock);
+        return err;
 }
 
 no_ignore static ubik_error
@@ -506,7 +511,7 @@ push(
                         e->term++;
 
         memset(e->s, WAIT, e->n * sizeof(enum node_status));
-        ubik_rwlock_init(&e->lock);
+        pthread_mutex_init(&e->lock, NULL);
 
         ubik_deque_pushl(&evaluator->q, req);
         return OK;
@@ -573,23 +578,21 @@ run(void *e)
                 t1 = r->e->f->fun.result;
                 if (likely(r->waiting != NULL))
                 {
-                        ubik_rwlock_write(&r->waiting->lock);
-                        ubik_rwlock_read(&r->e->lock);
+                        pthread_mutex_lock(&r->waiting->lock);
 
                         t0 = r->node;
                         r->waiting->nv[t0] = r->e->nv[t1];
                         r->waiting->nt[t0] = r->e->nt[t1];
                         setstatus(r->waiting, t0, LOADED);
 
-                        ubik_rwlock_release(&r->waiting->lock);
-                        ubik_rwlock_release(&r->e->lock);
+                        pthread_mutex_unlock(&r->waiting->lock);
                 }
                 if (unlikely(r->cb != NULL))
                 {
-                        ubik_rwlock_read(&r->e->lock);
+                        pthread_mutex_lock(&r->e->lock);
                         err = r->cb->func(
                                 r->cb, r->e->nv[t1], r->e->nt[t1], r->e->nv);
-                        ubik_rwlock_release(&r->e->lock);
+                        pthread_mutex_unlock(&r->e->lock);
                         if (err != OK)
                                 return err;
                 }
