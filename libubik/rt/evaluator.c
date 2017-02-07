@@ -261,6 +261,7 @@ run_state(
         size_t t;
         enum node_status old_status;
         ubik_error err;
+        bool progress;
 
         if (e->f->fun.evaluator != NULL)
         {
@@ -274,145 +275,154 @@ run_state(
                 return OK;
         }
 
-        for (i = 0; i < e->n; i++)
+        progress = true;
+
+        while (progress && e->term != 0)
         {
-                node = &e->f->fun.nodes[i];
-                old_status = e->s[i];
-                switch (old_status)
-                {
-                case DONE:
-                case DATA:
-                case APPLY:
-                        continue;
-                case WAIT:
-                        if (unlikely(node->is_terminal))
-                                e->s[i] = NEEDED;
-                        break;
-                case LOADED:
-                        e->s[i] = DONE;
-                        goto postupdate;
-                case NEEDED:
-                        break;
-                }
+                progress = false;
 
-                switch (node->node_type)
+                for (i = 0; i < e->n; i++)
                 {
-                case UBIK_INPUT:
-                        t = node->input.arg_num;
-                        e->nv[i] = e->args[t];
-                        e->nt[i] = e->argtypes[t];
-                        e->s[i] = DONE;
-                        break;
-
-                case UBIK_REF:
-                        t = node->ref.referrent;
-                        switch (e->s[t])
+                        node = &e->f->fun.nodes[i];
+                        old_status = e->s[i];
+                        switch (old_status)
                         {
                         case DONE:
-                        case LOADED:
-                                e->nv[i] = e->nv[t];
-                                e->nt[i] = e->nt[t];
-                                e->s[i] = DONE;
-                                break;
-                        case WAIT:
-                                if (e->s[i] == NEEDED)
-                                        e->s[t] = NEEDED;
-                                break;
                         case DATA:
                         case APPLY:
-                        case NEEDED:
-                                break;
-                        }
-                        break;
-
-                case UBIK_VALUE:
-                        e->nv[i] = node->value.value;
-                        e->nt[i] = node->value.type;
-                        e->s[i] = DONE;
-                        break;
-
-                case UBIK_COND:
-                        run_cond(e, i, node);
-                        break;
-
-                case UBIK_APPLY:
-                        /* Don't evaluate any applications unless we need to;
-                         * without this, we'll end up doing tons of extra work
-                         * potentially infinitely evaluating the alternate
-                         * sides of conditionals. */
-                        if (e->s[i] != NEEDED)
-                                break;
-                        err = run_apply(evaluator, e, i, node);
-                        if (err != OK)
-                                return err;
-                        break;
-
-                case UBIK_LOAD:
-                        err = run_load(evaluator, e, i, node);
-                        if (err != OK)
-                                return err;
-                        break;
-
-                case UBIK_STORE:
-                        t = node->store.value;
-                        switch (e->s[t])
-                        {
-                        case DONE:
-                        case LOADED:
-                                e->nv[i] = e->nv[t];
-                                e->nt[i] = e->nt[t];
-                                e->s[i] = DONE;
-                                break;
+                                continue;
                         case WAIT:
-                                if (e->s[i] == NEEDED)
-                                        e->s[t] = NEEDED;
+                                if (unlikely(node->is_terminal))
+                                        e->s[i] = NEEDED;
                                 break;
-                        case DATA:
-                        case APPLY:
+                        case LOADED:
+                                e->s[i] = DONE;
+                                goto postupdate;
                         case NEEDED:
                                 break;
                         }
 
-                        if (e->s[i] != DONE)
+                        switch (node->node_type)
+                        {
+                        case UBIK_INPUT:
+                                t = node->input.arg_num;
+                                e->nv[i] = e->args[t];
+                                e->nt[i] = e->argtypes[t];
+                                e->s[i] = DONE;
                                 break;
-                        err = ubik_env_set(
-                                evaluator->env, node->store.loc,
-                                e->nv[i], e->nt[i]);
-                        if (err != OK)
-                                return err;
-                        break;
 
-                case UBIK_NATIVE:
-                case UBIK_MAX_NODE_TYPE:
-                default:
-                        return ubik_raise(ERR_BAD_TYPE, "unknown node type");
-                }
+                        case UBIK_REF:
+                                t = node->ref.referrent;
+                                switch (e->s[t])
+                                {
+                                case DONE:
+                                case LOADED:
+                                        e->nv[i] = e->nv[t];
+                                        e->nt[i] = e->nt[t];
+                                        e->s[i] = DONE;
+                                        break;
+                                case WAIT:
+                                        if (e->s[i] == NEEDED)
+                                                e->s[t] = NEEDED;
+                                        break;
+                                case DATA:
+                                case APPLY:
+                                case NEEDED:
+                                        break;
+                                }
+                                break;
 
-postupdate:
-                r = e->nv[i];
-                if (e->s[i] == DONE &&
-                        (r->type == UBIK_PAP || r->type == UBIK_FUN))
-                {
-                        t = 0;
-                        a = r;
-                        while (a->type == UBIK_PAP)
-                        {
-                                a = a->pap.func;
-                                t++;
-                        }
-                        if (t == a->fun.arity)
-                        {
-                                e->s[i] = APPLY;
-                                err = push(evaluator, r, e, i, NULL);
+                        case UBIK_VALUE:
+                                e->nv[i] = node->value.value;
+                                e->nt[i] = node->value.type;
+                                e->s[i] = DONE;
+                                break;
+
+                        case UBIK_COND:
+                                run_cond(e, i, node);
+                                break;
+
+                        case UBIK_APPLY:
+                                /* Don't evaluate any applications unless we need to;
+                                 * without this, we'll end up doing tons of extra work
+                                 * potentially infinitely evaluating the alternate
+                                 * sides of conditionals. */
+                                if (e->s[i] != NEEDED)
+                                        break;
+                                err = run_apply(evaluator, e, i, node);
                                 if (err != OK)
                                         return err;
-                        }
-                }
+                                break;
 
-                if (node->is_terminal && old_status != DONE && e->s[i] == DONE)
-                        e->term--;
-                if (e->term == 0)
-                        break;
+                        case UBIK_LOAD:
+                                err = run_load(evaluator, e, i, node);
+                                if (err != OK)
+                                        return err;
+                                break;
+
+                        case UBIK_STORE:
+                                t = node->store.value;
+                                switch (e->s[t])
+                                {
+                                case DONE:
+                                case LOADED:
+                                        e->nv[i] = e->nv[t];
+                                        e->nt[i] = e->nt[t];
+                                        e->s[i] = DONE;
+                                        break;
+                                case WAIT:
+                                        if (e->s[i] == NEEDED)
+                                                e->s[t] = NEEDED;
+                                        break;
+                                case DATA:
+                                case APPLY:
+                                case NEEDED:
+                                        break;
+                                }
+
+                                if (e->s[i] != DONE)
+                                        break;
+                                err = ubik_env_set(
+                                        evaluator->env, node->store.loc,
+                                        e->nv[i], e->nt[i]);
+                                if (err != OK)
+                                        return err;
+                                break;
+
+                        case UBIK_NATIVE:
+                        case UBIK_MAX_NODE_TYPE:
+                        default:
+                                return ubik_raise(ERR_BAD_TYPE, "unknown node type");
+                        }
+
+postupdate:
+                        r = e->nv[i];
+                        if (e->s[i] == DONE &&
+                                (r->type == UBIK_PAP || r->type == UBIK_FUN))
+                        {
+                                t = 0;
+                                a = r;
+                                while (a->type == UBIK_PAP)
+                                {
+                                        a = a->pap.func;
+                                        t++;
+                                }
+                                if (t == a->fun.arity)
+                                {
+                                        e->s[i] = APPLY;
+                                        err = push(evaluator, r, e, i, NULL);
+                                        if (err != OK)
+                                                return err;
+                                }
+                        }
+
+                        if (node->is_terminal &&
+                                        old_status != DONE && e->s[i] == DONE)
+                                e->term--;
+                        if (e->term == 0)
+                                break;
+                        progress = progress || (old_status != e->s[i]);
+                }
         }
 
         return OK;
