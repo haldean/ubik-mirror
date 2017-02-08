@@ -1,6 +1,8 @@
 #!/bin/sh
 
 iters=50
+export UBIK_HOOKFILE=../../hook/hooks.txt
+export UBIK_INCLUDE=../../lib:.
 
 if [[ -e bench-results ]]
 then
@@ -8,21 +10,20 @@ then
 fi
 mkdir -p bench-results
 
-for f in *.uk
+for f in $(find . -name '*.uk')
 do
-        ../../bin/ubic $f bench-results/${f%.uk}.ub >/dev/null 2>/dev/null
+    f=$(basename $f)
+    out="bench-results/${f%.uk}.ub"
+    ../../bin/ubic $f $out >/dev/null 2>/dev/null || rm -f $out
 done
 
 function runall()
 {
-        for (( i = 0 ; i < $iters ; i = i + 1 ))
-        do
-                echo $(expr $iters - $i)
-                for f in bench-results/*
-                do
-                        ../../bin/ubik $f >/dev/null 2>/dev/null
-                done
-        done
+    for (( i = 0 ; i < $iters ; i = i + 1 ))
+    do
+        echo $(expr $iters - $i)
+        find bench-results -name '*.ub' -print0 | \
+            xargs -0 -n1 ../../bin/ubik >/dev/null 2>/dev/null
+    done
 }
-
 time runall
