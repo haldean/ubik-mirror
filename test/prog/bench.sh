@@ -6,7 +6,7 @@ export UBIK_INCLUDE=../../lib:.
 
 if [[ -e bench-results ]]
 then
-        rm -r bench-results
+    rm -r bench-results
 fi
 mkdir -p bench-results
 
