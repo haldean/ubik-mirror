@@ -1,0 +1,156 @@
+Expression Syntax 2.0 ==================================================
+Haldean Brown                                      First draft: Feb 2017
+                                                  Last updated: Feb 2017
+
+Status: Draft
+
+------------------------------------------------------------------------
+
+Currently, Ubik expressions are LISP-like, with some special forms and
+some redundant parentheses removed. In this way, it is similar to
+Haskell; Haskell further removes redundant parentheses using significant
+whitespace and operators like <$>, which are only possible when combined
+with laziness.
+
+Ubik's desire to be (a) context-free and (b) eager mean that these
+options are not available to us. Also, Forth is cool. For that reason,
+I'm switching syntax over to a postfix, stack-style syntax.
+
+Ubik has a few expression forms:
+
+    * Atoms; things like:
+        "hello" -3.4 list:map
+
+    * Application, which is defined by adjacency with a function at the
+      head and an argument at the tail:
+        + 8 3
+
+    * Lambda statements, currently of the form:
+        \x y z -> body
+
+    * Pattern blocks, like:
+        ? expr {
+            . pattern => result
+            . pattern => result
+        }
+
+    * Condition blocks, of the form:
+        ? {
+            . boolean-expr => result
+            . boolean-expr => result
+        }
+
+    * Scope blocks, such as:
+        {
+            : x = 8
+            : y = -3
+            ! - x y
+        }
+
+    * Type application, which looks like:
+        String -> Number
+
+Each of these needs a new form in our new stack syntax. During this
+document, I'll refer back to a simple program for checking whether a
+number is a prime:
+
+        : is-prime
+        ^ Number -> Boolean
+        = \x -> {
+            : divisors = list:range 2 (- x 1)
+            ! list:all (list:map (\y -> not (eq (% x y) 0)) divisors)
+        }
+
+Atoms won't change; atoms are atomic. Application changes, though.
+The first switch is to change everything to postfix, so (- 8 3) becomes
+(8 3 -). Note that this mixes with partial application really nicely;
+(3 -) becomes a partial function that subtracts 3 from another number.
+
+        : is-prime
+        ^ Number -> Boolean
+        = \x -> {
+            : divisors = 2 (x 1 -) list:range
+            ! divisors (\y -> x y % 0 eq not) list:map list:all
+        }
+
+Look at all of the parens we got rid of! The challenge here is actually
+parsing this. For that inner function, we would still like to get out a
+parse tree that looks kind of like this:
+
+        not --- eq --- 0
+                   \
+                    +- % --- x
+                         \
+                          +- y
+
+Because that's much more helpful for code generation. We can do this,
+but it means we have to know the arity of all functions before we can
+parse stack operations like this into a tree. That means that parsing
+now happens in two steps: one gives us a sequence of stack operations
+and the arities of all functions (from their type signatures), and once
+we have the arities in hand we can take a second pass to generate the
+trees.
+
+Unfortunately, to get this syntax, we either have to drop existing type
+inference for lambdas that are bound to a name, or we have to go full
+Hindley-Milner: imagine the following:
+
+        : z = \x y -> 0 1 x y
+
+It is impossible to know whether x is a monadic function and y is a
+dyadic function, or vice-versa. Adding a type lets us know:
+
+        : z ^ (a -> b) -> (c -> d -> e) -> f
+        = \x y -> 0 1 x y
+
+One day we'll have real type inferrence and that won't be an issue. For
+now, c'est la vie. It's not so bad, too, because for lambdas that are
+used at a call site:
+
+        my-list (\x -> x 2 *) list:map
+
+We have the knowledge of the type of the other argument and the
+function, which less us narrow down the type of x.
+
+While we're here, let's call a spade a spade and say that the choice of
+"a -> b" for type application was the misguided addition of the only
+infix operator in Ubik, and fix that right up:
+
+        : is-prime
+        ^ Boolean Number <
+        = \x -> {
+            : divisors = 2 (x 1 -) list:range
+            ! divisors (\y -> x y % 0 eq not) list:map list:all
+        }
+
+Hey look a new operator! I just picked that off the top of my head, but
+I kind of like it. Let's transform some other type signatures:
+
+        : z ^ (a -> b) -> (c -> d -> e) -> f
+        : z ^ b a < e d < c < < f <
+
+Okay so that's not the easiest to read at first glance, but that's a
+noisy one. How about:
+
+        ^ List String -> List (List Char)
+        ^ String List Char List List <
+
+Again, this is only possible with static knowledge of fixed arity for
+types, but we've got that, so we're good.
+
+So what about lambdas? They're still pretty infixy:
+
+        \y -> x y % 0 eq not
+
+What if they looked like this?
+
+        [ x y % 0 eq not ] < y
+
+That's kind of neat! Multiple arguments? You bet:
+
+        \x y z -> + x (+ y z)
+
+        [ x y z + + ] < z y x              | all three of these are
+        [[ x y z + + ] < z ] < y x         | equivalent (there's still
+        [[[ x y z + + ] < z ] < y ] < x    | currying!)
+
