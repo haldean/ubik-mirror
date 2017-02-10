@@ -640,7 +640,7 @@ ubik_evaluate_run(struct ubik_evaluator *evaluator)
         ubik_error worker_err;
         pthread_t *workers;
 
-        n_workers = 4;
+        n_workers = 2;
         workers = NULL;
 
         if (n_workers > 1)
