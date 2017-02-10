@@ -47,6 +47,11 @@ Ubik has a few expression forms:
             ! - x y
         }
 
+    * ADT declarations, in the style of:
+        ^ List a
+            = Cons a (List a)
+            = Nil
+
     * Type application, which looks like:
         String -> Number
 
@@ -144,13 +149,125 @@ So what about lambdas? They're still pretty infixy:
 
 What if they looked like this?
 
-        [ x y % 0 eq not ] < y
+        [ x y % 0 eq not ] y <
 
 That's kind of neat! Multiple arguments? You bet:
 
         \x y z -> + x (+ y z)
 
-        [ x y z + + ] < z y x              | all three of these are
-        [[ x y z + + ] < z ] < y x         | equivalent (there's still
-        [[[ x y z + + ] < z ] < y ] < x    | currying!)
+        [ x y z + + ] z y x <              | all three of these are
+        [[ x y z + + ] z < ] y x <         | equivalent (there's still
+        [[[ x y z + + ] z < ] y < ] x <    | currying!)
 
+So now we've got
+
+        : is-prime
+        ^ Boolean Number <
+        = [{
+            : divisors = 2 x 1 - list:range
+            ! divisors [ x y % 0 eq not ] y < list:map list:all
+        }] x <
+
+While we're at it, let's make lambdas implicitly add a new scope:
+
+        : is-prime
+        ^ Boolean Number <
+        = [ : divisors = 2 x 1 - list:range
+            ! divisors [ x y % 0 eq not ] y < list:map list:all
+          ] x <
+
+So let's talk about condition and pattern blocks, then. Right now, we've got:
+
+        : fib
+            ^ Number Number <
+            = [? {
+                . x 0 eq => 1
+                . x 1 eq => 1
+                .        => x 1 - fib x 2 - fib +
+              }] x <
+
+        : maybe-string
+            ^ String String Maybe <
+            = [? s {
+                . Just str => str
+                . Nothing  => "nothing"
+              }] s <
+
+These feel pretty infixy and Haskelly to me. We can do better.
+
+        : fib
+            ^ Number Number <
+            = [{
+                 1                      [ x 0 eq ]*
+                 1                      [ x 1 eq ]*
+                 x 1 - fib x 2 - fib +  []*
+               } ? ] x <
+
+        : maybe-string
+            ^ String String Maybe <
+            = [s {
+                str         [ str Just ]*
+                "nothing"   [ Nothing ]*
+              } ?] s <
+
+[]* becomes a pattern constructor, {} becomes a block constructor, and ?
+evaluates the block. ? is a clever thing; it might be the only thing in Ubik
+without a fixed arity. When the block is a pattern block, ? is dyadic and
+consumes the block and a value to match. When the block is a predicate block,
+it consumes only the block.
+
+Let's switch over to ADT declarations:
+
+        ^ List a
+            = Cons a (List a)
+            = Nil
+
+        ^ Expr
+            = Add Expr Expr
+            = Multiply Expr Expr
+            = Log Expr
+            = Value Number
+
+Really the biggest change here is switching to postfix, but I'm also going to
+make it a little more explicit that the heads are constructors as well, by
+making users write it out like a type signature.
+
+        ^ List a
+            = Cons a List < a <
+            = Nil
+
+        ^ Expr
+            = Add Expr < Expr <
+            = Multiply Expr < Expr <
+            = Log Expr <
+            = Value Number <
+
+As a sidenote, check out how much nicer nested-conses are:
+
+        (Cons "a" (Cons "hello" (Cons "world" Nil)))
+        "a" "hello" "world" Nil Cons Cons Cons
+
+Still a little awkward to have all the Cons-es at the end, but at least it's
+not paren soup.
+
+I glossed over a thing earlier; now that just mentioning a function applies it
+to things ahead of it in the stack, what do we do when we want to pass
+functions to other functions?
+
+        mylist 0 + list:reduce
+
+During stack evaluation, you would expect + to try to add 0 and mylist, which
+is no good; we intended for it to be passed to reduce. For that reason, we add
+a new function reference syntax which doesn't immediately apply the function:
+
+        mylist 0 (+) list:reduce
+
+Putting a function alone in parentheses prevents it from being applied at the
+site of insertion. This is only necessary when the function is not the head of
+an expression; if we were to do this:
+
+        : double      = 2 *
+        : double-list = double list:map
+
+We don't need to parenthesize the double function, because it's at the head of
+the expression.
