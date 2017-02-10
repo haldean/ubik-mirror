@@ -1,6 +1,6 @@
 #!/bin/sh
 
-iters=50
+iters=10
 export UBIK_HOOKFILE=../../hook/hooks.txt
 export UBIK_INCLUDE=../../lib:.
 
