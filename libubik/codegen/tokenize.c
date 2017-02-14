@@ -136,6 +136,10 @@ ubik_tokenize(
                 case '_': EL; E(START_CLAUSE); break;
                 case '.': EL; E(END_CLAUSE); break;
                 case ':': EL; E(BIND); break;
+                case '<': EL; E(APPLY); break;
+                case '^': EL; E(TYPE); break;
+                case '@': EL; E(QUOTE); break;
+                case '!': EL; E(IMMEDIATE); break;
 
                 case ' ':
                 case '\n':
