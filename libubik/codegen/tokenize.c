@@ -19,6 +19,7 @@
 
 #include "ubik/tokenize.h"
 
+#include <inttypes.h>
 #include <string.h>
 
 #define TOKEN_DEBUG 1
@@ -35,78 +36,137 @@ char *ubik_token_names[] = {
         [TYPE] = "TYPE",
         [QUOTE] = "QUOTE",
         [IMMEDIATE] = "IMMEDIATE",
+        [DEFINES] = "DEFINES",
+        [IMPORT] = "IMPORT",
+        [IMPORT_ALL] = "IMPORT_ALL",
 };
 
 #if TOKEN_DEBUG
-#define LOG_TOKEN(m, typ, str) \
-        printf(m ": %s \"%s\"\n", ubik_token_names[typ], str)
+#define LOG_TOKEN(t) \
+        printf("emit: %s \"%s\"\n", ubik_token_names[t.type], t.str)
 #else
-#define LOG_TOKEN(m, typ, str)
+#define LOG_TOKEN(t)
 #endif
 
 #define TOKEN_BUFFER_SIZE 1024
 
-static inline no_ignore ubik_error
-emit(
-        struct ubik_token *t,
-        ssize_t *iref,
-        ubik_tokenize_cb cb,
-        void *cbarg)
+typedef uint16_t state;
+
+struct nfa_edge
 {
-        ubik_error err;
-        ssize_t i;
+        state s1;
+        state s2;
+        char c;
+};
 
-        i = *iref;
-        if (i < 0)
-                return OK;
+static const struct nfa_edge
+edges[] = {
+        { 0,  1,  '[' },
+        { 0,  2,  ']' },
+        { 0,  3,  '`' },
+        { 3,  4,  '*' },
+};
 
-        t->str[i + 1] = '\0';
-        LOG_TOKEN("emit", t->type, t->str);
+static const enum ubik_token_type
+state_emits[] = {
+        [0] = NONE,
+        [1] = BLOCK_OPEN,
+        [2] = BLOCK_CLOSE,
+        [3] = IMPORT,
+        [4] = IMPORT_ALL,
+};
 
-        err = cb(t, cbarg);
-        if (err != OK)
-                return err;
+#define N_STATES (sizeof(state_emits) / sizeof(state_emits[0]))
+#define N_EDGES (sizeof(edges) / sizeof(edges[0]))
 
-        *iref = -1;
-        return OK;
+static inline void
+print_states(uint8_t states[N_STATES])
+{
+        uint_fast32_t s;
+        for (s = 0; s < N_STATES; s++)
+        {
+                printf("%03" PRIuFAST32 "%c ", s, states[s] ? '#' : '_');
+        }
 }
 
-static inline no_ignore ubik_error
-emit_last(
-        struct ubik_token *t,
-        ssize_t *iref,
-        char c,
-        ubik_tokenize_cb cb,
-        void *cbarg)
+static inline void
+push_char(
+        uint_fast32_t *states_set_ref,
+        uint_fast32_t *terminal_ref,
+        uint8_t next_states[N_STATES],
+        uint8_t states[N_STATES],
+        char c)
 {
-        ubik_error err;
-        ssize_t i;
+        const struct nfa_edge *edge;
+        size_t e;
+        uint_fast32_t states_set;
+        uint_fast32_t terminal;
 
-        i = *iref;
-        if (i < 1)
-                return OK;
+        memset(next_states, 0x00, N_STATES);
+        states_set = 0;
+        terminal = 0;
+        for (e = 0; e < N_EDGES; e++)
+        {
+                edge = &edges[e];
+                if (c != edge->c)
+                        continue;
+                if (!states[edge->s1])
+                        continue;
+                if (next_states[edge->s2])
+                        continue;
+                states_set++;
+                next_states[edge->s2] = 1;
+                if (state_emits[edge->s2] != NONE && terminal == 0)
+                        terminal = edge->s2;
+        }
 
-        t->str[i] = '\0';
-        err = emit(t, iref, cb, cbarg);
-        if (err != OK)
-                return err;
+        printf("'%c': ", c);
+        print_states(states);
+        printf("-> ");
+        print_states(next_states);
+        printf("[%" PRIuFAST32 "]\n", states_set);
 
-        memset(t->str, 0x00, TOKEN_BUFFER_SIZE);
-        t->str[0] = c;
-        *iref = 0;
-        return OK;
+        *states_set_ref = states_set;
+        *terminal_ref = terminal;
 }
 
-#define EL do {                                 \
-        err = emit_last(&t, &i, c, cb, cb_arg); \
-        if (err != OK) return err; } while (0)
+static inline int
+next_char(
+        char accum[TOKEN_BUFFER_SIZE],
+        struct ubik_stream *source)
+{
+        size_t len;
+        size_t read;
+        char res;
 
-#define E(typ) do {                             \
-        t.type = typ;                           \
-        err = emit(&t, &i, cb, cb_arg);         \
-        if (err != OK) return err; } while (0)
+        len = strlen(accum);
+        if (len)
+        {
+                res = accum[len - 1];
+                accum[len - 1] = '\0';
+                printf("accum: ");
+                return res;
+        }
 
-#define DROP do { i = -1; } while (0)
+        printf("strea: ");
+        read = ubik_stream_read(&res, source, 1);
+        if (read != 1)
+                return -1;
+        return res;
+}
+
+static inline void
+backtrack(
+        char accum[TOKEN_BUFFER_SIZE],
+        struct ubik_token *token,
+        size_t last_terminal_i,
+        size_t i)
+{
+        size_t j;
+        for (j = strlen(accum); i > last_terminal_i; j++, i--)
+                accum[j] = token->str[i];
+        memset(&token->str[i], 0x00, TOKEN_BUFFER_SIZE - i);
+}
 
 no_ignore ubik_error
 ubik_tokenize(
@@ -115,45 +175,56 @@ ubik_tokenize(
         void *cb_arg)
 {
         char accum[TOKEN_BUFFER_SIZE] = {0};
-        char c;
-        size_t r;
+        char tokstr[TOKEN_BUFFER_SIZE] = {0};
         ssize_t i;
+        ssize_t last_terminal_i;
         struct ubik_token t;
+        uint8_t states[N_STATES];
+        uint8_t next_states[N_STATES];
+        uint_fast32_t states_set;
+        uint_fast32_t terminal;
+        uint_fast32_t last_terminal;
         ubik_error err;
+        char c;
 
         i = -1;
-        t.str = accum;
+        t.str = tokstr;
+        states[0] = 1;
+        last_terminal = 0;
 
-        while ((r = ubik_stream_read(&accum[++i], source, 1)) == 1)
+        while ((accum[++i] = next_char(accum, source)) >= 0)
         {
                 c = accum[i];
-                printf("'%c'\n", c);
-                accum[i + 1] = '\0';
-                switch (c)
+                push_char(&states_set, &terminal, next_states, states, c);
+
+                if (terminal)
                 {
-                case '[': EL; E(BLOCK_OPEN); break;
-                case ']': EL; E(BLOCK_CLOSE); break;
-                case '_': EL; E(START_CLAUSE); break;
-                case '.': EL; E(END_CLAUSE); break;
-                case ':': EL; E(BIND); break;
-                case '<': EL; E(APPLY); break;
-                case '^': EL; E(TYPE); break;
-                case '@': EL; E(QUOTE); break;
-                case '!': EL; E(IMMEDIATE); break;
-
-                case ' ':
-                case '\n':
-                case '\r':
-                case '\t':
-                        accum[i--] = '\0';
-                        EL;
-                        break;
-
-                default:
-                        t.type = NAME;
-                        accum[i + 1] = '\0';
-                        break;
+                        last_terminal_i = i;
+                        last_terminal = terminal;
                 }
+
+                if (last_terminal && !states_set)
+                {
+                        t.type = state_emits[last_terminal];
+                        backtrack(accum, &t, last_terminal_i, i);
+                        i -= last_terminal_i;
+
+                        LOG_TOKEN(t);
+                        err = cb(&t, cb_arg);
+                        if (err != OK)
+                                return err;
+
+                        memset(states, 0x00, N_STATES);
+                        states[0] = 1;
+                }
+                else if (!states_set) 
+                {
+                        memset(states, 0x00, N_STATES);
+                        states[0] = 1;
+                        memset(t.str, 0x00, TOKEN_BUFFER_SIZE);
+                }
+
+                memcpy(states, next_states, N_STATES);
         }
 
         return OK;

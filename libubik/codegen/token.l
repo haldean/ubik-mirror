@@ -21,7 +21,6 @@
 
 #include "ubik/ast.h"
 #include "ubik/string.h"
-#include "ubik/token.h"
 #include "ubik/parse.h"
 #include "grammar.h"
 
@@ -73,42 +72,42 @@ NAME [a-z_\-][a-zA-Z0-9/_\-']*
 \n
 [ ]
 
-#.*                       /* swallow comments */
+#.*                          /* swallow comments */
 
-"?:"                      TOKEN(TEST)
-"!"                       TOKEN(IMMEDIATE)
-":"                       TOKEN(BIND)
-"^"                       TOKEN(TYPE)
-"=>"                      TOKEN(IMPLIES)
-"->"                      TOKEN(GOES_TO)
-"\\"                      TOKEN(LAMBDA)
-"="                       TOKEN(IS)
-"("                       TOKEN(OPEN_PAR)
-")"                       TOKEN(CLOSE_PAR)
-"\."                      TOKEN(MEMBER)
-"{"                       TOKEN(OPEN_SCOPE)
-"}"                       TOKEN(CLOSE_SCOPE)
-"|"                       TOKEN(GIVEN)
-"'"                       TOKEN(EXISTS)
-"?"                       TOKEN(COND)
-"*"                       TOKEN(SPLAT)
-"+"                       TOKEN(ADD)
-"~"                       TOKEN(DEFINES)
-"_"                       TOKEN(INTERFACE)
-"`"                       TOKEN(IMPORT)
-"/"                       TOKEN(DIV)
-"%"                       TOKEN(MOD)
+"?:"                         TOKEN(TEST)
+"!"                          TOKEN(IMMEDIATE)
+":"                          TOKEN(BIND)
+"^"                          TOKEN(TYPE)
+"=>"                         TOKEN(IMPLIES)
+"->"                         TOKEN(GOES_TO)
+"\\"                         TOKEN(LAMBDA)
+"="                          TOKEN(IS)
+"("                          TOKEN(OPEN_PAR)
+")"                          TOKEN(CLOSE_PAR)
+"\."                         TOKEN(MEMBER)
+"{"                          TOKEN(OPEN_SCOPE)
+"}"                          TOKEN(CLOSE_SCOPE)
+"|"                          TOKEN(GIVEN)
+"'"                          TOKEN(EXISTS)
+"?"                          TOKEN(COND)
+"*"                          TOKEN(SPLAT)
+"+"                          TOKEN(ADD)
+"~"                          TOKEN(DEFINES)
+"_"                          TOKEN(INTERFACE)
+"`"                          TOKEN(IMPORT)
+"/"                          TOKEN(DIV)
+"%"                          TOKEN(MOD)
 ([0-9]+(\.[0-9]*)?|\.[0-9]+) { yylval->string = yytext; return NUMBER; }
-{NAME}                    TSTRING(NAME)
-{NAME}:{NAME}             TSTRING(QUALIFIED_NAME)
-{NAME}:[A-Z]{NAMECHARS}   TSTRING(QUALIFIED_TYPE_NAME)
-[A-Z]{NAMECHARS}          TSTRING(TYPE_NAME)
-"\""                      { yylval->string = read_string_literal(ctx, yyscanner);
-                            return STRING; }
+{NAME}                       TSTRING(NAME)
+{NAME}:{NAME}                TSTRING(QUALIFIED_NAME)
+{NAME}:[A-Z]{NAMECHARS}      TSTRING(QUALIFIED_TYPE_NAME)
+[A-Z]{NAMECHARS}             TSTRING(TYPE_NAME)
+"\""                         { yylval->string = read_string_literal(ctx, yyscanner);
+                               return STRING; }
 
-.                         { printf("%d: invalid character '%s'\n",
-                                   yylineno, yytext);
-                            return yytext[0]; }
+.                            { printf("%d: invalid character '%s'\n",
+                                      yylineno, yytext);
+                               return yytext[0]; }
 
 
 %%

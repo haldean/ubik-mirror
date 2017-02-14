@@ -24,6 +24,7 @@
 
 enum ubik_token_type
 {
+        NONE,
         BLOCK_OPEN = 1,
         BLOCK_CLOSE,
         NAME,
@@ -35,6 +36,9 @@ enum ubik_token_type
         TYPE,
         QUOTE,
         IMMEDIATE,
+        DEFINES,
+        IMPORT,
+        IMPORT_ALL,
 };
 
 extern char *ubik_token_names[];
