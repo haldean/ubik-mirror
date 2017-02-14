@@ -1,7 +1,7 @@
 [
-    x                             _ x f abs epsilon > .
-    x x f x f' / - newton-raphson _ true .
-] x epsilon f' f <
+    [ x                             ] [ x f abs epsilon gt ] ?
+    [ x x f x f' / - newton-raphson ] [ true ] ?
+] x < epsilon < f' < f <
 newton-raphson :
 Number Number < Number < Number Number < < Number Number < < ^
 

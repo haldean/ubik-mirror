@@ -23,11 +23,13 @@
 
 #include <string.h>
 
+static struct ubik_token t[1024] = {0};
+static size_t next_token = 0;
+
 static ubik_error
-token_cb(struct ubik_token *t, void *ignored)
+token_cb(struct ubik_token *tok, __attribute__((unused)) void *ignored)
 {
-        unused(ignored);
-        unused(t);
+        t[next_token++] = *tok;
         return OK;
 }
 
@@ -37,12 +39,19 @@ token_cb(struct ubik_token *t, void *ignored)
         assert(ubik_tokenize(token_cb, &s, NULL) == OK);                \
 } while (0)
 
+static char prog[] =
+        "[ [ x ] [ x f abs epsilon gt ] ? "
+        "x < n < newton-raphson : Number ^"
+        "1 0.001 @x2 @sq newton-raphson emit !";
+
 test_t
 tokenize()
 {
         struct ubik_stream s;
         assert(ubik_stream_buffer(&s, NULL) == OK);
-        parse_literal("`* -10.41* [ hello]]");
+        parse_literal(prog);
+        assert(next_token == 29);
+
         return ok;
 }
 
