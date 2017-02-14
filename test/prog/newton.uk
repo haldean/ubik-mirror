@@ -8,4 +8,4 @@ Number Number < Number < Number Number < < Number Number < < ^
 [ x x * ] x < sq : Number Number < ^
 2 * x2 : Number Number < ^
 
-1 0.001 'x2 'sq newton-raphson emit !
+1 0.001 @x2 @sq newton-raphson emit !

@@ -260,14 +260,13 @@ During stack evaluation, you would expect + to try to add 0 and mylist, which
 is no good; we intended for it to be passed to reduce. For that reason, we add
 a new function reference syntax which doesn't immediately apply the function:
 
-        mylist 0 '+ list:reduce
+        mylist 0 @+ list:reduce
 
-Here, we borrow Common Lisp's quoting syntax, using it instead to demarcate
-function references. Note that while quoting is not always strictly required
-for disambiguation, Ubik requires that all function references be quoted:
+Note that while quoting is not always strictly required for disambiguation,
+Ubik requires that all function references be quoted:
 
         : double      = 2 *
-        : double-list = 'double list:map
+        : double-list = @double list:map
 
 Technically there is no ambiguity here, because the alternate interpretation
 (that double should be applied to the stack) would result in a compile-time
