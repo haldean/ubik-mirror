@@ -148,10 +148,10 @@ next_char(
                 return res;
         }
 
-        printf("strea: ");
         read = ubik_stream_read(&res, source, 1);
         if (read != 1)
                 return -1;
+        printf("strea: ");
         return res;
 }
 
@@ -165,7 +165,15 @@ backtrack(
         size_t j;
         for (j = strlen(accum); i > last_terminal_i; j++, i--)
                 accum[j] = token->str[i];
-        memset(&token->str[i], 0x00, TOKEN_BUFFER_SIZE - i);
+        memset(&token->str[last_terminal_i + 1], 0x00,
+               TOKEN_BUFFER_SIZE - last_terminal_i - 1);
+}
+
+static inline void
+reset(uint8_t states[N_STATES])
+{
+        memset(states, 0x00, N_STATES);
+        states[0] = 1;
 }
 
 no_ignore ubik_error
@@ -179,8 +187,8 @@ ubik_tokenize(
         ssize_t i;
         ssize_t last_terminal_i;
         struct ubik_token t;
-        uint8_t states[N_STATES];
-        uint8_t next_states[N_STATES];
+        uint8_t states[N_STATES] = {0};
+        uint8_t next_states[N_STATES] = {0};
         uint_fast32_t states_set;
         uint_fast32_t terminal;
         uint_fast32_t last_terminal;
@@ -192,9 +200,9 @@ ubik_tokenize(
         states[0] = 1;
         last_terminal = 0;
 
-        while ((accum[++i] = next_char(accum, source)) >= 0)
+        while ((t.str[++i] = next_char(accum, source)) >= 0)
         {
-                c = accum[i];
+                c = t.str[i];
                 push_char(&states_set, &terminal, next_states, states, c);
 
                 if (terminal)
@@ -207,24 +215,38 @@ ubik_tokenize(
                 {
                         t.type = state_emits[last_terminal];
                         backtrack(accum, &t, last_terminal_i, i);
-                        i -= last_terminal_i;
+                        i -= last_terminal_i + 2;
 
                         LOG_TOKEN(t);
                         err = cb(&t, cb_arg);
                         if (err != OK)
                                 return err;
 
-                        memset(states, 0x00, N_STATES);
-                        states[0] = 1;
+                        last_terminal = 0;
                 }
-                else if (!states_set) 
+                else if (!states_set)
                 {
-                        memset(states, 0x00, N_STATES);
-                        states[0] = 1;
+                        /* Discard all input up until here, if we consumed a
+                         * bunch and never saw a terminal. */
+                        printf("drop: \"%s\"\n", t.str);
                         memset(t.str, 0x00, TOKEN_BUFFER_SIZE);
+                        i = -1;
                 }
 
-                memcpy(states, next_states, N_STATES);
+                if (!states_set)
+                        reset(states);
+                else
+                        memcpy(states, next_states, N_STATES);
+        }
+
+        if (last_terminal)
+        {
+                t.type = state_emits[last_terminal];
+                backtrack(accum, &t, last_terminal_i, i);
+                LOG_TOKEN(t);
+                err = cb(&t, cb_arg);
+                if (err != OK)
+                        return err;
         }
 
         return OK;
