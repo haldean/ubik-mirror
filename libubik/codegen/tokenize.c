@@ -56,15 +56,31 @@ struct nfa_edge
 {
         state s1;
         state s2;
-        char c;
+        char c_lo;
+        /* if 0, this only recognizes the char c_lo. Otherwise, this recognizes
+         * the characters c such that c_lo <= c <= c_hi. */
+        char c_hi;
 };
 
 static const struct nfa_edge
 edges[] = {
-        { 0,  1,  '[' },
-        { 0,  2,  ']' },
-        { 0,  3,  '`' },
-        { 3,  4,  '*' },
+        {  0,  1,  '[', '\0' },
+        {  0,  2,  ']', '\0' },
+        {  0,  3,  '`', '\0' },
+        {  3,  4,  '*', '\0' },
+        {  0,  5,  '0', '9'  },
+        {  5,  5,  '0', '9'  },
+        {  5,  5,  '.', '\0' },
+        {  0,  6,  '-', '\0' },
+        {  6,  5,  '0', '9'  },
+        {  0,  7,  'a', 'z'  },
+        {  0,  7,  'A', 'Z'  },
+        {  0,  7,  '_', '\0' },
+        {  7,  7,  'a', 'z'  },
+        {  7,  7,  'A', 'Z'  },
+        {  7,  7,  '_', '\0' },
+        {  7,  7,  '-', '\0' },
+        {  7,  7,  ':', '\0' },
 };
 
 static const enum ubik_token_type
@@ -74,6 +90,10 @@ state_emits[] = {
         [2] = BLOCK_CLOSE,
         [3] = IMPORT,
         [4] = IMPORT_ALL,
+        [5] = NUMBER,
+        /* have seen a '-', waiting for the rest of a number, maybe. */
+        [6] = NONE,
+        [7] = NAME,
 };
 
 #define N_STATES (sizeof(state_emits) / sizeof(state_emits[0]))
@@ -108,8 +128,14 @@ push_char(
         for (e = 0; e < N_EDGES; e++)
         {
                 edge = &edges[e];
-                if (c != edge->c)
+                if (edge->c_hi)
+                {
+                        if (c < edge->c_lo || c > edge->c_hi)
+                                continue;
+                }
+                else if (c != edge->c_lo)
                         continue;
+
                 if (!states[edge->s1])
                         continue;
                 if (next_states[edge->s2])
@@ -120,11 +146,13 @@ push_char(
                         terminal = edge->s2;
         }
 
+#if TOKEN_DEBUG
         printf("'%c': ", c);
         print_states(states);
         printf("-> ");
         print_states(next_states);
         printf("[%" PRIuFAST32 "]\n", states_set);
+#endif
 
         *states_set_ref = states_set;
         *terminal_ref = terminal;
@@ -144,14 +172,18 @@ next_char(
         {
                 res = accum[len - 1];
                 accum[len - 1] = '\0';
+#if TOKEN_DEBUG
                 printf("accum: ");
+#endif
                 return res;
         }
 
         read = ubik_stream_read(&res, source, 1);
         if (read != 1)
                 return -1;
+#if TOKEN_DEBUG
         printf("strea: ");
+#endif
         return res;
 }
 
@@ -215,7 +247,6 @@ ubik_tokenize(
                 {
                         t.type = state_emits[last_terminal];
                         backtrack(accum, &t, last_terminal_i, i);
-                        i -= last_terminal_i + 2;
 
                         LOG_TOKEN(t);
                         err = cb(&t, cb_arg);
@@ -224,17 +255,13 @@ ubik_tokenize(
 
                         last_terminal = 0;
                 }
-                else if (!states_set)
-                {
-                        /* Discard all input up until here, if we consumed a
-                         * bunch and never saw a terminal. */
-                        printf("drop: \"%s\"\n", t.str);
-                        memset(t.str, 0x00, TOKEN_BUFFER_SIZE);
-                        i = -1;
-                }
 
                 if (!states_set)
+                {
+                        memset(t.str, 0x00, TOKEN_BUFFER_SIZE);
                         reset(states);
+                        i = -1;
+                }
                 else
                         memcpy(states, next_states, N_STATES);
         }

@@ -42,7 +42,7 @@ tokenize()
 {
         struct ubik_stream s;
         assert(ubik_stream_buffer(&s, NULL) == OK);
-        parse_literal("`* ` * [ [   ][ hello]]");
+        parse_literal("`* -10.41* [ hello]]");
         return ok;
 }
 
