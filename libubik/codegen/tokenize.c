@@ -18,6 +18,7 @@
  */
 
 #include "ubik/tokenize.h"
+#include "ubik/assert.h"
 
 #include <inttypes.h>
 #include <string.h>
@@ -38,6 +39,7 @@ char *ubik_token_names[] = {
         [DEFINES] = "DEFINES",
         [IMPORT] = "IMPORT",
         [IMPORT_ALL] = "IMPORT_ALL",
+        [STRING] = "STRING",
 };
 
 #if TOKEN_DEBUG
@@ -55,9 +57,11 @@ struct nfa_edge
 {
         state s1;
         state s2;
+        /* If c_lo and c_hi are both nonzero, recognizes any character c such
+         * that c_lo <= c <= c_hi. If c_lo is zero, recognizes all characters
+         * other than the character c_hi. If c_hi is zero, recognizes only the
+         * character c_lo. If both are zero, recognizes all characters. */
         char c_lo;
-        /* if 0, this only recognizes the char c_lo. Otherwise, this recognizes
-         * the characters c such that c_lo <= c <= c_hi. */
         char c_hi;
 };
 
@@ -87,6 +91,12 @@ edges[] = {
         {  0, 11,   '@', 0   },
         {  0, 12,   '!', 0   },
         {  0, 13,   '~', 0   },
+        {  0, 14,   '"', 0   },
+        { 14, 14,     0, '"' },
+        { 14, 15,  '\\', 0   },
+        /* TODO: should only return to 14 on valid escapes */
+        { 15, 14,     0, 0   },
+        { 14, 16,   '"', 0   },
 };
 
 static const enum ubik_token_type
@@ -106,6 +116,11 @@ state_emits[] = {
         [11] = QUOTE,
         [12] = IMMEDIATE,
         [13] = DEFINES,
+        /* have seen a ", waiting for the rest of the string */
+        [14] = NONE,
+        /* have seen a forward slash, next char is escaped */
+        [15] = NONE,
+        [16] = STRING,
 };
 
 #define N_STATES (sizeof(state_emits) / sizeof(state_emits[0]))
@@ -115,10 +130,13 @@ static inline void
 print_states(uint8_t states[N_STATES])
 {
         uint_fast32_t s;
+        printf("{ ");
         for (s = 0; s < N_STATES; s++)
         {
-                printf("%03" PRIuFAST32 "%c ", s, states[s] ? '#' : '_');
+                if (states[s])
+                        printf("%03" PRIuFAST32 " ", s);
         }
+        printf("} ");
 }
 
 static inline void
@@ -140,12 +158,14 @@ push_char(
         for (e = 0; e < N_EDGES; e++)
         {
                 edge = &edges[e];
-                if (edge->c_hi)
+                if (edge->c_lo && edge->c_hi)
                 {
                         if (c < edge->c_lo || c > edge->c_hi)
                                 continue;
                 }
-                else if (c != edge->c_lo)
+                else if (!edge->c_lo && edge->c_hi && c == edge->c_hi)
+                        continue;
+                else if (edge->c_lo && c != edge->c_lo)
                         continue;
 
                 if (!states[edge->s1])
@@ -159,7 +179,12 @@ push_char(
         }
 
 #if TOKEN_DEBUG
-        printf("'%c': ", c);
+        if (c == '\n')
+                printf("\\n : ");
+        else if (c == '\r')
+                printf("\\r : ");
+        else
+                printf("'%c': ", c);
         print_states(states);
         printf("-> ");
         print_states(next_states);
@@ -220,6 +245,32 @@ reset(uint8_t states[N_STATES])
         states[0] = 1;
 }
 
+static inline void
+find_offsets(struct ubik_token *t)
+{
+        uint_fast32_t newlines;
+        size_t i;
+        size_t len;
+        size_t last_nl;
+
+        newlines = 0;
+        len = strlen(t->str);
+        last_nl = 0;
+        for (i = 0; i < len; i++)
+        {
+                if (t->str[i] == '\n')
+                {
+                        newlines++;
+                        last_nl = i;
+                }
+        }
+        t->loc.line_end = t->loc.line_start + newlines;
+        if (newlines)
+                t->loc.col_end = len - last_nl - 1;
+        else
+                t->loc.col_end = t->loc.col_start + len;
+}
+
 no_ignore ubik_error
 ubik_tokenize(
         ubik_tokenize_cb cb,
@@ -230,7 +281,7 @@ ubik_tokenize(
         char tokstr[TOKEN_BUFFER_SIZE] = {0};
         ssize_t i;
         ssize_t last_terminal_i;
-        struct ubik_token t;
+        struct ubik_token t = {0};
         uint8_t states[N_STATES] = {0};
         uint8_t next_states[N_STATES] = {0};
         uint_fast32_t states_set;
@@ -247,6 +298,7 @@ ubik_tokenize(
         while ((t.str[++i] = next_char(accum, source)) >= 0)
         {
                 c = t.str[i];
+
                 push_char(&states_set, &terminal, next_states, states, c);
 
                 if (terminal)
@@ -259,6 +311,7 @@ ubik_tokenize(
                 {
                         t.type = state_emits[last_terminal];
                         backtrack(accum, &t, last_terminal_i, i);
+                        find_offsets(&t);
 
                         LOG_TOKEN(t);
                         err = cb(&t, cb_arg);
@@ -267,15 +320,31 @@ ubik_tokenize(
 
                         last_terminal = 0;
                 }
+                else if (!states_set)
+                {
+                        /* We still want to find the offsets for the "token"
+                         * we're throwing away. We only want to keep track of
+                         * chars for location tracking that we're either
+                         * committing or discarding; we can't just keep track
+                         * as we read them, because the interaction with
+                         * rewinding is hard. */
+                        find_offsets(&t);
+                }
 
                 if (!states_set)
                 {
+                        t.loc.line_start = t.loc.line_end;
+                        t.loc.col_start = t.loc.col_end;
                         memset(t.str, 0x00, TOKEN_BUFFER_SIZE);
                         reset(states);
                         i = -1;
                 }
                 else
                         memcpy(states, next_states, N_STATES);
+
+                if (i == TOKEN_BUFFER_SIZE - 1)
+                        return ubik_raise(
+                                ERR_OVERFLOW, "exceeded token size limit");
         }
 
         if (last_terminal)

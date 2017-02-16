@@ -38,6 +38,7 @@ enum ubik_token_type
         IMPORT,
         IMPORT_ALL,
         LAST_TOKEN,
+        STRING,
 };
 
 extern char *ubik_token_names[];
