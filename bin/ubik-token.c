@@ -20,20 +20,27 @@
 
 #include "ubik/stream.h"
 #include "ubik/tokenize.h"
+#include "ubik/util.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-static struct ubik_token t[1024] = {0};
-static size_t next_token = 0;
-
 static ubik_error
 token_cb(struct ubik_token *tok, __attribute__((unused)) void *ignored)
 {
-        t[next_token].type = tok->type;
-        t[next_token].str = strdup(tok->str);
-        t[next_token].loc = tok->loc;
-        next_token++;
+        /* If we're building for a speedtest, this is a big ol nop; we just
+         * want to see how fast we can tokenize, not how fast we can print. */
+#ifndef SPEEDTEST
+        printf("%16s %05lu:%03lu:%05lu:%03lu \"%s\"\n",
+                ubik_token_names[tok->type],
+                tok->loc.line_start,
+                tok->loc.col_start,
+                tok->loc.line_end,
+                tok->loc.col_end,
+                tok->str);
+#else
+        unused(tok);
+#endif
         return OK;
 }
 
@@ -42,7 +49,6 @@ int main()
         struct ubik_stream s;
         ubik_error err;
         char *buf;
-        size_t i;
 
         err = ubik_stream_rfilep(&s, stdin);
         if (err != OK)
@@ -60,17 +66,6 @@ int main()
                 fprintf(stderr, "couldn't tokenize: %s\n", buf);
                 free(buf);
                 return 1;
-        }
-
-        for (i = 0; i < next_token; i++)
-        {
-                printf("%16s %05lu:%03lu:%05lu:%03lu \"%s\"\n",
-                        ubik_token_names[t[i].type],
-                        t[i].loc.line_start,
-                        t[i].loc.col_start,
-                        t[i].loc.line_end,
-                        t[i].loc.col_end,
-                        t[i].str);
         }
 
         return 0;

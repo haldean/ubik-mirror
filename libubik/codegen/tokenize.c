@@ -23,7 +23,7 @@
 #include <inttypes.h>
 #include <string.h>
 
-#define TOKEN_DEBUG 1
+#define TOKEN_DEBUG 0
 
 char *ubik_token_names[] = {
         [NONE] = "NONE",
@@ -57,46 +57,44 @@ struct nfa_edge
 {
         state s1;
         state s2;
-        /* If c_lo and c_hi are both nonzero, recognizes any character c such
-         * that c_lo <= c <= c_hi. If c_lo is zero, recognizes all characters
-         * other than the character c_hi. If c_hi is zero, recognizes only the
-         * character c_lo. If both are zero, recognizes all characters. */
         char c_lo;
         char c_hi;
 };
 
 static const struct nfa_edge
 edges[] = {
-        {  0,  1,   '[', 0   },
-        {  0,  2,   ']', 0   },
-        {  0,  3,   '`', 0   },
-        {  3,  4,   '*', 0   },
+        {  0,  1,   '[', '[' },
+        {  0,  2,   ']', ']' },
+        {  0,  3,   '`', '`' },
+        {  3,  4,   '*', '*' },
         {  0,  5,   '0', '9' },
         {  5,  5,   '0', '9' },
-        {  5,  5,   '.', 0   },
-        {  0,  6,   '-', 0   },
+        {  5,  5,   '.', '.' },
+        {  0,  6,   '-', '-' },
         {  6,  5,   '0', '9' },
         {  0,  7,   'a', 'z' },
         {  0,  7,   'A', 'Z' },
-        {  0,  7,   '_', 0   },
+        {  0,  7,   '_', '_' },
         {  7,  7,   'a', 'z' },
         {  7,  7,   'A', 'Z' },
-        {  7,  7,   '_', 0   },
-        {  7,  7,   '-', 0   },
-        {  7,  7,   ':', 0   },
-        {  7,  7,  '\'', 0   },
-        {  0,  8,   ':', 0   },
-        {  0,  9,   '<', 0   },
-        {  0, 10,   '^', 0   },
-        {  0, 11,   '@', 0   },
-        {  0, 12,   '!', 0   },
-        {  0, 13,   '~', 0   },
-        {  0, 14,   '"', 0   },
-        { 14, 14,     0, '"' },
-        { 14, 15,  '\\', 0   },
+        {  7,  7,   '_', '_' },
+        {  7,  7,   '-', '-' },
+        {  7,  7,   ':', ':' },
+        {  7,  7,  '\'', '\''},
+        {  0,  8,   ':', ':' },
+        {  0,  9,   '<', '<' },
+        {  0, 10,   '^', '^' },
+        {  0, 11,   '@', '@' },
+        {  0, 12,   '!', '!' },
+        {  0, 13,   '~', '~' },
+        {  0, 14,   '"', '"' },
+        /* These two match everything other than '"' */
+        { 14, 14,     0, '!' },
+        { 14, 14,   '#', 127 },
+        { 14, 15,  '\\', '\\'},
         /* TODO: should only return to 14 on valid escapes */
-        { 15, 14,     0, 0   },
-        { 14, 16,   '"', 0   },
+        { 15, 14,     0, 127 },
+        { 14, 16,   '"', '"' },
 };
 
 static const enum ubik_token_type
@@ -158,17 +156,9 @@ push_char(
         for (e = 0; e < N_EDGES; e++)
         {
                 edge = &edges[e];
-                if (edge->c_lo && edge->c_hi)
-                {
-                        if (c < edge->c_lo || c > edge->c_hi)
-                                continue;
-                }
-                else if (!edge->c_lo && edge->c_hi && c == edge->c_hi)
-                        continue;
-                else if (edge->c_lo && c != edge->c_lo)
-                        continue;
-
                 if (!states[edge->s1])
+                        continue;
+                if (c < edge->c_lo || edge->c_hi < c)
                         continue;
                 if (next_states[edge->s2])
                         continue;
