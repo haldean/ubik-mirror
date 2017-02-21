@@ -2,7 +2,7 @@ Expression Syntax 2.0 ==================================================
 Haldean Brown                                      First draft: Feb 2017
                                                   Last updated: Feb 2017
 
-Status: Draft
+Status: Rejected
 
 ------------------------------------------------------------------------
 

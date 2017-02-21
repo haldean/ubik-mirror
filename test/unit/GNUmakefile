@@ -13,7 +13,6 @@ tests = \
 	rat-test \
 	resolve-test \
 	split-test \
-	tokenize-test \
 	types-test \
 	uri-test
 
