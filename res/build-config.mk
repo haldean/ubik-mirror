@@ -11,7 +11,7 @@ UBIK_CFLAGS := -std=c11 -Werror -Wall -Wextra -Wswitch-enum \
 
 ifneq ($(CC), musl-gcc)
 ifneq ($(sanitize),no)
-	CFLAGS := $(CFLAGS) -fsanitize=address -fsanitize=leak -fsanitize=undefined
+	UBIK_CFLAGS := $(UBIK_CFLAGS) -fsanitize=address -fsanitize=leak -fsanitize=undefined
 endif
 endif
 

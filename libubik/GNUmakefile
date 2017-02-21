@@ -20,6 +20,7 @@ c_sources = \
     ./codegen/testing.c \
     ./codegen/token.c \
     ./codegen/tokenize.c \
+    ./codegen/tokenstack.c \
     ./codegen/types.c \
     ./codegen/typesystem.c \
     ./rt/evaluator.c \

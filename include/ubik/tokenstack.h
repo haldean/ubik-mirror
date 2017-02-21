@@ -1,5 +1,5 @@
 /*
- * tokenize.h: tokenization of Ubik source
+ * tokenstack.h: token stack operations on Ubik source
  * Copyright (C) 2017, Haldean Brown
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,42 +17,16 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#pragma once
-#include "ubik/ast.h"
-#include "ubik/rt.h"
-#include "ubik/stream.h"
+#define UBIK_TOKEN_STACK_SIZE 2048
 
-enum ubik_token_type
+struct ubik_tstack
 {
-        NONE,
-        BLOCK_OPEN,
-        BLOCK_CLOSE,
-        NAME,
-        NUMBER,
-        BIND,
-        APPLY,
-        TYPE,
-        QUOTE,
-        IMMEDIATE,
-        DEFINES,
-        IMPORT,
-        IMPORT_ALL,
-        STRING,
+        struct ubik_ast_expr *s[UBIK_TOKEN_STACK_SIZE];
+        struct ubik_alloc_region *r;
+        size_t top;
 };
 
-extern char *ubik_token_names[];
-
-struct ubik_token
-{
-        enum ubik_token_type type;
-        char *str;
-        struct ubik_ast_loc loc;
-};
-
-typedef ubik_error (*ubik_tokenize_cb)(struct ubik_token *, void *);
-
+/* The second argument is a void * instead of a ubik_tstack * so that the
+ * signature of the method matches the tokenize callback. */
 no_ignore ubik_error
-ubik_tokenize(
-        ubik_tokenize_cb cb,
-        struct ubik_stream *source,
-        void *cb_arg);
+ubik_tstack_push(struct ubik_token *t, void *void_ts);
