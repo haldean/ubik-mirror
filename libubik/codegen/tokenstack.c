@@ -53,6 +53,7 @@ atom(struct ubik_tstack *ts, struct ubik_token *t)
                 a->str[strlen(a->str) - 1] = '\0';
                 break;
         case NUMBER:
+                a->atom_type = ATOM_NUM;
                 err = ubik_rat_read(&a->number, t->str);
                 if (err != OK)
                         return err;
