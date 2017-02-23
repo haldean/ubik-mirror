@@ -21,6 +21,7 @@
 #include <stdatomic.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "ubik/alloc.h"
 #include "ubik/assert.h"
@@ -630,6 +631,22 @@ exit:
         return err;
 }
 
+static size_t
+n_processors()
+{
+        long res;
+#if defined(_SC_NPROCESSORS_ONLN)
+        res = sysconf(_SC_NPROCESSORS_ONLN);
+        if (res <= 0)
+        {
+                return 1;
+        }
+        return (size_t) res;
+#else
+        return 1;
+#endif
+}
+
 no_ignore ubik_error
 ubik_evaluate_run(struct ubik_evaluator *evaluator)
 {
@@ -640,7 +657,7 @@ ubik_evaluate_run(struct ubik_evaluator *evaluator)
         ubik_error worker_err;
         pthread_t *workers;
 
-        n_workers = 2;
+        n_workers = n_processors();
         workers = NULL;
 
         if (n_workers > 1)
