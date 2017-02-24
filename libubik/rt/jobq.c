@@ -23,14 +23,6 @@
 
 static const size_t max_subqueue_size = 32;
 
-static inline struct ubik_jobq_node *
-obtain()
-{
-        struct ubik_jobq_node *n;
-        ubik_alloc1(&n, struct ubik_jobq_node, NULL);
-        return n;
-}
-
 static inline void
 recycle(struct ubik_jobq_node *n)
 {
@@ -53,7 +45,13 @@ ubik_jobq_push(struct ubik_jobq *q, size_t worker_id, void *e)
         struct ubik_jobq_node *n;
 
         sq = q->qs + worker_id;
-        n = obtain();
+        if (sq->recycle != NULL)
+        {
+                n = sq->recycle;
+                sq->recycle = n->next;
+        }
+        else
+                ubik_alloc1(&n, struct ubik_jobq_node, NULL);
         n->elem = e;
 
         if (likely(sq->size < max_subqueue_size))
@@ -78,24 +76,49 @@ ubik_jobq_pop(struct ubik_jobq *q, size_t worker_id)
         void *elem;
 
         sq = q->qs + worker_id;
+        n = NULL;
 
         if (likely(sq->size > 0))
         {
                 n = sq->head;
-                sq->head = n->next;
-                sq->size--;
+                if (n != NULL)
+                {
+                        sq->head = n->next;
+                        sq->size--;
+                }
         }
-        else
+        if (n == NULL)
         {
                 pthread_mutex_lock(&q->global_lock);
                 n = q->global;
-                q->global = n->next;
+                if (n != NULL)
+                        q->global = n->next;
                 pthread_mutex_unlock(&q->global_lock);
         }
+        if (n == NULL)
+                return NULL;
 
         elem = n->elem;
-        recycle(n);
+
+        n->elem = NULL;
+        n->next = sq->recycle;
+        sq->recycle = n;
+
         return elem;
+}
+
+static void
+free_ll(struct ubik_jobq_node **head)
+{
+        struct ubik_jobq_node *n;
+
+        n = *head;
+        while (n != NULL)
+        {
+                *head = n->next;
+                free(n);
+                n = *head;
+        }
 }
 
 void
@@ -103,25 +126,14 @@ ubik_jobq_free(struct ubik_jobq *q)
 {
         size_t i;
         struct ubik_jobq_subq *sq;
-        struct ubik_jobq_node *n;
 
         for (i = 0; i < q->n_queues; i++)
         {
                 sq = q->qs + i;
-                n = sq->head;
-                while (n != NULL)
-                {
-                        sq->head = n->next;
-                        recycle(n);
-                        n = sq->head;
-                }
+                free_ll(&sq->head);
+                free_ll(&sq->recycle);
         }
-        n = q->global;
-        while (n != NULL)
-        {
-                q->global = n->next;
-                recycle(n);
-                n = q->global;
-        }
+        free_ll(&q->global);
+        free(q->qs);
 }
 

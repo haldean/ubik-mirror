@@ -40,6 +40,7 @@ struct ubik_jobq_node
 struct ubik_jobq_subq
 {
         struct ubik_jobq_node *head;
+        struct ubik_jobq_node *recycle;
         size_t size;
 };
 

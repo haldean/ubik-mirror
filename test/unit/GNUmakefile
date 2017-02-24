@@ -7,6 +7,7 @@ tests = \
 	env-test \
 	generator-test \
 	host_to_net-test \
+	jobq-test \
 	parenv-test \
 	path_concat-test \
 	pointer_set-test \
