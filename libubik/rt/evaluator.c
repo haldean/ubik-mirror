@@ -601,7 +601,7 @@ run(void *e)
         {
                 r = ubik_jobq_pop(&evaluator->q, wid);
                 if (r == NULL)
-                        break;
+                        goto exit;
 
                 err = run_state(evaluator, wid, r->e);
                 if (err != OK)

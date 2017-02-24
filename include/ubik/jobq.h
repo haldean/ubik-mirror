@@ -34,20 +34,26 @@
 struct ubik_jobq_node
 {
         void *elem;
-        struct ubik_jobq_node *next;
+        /* left points towards tail, right point towards head. */
+        struct ubik_jobq_node *left;
+        struct ubik_jobq_node *right;
 };
 
 struct ubik_jobq_subq
 {
+        /* elements are pushed onto the tail and popped off the head */
         struct ubik_jobq_node *head;
+        struct ubik_jobq_node *tail;
         struct ubik_jobq_node *recycle;
         size_t size;
+        int64_t owner_tid;
 };
 
 struct ubik_jobq
 {
         struct ubik_jobq_subq *qs;
-        struct ubik_jobq_node *global;
+        struct ubik_jobq_node *global_head;
+        struct ubik_jobq_node *global_tail;
         pthread_mutex_t global_lock;
         size_t n_queues;
 };
