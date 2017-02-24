@@ -571,7 +571,8 @@ ubik_evaluate_push_roots(
                         if (!ws->values[i].gc.root)
                                 continue;
                         err = push(
-                                evaluator, &ws->values[i], NULL, 0, q++, NULL);
+                                evaluator, &ws->values[i], NULL, 0,
+                                q++ % evaluator->n_workers, NULL);
                         if (err != OK)
                                 return err;
                 }

@@ -17,13 +17,20 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-/* The idea here is to make a series of queues, each of which has its own lock.
- * A given thread is paired with a given queue, and when a thread creates more
- * work, it pushes it onto its own queue. This decreases queue contention,
- * because usually the lock for each subqueue is only held by the thread its
- * paired with. When a thread runs out of work, it steals work from one of the
- * other threads, which involves locking the other thread's queue to steal its
- * work. */
+/*
+   The idea here is to make a series of fixed-sized queues, each of which is
+   owned by a given thread. A thread pulls jobs from its own queue, and when a
+   thread creates more work, it pushes it onto its own queue. This decreases
+   queue contention, because usually the lock for each subqueue is only held by
+   the thread its paired with. When a thread runs out of work, it fills its
+   queue from the global queue, which sits behind a lock. When a thread tries
+   to push onto its queue but its queue is full, it pushes directly onto the
+   global queue.
+ */
+
+#include <pthread.h>
+#include <stdlib.h>
+
 struct ubik_jobq_node
 {
         void *elem;
@@ -34,12 +41,13 @@ struct ubik_jobq_subq
 {
         struct ubik_jobq_node *head;
         size_t size;
-        pthread_mutex_t lock;
 };
 
 struct ubik_jobq
 {
         struct ubik_jobq_subq *qs;
+        struct ubik_jobq_node *global;
+        pthread_mutex_t global_lock;
         size_t n_queues;
 };
 
@@ -52,5 +60,7 @@ ubik_jobq_push(struct ubik_jobq *q, size_t worker_id, void *e);
 void *
 ubik_jobq_pop(struct ubik_jobq *q, size_t worker_id);
 
+/* This is not MT-Safe; no other jobq operations can be interleaved with a
+ * free, or your program will almost certainly segfault. */
 void
 ubik_jobq_free(struct ubik_jobq *q);

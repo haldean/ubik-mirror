@@ -22,6 +22,7 @@ c_sources = \
     ./codegen/types.c \
     ./codegen/typesystem.c \
     ./rt/evaluator.c \
+    ./rt/jobq.c \
     ./rt/mem.c \
     ./rt/rat.c \
     ./rt/rwlock.c \
