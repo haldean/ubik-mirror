@@ -20,6 +20,59 @@
 #include "ubik/assert.h"
 #include "ubik/deque.h"
 
+#include <stdatomic.h>
+
+/* Node recycling; this becomes a linked list of free nodes available for use. */
+static struct ubik_deque_elem *elem_pool = NULL;
+
+static inline struct ubik_deque_elem *
+obtain()
+{
+        struct ubik_deque_elem *e;
+
+        for (;;)
+        {
+                e = atomic_load(&elem_pool);
+                if (e == NULL)
+                {
+                        e = calloc(1, sizeof(struct ubik_deque_elem));
+                        ubik_assert(e != NULL);
+                        return e;
+                }
+                if (atomic_compare_exchange_weak(&elem_pool, &e, e->right))
+                        return e;
+        }
+}
+
+static inline void
+recycle(struct ubik_deque_elem *e)
+{
+        struct ubik_deque_elem *current;
+
+        for (;;)
+        {
+                current = elem_pool;
+                if (atomic_compare_exchange_weak(&elem_pool, &current, e))
+                {
+                        e->right = current;
+                        return;
+                }
+        }
+}
+
+void
+ubik_deque_empty_recycler()
+{
+        struct ubik_deque_elem *e;
+
+        while (elem_pool != NULL)
+        {
+                e = elem_pool;
+                elem_pool = e->right;
+                free(e);
+        }
+}
+
 void
 ubik_deque_init(struct ubik_deque *d)
 {
@@ -30,7 +83,7 @@ void
 ubik_deque_pushl(struct ubik_deque *d, void *e)
 {
         struct ubik_deque_elem *elem;
-        ubik_alloc1(&elem, struct ubik_deque_elem, d->r);
+        elem = obtain();
 
         pthread_mutex_lock(&d->lock);
         elem->e = e;
@@ -48,7 +101,9 @@ void
 ubik_deque_pushr(struct ubik_deque *d, void *e)
 {
         struct ubik_deque_elem *elem;
-        ubik_alloc1(&elem, struct ubik_deque_elem, d->r);
+        elem = obtain();
+
+        pthread_mutex_lock(&d->lock);
         elem->e = e;
         elem->left = d->right;
         elem->right = NULL;
@@ -82,7 +137,7 @@ ubik_deque_popl(struct ubik_deque *d)
         pthread_mutex_unlock(&d->lock);
 
         v = e->e;
-        ubik_free(d->r, e);
+        recycle(e);
         return v;
 }
 
@@ -108,7 +163,7 @@ ubik_deque_popr(struct ubik_deque *d)
         pthread_mutex_unlock(&d->lock);
 
         v = e->e;
-        ubik_free(d->r, e);
+        recycle(e);
         return v;
 }
 

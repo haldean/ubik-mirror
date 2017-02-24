@@ -18,6 +18,7 @@
  */
 
 #include "ubik/alloc.h"
+#include "ubik/deque.h"
 #include "ubik/env.h"
 #include "ubik/hooks.h"
 #include "ubik/stream.h"
@@ -118,5 +119,6 @@ ubik_teardown()
                 return err;
 
         ubik_hooks_teardown();
+        ubik_deque_empty_recycler();
         return OK;
 }

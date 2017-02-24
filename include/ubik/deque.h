@@ -53,3 +53,12 @@ ubik_deque_popr(struct ubik_deque *d);
 
 bool
 ubik_deque_empty(struct ubik_deque *d);
+
+/* Node structs are recycled internally by the deque; this frees all memory
+ * associated with the recycler. Calling this will probably reduce memory usage
+ * of the interpreter momentarily, but usage will eventually grow again when
+ * more elements are enqueued and dequeued. This function, unlike the other
+ * deque functions, is not MT-safe, and cannot be called while any other
+ * threads are attempting to access any deque. */
+void
+ubik_deque_empty_recycler();
