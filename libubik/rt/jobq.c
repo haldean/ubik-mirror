@@ -63,7 +63,7 @@ ubik_jobq_push(struct ubik_jobq *q, size_t worker_id, void *e)
                 n->right = sq->tail;
                 if (sq->tail != NULL)
                         sq->tail->left = n;
-                if (sq->head == NULL)
+                else
                         sq->head = n;
                 sq->tail = n;
                 sq->size++;
@@ -103,9 +103,11 @@ ubik_jobq_pop(struct ubik_jobq *q, size_t worker_id)
                 if (n != NULL)
                 {
                         sq->head = n->left;
-                        sq->size--;
-                        if (!sq->size)
+                        if (sq->head == NULL)
                                 sq->tail = NULL;
+                        else
+                                sq->head->right = NULL;
+                        sq->size--;
                 }
         }
         if (n == NULL)
@@ -116,6 +118,8 @@ ubik_jobq_pop(struct ubik_jobq *q, size_t worker_id)
                         q->global_head = n->left;
                 if (q->global_head == NULL)
                         q->global_tail = NULL;
+                else
+                        q->global_head->right = NULL;
                 pthread_mutex_unlock(&q->global_lock);
         }
         if (n == NULL)
