@@ -127,12 +127,10 @@ ubik_jobq_pop(struct ubik_jobq *q, size_t worker_id)
 
         elem = n->elem;
 
-        /*
         n->elem = NULL;
+        n->left = NULL;
         n->right = sq->recycle;
         sq->recycle = n;
-        */
-        free(n);
 
         return elem;
 }
@@ -145,7 +143,7 @@ free_ll(struct ubik_jobq_node **head)
         n = *head;
         while (n != NULL)
         {
-                *head = n->left;
+                *head = n->right;
                 free(n);
                 n = *head;
         }
@@ -160,10 +158,10 @@ ubik_jobq_free(struct ubik_jobq *q)
         for (i = 0; i < q->n_queues; i++)
         {
                 sq = q->qs + i;
-                free_ll(&sq->head);
+                free_ll(&sq->tail);
                 free_ll(&sq->recycle);
         }
-        free_ll(&q->global_head);
+        free_ll(&q->global_tail);
         free(q->qs);
 }
 
