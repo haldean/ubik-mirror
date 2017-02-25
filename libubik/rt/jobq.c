@@ -27,16 +27,11 @@ static const size_t max_subqueue_size = 32;
 void
 ubik_jobq_init(struct ubik_jobq *q, size_t n_workers)
 {
-        size_t i;
-
         pthread_mutex_init(&q->global_lock, NULL);
         ubik_galloc((void**) &q->qs, n_workers, sizeof(struct ubik_jobq_subq));
         q->n_queues = n_workers;
         q->global_head = NULL;
         q->global_tail = NULL;
-
-        for (i = 0; i < n_workers; i++)
-                q->qs[i].owner_tid = -1;
 }
 
 void
@@ -89,13 +84,6 @@ ubik_jobq_pop(struct ubik_jobq *q, size_t worker_id)
 
         sq = q->qs + worker_id;
         n = NULL;
-
-        if (sq->owner_tid == -1)
-                sq->owner_tid = ubik_gettid();
-        else if (ubik_gettid() != sq->owner_tid)
-        {
-                ubik_unreachable("shouldn't happen!");
-        }
 
         if (likely(sq->size > 0))
         {

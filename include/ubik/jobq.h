@@ -46,7 +46,6 @@ struct ubik_jobq_subq
         struct ubik_jobq_node *tail;
         struct ubik_jobq_node *recycle;
         size_t size;
-        int64_t owner_tid;
 };
 
 struct ubik_jobq

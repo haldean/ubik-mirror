@@ -621,12 +621,10 @@ run(void *e)
                 if (likely(r->waiting != NULL))
                 {
                         pthread_mutex_lock(&r->waiting->lock);
-
                         t0 = r->node;
                         r->waiting->nv[t0] = r->e->nv[t1];
                         r->waiting->nt[t0] = r->e->nt[t1];
                         setstatus(r->waiting, t0, LOADED);
-
                         pthread_mutex_unlock(&r->waiting->lock);
                 }
                 if (unlikely(r->cb != NULL))
