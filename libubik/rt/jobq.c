@@ -46,15 +46,16 @@ ubik_jobq_push(struct ubik_jobq *q, size_t worker_id, void *e)
         struct ubik_jobq_node *n;
 
         sq = q->qs + worker_id;
-        /*
         if (sq->recycle != NULL)
         {
                 n = sq->recycle;
                 sq->recycle = n->right;
         }
         else
-        */
-                ubik_alloc1(&n, struct ubik_jobq_node, NULL);
+        {
+                n = calloc(1, sizeof(struct ubik_jobq_node));
+                ubik_assert(n != NULL);
+        }
         n->elem = e;
 
         if (likely(sq->size < max_subqueue_size))
