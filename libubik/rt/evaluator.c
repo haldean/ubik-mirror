@@ -652,6 +652,16 @@ static size_t
 n_processors()
 {
         long res;
+        char *env;
+        char *end;
+
+        env = getenv("UBIK_PROCS");
+        if (env != NULL)
+        {
+                res = strtol(env, &end, 10);
+                if (end != env)
+                        return res;
+        }
 #if defined(_SC_NPROCESSORS_ONLN)
         res = sysconf(_SC_NPROCESSORS_ONLN);
         if (res <= 0)
