@@ -33,7 +33,7 @@ jobq()
         ubik_jobq_push(&q, 1, &y);
         assert(q.qs[0].size == 1);
         assert(q.qs[1].size == 1);
-        assert(q.global == 0);
+        assert(q.global_head == NULL);
 
         assert(ubik_jobq_pop(&q, 0) == &x);
         assert(ubik_jobq_pop(&q, 0) == NULL);

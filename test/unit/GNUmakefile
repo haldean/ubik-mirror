@@ -9,6 +9,7 @@ tests = \
 	host_to_net-test \
 	jobq-test \
 	parenv-test \
+	parq-test \
 	path_concat-test \
 	pointer_set-test \
 	rat-test \
