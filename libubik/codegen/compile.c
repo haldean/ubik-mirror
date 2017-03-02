@@ -260,8 +260,10 @@ load_ast(struct ubik_compile_env *cenv, struct ubik_compile_job *job)
                 job->request->package_name = job->ast->package_name;
 
         import = job->ast->imports;
+        job->status = COMPILE_READY;
         while (import != NULL)
         {
+                job->status = COMPILE_WAIT_FOR_IMPORTS;
                 req = calloc(1, sizeof(struct ubik_compile_request));
                 err = create_import_request(
                         req, cenv, import->canonical, job->request,
@@ -278,9 +280,8 @@ load_ast(struct ubik_compile_env *cenv, struct ubik_compile_job *job)
                 import = import->next;
         }
 
-        job->status = job->ast->imports == NULL
-                ? COMPILE_READY
-                : COMPILE_WAIT_FOR_IMPORTS;
+        dprint("AST loaded for %s, new status is %d\n",
+               job->request->package_name, job->status);
         return OK;
 }
 
