@@ -42,6 +42,8 @@
 #include "ubik/typesystem.h"
 #include "ubik/util.h"
 
+#define dprint(...) do { if (cenv->debug) printf(__VA_ARGS__); } while (0)
+
 no_ignore ubik_error
 ubik_compile_env_default(
         struct ubik_compile_env *cenv,
@@ -160,14 +162,11 @@ create_import_request(
 
         err = OK;
 
-        if (cenv->debug)
-                printf("searching for source for \"%s\"\n", name);
+        dprint("searching for source for \"%s\"\n", name);
 
         for (i = 0; i < cenv->n_include_dirs; i++)
         {
-                if (cenv->debug)
-                        printf("\tchecking directory \"%s\"\n",
-                                cenv->include_dirs[i]);
+                dprint("\tchecking directory \"%s\"\n", cenv->include_dirs[i]);
                 test_dir = opendir(cenv->include_dirs[i]);
                 if (test_dir == NULL)
                 {
@@ -178,8 +177,7 @@ create_import_request(
                 while ((test_f = readdir(test_dir)) != NULL)
                 {
                         ubik_local_region(r);
-                        if (cenv->debug)
-                                printf("\tchecking \"%s\"\n", test_f->d_name);
+                        dprint("\tchecking \"%s\"\n", test_f->d_name);
 
                         if (!ubik_string_endswith(test_f->d_name, ".uk"))
                                 continue;
@@ -211,6 +209,8 @@ create_import_request(
 
                         if (strcmp(test_ast->package_name, name) == 0)
                         {
+                                dprint("found source for %s at %s\n",
+                                       name, test_f->d_name);
                                 ubik_stream_reset(&in_stream);
                                 ubik_alloc_start(&res->region);
                                 res->source_name = ubik_strdup(
@@ -293,8 +293,7 @@ compile_job(
         local(infer_context) struct ubik_infer_context infer_ctx = {0};
         ubik_error err;
 
-        if (cenv->debug)
-                printf("compiling package %s\n", job->ast->package_name);
+        dprint("compiling package %s\n", job->ast->package_name);
 
         err = ubik_import_add_all(cenv, job->ast, &job->request->region);
         if (err != OK)
@@ -479,11 +478,13 @@ ensure_imports_ready(
         char *check;
         size_t i;
 
+        dprint("checking imports for %s\n", job->request->package_name);
         import = job->ast->imports;
 
         while (import != NULL)
         {
                 expect = import->canonical;
+                dprint("    checking %s\n", expect);
                 result = NULL;
                 for (i = 0; i < cenv->compiled.n; i++)
                 {
@@ -517,6 +518,7 @@ ubik_compile_run(struct ubik_compile_env *cenv)
         while (cenv->to_compile.n > 0)
         {
                 job = cenv->to_compile.elems[cenv->to_compile.n - 1];
+                dprint("resume job for %s\n", job->request->source_name);
 
                 switch (job->status)
                 {
