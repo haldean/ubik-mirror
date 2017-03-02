@@ -53,7 +53,7 @@ all_pattern_case_stmts
 ;
 
 pattern_case_stmt
-: MEMBER pattern IMPLIES expr
+: MEMBER pattern IMPLIES top_expr
 {
         alloc($$, 1, struct ubik_ast_case);
         $$->head = $2;
@@ -85,7 +85,7 @@ pred_case_stmts
 ;
 
 last_pred_case_stmt
-: MEMBER IMPLIES expr
+: MEMBER IMPLIES top_expr
 {
         alloc($$, 1, struct ubik_ast_case);
         $$->head = NULL;
