@@ -256,6 +256,9 @@ load_ast(struct ubik_compile_env *cenv, struct ubik_compile_job *job)
         if (err != OK)
                 return err;
 
+        if (job->request->package_name == NULL)
+                job->request->package_name = job->ast->package_name;
+
         import = job->ast->imports;
         while (import != NULL)
         {
