@@ -22,7 +22,7 @@
 #include "ubik/jobq.h"
 #include "ubik/util.h"
 
-#define CHECK_GLOBAL_PERIOD 20
+#define CHECK_GLOBAL_PERIOD 4
 
 static const size_t max_subqueue_size = 32;
 
