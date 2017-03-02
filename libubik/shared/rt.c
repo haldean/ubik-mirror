@@ -119,6 +119,5 @@ ubik_teardown()
                 return err;
 
         ubik_hooks_teardown();
-        ubik_deque_empty_recycler();
         return OK;
 }

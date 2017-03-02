@@ -28,12 +28,13 @@ jobq()
         int x, y;
 
         ubik_jobq_init(&q, 2);
+        assert(ubik_deque_empty(&q.d));
 
         ubik_jobq_push(&q, 0, &x);
         ubik_jobq_push(&q, 1, &y);
         assert(q.qs[0].size == 1);
         assert(q.qs[1].size == 1);
-        assert(q.global_head == NULL);
+        assert(ubik_deque_empty(&q.d));
 
         assert(ubik_jobq_pop(&q, 0) == &x);
         assert(ubik_jobq_pop(&q, 0) == NULL);

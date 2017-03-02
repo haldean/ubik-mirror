@@ -22,16 +22,16 @@
 #include "ubik/jobq.h"
 #include "ubik/util.h"
 
+#define CHECK_GLOBAL_PERIOD 20
+
 static const size_t max_subqueue_size = 32;
 
 void
 ubik_jobq_init(struct ubik_jobq *q, size_t n_workers)
 {
-        pthread_mutex_init(&q->global_lock, NULL);
+        ubik_deque_init(&q->d);
         ubik_galloc((void**) &q->qs, n_workers, sizeof(struct ubik_jobq_subq));
         q->n_queues = n_workers;
-        q->global_head = NULL;
-        q->global_tail = NULL;
 }
 
 void
@@ -41,6 +41,13 @@ ubik_jobq_push(struct ubik_jobq *q, size_t worker_id, void *e)
         struct ubik_jobq_node *n;
 
         sq = q->qs + worker_id;
+
+        if (unlikely(sq->size >= max_subqueue_size))
+        {
+                ubik_deque_pushl(&q->d, e);
+                return;
+        }
+
         if (sq->recycle != NULL)
         {
                 n = sq->recycle;
@@ -53,26 +60,13 @@ ubik_jobq_push(struct ubik_jobq *q, size_t worker_id, void *e)
         }
         n->elem = e;
 
-        if (likely(sq->size < max_subqueue_size))
-        {
-                n->right = sq->tail;
-                if (sq->tail != NULL)
-                        sq->tail->left = n;
-                else
-                        sq->head = n;
-                sq->tail = n;
-                sq->size++;
-                return;
-        }
-
-        pthread_mutex_lock(&q->global_lock);
-        n->right = q->global_tail;
-        if (q->global_tail != NULL)
-                q->global_tail->left = n;
-        if (q->global_head == NULL)
-                q->global_head = n;
-        q->global_tail = n;
-        pthread_mutex_unlock(&q->global_lock);
+        n->right = sq->tail;
+        if (sq->tail != NULL)
+                sq->tail->left = n;
+        else
+                sq->head = n;
+        sq->tail = n;
+        sq->size++;
 }
 
 void *
@@ -84,8 +78,17 @@ ubik_jobq_pop(struct ubik_jobq *q, size_t worker_id)
 
         sq = q->qs + worker_id;
         n = NULL;
+        sq->since_global_check++;
 
-        if (likely(sq->size > 0))
+        if (sq->since_global_check == CHECK_GLOBAL_PERIOD)
+        {
+                elem = ubik_deque_popr(&q->d);
+                sq->since_global_check = 0;
+                if (elem != NULL)
+                        return elem;
+        }
+
+        if (sq->size > 0)
         {
                 n = sq->head;
                 if (n != NULL)
@@ -96,31 +99,20 @@ ubik_jobq_pop(struct ubik_jobq *q, size_t worker_id)
                         else
                                 sq->head->right = NULL;
                         sq->size--;
+
+                        elem = n->elem;
+
+                        n->elem = NULL;
+                        n->left = NULL;
+                        n->right = sq->recycle;
+                        sq->recycle = n;
+
+                        return elem;
                 }
         }
-        if (n == NULL)
-        {
-                pthread_mutex_lock(&q->global_lock);
-                n = q->global_head;
-                if (n != NULL)
-                        q->global_head = n->left;
-                if (q->global_head == NULL)
-                        q->global_tail = NULL;
-                else
-                        q->global_head->right = NULL;
-                pthread_mutex_unlock(&q->global_lock);
-        }
-        if (n == NULL)
-                return NULL;
 
-        elem = n->elem;
-
-        n->elem = NULL;
-        n->left = NULL;
-        n->right = sq->recycle;
-        sq->recycle = n;
-
-        return elem;
+        sq->since_global_check = 0;
+        return ubik_deque_popr(&q->d);
 }
 
 static void
@@ -149,7 +141,6 @@ ubik_jobq_free(struct ubik_jobq *q)
                 free_ll(&sq->tail);
                 free_ll(&sq->recycle);
         }
-        free_ll(&q->global_tail);
         free(q->qs);
 }
 

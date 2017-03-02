@@ -595,6 +595,8 @@ run(void *e)
         ets = (struct eval_thread_state *) e;
         evaluator = ets->e;
         wid = ets->id;
+        free(ets);
+
         err = OK;
 
         while (!evaluator->die)

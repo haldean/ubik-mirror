@@ -28,6 +28,8 @@
    global queue.
  */
 
+#include "ubik/deque.h"
+
 #include <pthread.h>
 #include <stdlib.h>
 
@@ -46,14 +48,20 @@ struct ubik_jobq_subq
         struct ubik_jobq_node *tail;
         struct ubik_jobq_node *recycle;
         size_t size;
+
+        /* This counts the number of pops we've taken from the local queue
+         * without checking the global queue. When this hits a threshold value,
+         * we check the global queue for work. This prevents the evaluator from
+         * spinning on the local queue while the tasks that are blocking those
+         * local tasks from being evaluated are sitting on the global queue not
+         * getting done. */
+        uint16_t since_global_check;
 };
 
 struct ubik_jobq
 {
+        struct ubik_deque d;
         struct ubik_jobq_subq *qs;
-        struct ubik_jobq_node *global_head;
-        struct ubik_jobq_node *global_tail;
-        pthread_mutex_t global_lock;
         size_t n_queues;
 };
 
