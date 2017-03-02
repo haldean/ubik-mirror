@@ -44,6 +44,13 @@
 
 #define dprint(...) do { if (cenv->debug) printf(__VA_ARGS__); } while (0)
 
+/* Returns an error if not all imports for the given job are in the compiled
+ * list in the provided environment. */
+no_ignore static ubik_error
+ensure_imports_ready(
+        struct ubik_compile_env *cenv,
+        struct ubik_compile_job *job);
+
 no_ignore ubik_error
 ubik_compile_env_default(
         struct ubik_compile_env *cenv,
@@ -408,6 +415,67 @@ compile_job(
         return OK;
 }
 
+/* Moves a job to the top of the request stack, along with all of its
+ * dependencies. When we attempt to reenqueue a job that has already been
+ * enqueued,  we need to pull it one to the top of the stack; if module A
+ * depends on modules B and C, after loading A's AST you have:
+ *
+ *      [bottom] A B C [top]
+ *
+ * If, in the process of loading C's AST, we discover it depends on B, it is
+ * not sufficient to leave the stack as-is, because it will lead to us
+ * attempting to compile C before B, which will raise an error. It means we
+ * need to bring B back up to the top, to make the stack:
+ *
+ *      [bottom] A C B [top]
+ */
+void
+requeue(struct ubik_compile_env *cenv, size_t i)
+{
+        struct ubik_compile_job *job;
+        struct ubik_compile_job *check;
+        struct ubik_ast_import_list *import;
+        size_t j;
+        ubik_error err;
+
+        job = cenv->to_compile.elems[i];
+        for (j = i + 1; j < cenv->to_compile.n; j++)
+                cenv->to_compile.elems[j - 1] = cenv->to_compile.elems[j];
+        cenv->to_compile.elems[cenv->to_compile.n - 1] = job;
+
+        /* If we haven't loaded the AST yet, we'll end up making sure the stack
+         * is correct when we load its imports at some point in the future.
+         * There's nothing we can do now. */
+        if (job->status == COMPILE_WAIT_FOR_AST)
+                return;
+
+        /* If all of this job's imports are ready, then we don't have to do
+         * anything to fix this. Otherwise, we need to requeue all of its
+         * dependencies. */
+        err = ensure_imports_ready(cenv, job);
+        if (err == OK)
+                return;
+        free(err);
+
+        import = job->ast->imports;
+        while (import != NULL)
+        {
+                for (j = 0; j < cenv->to_compile.n; j++)
+                {
+                        check = cenv->to_compile.elems[j];
+                        if (check->request->package_name == NULL)
+                                continue;
+                        if (strcmp(check->request->package_name,
+                                   import->canonical))
+                        {
+                                requeue(cenv, j);
+                                break;
+                        }
+                }
+                import = import->next;
+        }
+}
+
 no_ignore ubik_error
 ubik_compile_enqueue(
         struct ubik_compile_env *cenv,
@@ -425,20 +493,10 @@ ubik_compile_enqueue(
         {
                 check_job = (struct ubik_compile_job *)
                         cenv->to_compile.elems[i];
-
-                /* TODO: this is not sufficient! if this happens, we need to
-                 * pull this one to the top of the stack; if module A depends
-                 * on modules B and C, after loading A's AST you have:
-                 *      [bottom] A B C [top]
-                 * If, in the process of loading C's AST, we discover it
-                 * depends on B, it is not sufficient to leave the stack as-is,
-                 * because it will lead to us attempting to compile C before B,
-                 * which will raise an error. It means we need to bring B back
-                 * up to the top, to make the stack:
-                 *      [bottom] A C B [top]
-                 */
-                if (strcmp(check_job->request->source_name, src) == 0)
-                        return OK;
+                if (strcmp(check_job->request->source_name, src) != 0)
+                        continue;
+                requeue(cenv, i);
+                return OK;
         }
         for (i = 0; i < cenv->compiled.n; i++)
         {
