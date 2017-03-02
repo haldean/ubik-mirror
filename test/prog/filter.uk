@@ -1,0 +1,14 @@
+` *list
+` *boolean
+~ ubik-tests/filter
+
+: filter
+    ^ (a -> Boolean) -> List a -> List a
+    = \f l -> ? l {
+        . Nil => Nil
+        . Cons head tail => ? {
+            . f head => Cons head (filter f tail)
+            .        => filter f tail
+        }
+    }
+?: filter (\x -> eq 0 (% x 2)) (range 0 5) = Cons 0 (Cons 2 (Cons 4 Nil))
