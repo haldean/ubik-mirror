@@ -9,19 +9,24 @@ if exists("b:current_syntax")
 endif
 
 syntax match ubikBind ":"
-syntax match ubikBind "\."
+syntax match ubikBind "?:"
 syntax match ubikBind "!"
 syntax match ubikBind "_"
 syntax match ubikBind "|"
 syntax match ubikBind "'"
 highlight link ubikBind Special
 
-syntax match ubikSubbind "\^"
-syntax match ubikSubbind "="
+syntax match ubikMeta "`[ ]*[*]*"
+syntax match ubikMeta "\~"
+syntax match ubikMeta "="
+syntax match ubikMeta "\^"
+highlight link ubikMeta Define
+
 syntax match ubikSubbind "=>"
 syntax match ubikSubbind "/>"
 syntax match ubikSubbind "->"
-syntax match ubikSubbind "\\"
+syntax match ubikSubbind "?[^:]"
+syntax match ubikSubbind "[{}\\\.]"
 highlight link ubikSubbind Keyword
 
 syntax region ubikString start=/"/ skip=/\\"/ end=/"/ oneline
