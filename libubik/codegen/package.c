@@ -63,6 +63,38 @@ assign_package_expr(
         return OK;
 }
 
+static void
+assign_package_type_expr(
+        struct ubik_type_expr *texpr,
+        char *package_name)
+{
+        struct ubik_type_constraints *c;
+
+        switch (texpr->type_expr_type)
+        {
+        case TYPE_EXPR_APPLY:
+                assign_package_type_expr(texpr->apply.head, package_name);
+                assign_package_type_expr(texpr->apply.tail, package_name);
+                return;
+        case TYPE_EXPR_ATOM:
+        case TYPE_EXPR_VAR:
+                if (texpr->name.package == NULL)
+                        texpr->name.package = package_name;
+                return;
+        case TYPE_EXPR_CONSTRAINED:
+                assign_package_type_expr(
+                        texpr->constrained.term, package_name);
+                c = texpr->constrained.constraints;
+                while (c != NULL)
+                {
+                        if (c->interface.package == NULL)
+                                c->interface.package = package_name;
+                        assign_package_type_params(c->params, package_name);
+                        c = c->next;
+                }
+        }
+}
+
 no_ignore static ubik_error
 assign_package(
         struct ubik_alloc_region *r,
@@ -70,6 +102,9 @@ assign_package(
         char *package_name)
 {
         struct ubik_ast_binding *bind;
+        struct ubik_type *type;
+        struct ubik_ast_interface *interface;
+        struct ubik_ast_implementation *implementation;
         struct ubik_ast_test *test;
         size_t i;
         ubik_error err;
@@ -84,9 +119,30 @@ assign_package(
         for (i = 0; i < ast->bindings.n; i++)
         {
                 bind = ast->bindings.elems[i];
+                if (binding->type_expr != NULL)
+                        assign_package_type_expr(
+                                binding->type_expr, package_name);
                 err = assign_package_expr(r, bind->expr, package_name);
                 if (err != OK)
                         return err;
+        }
+
+        for (i = 0; i < ast->types.n; i++)
+        {
+                type = ast->types.elems[i];
+                assign_package_type(type, package_name);
+        }
+
+        for (i = 0; i < ast->interfaces.n; i++)
+        {
+                interface = ast->interfaces.elems[i];
+                assign_package_interface(interface, package_name);
+        }
+
+        for (i = 0; i < ast->implementation.n; i++)
+        {
+                implementation = ast->implementation.elems[i];
+                assign_package_implementation(implementation, package_name);
         }
 
         for (i = 0; i < ast->tests.n; i++)
