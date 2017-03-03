@@ -146,7 +146,13 @@ pattern
 | QUALIFIED_TYPE_NAME
 {
         struct ubik_ast_atom *atom;
-        wrap_err(ubik_ast_atom_new_qualified(&atom, $1, ctx->region));
+        alloc(atom, 1, struct ubik_ast_atom);
+        atom->atom_type = ATOM_QUALIFIED;
+
+        wrap_err(ubik_ast_read_qualified(
+                &atom->qualified.head, &atom->qualified.tail,
+                $1, ctx->region));
+
         load_loc(atom->loc);
 
         alloc($$, 1, struct ubik_ast_expr);

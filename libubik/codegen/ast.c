@@ -25,8 +25,9 @@
 #include <string.h>
 
 no_ignore ubik_error
-ubik_ast_atom_new_qualified(
-        struct ubik_ast_atom **atom,
+ubik_ast_read_qualified(
+        char **head,
+        char **tail,
         char *name,
         struct ubik_alloc_region *r)
 {
@@ -51,18 +52,11 @@ ubik_ast_atom_new_qualified(
         ubik_assert(head_len > 0);
         ubik_assert(tail_len > 0);
 
-        ubik_alloc1(atom, struct ubik_ast_atom, r);
-        (*atom)->atom_type = ATOM_QUALIFIED;
+        ubik_ralloc((void **) head, head_len + 1, sizeof(char), r);
+        memcpy(*head, name, head_len);
 
-        ubik_ralloc(
-                (void **) &(*atom)->qualified.head,
-                head_len + 1, sizeof(char), r);
-        memcpy((*atom)->qualified.head, name, head_len);
-
-        ubik_ralloc(
-                (void **) &(*atom)->qualified.tail,
-                tail_len + 1, sizeof(char), r);
-        memcpy((*atom)->qualified.tail, &name[head_len + 1], tail_len);
+        ubik_ralloc((void **) tail, tail_len + 1, sizeof(char), r);
+        memcpy(*tail, &name[head_len + 1], tail_len);
 
         return OK;
 }

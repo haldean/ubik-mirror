@@ -300,10 +300,10 @@ assign_atom_to_atom(
         struct ubik_type_expr *to,
         struct ubik_type_expr *from)
 {
-        if (strcmp(to->name, from->name) != 0)
-        {
+        if (strcmp(to->name.name, from->name.name) != 0)
                 unified->success = false;
-        }
+        if (strcmp(to->name.package, from->name.package) != 0)
+                unified->success = false;
         return OK;
 }
 
@@ -350,12 +350,16 @@ assign_to_var(
         for (i = 0; i < unified->substs.n; i++)
         {
                 sub = unified->substs.elems[i];
-                if (strcmp(sub->varname, var->name) == 0)
-                        return resolve_substs(
-                                sub, unified, tsys, expr, sub->val, region);
+                if (strcmp(sub->var.name, var->name.name) != 0)
+                        continue;
+                if (strcmp(sub->var.package, var->name.package) != 0)
+                        continue;
+                return resolve_substs(
+                        sub, unified, tsys, expr, sub->val, region);
         }
         ubik_alloc1(&sub, struct ubik_typesystem_subst, region);
-        sub->varname = var->name;
+        sub->var.name = var->name.name;
+        sub->var.package = var->name.package;
         sub->val = expr;
         return ubik_vector_append(&unified->substs, sub);
 }
@@ -451,7 +455,8 @@ add_constraints(
                      params != NULL && i < iface->n_params;
                      params = params->next, i++)
                 {
-                        impl->params[i].name = ubik_strdup(params->name, region);
+                        impl->params[i].name.name =
+                                ubik_strdup(params->name, region);
                         impl->params[i].type_expr_type = TYPE_EXPR_VAR;
                 }
                 if (params != NULL || i != iface->n_params)

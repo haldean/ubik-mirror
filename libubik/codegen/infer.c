@@ -45,12 +45,12 @@ static void
 new_tyvar(struct ubik_type_expr *t, struct ubik_infer_context *ctx)
 {
         t->type_expr_type = TYPE_EXPR_VAR;
+        ubik_asprintf(
+                &t->name.name, &ctx->req->region, "%u", ctx->next_tyvar++);
         /* It's important to add the package name here, otherwise imported
          * definitions from other packages could bring in type vars that clash
          * with type vars chosen during this inference process. */
-        ubik_asprintf(
-                &t->name, &ctx->req->region, "_%s_t%u",
-                ctx->req->package_name, ctx->next_tyvar++);
+        t->name.package = ctx->req->package_name;
 }
 
 no_ignore static ubik_error
@@ -58,6 +58,7 @@ free_vars(
         struct ubik_vector *freevars,
         struct ubik_type_expr *t)
 {
+        struct ubik_type_expr *f;
         ubik_error err;
         size_t i;
 
@@ -68,9 +69,14 @@ free_vars(
         case TYPE_EXPR_VAR:
                 /* don't add duplicates */
                 for (i = 0; i < freevars->n; i++)
-                        if (strcmp(freevars->elems[i], t->name) == 0)
+                {
+                        f = (struct ubik_type_expr *) freevars->elems[i];
+                        if (strcmp(f->name.package, t->name.package) != 0)
+                                continue;
+                        if (strcmp(f->name.name, t->name.name) == 0)
                                 return OK;
-                return ubik_vector_append(freevars, t->name);
+                }
+                return ubik_vector_append(freevars, t);
         case TYPE_EXPR_APPLY:
                 err = free_vars(freevars, t->apply.head);
                 if (err != OK)
@@ -95,6 +101,7 @@ instantiate(
         struct ubik_vector freevars = {0};
         struct ubik_vector substs = {0};
         struct ubik_typesystem_subst *sub;
+        struct ubik_type_expr *f;
         size_t i;
         ubik_error err;
 
@@ -111,7 +118,9 @@ instantiate(
                         &sub, struct ubik_typesystem_subst, &ctx->req->region);
                 ubik_alloc1(
                         &sub->val, struct ubik_type_expr, &ctx->req->region);
-                sub->varname = (char *) freevars.elems[i];
+                f = (struct ubik_type_expr *) freevars.elems[i];
+                sub->var.name = f->name.name;
+                sub->var.package = f->name.package;
                 new_tyvar(sub->val, ctx);
 
                 err = ubik_vector_append(&substs, sub);
@@ -170,12 +179,18 @@ infer_atom(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
         {
         case ATOM_NUM:
                 expr->type->type_expr_type = TYPE_EXPR_ATOM;
-                expr->type->name = ubik_strdup("Number", &ctx->req->region);
+                expr->type->name.name =
+                        ubik_strdup("Number", &ctx->req->region);
+                expr->type->name.package =
+                        ubik_strdup(UBIK_PACKAGE, &ctx->req->region);
                 return OK;
 
         case ATOM_STRING:
                 expr->type->type_expr_type = TYPE_EXPR_ATOM;
-                expr->type->name = ubik_strdup("String", &ctx->req->region);
+                expr->type->name.name =
+                        ubik_strdup("String", &ctx->req->region);
+                expr->type->name.package =
+                        ubik_strdup(UBIK_PACKAGE, &ctx->req->region);
                 return OK;
 
         case ATOM_NAME:

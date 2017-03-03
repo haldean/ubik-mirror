@@ -132,7 +132,10 @@ atom
 }
 | QUALIFIED_NAME
 {
-        wrap_err(ubik_ast_atom_new_qualified(&$$, $1, ctx->region));
+        alloc($$, 1, struct ubik_ast_atom);
+        $$->atom_type = ATOM_QUALIFIED;
+        wrap_err(ubik_ast_read_qualified(
+                &$$->qualified.head, &$$->qualified.tail, $1, ctx->region));
         load_loc($$->loc);
 }
 | TYPE_NAME
@@ -144,7 +147,10 @@ atom
 }
 | QUALIFIED_TYPE_NAME
 {
-        wrap_err(ubik_ast_atom_new_qualified(&$$, $1, ctx->region));
+        alloc($$, 1, struct ubik_ast_atom);
+        $$->atom_type = ATOM_QUALIFIED;
+        wrap_err(ubik_ast_read_qualified(
+                &$$->qualified.head, &$$->qualified.tail, $1, ctx->region));
         load_loc($$->loc);
 }
 | NUMBER

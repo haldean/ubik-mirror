@@ -29,7 +29,11 @@ struct ubik_compile_request;
 
 struct ubik_typesystem_subst
 {
-        char *varname;
+        struct
+        {
+                char *name;
+                char *package;
+        } var;
         struct ubik_type_expr *val;
 };
 

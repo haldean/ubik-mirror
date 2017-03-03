@@ -40,6 +40,8 @@ const uint32_t UBIK_PATCH = PATCH;
 const uint64_t UBIK_VERSION =
         (uint64_t) MAJOR << 48 | (uint64_t) MINOR << 32 | PATCH;
 
+const char * const UBIK_PACKAGE = "ubik";
+
 static no_ignore ubik_error
 load_hook_file(char *hookfile)
 {

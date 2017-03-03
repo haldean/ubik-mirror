@@ -43,8 +43,11 @@ struct ubik_type_expr
 {
         union
         {
-                /* TODO: should have package! */
-                char *name;
+                struct
+                {
+                        char *package;
+                        char *name;
+                } name;
                 struct
                 {
                         struct ubik_type_expr *head;
@@ -80,14 +83,22 @@ struct ubik_type
 
 struct ubik_type_params
 {
-        char *name;
+        struct
+        {
+                char *name;
+                char *package;
+        } name;
         struct ubik_ast_loc loc;
         struct ubik_type_params *next;
 };
 
 struct ubik_type_constraints
 {
-        char *interface;
+        struct
+        {
+                char *name;
+                char *package;
+        } interface;
         struct ubik_type_params *params;
         struct ubik_ast_loc loc;
         struct ubik_type_constraints *next;

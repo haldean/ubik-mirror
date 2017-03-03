@@ -35,7 +35,11 @@ type_params_copy(
 {
         for (; src != NULL; src = src->next)
         {
-                dst->name = ubik_strdup(src->name, r);
+                if (src->name.package != NULL)
+                        dst->name.package = ubik_strdup(src->name.package, r);
+                else
+                        dst->name.package = NULL;
+                dst->name.name = ubik_strdup(src->name.name, r);
                 dst->loc = src->loc;
                 dst->next = NULL;
                 if (src->next != NULL)
@@ -54,7 +58,12 @@ type_constraints_copy(
 {
         for (; src != NULL; src = src->next)
         {
-                dst->interface = ubik_strdup(src->interface, r);
+                if (src->interface.package != NULL)
+                        dst->interface.package =
+                                ubik_strdup(src->interface.package, r);
+                else
+                        dst->interface.package = NULL;
+                dst->interface.name = ubik_strdup(src->interface.name, r);
                 ubik_alloc1(&dst->params, struct ubik_type_params, r);
                 type_params_copy(dst->params, src->params, r);
                 dst->loc = src->loc;
@@ -114,7 +123,8 @@ ubik_type_expr_copy(
 
         case TYPE_EXPR_ATOM:
         case TYPE_EXPR_VAR:
-                dst->name = ubik_strdup(src->name, r);
+                dst->name.name = ubik_strdup(src->name.name, r);
+                dst->name.package = ubik_strdup(src->name.package, r);
                 break;
 
         default:
@@ -134,7 +144,9 @@ ubik_type_is_applyable(struct ubik_type_expr *type)
                 type = type->apply.head;
         if (type->type_expr_type != TYPE_EXPR_ATOM)
                 return false;
-        return strcmp(type->name, UBIK_FUNCTION_CONSTRUCTOR) == 0;
+        if (strcmp(type->name.package, UBIK_PACKAGE) != 0)
+                return false;
+        return strcmp(type->name.name, UBIK_FUNCTION_CONSTRUCTOR) == 0;
 }
 
 no_ignore uint_fast16_t
@@ -162,8 +174,8 @@ ubik_type_make_applyable(
 
         ubik_alloc1(&applyable, struct ubik_type_expr, region);
         applyable->type_expr_type = TYPE_EXPR_ATOM;
-        applyable->name = ubik_strdup(
-                UBIK_FUNCTION_CONSTRUCTOR, region);
+        applyable->name.name = ubik_strdup(UBIK_FUNCTION_CONSTRUCTOR, region);
+        applyable->name.package = ubik_strdup(UBIK_PACKAGE, region);
 
         ubik_alloc1(&t0, struct ubik_type_expr, region);
         ubik_alloc1(&t1, struct ubik_type_expr, region);
@@ -198,7 +210,8 @@ ubik_type_expr_pretty(
         {
         case TYPE_EXPR_ATOM:
         case TYPE_EXPR_VAR:
-                ubik_fprintf(out, "%s", expr->name);
+                ubik_fprintf(out, "%s:%s",
+                             expr->name.name, expr->name.package);
                 return;
 
         case TYPE_EXPR_APPLY:
@@ -243,9 +256,11 @@ ubik_type_expr_pretty(
                 ubik_fprintf(out, " |");
                 for (c = expr->constrained.constraints; c != NULL; c = c->next)
                 {
-                        ubik_fprintf(out, " ' %s", c->interface);
+                        ubik_fprintf(out, " ' %s:%s",
+                                     c->interface.package, c->interface.name);
                         for (p = c->params; p != NULL; p = p->next)
-                                ubik_fprintf(out, " %s", p->name);
+                                ubik_fprintf(out, " %s:%s",
+                                             p->name.package, p->name.name);
                 }
                 return;
         }

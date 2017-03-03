@@ -67,7 +67,16 @@ type_params
 : NAME type_params
 {
         alloc($$, 1, struct ubik_type_params);
-        $$->name = $1;
+        $$->name.name = $1;
+        $$->name.package = NULL;
+        $$->next = $2;
+        load_loc($$->loc);
+}
+| QUALIFIED_NAME type_params
+{
+        alloc($$, 1, struct ubik_type_params);
+        wrap_err(ubik_ast_read_qualified(
+                &$$->name.package, &$$->name.name, $1, ctx->region));
         $$->next = $2;
         load_loc($$->loc);
 }
@@ -78,7 +87,16 @@ nonempty_type_params
 : NAME type_params
 {
         alloc($$, 1, struct ubik_type_params);
-        $$->name = $1;
+        $$->name.name = $1;
+        $$->name.package = NULL;
+        $$->next = $2;
+        load_loc($$->loc);
+};
+| QUALIFIED_NAME type_params
+{
+        alloc($$, 1, struct ubik_type_params);
+        wrap_err(ubik_ast_read_qualified(
+                &$$->name.package, &$$->name.name, $1, ctx->region));
         $$->next = $2;
         load_loc($$->loc);
 };
@@ -96,7 +114,18 @@ type_constraint
 : EXISTS TYPE_NAME nonempty_type_params
 {
         alloc($$, 1, struct ubik_type_constraints);
-        $$->interface = $2;
+        $$->interface.name = $2;
+        $$->interface.package = NULL;
+        $$->params = $3;
+        $$->next = NULL;
+        load_loc($$->loc);
+        merge_loc($$, $$, $3);
+}
+| EXISTS QUALIFIED_TYPE_NAME nonempty_type_params
+{
+        alloc($$, 1, struct ubik_type_constraints);
+        wrap_err(ubik_ast_read_qualified(
+                &$$->interface.package, &$$->interface.name, $2, ctx->region));
         $$->params = $3;
         $$->next = NULL;
         load_loc($$->loc);
@@ -172,8 +201,10 @@ type_apply_expr
 
         alloc($$->apply.head->apply.head, 1, struct ubik_type_expr);
         $$->apply.head->apply.head->type_expr_type = TYPE_EXPR_ATOM;
-        $$->apply.head->apply.head->name = ubik_strdup(
+        $$->apply.head->apply.head->name.name = ubik_strdup(
                 UBIK_FUNCTION_CONSTRUCTOR, ctx->region);
+        $$->apply.head->apply.head->name.package = ubik_strdup(
+                UBIK_PACKAGE, ctx->region);
 
         $$->apply.head->apply.tail = $1;
         $$->apply.tail = $3;
@@ -210,21 +241,24 @@ type_atom
 {
         alloc($$, 1, struct ubik_type_expr);
         $$->type_expr_type = TYPE_EXPR_VAR;
-        $$->name = $1;
+        $$->name.name = $1;
+        $$->name.package = NULL;
         load_loc($$->loc);
 }
 | TYPE_NAME
 {
         alloc($$, 1, struct ubik_type_expr);
         $$->type_expr_type = TYPE_EXPR_ATOM;
-        $$->name = $1;
+        $$->name.name = $1;
+        $$->name.package = NULL;
         load_loc($$->loc);
 }
 | QUALIFIED_TYPE_NAME
 {
         alloc($$, 1, struct ubik_type_expr);
         $$->type_expr_type = TYPE_EXPR_ATOM;
-        $$->name = $1;
+        wrap_err(ubik_ast_read_qualified(
+                &$$->name.package, &$$->name.name, $1, ctx->region));
         load_loc($$->loc);
 }
 ;

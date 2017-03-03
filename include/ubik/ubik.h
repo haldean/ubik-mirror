@@ -54,3 +54,5 @@ typedef struct ubik_error * ubik_error;
 /* wheee legacy */
 #include "ubik/rt.h"
 
+/* The package in which built-in names are "stored" in Ubik source. */
+extern const char * const UBIK_PACKAGE;

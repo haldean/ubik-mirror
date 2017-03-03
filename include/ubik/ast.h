@@ -239,8 +239,9 @@ ubik_ast_bind(
         struct ubik_ast_binding *bind);
 
 no_ignore ubik_error
-ubik_ast_atom_new_qualified(
-        struct ubik_ast_atom **atom,
+ubik_ast_read_qualified(
+        char **head,
+        char **tail,
         char *name,
         struct ubik_alloc_region *r);
 
