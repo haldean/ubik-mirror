@@ -144,6 +144,8 @@ ubik_type_is_applyable(struct ubik_type_expr *type)
                 type = type->apply.head;
         if (type->type_expr_type != TYPE_EXPR_ATOM)
                 return false;
+        if (type->name.package == NULL)
+                return false;
         if (strcmp(type->name.package, UBIK_PACKAGE) != 0)
                 return false;
         return strcmp(type->name.name, UBIK_FUNCTION_CONSTRUCTOR) == 0;
@@ -210,8 +212,14 @@ ubik_type_expr_pretty(
         {
         case TYPE_EXPR_ATOM:
         case TYPE_EXPR_VAR:
+                if (expr->name.package == NULL ||
+                        strcmp(expr->name.package, UBIK_PACKAGE) == 0)
+                {
+                        ubik_fprintf(out, "%s", expr->name.name);
+                        return;
+                }
                 ubik_fprintf(out, "%s:%s",
-                             expr->name.name, expr->name.package);
+                             expr->name.package, expr->name.name);
                 return;
 
         case TYPE_EXPR_APPLY:
@@ -256,11 +264,22 @@ ubik_type_expr_pretty(
                 ubik_fprintf(out, " |");
                 for (c = expr->constrained.constraints; c != NULL; c = c->next)
                 {
-                        ubik_fprintf(out, " ' %s:%s",
+                        if (c->interface.package == NULL ||
+                                !strcmp(c->interface.package, UBIK_PACKAGE))
+                                ubik_fprintf(out, " ' %s", c->interface.name);
+                        else
+                                ubik_fprintf(out, " ' %s:%s",
                                      c->interface.package, c->interface.name);
                         for (p = c->params; p != NULL; p = p->next)
-                                ubik_fprintf(out, " %s:%s",
-                                             p->name.package, p->name.name);
+                        {
+                                if (p->name.package == NULL ||
+                                        !strcmp(p->name.package, UBIK_PACKAGE))
+                                        ubik_fprintf(
+                                                out, " %s", p->name.name);
+                                else
+                                        ubik_fprintf(out, " %s:%s",
+                                                p->name.package, p->name.name);
+                        }
                 }
                 return;
         }

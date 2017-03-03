@@ -346,7 +346,8 @@ _print_type(struct ubik_type *type, int indent)
                         p = c->params;
                         while (p != NULL)
                         {
-                                printf(" %s", p->name);
+                                printf(" %s:%s",
+                                       p->name.name, p->name.package);
                                 p = p->next;
                                 if (p != NULL)
                                         printf(" ");
@@ -393,7 +394,7 @@ _print_interface(struct ubik_ast_interface *i, int indent)
         _indent(indent + 4);
         printf("params:");
         for (p = i->params; p != NULL; p = p->next)
-                printf(" %s", p->name);
+                printf(" %s:%s", p->name.name, p->name.package);
         printf("\n");
 
         _indent(indent + 4);

@@ -118,8 +118,8 @@ adt_typ(
              src_params != NULL && i < res->typ.adt.n_params;
              src_params = src_params->next, i++)
         {
-                res->typ.adt.params[i].data = strdup(src_params->name);
-                res->typ.adt.params[i].length = strlen(src_params->name);
+                res->typ.adt.params[i].data = strdup(src_params->name.name);
+                res->typ.adt.params[i].length = strlen(src_params->name.name);
         }
 
         *res_ptr = res;

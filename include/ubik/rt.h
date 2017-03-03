@@ -184,6 +184,7 @@ struct ubik_typ
                 {
                         struct ubik_typ_ctor *ctors;
                         size_t n_ctors;
+                        /* TODO: these should be type objects themselves! */
                         struct ubik_str *params;
                         size_t n_params;
                 } adt;
