@@ -85,6 +85,7 @@ free_vars(
         return ubik_raise(ERR_BAD_TYPE, "unknown type expr type");
 }
 
+/* Replace all free variables with new variables. */
 no_ignore static ubik_error
 instantiate(
         struct ubik_type_expr *res,
@@ -260,7 +261,7 @@ infer_apply(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
                 if (!unified.success)
                         return ubik_raise(
                                 ERR_UNEXPECTED_FAILURE,
-                                "unifying to an unbound variable should "
+                                "unifying to a free variable should "
                                 "always work");
 
                 e = expr;
@@ -1040,7 +1041,11 @@ ubik_infer(
                 fatal |= ierr->error_type != INFER_ERR_UNTYPEABLE;
         }
         if (fatal)
+        {
+                if (ctx->debug)
+                        ubik_typesystem_dump(ctx->type_system);
                 return ubik_raise(ERR_BAD_TYPE, "program does not type check");
+        }
         return OK;
 }
 
