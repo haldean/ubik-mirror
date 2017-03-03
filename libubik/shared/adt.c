@@ -174,7 +174,10 @@ bind_decl(
 
         ubik_alloc1(&bind->type_expr, struct ubik_type_expr, &req->region);
         bind->type_expr->type_expr_type = TYPE_EXPR_ATOM;
-        bind->type_expr->name = ubik_strdup(UBIK_TYPE_CONSTRUCTOR, &req->region);
+        bind->type_expr->name.name =
+                ubik_strdup(UBIK_TYPE_CONSTRUCTOR, &req->region);
+        bind->type_expr->name.package =
+                ubik_strdup(UBIK_PACKAGE, &req->region);
 
         err = ubik_vector_append(&ast->bindings, bind);
         if (err != OK)
@@ -206,7 +209,8 @@ ubik_adt_make_ctor_type(
 
         ubik_alloc1(&t0, struct ubik_type_expr, &req->region);
         t0->type_expr_type = TYPE_EXPR_ATOM;
-        t0->name = type->name;
+        t0->name.name = type->name;
+        t0->name.package = req->package_name;
         err = ubik_vector_append(&rev_types, t0);
         if (err != OK)
                 return err;

@@ -241,7 +241,7 @@ ubik_type_expr_print(struct ubik_type_expr *type_expr)
         switch (type_expr->type_expr_type)
         {
         case TYPE_EXPR_ATOM:
-                printf("%s", type_expr->name);
+                printf("%s:%s", type_expr->name.package, type_expr->name.name);
                 return OK;
         case TYPE_EXPR_APPLY:
                 err = ubik_type_expr_print(type_expr->apply.head);
@@ -254,7 +254,7 @@ ubik_type_expr_print(struct ubik_type_expr *type_expr)
                 printf(")");
                 return OK;
         case TYPE_EXPR_VAR:
-                printf("%s", type_expr->name);
+                printf("%s:%s", type_expr->name.package, type_expr->name.name);
                 return OK;
         case TYPE_EXPR_CONSTRAINED:
                 err = ubik_type_expr_print(type_expr->constrained.term);
@@ -264,10 +264,14 @@ ubik_type_expr_print(struct ubik_type_expr *type_expr)
                 constr = type_expr->constrained.constraints;
                 for (; constr != NULL; constr = constr->next)
                 {
-                        printf(" ' %s", constr->interface);
+                        printf(" ' %s:%s",
+                               constr->interface.package,
+                               constr->interface.name);
                         params = constr->params;
                         for (; params != NULL; params = params->next)
-                                printf(" %s", params->name);
+                                printf(" %s:%s",
+                                       params->name.package,
+                                       params->name.name);
                 }
                 return OK;
         }
@@ -325,7 +329,7 @@ _print_type(struct ubik_type *type, int indent)
                 p = type->adt.params;
                 while (p != NULL)
                 {
-                        printf(" %s", p->name);
+                        printf(" %s:%s", p->name.name, p->name.package);
                         p = p->next;
                         if (p != NULL)
                                 printf(" ");
@@ -337,7 +341,8 @@ _print_type(struct ubik_type *type, int indent)
                 c = type->adt.constraints;
                 while (c != NULL)
                 {
-                        printf(" ' %s", c->interface);
+                        printf(" ' %s:%s",
+                               c->interface.name, c->interface.package);
                         p = c->params;
                         while (p != NULL)
                         {

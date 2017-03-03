@@ -436,12 +436,13 @@ add_constraints(
                 for (i = 0; i < tsys->interfaces.n; i++)
                 {
                         iface = tsys->interfaces.elems[i];
-                        /* TODO: actual package handling here. */
-                        if (strcmp(expr_cs->interface, iface->name) == 0)
-                        {
-                                found = true;
-                                break;
-                        }
+                        if (strcmp(expr_cs->interface.package,
+                                   iface->package) != 0)
+                                continue;
+                        if (strcmp(expr_cs->interface.name, iface->name) != 0)
+                                continue;
+                        found = true;
+                        break;
                 }
                 if (!found)
                         return ubik_raise(
@@ -456,7 +457,9 @@ add_constraints(
                      params = params->next, i++)
                 {
                         impl->params[i].name.name =
-                                ubik_strdup(params->name, region);
+                                ubik_strdup(params->name.name, region);
+                        impl->params[i].name.package =
+                                ubik_strdup(params->name.package, region);
                         impl->params[i].type_expr_type = TYPE_EXPR_VAR;
                 }
                 if (params != NULL || i != iface->n_params)
@@ -497,7 +500,9 @@ apply_subst(
                 return err;
 
         case TYPE_EXPR_VAR:
-                if (strcmp(expr->name, sub->varname) != 0)
+                if (strcmp(expr->name.name, sub->var.name) != 0)
+                        return OK;
+                if (strcmp(expr->name.package, sub->var.package) != 0)
                         return OK;
                 *expr = *(sub->val);
                 return OK;
@@ -568,7 +573,12 @@ impl_entailed(
                         /* variables in the constraint match anything */
                         if (cp->type_expr_type == TYPE_EXPR_VAR)
                                 continue;
-                        if (strcmp(ip->name, cp->name) != 0)
+                        if (strcmp(ip->name.name, cp->name.name) != 0)
+                        {
+                                match = false;
+                                break;
+                        }
+                        if (strcmp(ip->name.package, cp->name.package) != 0)
                         {
                                 match = false;
                                 break;
@@ -667,9 +677,10 @@ ubik_typesystem_unify(
                                 ubik_asprintf(
                                         &unified->failure_info,
                                         region,
-                                        "%s %s",
+                                        "%s %s:%s",
                                         unified->failure_info,
-                                        constraint->params[j].name);
+                                        constraint->params[j].name.package,
+                                        constraint->params[j].name.name);
                         }
                         ubik_asprintf(
                                 &unified->failure_info,
@@ -689,7 +700,7 @@ ubik_typesystem_unify(
                 for (i = 0; i < unified->substs.n; i++)
                 {
                         sub = unified->substs.elems[i];
-                        printf("(%s => ", sub->varname);
+                        printf("(%s:%s => ", sub->var.package, sub->var.name);
                         ubik_assert(ubik_type_expr_print(sub->val) == OK);
                         printf(") ");
                 }
@@ -699,7 +710,9 @@ ubik_typesystem_unify(
                         printf("requiring impl %s ", constraint->iface->name);
                         for (j = 0; j < constraint->iface->n_params; j++)
                         {
-                                printf("%s ", constraint->params[j].name);
+                                printf("%s:%s ",
+                                       constraint->params[j].name.package,
+                                       constraint->params[j].name.name);
                         }
                 }
                 printf(", result=%d\n", unified->success);
@@ -746,7 +759,8 @@ ubik_typesystem_get_from_expr(
         {
         case TYPE_EXPR_ATOM:
                 /* TODO: should have package! */
-                return ubik_typesystem_get(res, tsys, t->name, NULL);
+                return ubik_typesystem_get(
+                        res, tsys, t->name.name, t->name.package);
 
         case TYPE_EXPR_VAR:
                 return ubik_raise(
