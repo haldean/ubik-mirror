@@ -116,6 +116,13 @@ ubik_type_builtin_from_name(
                 err = ubik_type_str(value);
                 return err;
         }
+        if (strcmp(name, "Boolean") == 0)
+        {
+                if (value == NULL)
+                        return OK;
+                err = ubik_type_boo(value);
+                return err;
+        }
         if (strcmp(name, "Number") == 0)
         {
                 if (value == NULL)

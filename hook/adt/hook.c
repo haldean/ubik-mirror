@@ -157,8 +157,8 @@ __ubik_install(struct ubik_vector *hooks, struct ubik_alloc_region *region)
 
         ubik_alloc1(&r, struct ubik_hook, region);
         *r = (struct ubik_hook) {
-                "ubik-adt-ctor-matches?", 2, "String -> a -> Boolean",
-                NULL, ctor_matches
+                "ubik-adt-ctor-matches?", 2,
+                "ubik:String -> ubik:a -> ubik:Boolean", NULL, ctor_matches
         };
         err = ubik_vector_append(hooks, r);
         if (err != OK)
@@ -166,7 +166,7 @@ __ubik_install(struct ubik_vector *hooks, struct ubik_alloc_region *region)
 
         ubik_alloc1(&r, struct ubik_hook, region);
         *r = (struct ubik_hook) {
-                "ubik-adt-get", 2, "Number -> a -> b", NULL, adt_get
+                "ubik-adt-get", 2, "ubik:Number -> ubik:a -> ubik:b", NULL, adt_get
         };
         err = ubik_vector_append(hooks, r);
         if (err != OK)
@@ -175,10 +175,11 @@ __ubik_install(struct ubik_vector *hooks, struct ubik_alloc_region *region)
         for (i = 0; i < UBIK_MAX_ADT_FIELDS; i++)
         {
                 memset(typebuf, 0x00, TYPEBUF_SIZE);
-                memcpy(typebuf, "t -> String", strlen("t -> String"));
+                memcpy(typebuf, "ubik:t -> ubik:String",
+                       strlen("ubik:t -> ubik:String"));
                 for (j = 0; j < i; j++)
                 {
-                        strcat(typebuf, " -> arg-0");
+                        strcat(typebuf, " -> ubik:arg-0");
                         k = strlen(typebuf) - 1;
                         /* assigns a simple single-char encoding to
                          * each argument, counting from 0 to 9, then a

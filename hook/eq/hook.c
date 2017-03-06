@@ -51,7 +51,8 @@ __ubik_install(struct ubik_vector *hooks, struct ubik_alloc_region *region)
         ubik_error err;
 
         ubik_alloc1(&r, struct ubik_hook, region);
-        *r = (struct ubik_hook) { "eq", 2, "a -> a -> Boolean", NULL, eq };
+        *r = (struct ubik_hook) {
+                "eq", 2, "ubik:a -> ubik:a -> ubik:Boolean", NULL, eq };
         err = ubik_vector_append(hooks, r);
         if (err != OK)
                 return err;

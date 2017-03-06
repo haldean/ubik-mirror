@@ -20,6 +20,7 @@
 #include "ubik/assert.h"
 #include "ubik/compile.h"
 #include "ubik/feedback.h"
+#include "ubik/rttypes.h"
 #include "ubik/string.h"
 #include "ubik/typ.h"
 #include "ubik/typesystem.h"
@@ -146,6 +147,24 @@ ubik_typesystem_load(
         {
                 t = (struct ubik_type *) ast->types.elems[i];
                 ubik_alloc1(&tst, struct ts_type, tsys->region);
+
+                err = ubik_type_builtin_from_name(NULL, t->name);
+                if (err == OK)
+                {
+                        ubik_feedback_line(
+                                req->feedback,
+                                UBIK_FEEDBACK_ERR,
+                                &t->loc,
+                                "type name \x1b[32m%s\x1b[0m is reserved. "
+                                "This restriction will go away in a future "
+                                "version of the Ubik compiler.",
+                                t->name);
+                        return ubik_raise(
+                                ERR_BAD_VALUE,
+                                "tried to rebind built-in type name");
+                }
+                free(err);
+
                 tst->name = ubik_strdup(t->name, tsys->region);
                 tst->package = ubik_strdup(ast->package_name, tsys->region);
                 /* add to list first, to enable recursive type definitions */

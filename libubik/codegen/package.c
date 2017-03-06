@@ -33,6 +33,12 @@ assign_package(
         struct ubik_ast *ast,
         char *package_name);
 
+static void
+assign_package_type_expr(
+        struct ubik_alloc_region *r,
+        struct ubik_type_expr *texpr,
+        char *package_name);
+
 no_ignore static ubik_error
 assign_package_expr(
         struct ubik_alloc_region *r,
@@ -93,8 +99,30 @@ assign_package_type_constraints(
         }
 }
 
+static void
+assign_package_adt_ctors(
+        struct ubik_alloc_region *r,
+        struct ubik_ast_adt_ctors *c,
+        char *package_name)
+{
+        struct ubik_type_list *tl;
+
+        while (c != NULL)
+        {
+                tl = c->params;
+                while (tl != NULL)
+                {
+                        assign_package_type_expr(
+                                r, tl->type_expr, package_name);
+                        tl = tl->next;
+                }
+                c = c->next;
+        }
+}
+
 no_ignore static ubik_error
 assign_package_type(
+        struct ubik_alloc_region *r,
         struct ubik_type *type,
         char *package_name)
 {
@@ -109,6 +137,7 @@ assign_package_type(
                 assign_package_type_params(type->adt.params, package_name);
                 assign_package_type_constraints(
                         type->adt.constraints, package_name);
+                assign_package_adt_ctors(r, type->adt.ctors, package_name);
                 return OK;
         }
         ubik_unreachable("unknown type type");
@@ -221,7 +250,7 @@ assign_package(
         for (i = 0; i < ast->types.n; i++)
         {
                 type = ast->types.elems[i];
-                err = assign_package_type(type, package_name);
+                err = assign_package_type(r, type, package_name);
                 if (err != OK)
                         return err;
         }

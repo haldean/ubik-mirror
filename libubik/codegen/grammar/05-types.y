@@ -253,6 +253,14 @@ type_atom
         $$->name.package = NULL;
         load_loc($$->loc);
 }
+| QUALIFIED_NAME
+{
+        alloc($$, 1, struct ubik_type_expr);
+        $$->type_expr_type = TYPE_EXPR_VAR;
+        wrap_err(ubik_ast_read_qualified(
+                &$$->name.package, &$$->name.name, $1, ctx->region));
+        load_loc($$->loc);
+}
 | QUALIFIED_TYPE_NAME
 {
         alloc($$, 1, struct ubik_type_expr);

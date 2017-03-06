@@ -1,11 +1,11 @@
 ~ ubik-tests/pattern-block
 
-^ Number
-    = Succ Number
+^ Natural
+    = Succ Natural
     = Zero
 
 : is-it-zero
-    ^ Number -> String
+    ^ Natural -> String
     = \n -> ? n {
         . Succ * => "no"
         . Zero   => "yes"

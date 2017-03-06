@@ -37,6 +37,7 @@ __ubik_install(struct ubik_vector *hooks, struct ubik_alloc_region *region)
 {
         struct ubik_hook *r;
         ubik_alloc1(&r, struct ubik_hook, region);
-        *r = (struct ubik_hook) { "emit", 1, "String -> String", NULL, emit };
+        *r = (struct ubik_hook) {
+                "emit", 1, "ubik:String -> ubik:String", NULL, emit };
         return ubik_vector_append(hooks, r);
 }

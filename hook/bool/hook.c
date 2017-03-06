@@ -86,7 +86,8 @@ __ubik_install(struct ubik_vector *hooks, struct ubik_alloc_region *region)
 
         ubik_alloc1(&r, struct ubik_hook, region);
         *r = (struct ubik_hook) {
-                "ubik-native-boolean-true", 0, "Boolean", NULL, native_true
+                "ubik-native-boolean-true", 0, "ubik:Boolean", NULL,
+                native_true
         };
         err = ubik_vector_append(hooks, r);
         if (err != OK)
@@ -94,7 +95,8 @@ __ubik_install(struct ubik_vector *hooks, struct ubik_alloc_region *region)
 
         ubik_alloc1(&r, struct ubik_hook, region);
         *r = (struct ubik_hook) {
-                "ubik-native-boolean-false", 0, "Boolean", NULL, native_false
+                "ubik-native-boolean-false", 0, "ubik:Boolean", NULL,
+                native_false
         };
         err = ubik_vector_append(hooks, r);
         if (err != OK)
