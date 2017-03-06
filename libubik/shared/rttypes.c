@@ -104,16 +104,22 @@ ubik_type_builtin_from_name(
 
         if (strcmp(name, "Word") == 0)
         {
+                if (value == NULL)
+                        return OK;
                 err = ubik_type_rat(value);
                 return err;
         }
         if (strcmp(name, "String") == 0)
         {
+                if (value == NULL)
+                        return OK;
                 err = ubik_type_str(value);
                 return err;
         }
         if (strcmp(name, "Number") == 0)
         {
+                if (value == NULL)
+                        return OK;
                 err = ubik_type_rat(value);
                 return err;
         }
