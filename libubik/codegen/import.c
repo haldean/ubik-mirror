@@ -56,6 +56,8 @@ add_splat(
         struct ubik_compile_result *cres;
         struct ubik_ast_binding *new_bind;
         struct ubik_ast_binding *old_bind;
+        struct ubik_type *type;
+        struct ubik_type *alias;
         struct ubik_resolve_name_loc *name_loc;
         size_t i;
         ubik_error err;
@@ -110,6 +112,25 @@ add_splat(
                         new_bind->type_expr = NULL;
 
                 err = ubik_vector_append(&ast->bindings, new_bind);
+                if (err != OK)
+                        return err;
+        }
+
+        for (i = 0; i < cres->ast->types.n; i++)
+        {
+                type = cres->ast->types.elems[i];
+
+                ubik_alloc1(&alias, struct ubik_type, region);
+                alias->type = TYPE_ALIAS;
+                alias->name = ubik_strdup(type->name, region);
+
+                ubik_alloc1(&alias->aliases_to, struct ubik_type_expr, region);
+                alias->aliases_to->name.package =
+                        ubik_strdup(canonical, region);
+                alias->aliases_to->name.name = ubik_strdup(type->name, region);
+                alias->aliases_to->type_expr_type = TYPE_EXPR_ATOM;
+
+                err = ubik_vector_append(&ast->types, alias);
                 if (err != OK)
                         return err;
         }

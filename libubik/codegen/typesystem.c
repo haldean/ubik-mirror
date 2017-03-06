@@ -55,20 +55,22 @@ struct ts_impl
         struct ubik_type_expr params[UBIK_MAX_INTERFACE_PARAMS];
 };
 
-struct ts_value
+struct ts_alias
 {
-        union
-        {
-                struct ts_type t;
-                struct ts_iface f;
-                struct ts_impl m;
-        };
-        enum ts_value_type vt;
+        struct {
+                char *name;
+                char *package;
+        } src;
+        struct {
+                char *name;
+                char *package;
+        } dst;
 };
 
 struct ubik_typesystem
 {
         struct ubik_vector types;
+        struct ubik_vector aliases;
         struct ubik_vector interfaces;
         struct ubik_vector implementations;
         struct ubik_alloc_region *region;
@@ -86,6 +88,7 @@ ubik_typesystem_init(
 
         ubik_alloc1(tsys, struct ubik_typesystem, region);
         (*tsys)->types.region = region;
+        (*tsys)->aliases.region = region;
         (*tsys)->interfaces.region = region;
         (*tsys)->implementations.region = region;
         (*tsys)->region = region;
