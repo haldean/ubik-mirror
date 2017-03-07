@@ -142,13 +142,16 @@ instantiate(
 no_ignore static ubik_error
 infer_native(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
 {
+        struct ubik_type_expr *t;
         struct ubik_infer_error *ierr;
         ubik_error err;
 
+        ubik_alloc1(&t, struct ubik_type_expr, &ctx->req->region);
+
         err = ubik_natives_get_type(
-                expr->type, expr->atom->str, &ctx->req->region);
+                t, expr->atom->str, &ctx->req->region);
         if (err == OK)
-                return OK;
+                return instantiate(expr->type, t, ctx);
         if (err->error_code == ERR_UNKNOWN_TYPE)
         {
                 free(err);
@@ -173,6 +176,8 @@ infer_native(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
 no_ignore static ubik_error
 infer_atom(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
 {
+        struct ubik_type_expr *t;
+
         ubik_alloc1(&expr->type, struct ubik_type_expr, &ctx->req->region);
 
         switch (expr->atom->atom_type)
@@ -211,12 +216,11 @@ infer_atom(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
                                         expr->type;
                                 return OK;
                         }
-                        expr->type = expr->atom->name_loc->def->inferred_type;
-                        return OK;
+                        ubik_alloc1(&t, struct ubik_type_expr,
+                                    &ctx->req->region);
+                        t = expr->atom->name_loc->def->inferred_type;
                 }
-                return ubik_raise(
-                        ERR_BAD_VALUE,
-                        "unknown name resolution type in infer");
+                return instantiate(expr->type, t, ctx);
 
         case ATOM_VALUE:
                 expr->type = NULL;
