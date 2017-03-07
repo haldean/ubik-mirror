@@ -194,6 +194,7 @@ ubik_adt_make_ctor_type(
 {
         struct ubik_type_expr *t0, *t1;
         struct ubik_type_list *cargs;
+        struct ubik_type_params *tparam;
         struct ubik_vector rev_types = {0};
         ubik_error err;
         ssize_t i;
@@ -211,6 +212,22 @@ ubik_adt_make_ctor_type(
         t0->type_expr_type = TYPE_EXPR_ATOM;
         t0->name.name = type->name;
         t0->name.package = req->package_name;
+
+        for (tparam = type->adt.params; tparam != NULL; tparam = tparam->next)
+        {
+                ubik_alloc1(&t1, struct ubik_type_expr, &req->region);
+                t1->type_expr_type = TYPE_EXPR_APPLY;
+                t1->apply.head = t0;
+
+                ubik_alloc1(&t0, struct ubik_type_expr, &req->region);
+                t0->type_expr_type = TYPE_EXPR_VAR;
+                t0->name.name = tparam->name.name;
+                t0->name.package = tparam->name.package;
+                t1->apply.tail = t0;
+
+                t0 = t1;
+        }
+
         err = ubik_vector_append(&rev_types, t0);
         if (err != OK)
                 return err;
