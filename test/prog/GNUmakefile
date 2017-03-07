@@ -33,6 +33,7 @@ tests = \
 	scope-simple.uk \
 	simple-adt.uk \
 	simple-test.uk \
+	typevars.uk \
 	zero-arity.uk
 
 all: $(tests)

@@ -1,0 +1,12 @@
+^ Test var
+    = Hello var
+
+: thing ^ Test a -> a = \x -> ? x { . Hello v => v }
+
+! {
+    : t1 = thing (Hello 10)
+    : t2 = thing (Hello "ten")
+    ! 0
+}
+
+~ ubik-tests/typevars
