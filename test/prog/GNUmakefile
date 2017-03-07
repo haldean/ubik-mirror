@@ -19,6 +19,7 @@ tests = \
 	is-prime.uk \
 	lambda.uk \
 	lambda-simple.uk \
+	list.uk \
 	literate.rst \
 	literate-ooo.rst \
 	literate-simple.ul \
