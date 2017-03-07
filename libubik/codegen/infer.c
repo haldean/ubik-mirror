@@ -318,8 +318,8 @@ infer_apply(struct ubik_ast_expr *expr, struct ubik_infer_context *ctx)
         }
 
         err = ubik_typesystem_unify(
-                &unified, ctx->type_system, NULL,
-                inst->apply.head->apply.tail, t, &ctx->req->region, ctx->debug);
+                &unified, ctx->type_system, NULL, inst->apply.head->apply.tail,
+                t, &ctx->req->region, ctx->debug);
         if (err != OK)
                 return err;
         if (!unified.success)
