@@ -149,8 +149,15 @@ ubik_typ_from_ast(
         switch (t->type)
         {
         case TYPE_RECORD:
-        case TYPE_ALIAS:
                 return ubik_raise(ERR_NOT_IMPLEMENTED, "records");
+
+        case TYPE_ALIAS:
+                if (t->aliases_to->type_expr_type != TYPE_EXPR_ATOM)
+                        return ubik_raise(
+                                ERR_NOT_IMPLEMENTED, "nonatomic aliases");
+                return ubik_typesystem_get(
+                        res, tsys, t->aliases_to->name.name,
+                        t->aliases_to->name.package);
 
         case TYPE_ADT:
                 return adt_typ(res, t, tsys, ws);

@@ -129,10 +129,14 @@ assign_package_type(
         switch (type->type)
         {
         case TYPE_RECORD:
-        case TYPE_ALIAS:
                 return ubik_raise(
                         ERR_NOT_IMPLEMENTED,
                         "type package assignment not implemented");
+
+        case TYPE_ALIAS:
+                assign_package_type_expr(r, type->aliases_to, package_name);
+                return OK;
+
         case TYPE_ADT:
                 assign_package_type_params(type->adt.params, package_name);
                 assign_package_type_constraints(

@@ -139,6 +139,7 @@ ubik_typesystem_load(
         struct ts_type *tst;
         struct ts_iface *tsif;
         struct ts_impl *tsim;
+        struct ts_alias *tsalias;
 
         char *check_pkg;
         size_t i;
@@ -149,7 +150,6 @@ ubik_typesystem_load(
         for (i = 0; i < ast->types.n; i++)
         {
                 t = (struct ubik_type *) ast->types.elems[i];
-                ubik_alloc1(&tst, struct ts_type, tsys->region);
 
                 err = ubik_type_builtin_from_name(NULL, t->name);
                 if (err == OK)
@@ -168,6 +168,23 @@ ubik_typesystem_load(
                 }
                 free(err);
 
+                if (t->type == TYPE_ALIAS)
+                {
+                        ubik_assert(t->aliases_to->type_expr_type
+                                    == TYPE_EXPR_ATOM);
+                        ubik_alloc1(&tsalias, struct ts_alias, tsys->region);
+                        tsalias->src.name = t->aliases_to->name.name;
+                        tsalias->src.package = t->aliases_to->name.package;
+                        tsalias->dst.name = ubik_strdup(t->name, tsys->region);
+                        tsalias->dst.package = ubik_strdup(
+                                ast->package_name, tsys->region);
+                        err = ubik_vector_append(&tsys->aliases, tsalias);
+                        if (err != OK)
+                                return err;
+                        continue;
+                }
+
+                ubik_alloc1(&tst, struct ts_type, tsys->region);
                 tst->name = ubik_strdup(t->name, tsys->region);
                 tst->package = ubik_strdup(ast->package_name, tsys->region);
                 /* add to list first, to enable recursive type definitions */
@@ -287,12 +304,20 @@ ubik_typesystem_dump(struct ubik_typesystem *tsys)
         struct ts_type *type;
         struct ts_iface *iface;
         struct ts_impl *impl;
+        struct ts_alias *alias;
 
         printf("\n%lu known types:\n", tsys->types.n);
         for (i = 0; i < tsys->types.n; i++)
         {
                 type = tsys->types.elems[i];
                 printf("\t%s:%s\n", type->package, type->name);
+        }
+        printf("%lu known aliases:\n", tsys->aliases.n);
+        for (i = 0; i < tsys->aliases.n; i++)
+        {
+                alias = tsys->aliases.elems[i];
+                printf("\t%s:%s <- %s:%s\n", alias->dst.package,
+                       alias->dst.name, alias->src.package, alias->src.name);
         }
         printf("%lu known interfaces:\n", tsys->interfaces.n);
         for (i = 0; i < tsys->interfaces.n; i++)
@@ -319,13 +344,49 @@ ubik_typesystem_dump(struct ubik_typesystem *tsys)
 no_ignore static ubik_error
 assign_atom_to_atom(
         struct ubik_typesystem_unified *unified,
+        struct ubik_typesystem *tsys,
         struct ubik_type_expr *to,
         struct ubik_type_expr *from)
 {
+        bool name_match = true;
+        struct ts_alias *a;
+        size_t i;
+
         if (strcmp(to->name.name, from->name.name) != 0)
-                unified->success = false;
+                name_match = false;
         if (strcmp(to->name.package, from->name.package) != 0)
-                unified->success = false;
+                name_match = false;
+        if (name_match)
+                return OK;
+
+        for (i = 0; i < tsys->aliases.n; i++)
+        {
+                /* There has got to be a prettier way to do this. */
+                a = tsys->aliases.elems[i];
+                if (strcmp(a->dst.name, to->name.name) == 0)
+                {
+                        if (strcmp(a->dst.package, to->name.package) != 0)
+                                goto flip;
+                        if (strcmp(a->src.name, from->name.name) != 0)
+                                goto flip;
+                        if (strcmp(a->src.package, from->name.package) != 0)
+                                goto flip;
+                        return OK;
+                }
+        flip:
+                if (strcmp(a->dst.name, from->name.name) == 0)
+                {
+                        if (strcmp(a->dst.package, from->name.package) != 0)
+                                continue;
+                        if (strcmp(a->src.name, to->name.name) != 0)
+                                continue;
+                        if (strcmp(a->src.package, to->name.package) != 0)
+                                continue;
+                        return OK;
+                }
+        }
+
+        unified->success = false;
         return OK;
 }
 
@@ -405,7 +466,7 @@ unify(
                                 unified, tsys, assign_from, assign_to, region);
                 if (assign_from->type_expr_type == TYPE_EXPR_ATOM)
                         return assign_atom_to_atom(
-                                unified, assign_to, assign_from);
+                                unified, tsys, assign_to, assign_from);
                 unified->success = false;
                 return OK;
 
