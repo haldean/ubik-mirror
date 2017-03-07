@@ -55,6 +55,7 @@ ubik_parse(
         local(parse_context) struct ubik_parse_context ctx = {0};
         void *scanner;
         yypstate *ps;
+        struct ubik_ast_loc temploc;
 
         ctx.source_name = source_name;
         ctx.source_stream = stream;
@@ -73,6 +74,19 @@ ubik_parse(
 
         yypstate_delete(ps);
         yylex_destroy(scanner);
+
+        if (ctx.ast->package_name == NULL)
+        {
+                temploc.source_name = source_name;
+                temploc.line_start = 0;
+                temploc.col_start = 0;
+                temploc.line_end = 0;
+                temploc.col_end = 0;
+                status = 1;
+                ubik_feedback_header(
+                        feedback, UBIK_FEEDBACK_ERR, &temploc,
+                        "missing package declaration");
+        }
 
         if (status == 0)
         {
