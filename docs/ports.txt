@@ -1,0 +1,218 @@
+Ports ==================================================================
+Haldean Brown                                      First draft: Mar 2017
+                                                  Last updated: Mar 2017
+
+Status: Draft
+
+------------------------------------------------------------------------
+
+Ports are how a Ubik program interacts with the world outside the
+interpreter, and also form the highest-level control flow construct of
+Ubik. Ports are pluggable interfaces that allow for values to "flow"
+through a directed acyclic graph of computation. They can be backed by
+hooks (these are called "external ports" or "eports") or created from
+within the runtime (these are "virtual ports" or "vports"), and can be
+sources, sinks, or pipes (both source and sink). Ports are also typed;
+sources only produce values of a certain type, and sinks only support a
+certain type. This allows for the safe composition of ports into larger
+graphs of computation.
+
+Speaking of composition, ports are connected and composed using a
+special set of operators. Similar to bindings, tests, or type
+definitions, port connections are defined using a special top-level
+statement: a plug. Plugs begin with the plug operator >>, and then are
+composed of ports, functions and port operators. The available port
+operators are:
+
+    >   sink
+    |   map
+    .   reduce
+    /   zip
+    %   left-zip
+
+All of the operators are left-associative, infix (yes, infix!), and have
+equal precidence. There are no parenthesized statements; only simple
+pipelines are allowed (more complex branching will be discussed in a
+moment). Infix operators are used here instead of prefix operators,
+which is admittedly inconsistent with the rest of Ubik.  However, plugs
+are special in that they are expected to form chains; you want it to be
+easy to express things like:
+
+    >> weather-data
+        | get-temperature
+        / dow-jones-index
+        . find-correlation
+        | correlation-to-string
+        > stdout
+
+The equivalent prefix operation would be:
+
+    >> > (| (. (/ (| weather-data get-temperature) dow-jones-index)
+                find-correlation) correlation-to-string) stdout
+
+Which is so much harder to read. Ubik uses prefix notations for
+expressions because it handles functions of multiple arities cleanly,
+it's a syntax that is familiar to almost all programmers (even C-like
+languages, if you ignore arithmetic) and requires no precedence rules.
+With plugs, we only have one arity, we have no user-definable operators,
+we don't need multiple precidence levels, and binary operators forming
+an arithmetic (an arithmetic of streams, sure, but an arithmetic none
+the less) are also a familiar form to most programmers. Also, it's just
+way prettier.
+
+Let's go over what each of the operators does!
+
+Sink >  ----------------------------------------------------------------
+
+Map is by far the simplest of the operators: it takes a port of type T
+on the left, a port of type T on the right, and it puts each value from
+the port on the left into the port on the right.
+
+The sink operator has no result, and a plug without a sink produces no
+observable change to the system. Each plug therefore has exactly one
+sink, as the rightmost operator.
+
+The ubik implementation of cat looks like:
+
+    >> io:stdin > io:stdout
+
+Map |  -----------------------------------------------------------------
+
+Map takes a port of type A on the left and a function of type A -> B on
+the right and produces a port of type B. It does this by taking each
+element from the port, calling the function on it, and placing the
+result of that function into the result port.
+
+For example, here's a program that takes every line on standard in,
+concatenates it to itself, and then prints it on standard out:
+
+    : double-line ^ String -> String = concat
+    >> io:stdin | double-line > io:stdout
+
+Reduce .  --------------------------------------------------------------
+
+The reduce operator takes a port of type A, a function (let's call it f)
+of type maybe:Maybe B -> A -> B, and produces a port of type B. When the
+first value, v, is seen on the left port, the reduction behaves as if
+this were executed:
+
+    : res = f (maybe:No) v
+
+and then it stashes that value away in an accumulator. Note that it does
+not push it into the result port! For each subsequent value read off the
+source port, it executes:
+
+    : res = f (maybe:Yes accumulator) v
+
+It then both stashes the result in the accumulator and pushes it into
+the result port.
+
+This pattern is handy for doing things that require maintaining some
+kind of state between calls to the function. For example, keeping a
+cumulative sum of a stream of numbers is easy:
+
+    : sum-reducer ^ maybe:Maybe Number -> Number -> Number
+        = \acc x -> ? acc {
+            . maybe:Yes n => + n x
+            . maybe:No    => x
+        }
+    >> numbers . sum-reducer > sums
+
+Or, to calculate a mean of a source:
+
+    ^ RunningSum = RunningSum Number Number
+    : running-sum ^ RunningSum -> weather:WeatherUpdate -> RunningSum
+        = \rs, wu -> ? wu {
+            . weather:Temperature t => ? rs {
+                . RunningSum sum n => RunningSum (+ t sum) (+ n 1)
+            }
+        }
+    : find-mean ^ RunningSum -> Number
+        = \rs -> ? rs {
+            . RunningSum sum n => / sum n
+        }
+    >> weather:temperatures
+       . running-sum
+       | find-mean
+       | humanize
+       > io:stdout
+
+Zip /  -----------------------------------------------------------------
+
+Zip takes two ports of types A and B and produces a stream of type
+port:Zip A B. These are 2-tuples that can be unpacked by maps, reducers
+or whatever downstream of the zip. A new Zip is created for each value
+on each port; zips do not coalesce updates that occur simultaneously on
+the two input ports. That means that, if you have values A1 and A2 on
+the left port, and B1 and B2 on your right port, your zip port will end
+up with either:
+
+    port:Zip A1 B1
+    port:Zip A1 B2
+    port:Zip A2 B2
+
+or:
+
+    port:Zip A1 B1
+    port:Zip A2 B1
+    port:Zip A2 B2
+
+This is an important note! You cannot depend on the order in which
+things are delivered to separate ports at any point in the Ubik system,
+and this is an example of that. Both of those orderings for events are
+valid.
+
+The reasoning behind this is simple: coalescing that into two values
+(port:Zip A1 B1, port:Zip A2 B2) would require a determination of
+intent, one in which the mechanism for specifying intent would be far
+more complex than the solution that can be implemented by the user. If
+you want the result to only be updated when one of the streams changes,
+you're looking for...
+
+Left-zip %  ------------------------------------------------------------
+
+Left-zip is the same as zip, except a result is only pushed into the
+resulting stream when the left stream is updated. This is provided to
+associate a continuously-varying port with values from a discrete port,
+the most common case of which is timestamping values. This is probably
+easiest to explain with an example:
+
+    >> tweets-about-ubik
+       % time:clock
+       | extract-time
+       . difference-pairs
+       | extract-delta
+       > time-between-tweets-about-ubik
+
+    : extract-time ^ port:Zip Tweet Time -> Time
+        = \z -> ? z { . port:Zip _ time -> time }
+
+    ^ TimeReducer = TimeReducer Time TimeDelta
+
+    : difference-pairs
+        ^ maybe:Maybe TimeReducer -> Time -> TimeReducer
+        = \mtr t -> ? mtr {
+            . maybe:Yes (TimeReducer last _) => TimeReducer t (time-diff last t)
+            . maybe:No => TimeReducer t (time-diff t t)
+        }
+
+    : extract-delta ^ TimeReducer -> TimeDelta
+        = \tr -> ? tr { . TimeReducer _ delta -> delta }
+
+This calculates the amount of time between events occurring on the
+tweets-about-ubik port, and saves that to a result port. A normal zip is
+not appropriate here, because it would update every time the clock
+ticked; instead, we use a left zip, and the resulting port only has
+values that were triggered by values from the tweets-about-ubik port.
+
+Special ports ----------------------------------------------------------
+
+Sometimes you want to sink values into a sink without sourcing those
+values from somewhere else. Tough shit! That doesn't work in Ubik. There
+is, however, one special port that contains a single token at the start
+of the interpreter:
+
+    ~ my-module
+    ` port
+    >> port:once | (\x -> 7) | humanize > io:stdout
+
