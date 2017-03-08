@@ -96,3 +96,5 @@
             .        => filter f tail
         }
     }
+?: filter (\x -> math:lte x 10) (Cons 10 (Cons 20 (Cons 0 Nil)))
+   = (Cons 10 (Cons 0 Nil))
