@@ -4,6 +4,7 @@ top = ..
 c_sources = \
     ./codegen/assign.c \
     ./codegen/ast.c \
+    ./codegen/clash.c \
     ./codegen/closure.c \
     ./codegen/compile.c \
     ./codegen/gen.c \
@@ -51,6 +52,7 @@ c_sources = \
     ./shared/stream.c \
     ./shared/streamutil.c \
     ./shared/string.c \
+    ./shared/stringset.c \
     ./shared/typ.c \
     ./shared/uri.c \
     ./shared/util.c \

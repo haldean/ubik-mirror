@@ -1,0 +1,5 @@
+~ ubik-tests/name-clash
+
+` *boolean
+
+: true ^ Number = 10

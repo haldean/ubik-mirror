@@ -26,6 +26,7 @@
 #include "ubik/adt.h"
 #include "ubik/assert.h"
 #include "ubik/assign.h"
+#include "ubik/clash.h"
 #include "ubik/compile.h"
 #include "ubik/feedback.h"
 #include "ubik/gen.h"
@@ -313,6 +314,10 @@ compile_job(
                 if (err != OK)
                         return err;
         }
+
+        err = ubik_clash_check(job->ast, job->request->feedback);
+        if (err != OK)
+                return err;
 
         err = ubik_typesystem_load(
                 cenv->type_system, job->ast, job->request);
