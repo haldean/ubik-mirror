@@ -88,16 +88,14 @@ ubik_stringset_present(struct ubik_stringset *ss, char *str)
         return false;
 }
 
+/* These are broken up into two methods: one that frees the node, the vector
+ * and its children, and one that just frees the vector and the children. This
+ * is because we do not want to free the root node, which was allocated by the
+ * user. */
 void
 ss_free(struct ubik_stringset *ss)
 {
-        size_t i;
-
-        for (i = 0; i < ss->children.n; i++)
-        {
-                ss_free(ss->children.elems[i]);
-        }
-        ubik_vector_free(&ss->children);
+        ubik_stringset_free(ss);
         free(ss);
 }
 
