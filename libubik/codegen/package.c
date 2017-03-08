@@ -23,145 +23,69 @@
 #include "ubik/rttypes.h"
 #include "ubik/string.h"
 #include "ubik/types.h"
+#include "ubik/walk.h"
 
 #include <stdio.h>
 #include <string.h>
 
-no_ignore static ubik_error
-assign_package(
-        struct ubik_alloc_region *r,
-        struct ubik_ast *ast,
-        char *package_name);
+struct package_info
+{
+        /* this gets punned; walk_info must be the first element. */
+        struct ubik_walk_info head;
 
-static void
-assign_package_type_expr(
-        struct ubik_alloc_region *r,
-        struct ubik_type_expr *texpr,
-        char *package_name);
+        char *package_name;
+        struct ubik_alloc_region *r;
+};
 
 no_ignore static ubik_error
 assign_package_expr(
-        struct ubik_alloc_region *r,
-        struct ubik_ast_expr *expr,
-        char *package_name)
+        struct ubik_walk_info *wi,
+        struct ubik_ast_expr *expr)
 {
-        struct ubik_ast *subast;
-        struct ubik_ast_expr *subexprs[UBIK_MAX_SUBEXPRS];
-        size_t n_subexprs;
-        size_t i;
-        ubik_error err;
+        struct package_info *pi;
+        pi = (struct package_info *) wi;
 
-        expr->scope->package_name = package_name;
-
-        err = ubik_ast_subexprs(&subast, subexprs, &n_subexprs, expr);
-        if (err != OK)
-                return err;
-
-        for (i = 0; i < n_subexprs; i++)
-        {
-                err = assign_package_expr(r, subexprs[i], package_name);
-                if (err != OK)
-                        return err;
-        }
-        if (subast != NULL)
-        {
-                err = assign_package(r, subast, package_name);
-                if (err != OK)
-                        return err;
-        }
+        expr->scope->package_name = pi->package_name;
         return OK;
 }
 
-static void
+no_ignore static ubik_error
 assign_package_type_params(
-        struct ubik_type_params *p,
-        char *package_name)
+        struct ubik_walk_info *wi,
+        struct ubik_type_params *p)
 {
-        while (p != NULL)
-        {
-                if (p->name.package == NULL)
-                        p->name.package = package_name;
-                p = p->next;
-        }
-}
+        struct package_info *pi;
+        pi = (struct package_info *) wi;
 
-static void
-assign_package_type_constraints(
-        struct ubik_type_constraints *c,
-        char *package_name)
-{
-        while (c != NULL)
-        {
-                if (c->interface.package == NULL)
-                        c->interface.package = package_name;
-                assign_package_type_params(c->params, package_name);
-                c = c->next;
-        }
-}
-
-static void
-assign_package_adt_ctors(
-        struct ubik_alloc_region *r,
-        struct ubik_ast_adt_ctors *c,
-        char *package_name)
-{
-        struct ubik_type_list *tl;
-
-        while (c != NULL)
-        {
-                tl = c->params;
-                while (tl != NULL)
-                {
-                        assign_package_type_expr(
-                                r, tl->type_expr, package_name);
-                        tl = tl->next;
-                }
-                c = c->next;
-        }
+        if (p->name.package == NULL)
+                p->name.package = pi->package_name;
+        return OK;
 }
 
 no_ignore static ubik_error
-assign_package_type(
-        struct ubik_alloc_region *r,
-        struct ubik_type *type,
-        char *package_name)
+assign_package_type_constraints(
+        struct ubik_walk_info *wi,
+        struct ubik_type_constraints *c)
 {
-        switch (type->type)
-        {
-        case TYPE_RECORD:
-                return ubik_raise(
-                        ERR_NOT_IMPLEMENTED,
-                        "type package assignment not implemented");
+        struct package_info *pi;
+        pi = (struct package_info *) wi;
 
-        case TYPE_ALIAS:
-                assign_package_type_expr(r, type->aliases_to, package_name);
-                return OK;
-
-        case TYPE_ADT:
-                assign_package_type_params(type->adt.params, package_name);
-                assign_package_type_constraints(
-                        type->adt.constraints, package_name);
-                assign_package_adt_ctors(r, type->adt.ctors, package_name);
-                return OK;
-        }
-        ubik_unreachable("unknown type type");
+        if (c->interface.package == NULL)
+                c->interface.package = pi->package_name;
+        return OK;
 }
 
-static void
+no_ignore static ubik_error
 assign_package_type_expr(
-        struct ubik_alloc_region *r,
-        struct ubik_type_expr *texpr,
-        char *package_name)
+        struct ubik_walk_info *wi,
+        struct ubik_type_expr *texpr)
 {
-        struct ubik_type_constraints *c;
         ubik_error err;
+        struct package_info *pi;
+        pi = (struct package_info *) wi;
 
         switch (texpr->type_expr_type)
         {
-        case TYPE_EXPR_APPLY:
-                assign_package_type_expr(r, texpr->apply.head, package_name);
-                assign_package_type_expr(r, texpr->apply.tail, package_name);
-                return;
         case TYPE_EXPR_ATOM:
         case TYPE_EXPR_VAR:
                 if (texpr->name.package == NULL)
@@ -171,121 +95,42 @@ assign_package_type_expr(
                         if (err == OK)
                         {
                                 texpr->name.package =
-                                        ubik_strdup(UBIK_PACKAGE, r);
-                                return;
+                                        ubik_strdup(UBIK_PACKAGE, pi->r);
+                                return OK;
                         }
                         free(err);
-                        texpr->name.package = package_name;
+                        texpr->name.package = pi->package_name;
                 }
-                return;
+                return OK;
+
         case TYPE_EXPR_CONSTRAINED:
-                assign_package_type_expr(
-                        r, texpr->constrained.term, package_name);
-                c = texpr->constrained.constraints;
-                while (c != NULL)
-                {
-                        if (c->interface.package == NULL)
-                                c->interface.package = package_name;
-                        assign_package_type_params(c->params, package_name);
-                        c = c->next;
-                }
-                return;
+        case TYPE_EXPR_APPLY:
+                return OK;
         }
+        ubik_unreachable("unknown type expr type");
 }
 
 no_ignore static ubik_error
 assign_package_implementation(
-        struct ubik_alloc_region *r,
-        struct ubik_ast_implementation *impl,
-        char *package_name)
+        struct ubik_walk_info *wi,
+        struct ubik_ast_implementation *impl)
 {
-        struct ubik_type_list *tl;
-        struct ubik_ast_member_list *ml;
-        ubik_error err;
-
+        struct package_info *pi;
+        pi = (struct package_info *) wi;
         if (impl->iface_package == NULL)
-                impl->iface_package = package_name;
-
-        for (tl = impl->params; tl != NULL; tl = tl->next)
-                assign_package_type_expr(r, tl->type_expr, package_name);
-
-        for (ml = impl->members; ml != NULL; ml = ml->next)
-        {
-                assign_package_type_expr(r, ml->type, package_name);
-                err = assign_package_expr(r, ml->value, package_name);
-                if (err != OK)
-                        return err;
-        }
-
+                impl->iface_package = pi->package_name;
         return OK;
 }
 
 no_ignore static ubik_error
-assign_package(
-        struct ubik_alloc_region *r,
-        struct ubik_ast *ast,
-        char *package_name)
+assign_package_ast(
+        struct ubik_walk_info *wi,
+        struct ubik_ast *ast)
 {
-        struct ubik_ast_binding *bind;
-        struct ubik_type *type;
-        struct ubik_ast_implementation *implementation;
-        struct ubik_ast_test *test;
-        size_t i;
-        ubik_error err;
-
+        struct package_info *pi;
+        pi = (struct package_info *) wi;
         if (ast->package_name == NULL)
-                ast->package_name = ubik_strdup(package_name, r);
-        else if (strcmp(package_name, ast->package_name) != 0)
-                return ubik_raise(
-                        ERR_BAD_VALUE,
-                        "all ASTs in tree must agree on package name");
-
-        for (i = 0; i < ast->bindings.n; i++)
-        {
-                bind = ast->bindings.elems[i];
-                if (bind->type_expr != NULL)
-                        assign_package_type_expr(
-                                r, bind->type_expr, package_name);
-                err = assign_package_expr(r, bind->expr, package_name);
-                if (err != OK)
-                        return err;
-        }
-
-        for (i = 0; i < ast->types.n; i++)
-        {
-                type = ast->types.elems[i];
-                err = assign_package_type(r, type, package_name);
-                if (err != OK)
-                        return err;
-        }
-
-        for (i = 0; i < ast->implementations.n; i++)
-        {
-                implementation = ast->implementations.elems[i];
-                err = assign_package_implementation(
-                        r, implementation, package_name);
-                if (err != OK)
-                        return err;
-        }
-
-        for (i = 0; i < ast->tests.n; i++)
-        {
-                test = ast->tests.elems[i];
-                err = assign_package_expr(r, test->actual, package_name);
-                if (err != OK)
-                        return err;
-                err = assign_package_expr(r, test->expected, package_name);
-                if (err != OK)
-                        return err;
-        }
-
-        if (ast->immediate != NULL)
-        {
-                err = assign_package_expr(r, ast->immediate, package_name);
-                if (err != OK)
-                        return err;
-        }
-
+                ast->package_name = pi->package_name;
         return OK;
 }
 
@@ -294,6 +139,19 @@ ubik_package_add_to_scope(
         struct ubik_ast *ast,
         struct ubik_compile_request *req)
 {
+        struct package_info pi = {
+                .head = {
+                        .ast = assign_package_ast,
+                        .expr = assign_package_expr,
+                        .tparam = assign_package_type_params,
+                        .tconstr = assign_package_type_constraints,
+                        .texpr = assign_package_type_expr,
+                        .impl = assign_package_implementation,
+                },
+                .package_name = ast->package_name,
+                .r = &req->region,
+        };
+
         if (ast->package_name == NULL)
         {
                 ubik_feedback_header(
@@ -302,5 +160,5 @@ ubik_package_add_to_scope(
                 return ubik_raise(
                         ERR_BAD_VALUE, "root AST must have package name");
         }
-        return assign_package(&req->region, ast, ast->package_name);
+        return ubik_walk_ast(ast, &pi.head);
 }

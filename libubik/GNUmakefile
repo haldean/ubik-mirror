@@ -21,6 +21,7 @@ c_sources = \
     ./codegen/token.c \
     ./codegen/types.c \
     ./codegen/typesystem.c \
+    ./codegen/walk.c \
     ./rt/evaluator.c \
     ./rt/jobq.c \
     ./rt/mem.c \
