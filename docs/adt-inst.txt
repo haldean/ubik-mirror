@@ -2,7 +2,9 @@ Instantiating Algebraic Data Types =====================================
 Haldean Brown                                      First draft: May 2016
                                                   Last updated: May 2016
 
-Status: Complete
+Status: Obsolete
+        This document dates back from when everything was pairs of
+        words; now that tuples are a base type, ADTs are just tuples.
 
 ------------------------------------------------------------------------
 

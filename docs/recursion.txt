@@ -2,7 +2,7 @@ Recursive closures =====================================================
 Haldean Brown                                      First draft: Nov 2016
                                                   Last updated: Nov 2016
 
-Status: In progress
+Status: Complete
 
 ------------------------------------------------------------------------
 

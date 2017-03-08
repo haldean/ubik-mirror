@@ -2,7 +2,10 @@ Architecture of the Ubik runtime =======================================
 Haldean Brown                                      First draft: Sep 2016
                                                   Last updated: Sep 2016
 
-Status: Draft
+Status: Needs revision
+        While the value encodings have remained the same, the scheduler
+        (now called the evaluator) has been significantly reworked to
+        improve performance; that section needs rewriting.
 
 ------------------------------------------------------------------------
 

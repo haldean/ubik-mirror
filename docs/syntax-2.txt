@@ -3,6 +3,9 @@ Haldean Brown                                      First draft: Feb 2017
                                                   Last updated: Feb 2017
 
 Status: Rejected
+        Once I started playing with the syntax, I realized this was fun
+        but also a completely different language from Ubik. I sort of
+        got carried away here.
 
 ------------------------------------------------------------------------
 
