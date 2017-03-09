@@ -4,6 +4,8 @@ Haldean Brown                                      First draft: Mar 2017
 
 Status: Draft
 
+To do: extract, zip-new (tell the zip which value triggered it)
+
 ------------------------------------------------------------------------
 
 Ports are how a Ubik program interacts with the world outside the
