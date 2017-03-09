@@ -1,0 +1,11 @@
+Multimethods ===========================================================
+Haldean Brown                                      First draft: Mar 2017
+                                                  Last updated: Mar 2017
+
+Status: Draft
+
+------------------------------------------------------------------------
+
+: handle = ubik-multimethod-handle $uri
+ubik-multimethod-call handle arg-1 arg-2
+ubik-multimethod-register $uri handler type-1 type-2 type-3

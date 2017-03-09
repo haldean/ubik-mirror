@@ -1,0 +1,4 @@
+~ functor
+
+_ Functor m
+    . fmap ^ (a -> b) -> m a -> m b

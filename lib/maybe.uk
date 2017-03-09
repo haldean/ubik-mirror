@@ -1,0 +1,15 @@
+~ maybe
+` functor
+
+^ Maybe a
+    = Yes a
+    = No
+
+~ functor:Functor (Maybe a)
+    . fmap = \f x -> ? x {
+        . Yes v => Yes (f v)
+        . No    => No
+    }
+
+?: functor:fmap (\x -> * 2 x) (Yes 6) = Yes 12
+?: functor:fmap (\x -> * 2 x) No = No

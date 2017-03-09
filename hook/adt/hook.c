@@ -175,8 +175,7 @@ __ubik_install(struct ubik_vector *hooks, struct ubik_alloc_region *region)
         for (i = 0; i < UBIK_MAX_ADT_FIELDS; i++)
         {
                 memset(typebuf, 0x00, TYPEBUF_SIZE);
-                memcpy(typebuf, "ubik:t -> ubik:String",
-                       strlen("ubik:t -> ubik:String"));
+                strcat(typebuf, "ubik:t -> ubik:String");
                 for (j = 0; j < i; j++)
                 {
                         strcat(typebuf, " -> ubik:arg-0");
