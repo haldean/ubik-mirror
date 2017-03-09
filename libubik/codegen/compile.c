@@ -35,6 +35,7 @@
 #include "ubik/interfaces.h"
 #include "ubik/literate.h"
 #include "ubik/hooks.h"
+#include "ubik/package.h"
 #include "ubik/parse.h"
 #include "ubik/patterns.h"
 #include "ubik/resolve.h"
@@ -266,6 +267,10 @@ load_ast(struct ubik_compile_env *cenv, struct ubik_compile_job *job)
 
         if (job->request->package_name == NULL)
                 job->request->package_name = job->ast->package_name;
+
+        err = ubik_package_add_to_scope(job->ast, job->request);
+        if (err != OK)
+                return err;
 
         import = job->ast->imports;
         job->status = COMPILE_READY;

@@ -389,12 +389,12 @@ _print_interface(struct ubik_ast_interface *i, int indent)
         ubik_error err;
 
         _indent(indent);
-        printf("interface %s\n", i->name);
+        printf("interface %s:%s\n", i->name.package, i->name.name);
 
         _indent(indent + 4);
         printf("params:");
         for (p = i->params; p != NULL; p = p->next)
-                printf(" %s:%s", p->name.name, p->name.package);
+                printf(" %s:%s", p->name.package, p->name.name);
         printf("\n");
 
         _indent(indent + 4);

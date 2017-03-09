@@ -206,12 +206,60 @@ walk_type_expr(
 }
 
 no_ignore static ubik_error
+walk_member_list(
+        struct ubik_walk_info *w,
+        struct ubik_ast_member_list *ml)
+{
+        ubik_error err;
+
+        for (; ml != NULL; ml = ml->next)
+        {
+                if (ml->type != NULL)
+                {
+                        err = walk_type_expr(w, ml->type);
+                        if (err != OK)
+                                return err;
+                }
+                if (ml->value != NULL)
+                {
+                        err = walk_expr(w, ml->value);
+                        if (err != OK)
+                                return err;
+                }
+        }
+        return OK;
+}
+
+no_ignore static ubik_error
+walk_interface(
+        struct ubik_walk_info *w,
+        struct ubik_ast_interface *iface)
+{
+        ubik_error err;
+
+        if (w->iface != NULL)
+        {
+                err = w->iface(w, iface);
+                if (err != OK)
+                        return err;
+        }
+
+        err = walk_type_params(w, iface->params);
+        if (err != OK)
+                return err;
+
+        err = walk_member_list(w, iface->members);
+        if (err != OK)
+                return err;
+        return OK;
+}
+
+no_ignore static ubik_error
 walk_implementation(
         struct ubik_walk_info *w,
         struct ubik_ast_implementation *impl)
 {
         struct ubik_type_list *tl;
-        struct ubik_ast_member_list *ml;
         ubik_error err;
 
         if (w->impl != NULL)
@@ -228,15 +276,9 @@ walk_implementation(
                         return err;
         }
 
-        for (ml = impl->members; ml != NULL; ml = ml->next)
-        {
-                err = walk_type_expr(w, ml->type);
-                if (err != OK)
-                        return err;
-                err = walk_expr(w, ml->value);
-                if (err != OK)
-                        return err;
-        }
+        err = walk_member_list(w, impl->members);
+        if (err != OK)
+                return err;
 
         return OK;
 }
@@ -249,6 +291,7 @@ walk(
         struct ubik_ast_binding *bind;
         struct ubik_type *type;
         struct ubik_ast_implementation *implementation;
+        struct ubik_ast_interface *interface;
         struct ubik_ast_test *test;
         size_t i;
         ubik_error err;
@@ -278,6 +321,14 @@ walk(
         {
                 type = ast->types.elems[i];
                 err = walk_type(w, type);
+                if (err != OK)
+                        return err;
+        }
+
+        for (i = 0; i < ast->interfaces.n; i++)
+        {
+                interface = ast->interfaces.elems[i];
+                err = walk_interface(w, interface);
                 if (err != OK)
                         return err;
         }

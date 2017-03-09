@@ -164,6 +164,7 @@ assign_initial_scopes(
                 return ubik_raise(
                         ERR_BAD_TYPE, "bad expr type in initial scopes");
         }
+        expr->scope->package_name = parent->package_name;
 
         /* pattern blocks need special treatment, because each case introduces a
          * new scope. */
@@ -185,6 +186,7 @@ assign_initial_scopes(
                         case_stmt->scope->names.region = ctx->region;
                         case_stmt->scope->parent = expr->scope;
                         case_stmt->scope->boundary = BOUNDARY_BLOCK;
+                        case_stmt->scope->package_name = parent->package_name;
 
                         err = assign_initial_scopes(
                                 ctx, case_stmt->head, case_stmt->scope);
@@ -238,6 +240,7 @@ assign_all_initial_scopes(
 
         ast->scope->parent = parent;
         ast->scope->boundary = is_root ? BOUNDARY_GLOBAL : BOUNDARY_BLOCK;
+        ast->scope->package_name = ast->package_name;
 
         for (i = 0; i < ast->bindings.n; i++)
         {
@@ -964,6 +967,8 @@ ubik_resolve(
         if (err != OK)
                 return err;
 
+        /* This is also run in the compile module right after loading the AST,
+         * but at the time there were no scope objects for it to update. */
         err = ubik_package_add_to_scope(ast, req);
         if (err != OK)
                 return err;

@@ -200,8 +200,8 @@ ubik_typesystem_load(
         {
                 iface = (struct ubik_ast_interface *) ast->interfaces.elems[i];
                 ubik_alloc1(&tsif, struct ts_iface, tsys->region);
-                tsif->name = ubik_strdup(iface->name, tsys->region);
-                tsif->package = ubik_strdup(ast->package_name, tsys->region);
+                tsif->name = ubik_strdup(iface->name.name, tsys->region);
+                tsif->package = ubik_strdup(iface->name.package, tsys->region);
                 for (params = iface->params, tsif->n_params = 0;
                         params != NULL;
                         params = params->next, tsif->n_params++);
@@ -213,9 +213,10 @@ ubik_typesystem_load(
                                 UBIK_FEEDBACK_ERR,
                                 &iface->loc,
                                 "interfaces cannot have more than %d "
-                                "parameters, %s has %lu",
+                                "parameters, %s:%s has %lu",
                                 UBIK_MAX_INTERFACE_PARAMS,
-                                iface->name,
+                                iface->name.package,
+                                iface->name.name,
                                 tsif->n_params);
                         return ubik_raise(
                                 ERR_UNKNOWN_TYPE, "too many interface params");

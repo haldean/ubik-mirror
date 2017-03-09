@@ -122,7 +122,11 @@ struct ubik_ast_adt_ctors
 
 struct ubik_ast_interface
 {
-        char *name;
+        struct
+        {
+                char *name;
+                char *package;
+        } name;
         struct ubik_type_params *params;
         struct ubik_ast_member_list *members;
         struct ubik_ast_loc loc;

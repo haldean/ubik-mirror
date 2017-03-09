@@ -27,6 +27,7 @@
 
 #include "ubik/assert.h"
 #include "ubik/patterns.h"
+#include "ubik/resolve.h"
 #include "ubik/string.h"
 #include "ubik/util.h"
 
@@ -167,6 +168,10 @@ create_bind_tail(
         /* the old tail is always what we want to run, it's just a question of
          * whether we need to make any bindings first. */
         res->block->immediate = tail;
+        /* each AST is required to state the package that it is defined in;
+         * luckily, we can get this from the scope of the expression we're
+         * replacing. */
+        res->block->package_name = tail->scope->package_name;
 
         /* this is the case where the constructor takes no arguments, so we
          * don't have to do anything other than refer to the old tail, which

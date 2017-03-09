@@ -21,7 +21,7 @@ interface_def
 : INTERFACE TYPE_NAME type_params interface_members
 {
         alloc($$, 1, struct ubik_ast_interface);
-        $$->name = $2;
+        $$->name.name = $2;
         $$->params = $3;
         $$->members = $4;
         load_loc($$->loc);
@@ -56,6 +56,16 @@ impl_def
 {
         alloc($$, 1, struct ubik_ast_implementation);
         $$->iface_name = $2;
+        $$->params = $3;
+        $$->members = $4;
+        load_loc($$->loc);
+        merge_loc($$, $$, $4);
+}
+| DEFINES QUALIFIED_TYPE_NAME type_list impl_members
+{
+        alloc($$, 1, struct ubik_ast_implementation);
+        wrap_err(ubik_ast_read_qualified(
+                &$$->iface_package, &$$->iface_name, $2, ctx->region));
         $$->params = $3;
         $$->members = $4;
         load_loc($$->loc);

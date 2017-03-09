@@ -38,18 +38,6 @@ struct package_info
 };
 
 no_ignore static ubik_error
-assign_package_expr(
-        struct ubik_walk_info *wi,
-        struct ubik_ast_expr *expr)
-{
-        struct package_info *pi;
-        pi = (struct package_info *) wi;
-
-        expr->scope->package_name = pi->package_name;
-        return OK;
-}
-
-no_ignore static ubik_error
 assign_package_type_params(
         struct ubik_walk_info *wi,
         struct ubik_type_params *p)
@@ -111,6 +99,18 @@ assign_package_type_expr(
 }
 
 no_ignore static ubik_error
+assign_package_interface(
+        struct ubik_walk_info *wi,
+        struct ubik_ast_interface *iface)
+{
+        struct package_info *pi;
+        pi = (struct package_info *) wi;
+        if (iface->name.package == NULL)
+                iface->name.package = pi->package_name;
+        return OK;
+}
+
+no_ignore static ubik_error
 assign_package_implementation(
         struct ubik_walk_info *wi,
         struct ubik_ast_implementation *impl)
@@ -142,11 +142,11 @@ ubik_package_add_to_scope(
         struct package_info pi = {
                 .head = {
                         .ast = assign_package_ast,
-                        .expr = assign_package_expr,
                         .tparam = assign_package_type_params,
                         .tconstr = assign_package_type_constraints,
                         .texpr = assign_package_type_expr,
                         .impl = assign_package_implementation,
+                        .iface = assign_package_interface,
                 },
                 .package_name = ast->package_name,
                 .r = &req->region,
