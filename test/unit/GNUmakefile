@@ -12,6 +12,7 @@ tests = \
 	parq-test \
 	path_concat-test \
 	pointer_set-test \
+	port-test \
 	rat-test \
 	resolve-test \
 	split-test \

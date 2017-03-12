@@ -26,6 +26,7 @@ c_sources = \
     ./rt/evaluator.c \
     ./rt/jobq.c \
     ./rt/mem.c \
+    ./rt/ports.c \
     ./rt/rat.c \
     ./rt/rwlock.c \
     ./rt/str.c \
