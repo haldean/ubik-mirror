@@ -45,7 +45,6 @@ __ubik_install(struct ubik_vector *hooks, struct ubik_alloc_region *region)
         struct ubik_hook *r;
         size_t i;
         size_t j;
-        size_t k;
         char typebuf[TYPEBUF_SIZE];
         char *funcname;
         ubik_error err;
@@ -56,17 +55,8 @@ __ubik_install(struct ubik_vector *hooks, struct ubik_alloc_region *region)
                 strcat(typebuf, "ubik:uri-type");
                 for (j = 0; j < i; j++)
                 {
-                        strcat(typebuf, " -> ubik:arg-0");
-                        k = strlen(typebuf) - 1;
-                        /* assigns a simple single-char encoding to
-                         * each argument, counting from 0 to 9, then a
-                         * to z, then A to Z. */
-                        if (j < 10) typebuf[k] += j;
-                        else if (j < 26 + 10) typebuf[k] = 'a' + j - 10;
-                        else if (j < 26 + 26 + 10) typebuf[k] = 'A' + j - 36;
-                        else return ubik_raise(
-                                ERR_SYSTEM,
-                                "too many function params to encode");
+                        sprintf(&typebuf[strlen(typebuf)],
+                                " -> ubik:arg-%" PRIu64, j);
                 }
                 strcat(typebuf, " -> ubik:ret-type");
 
