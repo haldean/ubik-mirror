@@ -37,9 +37,11 @@ struct ubik_port;
 typedef ubik_error (*ubik_port_source)(bool *updated, struct ubik_port *p);
 
 /* Function called by ubik_port_poll when there is new data for a port
- * to sink. Only called on ports with the SINK bit set. It is not the
- * responsibility of pipes to notify their associated plugs; most pipes
- * will probably not even specify a sink function. */
+ * to sink. Only called on ports with the SINK bit set. When this
+ * function is called, the head pointer on the sink will have been
+ * updated to the new value. It is not the responsibility of pipes to
+ * notify their associated plugs; most pipes will probably not even
+ * specify a sink function. */
 typedef ubik_error (*ubik_port_sink)(struct ubik_port *p);
 
 /* Function called to transform a value that's being transmitted from
