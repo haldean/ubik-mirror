@@ -48,6 +48,13 @@ sink_error(struct ubik_port *p)
         return ubik_raise(ERR_PRESENT, "expected error");
 }
 
+static ubik_error
+xform(struct ubik_value **res, struct ubik_port *p)
+{
+        *res = p->head;
+        return OK;
+}
+
 test_t
 attach_moves_value_forward()
 {
@@ -112,6 +119,66 @@ sink_error_returns_error()
         return ok;
 }
 
+test_t
+dump_graphviz()
+{
+        struct ubik_port p1 = {
+                .type = UBIK_PORT_SOURCE,
+                .debug = { .name = "stdio" },
+        };
+        struct ubik_port p2 = {
+                .type = UBIK_PORT_PIPE,
+                .debug = { .name = "P" },
+        };
+        struct ubik_port p3 = {
+                .type = UBIK_PORT_SOURCE,
+                .debug = { .name = "clock" },
+        };
+        struct ubik_port p4 = {
+                .type = UBIK_PORT_PIPE,
+        };
+        struct ubik_port p5 = {
+                .type = UBIK_PORT_PIPE,
+        };
+        struct ubik_port p6 = {
+                .type = UBIK_PORT_SINK,
+                .debug = { .name = "stdout" },
+        };
+        struct ubik_port p7 = {
+                .type = UBIK_PORT_SINK,
+        };
+        struct ubik_port p8 = {
+                .type = UBIK_PORT_SOURCE,
+        };
+        struct ubik_port *ps[] = { &p1, &p2, &p3, &p4, &p5, &p6, &p7, &p8 };
+        struct ubik_stream out;
+
+        assert(ubik_port_attach(&p1, &p2, NULL) == OK);
+        assert(ubik_port_attach(&p1, &p4, &xform) == OK);
+        assert(ubik_port_attach(&p3, &p2, NULL) == OK);
+        assert(ubik_port_attach(&p1, &p5, NULL) == OK);
+        assert(ubik_port_attach(&p5, &p6, NULL) == OK);
+        assert(ubik_port_attach(&p4, &p5, NULL) == OK);
+        assert(ubik_port_attach(&p2, &p7, &xform) == OK);
+        assert(ubik_port_attach(&p5, &p7, NULL) == OK);
+        assert(ubik_port_attach(&p8, &p7, NULL) == OK);
+        assert(ubik_stream_wfile(&out, "/tmp/ubik-test-unit-port.dot") == OK);
+
+        ubik_port_dump(&out, ps, sizeof(ps) / sizeof(ps[0]));
+
+        ubik_stream_close(&out);
+        ubik_port_free(&p1);
+        ubik_port_free(&p2);
+        ubik_port_free(&p3);
+        ubik_port_free(&p4);
+        ubik_port_free(&p5);
+        ubik_port_free(&p6);
+        ubik_port_free(&p7);
+        ubik_port_free(&p8);
+
+        return ok;
+}
+
 int
 main()
 {
@@ -119,5 +186,6 @@ main()
         run(attach_moves_value_forward);
         run(poll_moves_value_forward);
         run(sink_error_returns_error);
+        run(dump_graphviz);
         finish();
 }

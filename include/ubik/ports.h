@@ -19,6 +19,7 @@
 
 #pragma once
 #include "ubik/rt.h"
+#include "ubik/stream.h"
 #include "ubik/vector.h"
 
 enum ubik_port_type
@@ -60,11 +61,20 @@ struct ubik_port
 {
         ubik_port_source source;
         ubik_port_sink sink;
+
         /* Elements of plugs vector are ubik_plug pointers. Users should
          * not add to this vector directly; instead, they should use
          * ubik_port_attach. */
         struct ubik_vector plugs;
+
         struct ubik_value *head;
+
+        /* All elements of this struct are only used for implementing
+         * ubik_port_dump(). */
+        struct {
+                char *name;
+        } debug;
+
         enum ubik_port_type type;
 };
 
@@ -94,3 +104,8 @@ ubik_port_attach(
  * freed causes undefined behavior. */
 void
 ubik_port_free(struct ubik_port *p);
+
+/* Dumps all information about a set of ports in GraphViz dot format
+ * into the given stream. */
+void
+ubik_port_dump(struct ubik_stream *s, struct ubik_port **ports, size_t n);

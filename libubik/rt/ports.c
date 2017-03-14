@@ -19,6 +19,7 @@
 
 #include "ubik/assert.h"
 #include "ubik/ports.h"
+#include "ubik/string.h"
 
 #include <stdlib.h>
 
@@ -132,4 +133,51 @@ ubik_port_free(struct ubik_port *p)
         p->sink = NULL;
         p->head = NULL;
         p->type = 0;
+}
+
+void
+ubik_port_dump(struct ubik_stream *s, struct ubik_port **ports, size_t n)
+{
+        size_t i;
+        size_t j;
+        struct ubik_port *p;
+        struct ubik_plug *plug;
+
+        ubik_fprintf(s, "digraph {\n");
+        for (i = 0; i < n; i++)
+        {
+                p = ports[i];
+                /* Need the "n" prefix because otherwise 0xABC gets
+                 * parsed as a malformed number by graphviz. */
+                ubik_fprintf(s, "  n%p [", (void *) p);
+                if (p->type & UBIK_PORT_SOURCE)
+                        ubik_fprintf(s, "shape=box");
+                else if (p->type & UBIK_PORT_SINK)
+                        ubik_fprintf(s, "shape=trapezium");
+                else
+                        ubik_fprintf(s, "shape=octagon");
+
+                if (p->type & UBIK_PORT_SINK)
+                        ubik_fprintf(s, ", style=bold");
+                else
+                        ubik_fprintf(s, ", style=solid");
+
+                if (p->debug.name != NULL)
+                        ubik_fprintf(s, ", label=\"%s\"", p->debug.name);
+                else
+                        ubik_fprintf(s, ", label=\"\"");
+
+                ubik_fprintf(s, "]\n");
+
+                for (j = 0; j < p->plugs.n; j++)
+                {
+                        plug = p->plugs.elems[j];
+                        ubik_fprintf(s, "  n%p -> n%p",
+                                        (void *) p, (void *) plug->dst);
+                        if (plug->func != NULL)
+                                ubik_fprintf(s, " [style=dashed]");
+                        ubik_fprintf(s, "\n");
+                }
+        }
+        ubik_fprintf(s, "}\n");
 }
