@@ -70,7 +70,7 @@ struct ubik_port
         struct ubik_value *head;
 
         /* All elements of this struct are only used for implementing
-         * ubik_port_dump(). */
+         * ubik_port_dump() or other debugging facilities. */
         struct {
                 char *name;
         } debug;
@@ -78,10 +78,18 @@ struct ubik_port
         enum ubik_port_type type;
 };
 
+/* All elements of this struct are only used for implementing
+ * ubik_port_dump() or other debugging facilities. */
+struct ubik_plug_debug
+{
+        char *name;
+};
+
 struct ubik_plug
 {
         ubik_port_transformer func;
         struct ubik_port *dst;
+        struct ubik_plug_debug debug;
 };
 
 /* Requests that a port update its head, notifying its listeners if
@@ -91,12 +99,17 @@ ubik_port_poll(struct ubik_port *p);
 
 /* Requests that a plug-pair be attached to a port. This handles all of
  * the initialization of the plug relationship, notifying the new sink
- * of any available information in the source. */
+ * of any available information in the source. Debug informationi is
+ * optional; to skip debug info attachment, pass NULL. A pointer is used
+ * to make the parameter optional; debug information will be copied out
+ * of the passed object, if non-null. The provided pointer does not need
+ * to live past the end of the call to ubik_port_attach. */
 no_ignore ubik_error
 ubik_port_attach(
         struct ubik_port *source,
         struct ubik_port *sink,
-        ubik_port_transformer func);
+        ubik_port_transformer func,
+        struct ubik_plug_debug *debug);
 
 /* Frees all memory associated with the port. This clears all
  * plugs whose source is this port, but it does not clear plugs whose

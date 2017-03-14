@@ -67,7 +67,7 @@ attach_moves_value_forward()
                 .sink = sink,
         };
         sunk = NULL;
-        assert(ubik_port_attach(&p1, &p2, NULL) == OK);
+        assert(ubik_port_attach(&p1, &p2, NULL, NULL) == OK);
         assert(p2.head == &sentinel);
         assert(sunk == &sentinel);
         ubik_port_free(&p1);
@@ -87,7 +87,7 @@ poll_moves_value_forward()
                 .sink = sink,
         };
         sunk = NULL;
-        assert(ubik_port_attach(&p1, &p2, NULL) == OK);
+        assert(ubik_port_attach(&p1, &p2, NULL, NULL) == OK);
         assert(ubik_port_poll(&p1) == OK);
         assert(p2.head == &sentinel);
         assert(sunk == &sentinel);
@@ -109,7 +109,7 @@ sink_error_returns_error()
         };
         ubik_error err;
 
-        assert(ubik_port_attach(&p1, &p2, NULL) == OK);
+        assert(ubik_port_attach(&p1, &p2, NULL, NULL) == OK);
         err = ubik_port_poll(&p1);
         assert(err != OK);
         assert(err->error_code == ERR_PRESENT);
@@ -152,16 +152,22 @@ dump_graphviz()
         };
         struct ubik_port *ps[] = { &p1, &p2, &p3, &p4, &p5, &p6, &p7, &p8 };
         struct ubik_stream out;
+        struct ubik_plug_debug d;
 
-        assert(ubik_port_attach(&p1, &p2, NULL) == OK);
-        assert(ubik_port_attach(&p1, &p4, &xform) == OK);
-        assert(ubik_port_attach(&p3, &p2, NULL) == OK);
-        assert(ubik_port_attach(&p1, &p5, NULL) == OK);
-        assert(ubik_port_attach(&p5, &p6, NULL) == OK);
-        assert(ubik_port_attach(&p4, &p5, NULL) == OK);
-        assert(ubik_port_attach(&p2, &p7, &xform) == OK);
-        assert(ubik_port_attach(&p5, &p7, NULL) == OK);
-        assert(ubik_port_attach(&p8, &p7, NULL) == OK);
+        assert(ubik_port_attach(&p1, &p2, NULL, NULL) == OK);
+        d.name = "concatenate";
+        assert(ubik_port_attach(&p1, &p4, &xform, &d) == OK);
+        d.name = "reduce-running-sum";
+        assert(ubik_port_attach(&p3, &p2, NULL, &d) == OK);
+        assert(ubik_port_attach(&p1, &p5, NULL, NULL) == OK);
+        d.name = "assert";
+        assert(ubik_port_attach(&p5, &p6, NULL, &d) == OK);
+        d.name = "flip";
+        assert(ubik_port_attach(&p4, &p5, NULL, &d) == OK);
+        assert(ubik_port_attach(&p2, &p7, &xform, NULL) == OK);
+        assert(ubik_port_attach(&p5, &p7, NULL, NULL) == OK);
+        d.name = "gen";
+        assert(ubik_port_attach(&p8, &p7, NULL, &d) == OK);
         assert(ubik_stream_wfile(&out, "/tmp/ubik-test-unit-port.dot") == OK);
 
         ubik_port_dump(&out, ps, sizeof(ps) / sizeof(ps[0]));
