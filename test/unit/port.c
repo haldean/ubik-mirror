@@ -22,6 +22,7 @@
 #include "unit.h"
 
 #include <stdlib.h>
+#include <string.h>
 
 static struct ubik_value sentinel;
 static struct ubik_value *sunk;
@@ -124,15 +125,15 @@ dump_graphviz()
 {
         struct ubik_port p1 = {
                 .type = UBIK_PORT_SOURCE,
-                .debug = { .name = "stdio" },
+                .debug = { .name = strdup("stdin") },
         };
         struct ubik_port p2 = {
                 .type = UBIK_PORT_PIPE,
-                .debug = { .name = "P" },
+                .debug = { .name = strdup("P") },
         };
         struct ubik_port p3 = {
                 .type = UBIK_PORT_SOURCE,
-                .debug = { .name = "clock" },
+                .debug = { .name = strdup("clock") },
         };
         struct ubik_port p4 = {
                 .type = UBIK_PORT_PIPE,
@@ -142,7 +143,7 @@ dump_graphviz()
         };
         struct ubik_port p6 = {
                 .type = UBIK_PORT_SINK,
-                .debug = { .name = "stdout" },
+                .debug = { .name = strdup("stdout") },
         };
         struct ubik_port p7 = {
                 .type = UBIK_PORT_SINK,
@@ -155,18 +156,18 @@ dump_graphviz()
         struct ubik_plug_debug d;
 
         assert(ubik_port_attach(&p1, &p2, NULL, NULL) == OK);
-        d.name = "concatenate";
+        d.name = strdup("concatenate");
         assert(ubik_port_attach(&p1, &p4, &xform, &d) == OK);
-        d.name = "reduce-running-sum";
+        d.name = strdup("reduce-running-sum");
         assert(ubik_port_attach(&p3, &p2, NULL, &d) == OK);
         assert(ubik_port_attach(&p1, &p5, NULL, NULL) == OK);
-        d.name = "assert";
+        d.name = strdup("assert");
         assert(ubik_port_attach(&p5, &p6, NULL, &d) == OK);
-        d.name = "flip";
+        d.name = strdup("flip");
         assert(ubik_port_attach(&p4, &p5, NULL, &d) == OK);
         assert(ubik_port_attach(&p2, &p7, &xform, NULL) == OK);
         assert(ubik_port_attach(&p5, &p7, NULL, NULL) == OK);
-        d.name = "gen";
+        d.name = strdup("gen");
         assert(ubik_port_attach(&p8, &p7, NULL, &d) == OK);
         assert(ubik_stream_wfile(&out, "/tmp/ubik-test-unit-port.dot") == OK);
 

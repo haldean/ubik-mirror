@@ -126,12 +126,23 @@ ubik_port_attach(
 void
 ubik_port_free(struct ubik_port *p)
 {
+        struct ubik_plug *plug;
         size_t i;
 
         for (i = 0; i < p->plugs.n; i++)
-                free(p->plugs.elems[i]);
+        {
+                plug = p->plugs.elems[i];
+                if (plug->debug.name != NULL)
+                        free(plug->debug.name);
+                free(plug);
+        }
         ubik_vector_free(&p->plugs);
 
+        if (p->debug.name != NULL)
+        {
+                free(p->debug.name);
+                p->debug.name = NULL;
+        }
         p->source = NULL;
         p->sink = NULL;
         p->head = NULL;
