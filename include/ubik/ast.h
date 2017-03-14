@@ -27,8 +27,8 @@
 /* The maximum number of subexpressions any one expression can have. */
 #define UBIK_MAX_SUBEXPRS 64
 
-/* THe maximum number of arguments a function can take. */
-#define UBIK_MAX_FUNC_PARAMS 128
+/* The maximum number of arguments a function can take. */
+#define UBIK_MAX_FUNC_PARAMS 32
 
 enum ubik_expr_type
 {
