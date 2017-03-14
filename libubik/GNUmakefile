@@ -24,6 +24,7 @@ c_sources = \
     ./codegen/typesystem.c \
     ./codegen/walk.c \
     ./rt/evaluator.c \
+    ./rt/fileport.c \
     ./rt/jobq.c \
     ./rt/mem.c \
     ./rt/ports.c \
