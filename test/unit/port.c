@@ -169,7 +169,7 @@ dump_graphviz()
         assert(ubik_port_attach(&p5, &p7, NULL, NULL) == OK);
         d.name = strdup("gen");
         assert(ubik_port_attach(&p8, &p7, NULL, &d) == OK);
-        assert(ubik_stream_wfile(&out, "/tmp/ubik-test-unit-port.dot") == OK);
+        assert(ubik_stream_wfile(&out, "/tmp/ubik-unit-port.dot") == OK);
 
         ubik_port_dump(&out, ps, sizeof(ps) / sizeof(ps[0]));
 

@@ -30,7 +30,13 @@ struct ubik_fileport
 };
 
 no_ignore ubik_error
-ubik_fileport_open_source(struct ubik_fileport *p, char *path);
+ubik_fileport_open_source(
+        struct ubik_fileport *p,
+        char *path,
+        struct ubik_workspace *ws);
 
 no_ignore ubik_error
 ubik_fileport_open_sink(struct ubik_fileport *p, char *path);
+
+no_ignore ubik_error
+ubik_fileport_open_stdout(struct ubik_fileport *p);

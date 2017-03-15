@@ -14,6 +14,7 @@ tests = \
 	pointer_set-test \
 	port-test \
 	rat-test \
+	readfile-test \
 	resolve-test \
 	split-test \
 	types-test \
