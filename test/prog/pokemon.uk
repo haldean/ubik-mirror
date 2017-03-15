@@ -1,0 +1,38 @@
+~ ubik-tests/pokemon
+` list
+
+^ IV = Good = Bad
+
+^ Bag
+    = Bag Number Number
+
+    # accessors for members, to give them names
+    : n ^ Bag -> Number = \x -> ? x { . Bag n * => n }
+    : good ^ Bag -> Number = \x -> ? x { . Bag * good => good }
+
+    # make new bags with a good or a bad value removed
+    : sub-good ^ Bag -> Bag
+        = \x -> Bag (- (n x) 1) (- (good x) 1)
+    : sub-bad ^ Bag -> Bag
+        = \x -> Bag (- (n x) 1) (good x)
+
+# this should be a tuple...
+^ TreePair = TreePair IV Tree
+# ...and this should be an alias
+^ Tree = Tree (List TreePair)
+
+: maketree ^ Number -> Bag -> Tree
+    = \k b -> ? {
+        . eq k 0 => Tree Nil
+        . => Tree ({
+            : ivs = list:map (\num -> ? {
+                    . math:lt num (good b) => Good
+                    . => Bad
+                }) (list:range 0 (n b))
+            ! list:map (\iv -> ? iv {
+                . Good => TreePair Good (maketree (- k 1) (sub-good b))
+                . Bad  => TreePair Bad  (maketree (- k 1) (sub-bad b))
+            }) ivs
+        })
+    }
+?: maketree 0 (Bag 1 1) = Tree Nil
