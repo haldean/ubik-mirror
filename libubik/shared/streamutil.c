@@ -72,14 +72,25 @@ ubik_streamutil_get_line(
                                 res[res_i] = '\0';
                                 return OK;
                         }
-                        res[res_i++] = buf[i];
-                        if (res_i - 1 == n)
+                        if (buf[i] == '\0')
+                        {
+                                /* Preemptively write a NUL here, but don't
+                                 * increment res_i. If we get more results when
+                                 * read-ing below, we'll overwrite this NUL,
+                                 * but if we don't, the string is in a good
+                                 * state. */
+                                res[res_i] = '\0';
+                                break;
+                        }
+                        if (res_i == n)
                                 return ubik_raise(
                                         ERR_FULL, "not enough space in buffer");
+                        res[res_i++] = buf[i];
                 }
                 read = ubik_stream_read(buf, stream, GET_LINE_BUF_SIZE - 1);
                 if (read == 0)
                         return OK;
+                buf[read] = '\0';
                 i = 0;
         }
 }
