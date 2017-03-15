@@ -36,3 +36,7 @@
         })
     }
 ?: maketree 0 (Bag 1 1) = Tree Nil
+?: maketree 1 (Bag 1 1) = Tree (Cons (TreePair Good (Tree Nil)) Nil)
+?: maketree 1 (Bag 2 1) = Tree (Cons (TreePair Good (Tree Nil))
+                               (Cons (TreePair Bad  (Tree Nil)) Nil)
+
