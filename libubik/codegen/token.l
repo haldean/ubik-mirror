@@ -58,7 +58,6 @@ static size_t get_input(struct ubik_parse_context *ctx, char *buf, size_t max_si
 %}
 
 %option reentrant
-%option noyywrap
 %option yylineno
 %option nounput
 %option bison-bridge
@@ -174,4 +173,10 @@ get_input(struct ubik_parse_context *ctx, char *buf, size_t max_size)
         size_t read;
         read = ubik_stream_read(buf, ctx->source_stream, max_size);
         return read;
+}
+
+int
+yywrap(yyscan_t yyscanner)
+{
+        return 1;
 }
