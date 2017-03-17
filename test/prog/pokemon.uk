@@ -18,25 +18,53 @@
 
 # this should be a tuple...
 ^ TreePair = TreePair IV Tree
+    : tree ^ TreePair -> Tree = \tp -> ? tp { . TreePair * t => t }
+
 # ...and this should be an alias
 ^ Tree = Tree (List TreePair)
+    # accessor for children
+    : children ^ Tree -> List TreePair = \tree -> ? tree { . Tree l => l }
 
-: maketree ^ Number -> Bag -> Tree
-    = \k b -> ? {
-        . eq k 0 => Tree Nil
-        . => Tree ({
-            : ivs = list:map (\num -> ? {
-                    . math:lt num (good b) => Good
-                    . => Bad
-                }) (list:range 0 (n b))
-            ! list:map (\iv -> ? iv {
-                . Good => TreePair Good (maketree (- k 1) (sub-good b))
-                . Bad  => TreePair Bad  (maketree (- k 1) (sub-bad b))
-            }) ivs
-        })
-    }
-?: maketree 0 (Bag 1 1) = Tree Nil
-?: maketree 1 (Bag 1 1) = Tree (Cons (TreePair Good (Tree Nil)) Nil)
-?: maketree 1 (Bag 2 1) = Tree (Cons (TreePair Good (Tree Nil))
-                               (Cons (TreePair Bad  (Tree Nil)) Nil)
+    # create a tree by choosing k IVs out of bag b
+    : make ^ Number -> Bag -> Tree
+        = \k b -> ? {
+            . eq k 0 => Tree Nil
+            . => Tree ({
+                : ivs = list:map (\num -> ? {
+                        . math:lt num (good b) => Good
+                        . => Bad
+                    }) (list:range 0 (n b))
+                ! list:map (\iv -> ? iv {
+                    . Good => TreePair Good (make (- k 1) (sub-good b))
+                    . Bad  => TreePair Bad  (make (- k 1) (sub-bad b))
+                }) ivs
+            })
+        }
+    ?: make 0 (Bag 1 1) = Tree Nil
+    ?: make 1 (Bag 1 1) = Tree (Cons (TreePair Good (Tree Nil)) Nil)
+    ?: make 1 (Bag 2 1) = Tree (Cons (TreePair Good (Tree Nil))
+                               (Cons (TreePair Bad  (Tree Nil)) Nil))
 
+    # the probability that you would get i good IVs when drawing from the tree.
+    : prob ^ Tree -> Number -> Number
+        = \tree i -> {
+            : c = children tree
+            : nc = list:length c
+            ! (? c {
+                . Nil => ? { . eq i 0 => 1 . => 0 }
+                . List * * =>
+                    list:map
+                        (\child -> * (* n (/ 1 nc)) (prob (tree child) (? child {
+                            . TreePair * iv => ? iv {
+                                . Good => (- i 1)
+                                . Bad => i
+                            }
+                        })))
+                        c
+            })
+        }
+
+! {
+    : t = make 2 (Bag 2 1)
+    ! emit (humanize (prob t 1))
+}
