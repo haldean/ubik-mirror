@@ -24,8 +24,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-const char const *UBIK_FUNCTION_CONSTRUCTOR = "Applyable";
-const char const *UBIK_TYPE_CONSTRUCTOR = "Type";
+const char * const UBIK_FUNCTION_CONSTRUCTOR = "Applyable";
+const char * const UBIK_TYPE_CONSTRUCTOR = "Type";
 
 void
 type_params_copy(

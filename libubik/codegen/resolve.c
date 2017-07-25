@@ -997,12 +997,14 @@ ubik_resolve(
                                         ctx.feedback, UBIK_FEEDBACK_ERR,
                                         &resolv_err->loc, "name not found: %s",
                                         resolv_err->name);
+                                break;
                         case RESOLVE_ERR_PKG_NOT_FOUND:
                                 ubik_feedback_line(
                                         ctx.feedback, UBIK_FEEDBACK_ERR,
                                         &resolv_err->loc,
                                         "package not imported: %s",
                                         resolv_err->name);
+                                break;
                         }
                 }
                 return ubik_raise(ERR_BAD_VALUE, "couldn't resolve some names");

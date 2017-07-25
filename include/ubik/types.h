@@ -21,8 +21,8 @@
 #include "ubik/ast.h"
 #include "ubik/ubik.h"
 
-extern const char const *UBIK_FUNCTION_CONSTRUCTOR;
-extern const char const *UBIK_TYPE_CONSTRUCTOR;
+extern const char * const UBIK_FUNCTION_CONSTRUCTOR;
+extern const char * const UBIK_TYPE_CONSTRUCTOR;
 
 enum ubik_type_expr_type
 {
