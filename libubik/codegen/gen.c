@@ -22,6 +22,7 @@
 #include "ubik/assert.h"
 #include "ubik/assign.h"
 #include "ubik/env.h"
+#include "ubik/feedback.h"
 #include "ubik/fun.h"
 #include "ubik/gen.h"
 #include "ubik/resolve.h"
@@ -74,10 +75,22 @@ ubik_compile_binding(
                 return err;
 
         err = ubik_env_set(local_env, uri, res, type);
-        ubik_uri_free(uri);
         if (err != OK)
+        {
+                if (err->error_code == ERR_PRESENT)
+                {
+                        ubik_feedback_line(
+                                ctx->feedback,
+                                UBIK_FEEDBACK_ERR,
+                                &binding->loc,
+                                "tried to assign name twice: %s:%s",
+                                uri->source, uri->name);
+                }
+                ubik_uri_free(uri);
                 return err;
+        }
 
+        ubik_uri_free(uri);
         return OK;
 }
 
