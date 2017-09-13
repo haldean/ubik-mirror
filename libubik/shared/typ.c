@@ -45,9 +45,14 @@ adt_typ(
         size_t n_vars;
         unused(ws);
 
-        err = ubik_value_new(&res, ws);
-        if (err != OK)
-                return err;
+        if (*res_ptr != NULL)
+        {
+                err = ubik_value_new(&res, ws);
+                if (err != OK)
+                        return err;
+        }
+        else
+                res = *res_ptr;
 
         src_constraints = t->adt.constraints;
         if (src_constraints != NULL)

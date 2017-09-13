@@ -24,7 +24,9 @@
 #include "ubik/ubik.h"
 
 /* Create a TYP value from an AST type definition. Types referenced by the
-   expression must already be present in the given type system. */
+   expression must already be present in the given type system. If the res
+   pointer isn't NULL, this fills in the provided value instead of creating a
+   new value. */
 no_ignore ubik_error
 ubik_typ_from_ast(
         struct ubik_value **res,

@@ -145,7 +145,10 @@ ubik_typesystem_load(
         size_t i;
         size_t j;
         size_t n_params;
+        size_t new_types_start;
         ubik_error err;
+
+        new_types_start = tsys->types.n;
 
         for (i = 0; i < ast->types.n; i++)
         {
@@ -187,10 +190,23 @@ ubik_typesystem_load(
                 ubik_alloc1(&tst, struct ts_type, tsys->region);
                 tst->name = ubik_strdup(t->name, tsys->region);
                 tst->package = ubik_strdup(ast->package_name, tsys->region);
-                /* add to list first, to enable recursive type definitions */
+
+                /* we give it an empty value for other types to reference, so
+                 * that recursive aliases can reference each others' values. */
+                err = ubik_value_new(&tst->v, req->workspace);
+                if (err != OK)
+                        return err;
+
+                /* add to list first, to enable recursive and out-of-order type
+                 * definitions */
                 err = ubik_vector_append(&tsys->types, tst);
                 if (err != OK)
                         return err;
+        }
+
+        for (i = new_types_start; i < tsys->types.n; i++)
+        {
+                tst = (struct ts_type *) tsys->types.elems[i];
                 err = ubik_typ_from_ast(&tst->v, t, tsys, req->workspace);
                 if (err != OK)
                         return err;
