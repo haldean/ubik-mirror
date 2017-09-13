@@ -98,3 +98,22 @@
     }
 ?: filter (\x -> math:lte x 10) (Cons 10 (Cons 20 (Cons 0 Nil)))
    = (Cons 10 (Cons 0 Nil))
+
+: length
+    ^ List a -> Number
+    = \l -> ? l {
+        . Nil => 0
+        . Cons * cdr => + 1 (length cdr)
+    }
+?: length Nil = 0
+?: length (Cons 1 Nil) = 1
+?: length (Cons 1 (Cons 2 (Cons 3 (Cons 4 Nil)))) = 4
+
+: reduce
+    ^ (b -> a -> b) -> b -> List a -> b
+    = \f acc l -> ? l {
+        . Nil => acc
+        . Cons car cdr => reduce f (f acc car) cdr
+    }
+?: reduce + 10 (Cons 20 (Cons 30 Nil)) = 60
+?: reduce (\str char -> concat str char) "" (Cons "a" (Cons "bc" Nil)) = "abc"
