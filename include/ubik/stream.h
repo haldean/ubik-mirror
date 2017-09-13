@@ -24,6 +24,14 @@
 #include "ubik/alloc.h"
 #include "ubik/ubik.h"
 
+enum ubik_stream_type
+{
+        STREAM_TYPE_FILE_R,
+        STREAM_TYPE_FILE_W,
+        STREAM_TYPE_BUFFER,
+        STREAM_TYPE_GENERATOR,
+};
+
 struct _ubik_buf
 {
         uint8_t *start;
@@ -49,7 +57,7 @@ struct ubik_stream
                 struct _ubik_buf *buffer;
                 struct ubik_generator *gen;
         };
-        ubik_word stream_type;
+        enum ubik_stream_type stream_type;
 };
 
 /* Opens a stream for reading from the given file. */

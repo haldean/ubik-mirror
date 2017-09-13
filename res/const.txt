@@ -20,11 +20,6 @@
 - when the project is made. Lines that begin with - are ignored. The format is
 - "  packed.NAME_OF_CONSTANT"; the packed value must be 8 characters long.
 
-   rfile.STREAM_TYPE_FILE_R
-   wfile.STREAM_TYPE_FILE_W
-  buffer.STREAM_TYPE_BUFFER
-     gen.STREAM_TYPE_GENERATOR
-
  eabsent.ERR_ABSENT
  ebvalue.ERR_BAD_VALUE
  ebgraph.ERR_BAD_GRAPH
