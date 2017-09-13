@@ -26,11 +26,13 @@ ubik_charstack_init(struct ubik_charstack *cs, size_t cap)
 {
         ubik_galloc((void **) &cs->data, cap, sizeof(char *));
         cs->n = 0;
+        cs->cap = cap;
 }
 
 void
 ubik_charstack_push(struct ubik_charstack *cs, char *elem)
 {
+        ubik_assert(cs->n < cs->cap);
         cs->data[cs->n++] = elem;
 }
 

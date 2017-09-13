@@ -24,6 +24,7 @@ struct ubik_charstack
 {
         char **data;
         size_t n;
+        size_t cap;
 };
 
 void
