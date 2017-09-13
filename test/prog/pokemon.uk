@@ -5,46 +5,46 @@
 ^ IV = Good = Bad
 
 ^ Bag
-    = Bag Number Number
+    = BagC Number Number
 
     # accessors for members, to give them names
-    : n ^ Bag -> Number = \x -> ? x { . Bag n * => n }
-    : good ^ Bag -> Number = \x -> ? x { . Bag * good => good }
+    : n ^ Bag -> Number = \x -> ? x { . BagC n * => n }
+    : good ^ Bag -> Number = \x -> ? x { . BagC * good => good }
 
     # make new bags with a good or a bad value removed
     : sub-good ^ Bag -> Bag
-        = \x -> Bag (- (n x) 1) (- (good x) 1)
+        = \x -> BagC (- (n x) 1) (- (good x) 1)
     : sub-bad ^ Bag -> Bag
-        = \x -> Bag (- (n x) 1) (good x)
+        = \x -> BagC (- (n x) 1) (good x)
 
 # this should be a tuple...
-^ TreePair = TreePair IV Tree
-    : tree ^ TreePair -> Tree = \tp -> ? tp { . TreePair * t => t }
+^ TreePair = TreePairC IV Tree
+    : tree ^ TreePair -> Tree = \tp -> ? tp { . TreePairC * t => t }
 
 # ...and this should be an alias
-^ Tree = Tree (List TreePair)
+^ Tree = TreeC (List TreePair)
     # accessor for children
-    : children ^ Tree -> List TreePair = \tree -> ? tree { . Tree l => l }
+    : children ^ Tree -> List TreePair = \tree -> ? tree { . TreeC l => l }
 
     # create a tree by choosing k IVs out of bag b
     : make ^ Number -> Bag -> Tree
         = \k b -> ? {
-            . eq k 0 => Tree Nil
-            . => Tree ({
+            . eq k 0 => TreeC Nil
+            . => TreeC ({
                 : ivs = map (\num -> ? {
                         . math:lt num (good b) => Good
                         . => Bad
                     }) (range 0 (n b))
                 ! map (\iv -> ? iv {
-                    . Good => TreePair Good (make (- k 1) (sub-good b))
-                    . Bad  => TreePair Bad  (make (- k 1) (sub-bad b))
+                    . Good => TreePairC Good (make (- k 1) (sub-good b))
+                    . Bad  => TreePairC Bad  (make (- k 1) (sub-bad b))
                 }) ivs
             })
         }
-    ?: make 0 (Bag 1 1) = Tree Nil
-    ?: make 1 (Bag 1 1) = Tree (Cons (TreePair Good (Tree Nil)) Nil)
-    ?: make 1 (Bag 2 1) = Tree (Cons (TreePair Good (Tree Nil))
-                               (Cons (TreePair Bad  (Tree Nil)) Nil))
+    ?: make 0 (BagC 1 1) = TreeC Nil
+    ?: make 1 (BagC 1 1) = TreeC (Cons (TreePairC Good (TreeC Nil)) Nil)
+    ?: make 1 (BagC 2 1) = TreeC (Cons (TreePairC Good (TreeC Nil))
+                                 (Cons (TreePairC Bad  (TreeC Nil)) Nil))
 
     # the probability that you would get i good IVs when drawing from the tree.
     : prob ^ Tree -> Number -> Number
@@ -56,7 +56,7 @@
                 . Cons * * =>
                     reduce + 0 (map
                         (\child -> * (/ 1 nc) (prob (tree child) (? child {
-                            . TreePair * iv => ? iv {
+                            . TreePairC * iv => ? iv {
                                 . Good => (- i 1)
                                 . Bad => i
                             }
@@ -66,6 +66,6 @@
         }
 
 ! {
-    : t = make 2 (Bag 2 1)
+    : t = make 2 (BagC 2 1)
     ! emit (humanize (prob t 1))
 }
