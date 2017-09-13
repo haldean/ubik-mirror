@@ -60,7 +60,8 @@ ubik_adt_instantiate(
                 ctor = NULL;
         }
         if (ctor == NULL)
-                return ubik_raise(ERR_BAD_VALUE, "ctor not found");
+                return ubik_raisef(
+                        ERR_BAD_VALUE, "ctor %s not found", ctor_name->str);
         if (ctor->arity != args->tup.n)
                 return ubik_raisef(
                         ERR_BAD_VALUE,
