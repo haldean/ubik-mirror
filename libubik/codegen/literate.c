@@ -230,6 +230,8 @@ reset_lit(struct ubik_generator *gen)
         asls(gen)->code_match_len = false;
         asls(gen)->colon_match_len = false;
         asls(gen)->just_saw_nl = true;
+        asls(gen)->buf_loc = 0;
+        asls(gen)->buf_end = 0;
 }
 
 static bool
